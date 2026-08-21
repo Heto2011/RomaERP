@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.HR;
+using RomaERP.Domain.Inventory;
 using RomaERP.Infrastructure.Identity;
 
 namespace RomaERP.Infrastructure.Persistence;
@@ -27,6 +28,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<EmployeeSalaryComponent> EmployeeSalaryComponents => Set<EmployeeSalaryComponent>();
     public DbSet<PayrollRun> PayrollRuns => Set<PayrollRun>();
     public DbSet<PayrollRunLine> PayrollRunLines => Set<PayrollRunLine>();
+
+    public DbSet<ItemCategory> ItemCategories => Set<ItemCategory>();
+    public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<Item> Items => Set<Item>();
+    public DbSet<StockMovement> StockMovements => Set<StockMovement>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

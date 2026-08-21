@@ -1,14 +1,19 @@
 import { apiClient } from "./client";
 import type {
   Account,
+  CostCenterLookup,
   Department,
   Employee,
   FiscalPeriod,
+  Item,
+  ItemCategory,
   JournalEntry,
   PayrollRun,
   Position,
   SalaryComponent,
+  StockMovement,
   TrialBalanceLine,
+  Warehouse,
 } from "./types";
 
 export const AuthApi = {
@@ -41,7 +46,7 @@ export const JournalEntriesApi = {
 
 export const LookupsApi = {
   fiscalPeriods: () => apiClient.get<FiscalPeriod[]>("/lookups/fiscal-periods"),
-  costCenters: () => apiClient.get<{ id: string; code: string; nameAr: string }[]>("/lookups/cost-centers"),
+  costCenters: () => apiClient.get<CostCenterLookup[]>("/lookups/cost-centers"),
 };
 
 export const DepartmentsApi = {
@@ -81,4 +86,28 @@ export const PayrollApi = {
   create: (data: unknown) => apiClient.post<PayrollRun>("/payroll", data),
   approve: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/approve`),
   post: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/post`),
+};
+
+export const ItemCategoriesApi = {
+  getAll: () => apiClient.get<ItemCategory[]>("/itemcategories"),
+  create: (data: Partial<ItemCategory>) => apiClient.post<ItemCategory>("/itemcategories", data),
+  remove: (id: string) => apiClient.delete(`/itemcategories/${id}`),
+};
+
+export const WarehousesApi = {
+  getAll: () => apiClient.get<Warehouse[]>("/warehouses"),
+  create: (data: Partial<Warehouse>) => apiClient.post<Warehouse>("/warehouses", data),
+  remove: (id: string) => apiClient.delete(`/warehouses/${id}`),
+};
+
+export const ItemsApi = {
+  getAll: () => apiClient.get<Item[]>("/items"),
+  create: (data: Partial<Item>) => apiClient.post<Item>("/items", data),
+  remove: (id: string) => apiClient.delete(`/items/${id}`),
+};
+
+export const InventoryApi = {
+  getMovements: () => apiClient.get<StockMovement[]>("/inventory/movements"),
+  receive: (data: unknown) => apiClient.post<StockMovement>("/inventory/receive", data),
+  issue: (data: unknown) => apiClient.post<StockMovement>("/inventory/issue", data),
 };

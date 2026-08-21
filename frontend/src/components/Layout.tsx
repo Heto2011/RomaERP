@@ -21,6 +21,14 @@ const links = [
       { to: "/hr/payroll", label: "الرواتب" },
     ],
   },
+  {
+    section: "المخزون",
+    items: [
+      { to: "/inventory/items", label: "الأصناف" },
+      { to: "/inventory/warehouses", label: "المخازن" },
+      { to: "/inventory/movements", label: "حركات المخزون" },
+    ],
+  },
 ];
 
 export default function Layout({ children }: { children: ReactNode }) {

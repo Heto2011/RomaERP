@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.HR;
+using RomaERP.Domain.Inventory;
 
 namespace RomaERP.Application.Common.Interfaces;
 
@@ -20,6 +21,11 @@ public interface IApplicationDbContext
     DbSet<EmployeeSalaryComponent> EmployeeSalaryComponents { get; }
     DbSet<PayrollRun> PayrollRuns { get; }
     DbSet<PayrollRunLine> PayrollRunLines { get; }
+
+    DbSet<ItemCategory> ItemCategories { get; }
+    DbSet<Warehouse> Warehouses { get; }
+    DbSet<Item> Items { get; }
+    DbSet<StockMovement> StockMovements { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

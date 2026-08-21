@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.HR;
+using RomaERP.Domain.Inventory;
 using RomaERP.Infrastructure.Identity;
 
 namespace RomaERP.Infrastructure.Persistence.Seed;
@@ -21,6 +22,7 @@ public static class DbInitializer
         await SeedFiscalYearAsync(context);
         await SeedCostCenterAsync(context);
         await SeedDepartmentAsync(context);
+        await SeedInventoryAsync(context);
     }
 
     private static async Task SeedRolesAndAdminAsync(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager)
@@ -219,6 +221,30 @@ public static class DbInitializer
             TitleAr = "مدير عام",
             TitleEn = "General Manager",
             DepartmentId = management.Id,
+            IsActive = true
+        });
+
+        await context.SaveChangesAsync();
+    }
+
+    private static async Task SeedInventoryAsync(ApplicationDbContext context)
+    {
+        if (await context.Warehouses.AnyAsync())
+            return;
+
+        context.Warehouses.Add(new Warehouse
+        {
+            Code = "WH-000",
+            NameAr = "المخزن الرئيسي",
+            NameEn = "Main Warehouse",
+            IsActive = true
+        });
+
+        context.ItemCategories.Add(new ItemCategory
+        {
+            Code = "CAT-000",
+            NameAr = "تصنيف عام",
+            NameEn = "General",
             IsActive = true
         });
 

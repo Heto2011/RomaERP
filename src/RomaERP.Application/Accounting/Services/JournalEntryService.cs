@@ -184,20 +184,21 @@ public class JournalEntryService : IJournalEntryService
         var lines = await query.ToListAsync(ct);
 
         var result = lines
-            .GroupBy(l => l.Account!)
+            .GroupBy(l => l.AccountId)
             .Select(g =>
             {
+                var account = g.First().Account!;
                 var totalDebit = g.Sum(l => l.Debit);
                 var totalCredit = g.Sum(l => l.Credit);
-                var balance = g.Key.Nature == AccountNature.Debit
+                var balance = account.Nature == AccountNature.Debit
                     ? totalDebit - totalCredit
                     : totalCredit - totalDebit;
 
                 return new TrialBalanceLineDto
                 {
-                    AccountCode = g.Key.Code,
-                    AccountName = g.Key.NameAr,
-                    AccountType = g.Key.AccountType,
+                    AccountCode = account.Code,
+                    AccountName = account.NameAr,
+                    AccountType = account.AccountType,
                     TotalDebit = totalDebit,
                     TotalCredit = totalCredit,
                     Balance = balance

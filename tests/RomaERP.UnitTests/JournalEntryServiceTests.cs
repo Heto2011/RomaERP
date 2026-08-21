@@ -127,4 +127,32 @@ public class JournalEntryServiceTests
         Assert.Equal(2000, cashLine.Balance);
         Assert.Equal(2000, capitalLine.Balance);
     }
+
+    [Fact]
+    public async Task GetTrialBalance_WithMultipleEntriesOnSameAccount_AggregatesIntoOneLine()
+    {
+        var (ctx, cash, capital, period) = await SeedAsync();
+        var service = new JournalEntryService(ctx);
+
+        for (var i = 0; i < 3; i++)
+        {
+            var entry = await service.CreateAsync(new CreateJournalEntryDto
+            {
+                EntryDate = new DateTime(2026, 1, 5 + i),
+                FiscalPeriodId = period.Id,
+                Lines =
+                {
+                    new CreateJournalEntryLineDto { AccountId = cash.Id, Debit = 100, Credit = 0 },
+                    new CreateJournalEntryLineDto { AccountId = capital.Id, Debit = 0, Credit = 100 }
+                }
+            });
+            await service.PostAsync(entry.Id);
+        }
+
+        var trialBalance = await service.GetTrialBalanceAsync(null);
+
+        Assert.Equal(2, trialBalance.Count);
+        Assert.Equal(300, trialBalance.Single(l => l.AccountCode == "1111").Balance);
+        Assert.Equal(300, trialBalance.Single(l => l.AccountCode == "3100").Balance);
+    }
 }

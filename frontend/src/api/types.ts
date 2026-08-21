@@ -65,6 +65,12 @@ export interface TrialBalanceLine {
   balance: number;
 }
 
+export interface CostCenterLookup {
+  id: string;
+  code: string;
+  nameAr: string;
+}
+
 export interface FiscalPeriod {
   id: string;
   name: string;
@@ -181,4 +187,57 @@ export interface PayrollRun {
   journalEntryId: string | null;
   lines: PayrollRunLine[];
   totalNet: number;
+}
+
+export interface ItemCategory {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  isActive: boolean;
+}
+
+export interface Warehouse {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  isActive: boolean;
+}
+
+export interface Item {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  unitOfMeasure: string;
+  itemCategoryId: string;
+  itemCategoryName: string;
+  reorderLevel: number;
+  quantityOnHand: number;
+  averageCost: number;
+  isActive: boolean;
+}
+
+export enum StockMovementType {
+  Receipt = 1,
+  Issue = 2,
+}
+
+export interface StockMovement {
+  id: string;
+  movementNumber: string;
+  movementDate: string;
+  movementType: StockMovementType;
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  warehouseId: string;
+  warehouseName: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+  reference: string | null;
+  description: string | null;
+  journalEntryId: string | null;
 }

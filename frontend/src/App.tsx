@@ -10,6 +10,9 @@ import Departments from "./pages/hr/Departments";
 import Positions from "./pages/hr/Positions";
 import Employees from "./pages/hr/Employees";
 import Payroll from "./pages/hr/Payroll";
+import Items from "./pages/inventory/Items";
+import Warehouses from "./pages/inventory/Warehouses";
+import StockMovements from "./pages/inventory/StockMovements";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -29,6 +32,9 @@ export default function App() {
       <Route path="/hr/positions" element={<ProtectedRoute><Positions /></ProtectedRoute>} />
       <Route path="/hr/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
       <Route path="/hr/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
+      <Route path="/inventory/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
+      <Route path="/inventory/warehouses" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />
+      <Route path="/inventory/movements" element={<ProtectedRoute><StockMovements /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
