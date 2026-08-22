@@ -25,6 +25,7 @@ public class EmployeeDto
     public string? Address { get; set; }
     public string? BankAccountNumber { get; set; }
     public string? Iban { get; set; }
+    public Guid? ApplicationUserId { get; set; }
 }
 
 public class CreateEmployeeDto

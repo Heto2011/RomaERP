@@ -24,6 +24,7 @@ import type {
   Item,
   ItemCategory,
   JournalEntry,
+  MyPayslip,
   PayrollRun,
   Position,
   PurchaseInvoice,
@@ -90,6 +91,7 @@ export const PositionsApi = {
 export const EmployeesApi = {
   getAll: () => apiClient.get<Employee[]>("/employees"),
   getById: (id: string) => apiClient.get<Employee>(`/employees/${id}`),
+  getMyProfile: () => apiClient.get<Employee>("/employees/me"),
   create: (data: Partial<Employee>) => apiClient.post<Employee>("/employees", data),
   update: (id: string, data: Partial<Employee>) => apiClient.put<Employee>(`/employees/${id}`, data),
   remove: (id: string) => apiClient.delete(`/employees/${id}`),
@@ -107,6 +109,7 @@ export const SalaryComponentsApi = {
 export const PayrollApi = {
   getAll: () => apiClient.get<PayrollRun[]>("/payroll"),
   getById: (id: string) => apiClient.get<PayrollRun>(`/payroll/${id}`),
+  getMyPayslips: () => apiClient.get<MyPayslip[]>("/payroll/me"),
   create: (data: unknown) => apiClient.post<PayrollRun>("/payroll", data),
   approve: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/approve`),
   post: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/post`),
@@ -213,4 +216,5 @@ export const UsersApi = {
   updateRoles: (id: string, roles: string[]) => apiClient.put<AppUser>(`/users/${id}/roles`, { roles }),
   deactivate: (id: string) => apiClient.post<AppUser>(`/users/${id}/deactivate`),
   activate: (id: string) => apiClient.post<AppUser>(`/users/${id}/activate`),
+  linkEmployee: (id: string, employeeId: string | null) => apiClient.put<AppUser>(`/users/${id}/employee-link`, { employeeId }),
 };

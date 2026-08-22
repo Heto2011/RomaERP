@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
-import { UsersApi } from "../api/services";
-import { AppRoles, type AppUser } from "../api/types";
+import { EmployeesApi, UsersApi } from "../api/services";
+import { AppRoles, type AppUser, type Employee } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 
 export default function Users() {
   const { t } = useLanguage();
   const [users, setUsers] = useState<AppUser[]>([]);
+  const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -19,8 +20,9 @@ export default function Users() {
   const [editingRoles, setEditingRoles] = useState<string[]>([]);
 
   async function load() {
-    const res = await UsersApi.getAll();
-    setUsers(res.data);
+    const [usersRes, employeesRes] = await Promise.all([UsersApi.getAll(), EmployeesApi.getAll()]);
+    setUsers(usersRes.data);
+    setEmployees(employeesRes.data);
   }
 
   useEffect(() => {
@@ -68,6 +70,16 @@ export default function Users() {
     try {
       if (user.isActive) await UsersApi.deactivate(user.id);
       else await UsersApi.activate(user.id);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleLinkEmployee(userId: string, employeeId: string) {
+    setError(null);
+    try {
+      await UsersApi.linkEmployee(userId, employeeId || null);
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -127,6 +139,7 @@ export default function Users() {
               <th>{t.users.fullName}</th>
               <th>{t.users.email}</th>
               <th>{t.users.roles}</th>
+              <th>{t.users.linkedEmployee}</th>
               <th>{t.common.status}</th>
               <th>{t.common.actions}</th>
             </tr>
@@ -134,7 +147,7 @@ export default function Users() {
           <tbody>
             {users.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
+                <td colSpan={6} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
                   {t.common.noData}
                 </td>
               </tr>
@@ -156,6 +169,21 @@ export default function Users() {
                   ) : (
                     u.roles.map((r) => t.roles[r as keyof typeof t.roles] ?? r).join("، ")
                   )}
+                </td>
+                <td>
+                  <select
+                    value={u.employeeId ?? ""}
+                    onChange={(e) => handleLinkEmployee(u.id, e.target.value)}
+                  >
+                    <option value="">{t.users.noLinkedEmployee}</option>
+                    {employees
+                      .filter((emp) => !emp.applicationUserId || emp.id === u.employeeId)
+                      .map((emp) => (
+                        <option key={emp.id} value={emp.id}>
+                          {emp.employeeCode} - {emp.fullNameAr}
+                        </option>
+                      ))}
+                  </select>
                 </td>
                 <td>
                   <span className={u.isActive ? "text-success" : "text-danger"}>

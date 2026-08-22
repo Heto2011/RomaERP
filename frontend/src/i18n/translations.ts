@@ -27,6 +27,8 @@ const ar = {
     activate: "تفعيل",
     editRoles: "تعديل الأدوار",
     saveRoles: "حفظ الأدوار",
+    linkedEmployee: "الموظف المرتبط",
+    noLinkedEmployee: "بدون ربط",
   },
   roles: {
     Admin: "مدير",
@@ -69,6 +71,7 @@ const ar = {
     stockMovements: "حركات المخزون",
     administration: "الإدارة",
     users: "المستخدمون",
+    myProfile: "بياناتي",
   },
   login: {
     title: "RomaERP",
@@ -318,6 +321,11 @@ const ar = {
     receipt: "استلام",
     issue: "صرف",
   },
+  myProfile: {
+    title: "بياناتي",
+    notLinked: "حسابك مش مرتبط بسجل موظف حاليًا. تواصل مع مدير النظام لربط حسابك ببياناتك الوظيفية.",
+    payslipsTitle: "سجل الرواتب",
+  },
   assistant: {
     statuses: {
       awaitingDetails: "محتاج تفاصيل أكتر",
@@ -410,6 +418,8 @@ const en: typeof ar = {
     activate: "Activate",
     editRoles: "Edit Roles",
     saveRoles: "Save Roles",
+    linkedEmployee: "Linked Employee",
+    noLinkedEmployee: "Not linked",
   },
   roles: {
     Admin: "Admin",
@@ -451,6 +461,7 @@ const en: typeof ar = {
     stockMovements: "Stock Movements",
     administration: "Administration",
     users: "Users",
+    myProfile: "My Profile",
   },
   login: {
     title: "RomaERP",
@@ -699,6 +710,11 @@ const en: typeof ar = {
     movementNumber: "Movement #",
     receipt: "Receipt",
     issue: "Issue",
+  },
+  myProfile: {
+    title: "My Profile",
+    notLinked: "Your account is not linked to an employee record yet. Contact the system administrator to link your account.",
+    payslipsTitle: "Payslip History",
   },
   assistant: {
     statuses: {

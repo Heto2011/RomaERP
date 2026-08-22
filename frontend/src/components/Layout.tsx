@@ -8,7 +8,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { t, lang, setLang } = useLanguage();
 
   const links = [
-    { section: t.nav.general, items: [{ to: "/", label: t.nav.dashboard }] },
+    { section: t.nav.general, items: [{ to: "/", label: t.nav.dashboard }, { to: "/my-profile", label: t.nav.myProfile }] },
     {
       section: t.nav.assistant,
       items: [

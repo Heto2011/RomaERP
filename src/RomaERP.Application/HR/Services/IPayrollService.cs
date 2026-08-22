@@ -9,4 +9,5 @@ public interface IPayrollService
     Task<PayrollRunDto> CreateAndCalculateAsync(CreatePayrollRunDto dto, CancellationToken ct = default);
     Task<PayrollRunDto> ApproveAsync(Guid id, CancellationToken ct = default);
     Task<PayrollRunDto> PostAsync(Guid id, CancellationToken ct = default);
+    Task<List<MyPayslipDto>> GetMyPayslipsAsync(Guid employeeId, CancellationToken ct = default);
 }

@@ -1,27 +1,45 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RomaERP.Application.Common.Exceptions;
+using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.HR.DTOs;
 using RomaERP.Application.HR.Services;
 
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,HR")]
+[Authorize]
 [Route("api/[controller]")]
 public class EmployeesController : ControllerBase
 {
     private readonly IEmployeeService _employeeService;
+    private readonly ICurrentUserService _currentUser;
 
-    public EmployeesController(IEmployeeService employeeService)
+    public EmployeesController(IEmployeeService employeeService, ICurrentUserService currentUser)
     {
         _employeeService = employeeService;
+        _currentUser = currentUser;
     }
 
     [HttpGet]
+    [Authorize(Roles = "Admin,HR")]
     public async Task<ActionResult<List<EmployeeDto>>> GetAll(CancellationToken ct)
         => Ok(await _employeeService.GetAllAsync(ct));
 
+    [HttpGet("me")]
+    public async Task<ActionResult<EmployeeDto>> GetMyProfile(CancellationToken ct)
+    {
+        if (_currentUser.UserId is not { } userId || !Guid.TryParse(userId, out var applicationUserId))
+            return Unauthorized();
+
+        var profile = await _employeeService.GetMyProfileAsync(applicationUserId, ct)
+            ?? throw new NotFoundException(nameof(Domain.HR.Employee), applicationUserId);
+
+        return Ok(profile);
+    }
+
     [HttpGet("{id:guid}")]
+    [Authorize(Roles = "Admin,HR")]
     public async Task<ActionResult<EmployeeDto>> GetById(Guid id, CancellationToken ct)
         => Ok(await _employeeService.GetByIdAsync(id, ct));
 

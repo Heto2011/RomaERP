@@ -117,6 +117,35 @@ public class EmployeeService : IEmployeeService
         await _context.SaveChangesAsync(ct);
     }
 
+    public async Task<EmployeeDto?> GetMyProfileAsync(Guid applicationUserId, CancellationToken ct = default)
+    {
+        var employee = await _context.Employees
+            .AsNoTracking()
+            .Include(e => e.Department)
+            .Include(e => e.Position)
+            .FirstOrDefaultAsync(e => e.ApplicationUserId == applicationUserId, ct);
+
+        return employee is null ? null : Map(employee);
+    }
+
+    public async Task<EmployeeDto> LinkUserAsync(Guid employeeId, Guid? applicationUserId, CancellationToken ct = default)
+    {
+        var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == employeeId, ct)
+            ?? throw new NotFoundException(nameof(Employee), employeeId);
+
+        if (applicationUserId is { } userId)
+        {
+            var previouslyLinked = await _context.Employees
+                .FirstOrDefaultAsync(e => e.ApplicationUserId == userId && e.Id != employeeId, ct);
+            if (previouslyLinked is not null)
+                previouslyLinked.ApplicationUserId = null;
+        }
+
+        employee.ApplicationUserId = applicationUserId;
+        await _context.SaveChangesAsync(ct);
+        return await GetByIdAsync(employeeId, ct);
+    }
+
     private async Task ValidateDepartmentAndPosition(Guid departmentId, Guid positionId, CancellationToken ct)
     {
         var departmentExists = await _context.Departments.AnyAsync(d => d.Id == departmentId && !d.IsDeleted, ct);
@@ -152,6 +181,7 @@ public class EmployeeService : IEmployeeService
         Phone = e.Phone,
         Address = e.Address,
         BankAccountNumber = e.BankAccountNumber,
-        Iban = e.Iban
+        Iban = e.Iban,
+        ApplicationUserId = e.ApplicationUserId
     };
 }

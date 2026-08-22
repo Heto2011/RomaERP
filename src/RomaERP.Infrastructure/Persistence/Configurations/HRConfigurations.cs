@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using RomaERP.Domain.HR;
+using RomaERP.Infrastructure.Identity;
 
 namespace RomaERP.Infrastructure.Persistence.Configurations;
 
@@ -58,6 +59,7 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.BasicSalary).HasPrecision(18, 2);
         builder.Property(e => e.CustodyBalance).HasPrecision(18, 2);
         builder.HasIndex(e => e.EmployeeCode).IsUnique();
+        builder.HasIndex(e => e.ApplicationUserId).IsUnique();
 
         builder.HasOne(e => e.Department)
             .WithMany(d => d.Employees)
@@ -68,6 +70,11 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
             .WithMany(p => p.Employees)
             .HasForeignKey(e => e.PositionId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne<ApplicationUser>()
+            .WithMany()
+            .HasForeignKey(e => e.ApplicationUserId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.HasQueryFilter(e => !e.IsDeleted);
     }

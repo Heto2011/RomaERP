@@ -259,6 +259,7 @@ export interface Employee {
   address: string | null;
   bankAccountNumber: string | null;
   iban: string | null;
+  applicationUserId: string | null;
 }
 
 export enum SalaryComponentType {
@@ -308,6 +309,16 @@ export interface PayrollRun {
   journalEntryId: string | null;
   lines: PayrollRunLine[];
   totalNet: number;
+}
+
+export interface MyPayslip {
+  runDate: string;
+  status: PayrollRunStatus;
+  description: string | null;
+  basicSalary: number;
+  totalAllowances: number;
+  totalDeductions: number;
+  netSalary: number;
 }
 
 export interface ItemCategory {
@@ -567,6 +578,8 @@ export interface AppUser {
   fullName: string;
   isActive: boolean;
   roles: string[];
+  employeeId: string | null;
+  employeeName: string | null;
 }
 
 export interface CreateUserInput {

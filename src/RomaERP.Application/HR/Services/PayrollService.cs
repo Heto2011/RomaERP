@@ -207,6 +207,27 @@ public class PayrollService : IPayrollService
         return await GetByIdAsync(id, ct);
     }
 
+    public async Task<List<MyPayslipDto>> GetMyPayslipsAsync(Guid employeeId, CancellationToken ct = default)
+    {
+        var lines = await _context.PayrollRunLines
+            .AsNoTracking()
+            .Include(l => l.PayrollRun)
+            .Where(l => l.EmployeeId == employeeId && l.PayrollRun!.Status != PayrollRunStatus.Draft)
+            .OrderByDescending(l => l.PayrollRun!.RunDate)
+            .ToListAsync(ct);
+
+        return lines.Select(l => new MyPayslipDto
+        {
+            RunDate = l.PayrollRun!.RunDate,
+            Status = l.PayrollRun.Status,
+            Description = l.PayrollRun.Description,
+            BasicSalary = l.BasicSalary,
+            TotalAllowances = l.TotalAllowances,
+            TotalDeductions = l.TotalDeductions,
+            NetSalary = l.NetSalary
+        }).ToList();
+    }
+
     private static PayrollRunDto Map(PayrollRun r) => new()
     {
         Id = r.Id,

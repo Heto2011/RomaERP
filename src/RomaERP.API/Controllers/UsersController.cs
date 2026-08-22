@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.API.Contracts;
 using RomaERP.Application.Common.Interfaces;
+using RomaERP.Application.HR.Services;
 using RomaERP.Infrastructure.Identity;
 
 namespace RomaERP.API.Controllers;
@@ -20,26 +21,47 @@ public class UsersController : ControllerBase
 
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ICurrentUserService _currentUser;
+    private readonly IEmployeeService _employeeService;
 
-    public UsersController(UserManager<ApplicationUser> userManager, ICurrentUserService currentUser)
+    public UsersController(UserManager<ApplicationUser> userManager, ICurrentUserService currentUser, IEmployeeService employeeService)
     {
         _userManager = userManager;
         _currentUser = currentUser;
+        _employeeService = employeeService;
     }
 
     [HttpGet]
     public async Task<ActionResult<List<UserDto>>> GetUsers(CancellationToken ct)
     {
         var users = await _userManager.Users.OrderBy(u => u.Email).ToListAsync(ct);
+        var employees = await _employeeService.GetAllAsync(ct);
+        var employeeByUserId = employees.Where(e => e.ApplicationUserId is not null).ToDictionary(e => e.ApplicationUserId!.Value);
 
         var result = new List<UserDto>();
         foreach (var user in users)
         {
             var roles = await _userManager.GetRolesAsync(user);
-            result.Add(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList()));
+            var linkedEmployee = employeeByUserId.GetValueOrDefault(user.Id);
+            result.Add(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr));
         }
 
         return Ok(result);
+    }
+
+    [HttpPut("{id:guid}/employee-link")]
+    public async Task<ActionResult<UserDto>> LinkEmployee(Guid id, LinkEmployeeRequest request, CancellationToken ct)
+    {
+        var user = await _userManager.FindByIdAsync(id.ToString())
+            ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+
+        if (request.EmployeeId is { } employeeId)
+            await _employeeService.LinkUserAsync(employeeId, id, ct);
+        else if (await GetLinkedEmployeeAsync(id, ct) is { } currentlyLinked)
+            await _employeeService.LinkUserAsync(currentlyLinked.Id, null, ct);
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr));
     }
 
     [HttpPost]
@@ -73,11 +95,11 @@ public class UsersController : ControllerBase
 
         await _userManager.AddToRolesAsync(user, request.Roles);
 
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, null, null));
     }
 
     [HttpPut("{id:guid}/roles")]
-    public async Task<ActionResult<UserDto>> UpdateRoles(Guid id, UpdateUserRolesRequest request)
+    public async Task<ActionResult<UserDto>> UpdateRoles(Guid id, UpdateUserRolesRequest request, CancellationToken ct)
     {
         if (request.Roles.Count == 0)
             return BadRequest(new { error = "لازم يفضل دور واحد على الأقل للمستخدم." });
@@ -96,11 +118,12 @@ public class UsersController : ControllerBase
         await _userManager.RemoveFromRolesAsync(user, currentRoles);
         await _userManager.AddToRolesAsync(user, request.Roles);
 
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles));
+        var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, linkedEmployee?.Id, linkedEmployee?.FullNameAr));
     }
 
     [HttpPost("{id:guid}/deactivate")]
-    public async Task<ActionResult<UserDto>> Deactivate(Guid id)
+    public async Task<ActionResult<UserDto>> Deactivate(Guid id, CancellationToken ct)
     {
         if (id.ToString() == _currentUser.UserId)
             return BadRequest(new { error = "متقدرش توقف حسابك أنت." });
@@ -112,11 +135,12 @@ public class UsersController : ControllerBase
         await _userManager.UpdateAsync(user);
 
         var roles = await _userManager.GetRolesAsync(user);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList()));
+        var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr));
     }
 
     [HttpPost("{id:guid}/activate")]
-    public async Task<ActionResult<UserDto>> Activate(Guid id)
+    public async Task<ActionResult<UserDto>> Activate(Guid id, CancellationToken ct)
     {
         var user = await _userManager.FindByIdAsync(id.ToString())
             ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
@@ -125,6 +149,13 @@ public class UsersController : ControllerBase
         await _userManager.UpdateAsync(user);
 
         var roles = await _userManager.GetRolesAsync(user);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList()));
+        var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr));
+    }
+
+    private async Task<Application.HR.DTOs.EmployeeDto?> GetLinkedEmployeeAsync(Guid userId, CancellationToken ct)
+    {
+        var employees = await _employeeService.GetAllAsync(ct);
+        return employees.FirstOrDefault(e => e.ApplicationUserId == userId);
     }
 }

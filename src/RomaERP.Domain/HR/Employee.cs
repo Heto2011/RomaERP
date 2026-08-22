@@ -16,6 +16,9 @@ public class Employee : AuditableEntity
     public DateTime? TerminationDate { get; set; }
     public EmploymentStatus EmploymentStatus { get; set; } = EmploymentStatus.Active;
 
+    /// <summary>Login account linked to this employee, if any — lets them see only their own profile and payslips.</summary>
+    public Guid? ApplicationUserId { get; set; }
+
     public Guid DepartmentId { get; set; }
     public Department? Department { get; set; }
 

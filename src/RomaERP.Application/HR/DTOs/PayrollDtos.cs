@@ -56,3 +56,14 @@ public class CreatePayrollRunDto
     public DateTime RunDate { get; set; }
     public string? Description { get; set; }
 }
+
+public class MyPayslipDto
+{
+    public DateTime RunDate { get; set; }
+    public PayrollRunStatus Status { get; set; }
+    public string? Description { get; set; }
+    public decimal BasicSalary { get; set; }
+    public decimal TotalAllowances { get; set; }
+    public decimal TotalDeductions { get; set; }
+    public decimal NetSalary { get; set; }
+}
