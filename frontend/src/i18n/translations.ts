@@ -3,6 +3,17 @@ export type Lang = "ar" | "en";
 const ar = {
   appName: "RomaERP",
   logout: "تسجيل الخروج",
+  dashboard: {
+    title: "لوحة التحكم",
+    accountsCount: "عدد الحسابات",
+    employeesCount: "عدد الموظفين",
+    totalDebit: "إجمالي المدين (القيود المرحلة)",
+    totalCredit: "إجمالي الدائن (القيود المرحلة)",
+    totalSales: "إجمالي المبيعات",
+    totalPurchases: "إجمالي المشتريات",
+    arOutstanding: "أرصدة العملاء الآجلة",
+    apOutstanding: "أرصدة الموردين الآجلة",
+  },
   language: "English",
   nav: {
     general: "عام",
@@ -128,6 +139,17 @@ const en: typeof ar = {
   appName: "RomaERP",
   logout: "Logout",
   language: "العربية",
+  dashboard: {
+    title: "Dashboard",
+    accountsCount: "Accounts",
+    employeesCount: "Employees",
+    totalDebit: "Total Debit (Posted Entries)",
+    totalCredit: "Total Credit (Posted Entries)",
+    totalSales: "Total Sales",
+    totalPurchases: "Total Purchases",
+    arOutstanding: "AR Outstanding",
+    apOutstanding: "AP Outstanding",
+  },
   nav: {
     general: "General",
     dashboard: "Dashboard",
