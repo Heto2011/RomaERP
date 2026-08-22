@@ -394,6 +394,7 @@ export interface SalesInvoiceLineInput {
   description: string;
   quantity: number;
   unitPrice: number;
+  itemId?: string | null;
 }
 
 export interface SalesInvoiceLine {
@@ -401,6 +402,9 @@ export interface SalesInvoiceLine {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  itemId: string | null;
+  itemCode: string | null;
+  itemName: string | null;
 }
 
 export interface SalesPayment {
@@ -418,6 +422,7 @@ export interface CreateSalesInvoiceInput {
   fiscalPeriodId: string;
   paymentTerm: PaymentTerm;
   notes?: string | null;
+  warehouseId?: string | null;
   lines: SalesInvoiceLineInput[];
 }
 
@@ -443,6 +448,8 @@ export interface SalesInvoice {
   outstandingAmount: number;
   journalEntryId: string | null;
   notes: string | null;
+  warehouseId: string | null;
+  warehouseName: string | null;
   lines: SalesInvoiceLine[];
   payments: SalesPayment[];
 }

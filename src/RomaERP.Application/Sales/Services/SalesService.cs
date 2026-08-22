@@ -5,6 +5,7 @@ using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.Sales.DTOs;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
+using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Sales;
 
 namespace RomaERP.Application.Sales.Services;
@@ -54,7 +55,8 @@ public class SalesService : ISalesService
         var invoices = await _context.SalesInvoices
             .AsNoTracking()
             .Include(i => i.Customer)
-            .Include(i => i.Lines)
+            .Include(i => i.Warehouse)
+            .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Payments)
             .OrderByDescending(i => i.InvoiceDate)
             .ThenByDescending(i => i.InvoiceNumber)
@@ -90,7 +92,39 @@ public class SalesService : ISalesService
         if (period.IsClosed)
             throw new ValidationAppException("لا يمكن تسجيل فاتورة لفترة محاسبية مقفلة.");
 
+        // Pre-validate inventory lines (load items + check stock) before mutating anything.
+        var itemLineInputs = dto.Lines.Where(l => l.ItemId.HasValue).ToList();
+        Warehouse? warehouse = null;
+        var itemsById = new Dictionary<Guid, Item>();
+        if (itemLineInputs.Count > 0)
+        {
+            if (dto.WarehouseId is null)
+                throw new ValidationAppException("لازم تحدد المخزن لما تختار صنف من المخزون في بند الفاتورة.");
+
+            warehouse = await _context.Warehouses.FirstOrDefaultAsync(w => w.Id == dto.WarehouseId && !w.IsDeleted, ct)
+                ?? throw new NotFoundException(nameof(Warehouse), dto.WarehouseId.Value);
+
+            foreach (var itemId in itemLineInputs.Select(l => l.ItemId!.Value).Distinct())
+            {
+                var item = await _context.Items.FirstOrDefaultAsync(i => i.Id == itemId && !i.IsDeleted, ct)
+                    ?? throw new NotFoundException(nameof(Item), itemId);
+                itemsById[itemId] = item;
+            }
+
+            var requestedQuantities = itemLineInputs.GroupBy(l => l.ItemId!.Value).ToDictionary(g => g.Key, g => g.Sum(l => l.Quantity));
+            foreach (var (itemId, requestedQty) in requestedQuantities)
+            {
+                var item = itemsById[itemId];
+                if (requestedQty > item.QuantityOnHand)
+                    throw new ValidationAppException($"الكمية المطلوبة ({requestedQty}) من الصنف {item.Code} أكبر من الرصيد المتاح ({item.QuantityOnHand}).");
+            }
+        }
+
         var vatRate = await GetVatRateAsync(ct);
+
+        // Fetched once: this request may add up to two new journal entries (revenue + COGS) before either
+        // is saved, so GenerateEntryNumberAsync's DB count can't be re-queried between them without colliding.
+        var journalEntrySequenceBase = await _context.JournalEntries.CountAsync(ct);
 
         var lines = dto.Lines.Select((l, idx) => new SalesInvoiceLine
         {
@@ -98,7 +132,8 @@ public class SalesService : ISalesService
             Description = l.Description,
             Quantity = l.Quantity,
             UnitPrice = l.UnitPrice,
-            LineTotal = Math.Round(l.Quantity * l.UnitPrice, 2)
+            LineTotal = Math.Round(l.Quantity * l.UnitPrice, 2),
+            ItemId = l.ItemId
         }).ToList();
 
         var subTotal = lines.Sum(l => l.LineTotal);
@@ -132,7 +167,7 @@ public class SalesService : ISalesService
 
         var entry = new JournalEntry
         {
-            EntryNumber = await GenerateEntryNumberAsync(ct),
+            EntryNumber = $"JV-{(journalEntrySequenceBase + 1):D6}",
             EntryDate = dto.InvoiceDate,
             FiscalPeriodId = dto.FiscalPeriodId,
             Description = $"فاتورة مبيعات - {customer.NameAr}",
@@ -142,12 +177,15 @@ public class SalesService : ISalesService
         };
         _context.JournalEntries.Add(entry);
 
+        var invoiceNumber = await GenerateInvoiceNumberAsync(ct);
+
         var invoice = new SalesInvoice
         {
-            InvoiceNumber = await GenerateInvoiceNumberAsync(ct),
+            InvoiceNumber = invoiceNumber,
             InvoiceDate = dto.InvoiceDate,
             CustomerId = customer.Id,
             FiscalPeriodId = dto.FiscalPeriodId,
+            WarehouseId = warehouse?.Id,
             SubTotal = subTotal,
             VatRate = vatRate,
             VatAmount = vatAmount,
@@ -160,6 +198,63 @@ public class SalesService : ISalesService
         };
 
         _context.SalesInvoices.Add(invoice);
+
+        // Issue stock and post COGS for every line fulfilled from inventory.
+        if (itemLineInputs.Count > 0)
+        {
+            var cogsAccount = await GetAccountAsync(AccountingConstants.CostOfGoodsSoldAccountCode, "تكلفة البضاعة المباعة", ct);
+            var inventoryAccount = await GetAccountAsync(AccountingConstants.InventoryAccountCode, "المخزون", ct);
+
+            var movementSequenceBase = await _context.StockMovements.CountAsync(ct);
+            decimal totalCogs = 0;
+            var stockMovements = new List<StockMovement>();
+            foreach (var (itemLine, movementIndex) in itemLineInputs.Select((l, idx) => (l, idx)))
+            {
+                var item = itemsById[itemLine.ItemId!.Value];
+                var unitCost = item.AverageCost;
+                var movementCost = Math.Round(itemLine.Quantity * unitCost, 2);
+                totalCogs += movementCost;
+                item.QuantityOnHand -= itemLine.Quantity;
+
+                stockMovements.Add(new StockMovement
+                {
+                    MovementNumber = $"SM-{(movementSequenceBase + movementIndex + 1):D6}",
+                    MovementDate = dto.InvoiceDate,
+                    MovementType = StockMovementType.Issue,
+                    ItemId = item.Id,
+                    WarehouseId = warehouse!.Id,
+                    Quantity = itemLine.Quantity,
+                    UnitCost = unitCost,
+                    TotalCost = movementCost,
+                    Reference = invoiceNumber,
+                    Description = $"صرف لفاتورة مبيعات {invoiceNumber}"
+                });
+            }
+
+            if (totalCogs > 0)
+            {
+                var cogsEntry = new JournalEntry
+                {
+                    EntryNumber = $"JV-{(journalEntrySequenceBase + 2):D6}",
+                    EntryDate = dto.InvoiceDate,
+                    FiscalPeriodId = dto.FiscalPeriodId,
+                    Description = $"تكلفة البضاعة المباعة - فاتورة مبيعات {invoiceNumber}",
+                    Reference = AccountingConstants.SalesInvoiceReference,
+                    Status = JournalEntryStatus.Posted,
+                    Lines =
+                    {
+                        new JournalEntryLine { LineNumber = 1, AccountId = cogsAccount.Id, Debit = totalCogs, Credit = 0, Description = "تكلفة بضاعة مباعة" },
+                        new JournalEntryLine { LineNumber = 2, AccountId = inventoryAccount.Id, Debit = 0, Credit = totalCogs, Description = "صرف من المخزون" }
+                    }
+                };
+                _context.JournalEntries.Add(cogsEntry);
+                foreach (var movement in stockMovements)
+                    movement.JournalEntry = cogsEntry;
+            }
+
+            _context.StockMovements.AddRange(stockMovements);
+        }
+
         await _context.SaveChangesAsync(ct);
 
         return await GetInvoiceAsync(invoice.Id, ct);
@@ -257,7 +352,8 @@ public class SalesService : ISalesService
         => await _context.SalesInvoices
             .AsNoTracking()
             .Include(i => i.Customer)
-            .Include(i => i.Lines)
+            .Include(i => i.Warehouse)
+            .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Payments)
             .FirstOrDefaultAsync(i => i.Id == id, ct)
             ?? throw new NotFoundException(nameof(SalesInvoice), id);
@@ -291,11 +387,16 @@ public class SalesService : ISalesService
         OutstandingAmount = i.TotalAmount - i.PaidAmount,
         JournalEntryId = i.JournalEntryId,
         Notes = i.Notes,
+        WarehouseId = i.WarehouseId,
+        WarehouseName = i.Warehouse?.NameAr,
         Lines = i.Lines.OrderBy(l => l.LineNumber).Select(l => new SalesInvoiceLineDto
         {
             Description = l.Description,
             Quantity = l.Quantity,
             UnitPrice = l.UnitPrice,
+            ItemId = l.ItemId,
+            ItemCode = l.Item?.Code,
+            ItemName = l.Item?.NameAr,
             LineTotal = l.LineTotal
         }).ToList(),
         Payments = i.Payments.OrderBy(p => p.PaymentDate).Select(p => new SalesPaymentDto

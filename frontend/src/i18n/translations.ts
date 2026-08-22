@@ -96,6 +96,9 @@ const ar = {
     addLine: "+ إضافة بند",
     createInvoiceTitle: "فاتورة مبيعات جديدة",
     recordPaymentTitle: "تسجيل تحصيل دفعة",
+    item: "الصنف",
+    warehouse: "المخزن",
+    serviceLine: "بند خدمة (بدون مخزون)",
   },
   purchasing: {
     vendorsTitle: "الموردون",
@@ -209,6 +212,9 @@ const en: typeof ar = {
     addLine: "+ Add Line",
     createInvoiceTitle: "New Sales Invoice",
     recordPaymentTitle: "Record Payment Collection",
+    item: "Item",
+    warehouse: "Warehouse",
+    serviceLine: "Service line (no inventory)",
   },
   purchasing: {
     vendorsTitle: "Vendors",

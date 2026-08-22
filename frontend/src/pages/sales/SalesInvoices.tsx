@@ -1,22 +1,25 @@
 import { useEffect, useState } from "react";
-import { LookupsApi, SalesApi } from "../../api/services";
-import { PaymentTerm, type Customer, type FiscalPeriod, type SalesInvoice, type SalesInvoiceLineInput } from "../../api/types";
+import { ItemsApi, LookupsApi, SalesApi, WarehousesApi } from "../../api/services";
+import { PaymentTerm, type Customer, type FiscalPeriod, type Item, type SalesInvoice, type SalesInvoiceLineInput, type Warehouse } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 
-const emptyLine = (): SalesInvoiceLineInput => ({ description: "", quantity: 1, unitPrice: 0 });
+const emptyLine = (): SalesInvoiceLineInput => ({ description: "", quantity: 1, unitPrice: 0, itemId: null });
 
 export default function SalesInvoices() {
   const { t } = useLanguage();
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [vatRate, setVatRate] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
   const [customerId, setCustomerId] = useState("");
   const [fiscalPeriodId, setFiscalPeriodId] = useState("");
+  const [warehouseId, setWarehouseId] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [paymentTerm, setPaymentTerm] = useState<PaymentTerm>(PaymentTerm.Cash);
   const [notes, setNotes] = useState("");
@@ -29,18 +32,23 @@ export default function SalesInvoices() {
   const netTotal = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
   const vatTotal = netTotal * vatRate;
   const grandTotal = netTotal + vatTotal;
+  const hasItemLines = lines.some((l) => l.itemId);
 
   async function load() {
-    const [invRes, custRes, periodRes, settingsRes] = await Promise.all([
+    const [invRes, custRes, periodRes, settingsRes, itemsRes, warehousesRes] = await Promise.all([
       SalesApi.getInvoices(),
       SalesApi.getCustomers(),
       LookupsApi.fiscalPeriods(),
       LookupsApi.companySettings(),
+      ItemsApi.getAll(),
+      WarehousesApi.getAll(),
     ]);
     setInvoices(invRes.data);
     setCustomers(custRes.data);
     setPeriods(periodRes.data);
     setVatRate(settingsRes.data.vatRate);
+    setItems(itemsRes.data);
+    setWarehouses(warehousesRes.data);
   }
 
   useEffect(() => {
@@ -51,9 +59,22 @@ export default function SalesInvoices() {
     setLines((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
   }
 
+  function selectLineItem(idx: number, itemId: string) {
+    if (!itemId) {
+      updateLine(idx, { itemId: null });
+      return;
+    }
+    const item = items.find((i) => i.id === itemId);
+    setLines((prev) => prev.map((l, i) => (i === idx ? { ...l, itemId, description: item ? item.nameAr : l.description } : l)));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (hasItemLines && !warehouseId) {
+      setError("لازم تحدد المخزن لما تختار صنف من المخزون في بند الفاتورة.");
+      return;
+    }
     try {
       await SalesApi.createInvoice({
         customerId,
@@ -61,11 +82,13 @@ export default function SalesInvoices() {
         fiscalPeriodId,
         paymentTerm,
         notes: notes || null,
+        warehouseId: warehouseId || null,
         lines,
       });
       setShowForm(false);
       setCustomerId("");
       setFiscalPeriodId("");
+      setWarehouseId("");
       setNotes("");
       setLines([emptyLine()]);
       setPaymentTerm(PaymentTerm.Cash);
@@ -149,12 +172,22 @@ export default function SalesInvoices() {
                   <option value={PaymentTerm.Credit}>🗓 {t.paymentTerm.credit}</option>
                 </select>
               </div>
+              <div className="form-field">
+                <label>{t.sales.warehouse}{hasItemLines ? " *" : ""}</label>
+                <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} required={hasItemLines}>
+                  <option value="">-</option>
+                  {warehouses.map((w) => (
+                    <option key={w.id} value={w.id}>{w.code} - {w.nameAr}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div style={{ marginTop: 16 }}>
               <table>
                 <thead>
                   <tr>
+                    <th>{t.sales.item}</th>
                     <th>{t.common.description}</th>
                     <th>{t.common.quantity}</th>
                     <th>{t.common.unitPrice}</th>
@@ -165,6 +198,14 @@ export default function SalesInvoices() {
                 <tbody>
                   {lines.map((line, idx) => (
                     <tr key={idx}>
+                      <td>
+                        <select value={line.itemId ?? ""} onChange={(e) => selectLineItem(idx, e.target.value)} style={{ width: 160 }}>
+                          <option value="">{t.sales.serviceLine}</option>
+                          {items.map((i) => (
+                            <option key={i.id} value={i.id}>{i.code} - {i.nameAr} ({i.quantityOnHand})</option>
+                          ))}
+                        </select>
+                      </td>
                       <td><input value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} required /></td>
                       <td><input type="number" min={0.0001} step="0.01" value={line.quantity} onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })} style={{ width: 90 }} required /></td>
                       <td><input type="number" min={0} step="0.01" value={line.unitPrice} onChange={(e) => updateLine(idx, { unitPrice: Number(e.target.value) })} style={{ width: 110 }} required /></td>

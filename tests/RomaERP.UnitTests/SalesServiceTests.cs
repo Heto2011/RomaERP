@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Sales.DTOs;
 using RomaERP.Application.Sales.Services;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
+using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Sales;
 using RomaERP.Domain.Tenancy;
 using RomaERP.Infrastructure.Persistence;
@@ -44,6 +46,34 @@ public class SalesServiceTests
         await ctx.SaveChangesAsync();
 
         return (ctx, cash, bank, ar, revenue, outputVat, customer, period);
+    }
+
+    private static async Task<(Account cogs, Account inventory, Item item, Warehouse warehouse)> AddInventoryAsync(ApplicationDbContext ctx, decimal quantityOnHand, decimal averageCost)
+    {
+        var cogs = new Account { Code = "5500", NameAr = "تكلفة البضاعة المباعة", NameEn = "COGS", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        var inventory = new Account { Code = "1160", NameAr = "المخزون", NameEn = "Inventory", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+        var category = new ItemCategory { Code = "CAT-1", NameAr = "تصنيف", NameEn = "Category" };
+        var warehouse = new Warehouse { Code = "WH-1", NameAr = "المخزن الرئيسي", NameEn = "Main Warehouse" };
+
+        ctx.Accounts.AddRange(cogs, inventory);
+        ctx.ItemCategories.Add(category);
+        ctx.Warehouses.Add(warehouse);
+        await ctx.SaveChangesAsync();
+
+        var item = new Item
+        {
+            Code = "ITEM-1",
+            NameAr = "منتج تجريبي",
+            NameEn = "Test Item",
+            UnitOfMeasure = "قطعة",
+            ItemCategoryId = category.Id,
+            QuantityOnHand = quantityOnHand,
+            AverageCost = averageCost
+        };
+        ctx.Items.Add(item);
+        await ctx.SaveChangesAsync();
+
+        return (cogs, inventory, item, warehouse);
     }
 
     [Fact]
@@ -157,7 +187,93 @@ public class SalesServiceTests
             Lines = { new SalesInvoiceLineInputDto { Description = "منتج", Quantity = 1, UnitPrice = 100 } }
         });
 
-        await Assert.ThrowsAsync<RomaERP.Application.Common.Exceptions.ValidationAppException>(
+        await Assert.ThrowsAsync<ValidationAppException>(
             () => service.RecordPaymentAsync(invoice.Id, new RecordSalesPaymentDto { Amount = 1000, Method = PaymentTerm.Cash, PaymentDate = DateTime.UtcNow.Date }));
+    }
+
+    [Fact]
+    public async Task CreateInvoice_WithItemLine_IssuesStockAndPostsCogs()
+    {
+        var (ctx, cash, _, _, revenue, outputVat, customer, period) = await SeedAsync();
+        var (cogs, inventory, item, warehouse) = await AddInventoryAsync(ctx, quantityOnHand: 50, averageCost: 30);
+        var service = new SalesService(ctx);
+
+        var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
+        {
+            CustomerId = customer.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Cash,
+            WarehouseId = warehouse.Id,
+            Lines = { new SalesInvoiceLineInputDto { Description = "بيع منتج", Quantity = 5, UnitPrice = 100, ItemId = item.Id } }
+        });
+
+        Assert.Equal(500, invoice.SubTotal);
+        Assert.Single(invoice.Lines);
+        Assert.Equal(item.Id, invoice.Lines[0].ItemId);
+        Assert.Equal("ITEM-1", invoice.Lines[0].ItemCode);
+
+        // Revenue side: unaffected by the inventory linkage.
+        var revenueEntry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == invoice.JournalEntryId);
+        Assert.Contains(revenueEntry.Lines, l => l.AccountId == cash.Id && l.Debit == 570);
+        Assert.Contains(revenueEntry.Lines, l => l.AccountId == revenue.Id && l.Credit == 500);
+        Assert.Contains(revenueEntry.Lines, l => l.AccountId == outputVat.Id && l.Credit == 70);
+
+        // COGS side: 5 units * 30 average cost = 150, posted as a separate balanced entry.
+        var cogsEntry = await ctx.JournalEntries
+            .Include(e => e.Lines)
+            .Where(e => e.Reference == "SALES-INVOICE" && e.Id != invoice.JournalEntryId)
+            .SingleAsync();
+        Assert.Contains(cogsEntry.Lines, l => l.AccountId == cogs.Id && l.Debit == 150);
+        Assert.Contains(cogsEntry.Lines, l => l.AccountId == inventory.Id && l.Credit == 150);
+        Assert.Equal(cogsEntry.TotalDebit, cogsEntry.TotalCredit);
+
+        var updatedItem = await ctx.Items.FirstAsync(i => i.Id == item.Id);
+        Assert.Equal(45, updatedItem.QuantityOnHand);
+
+        var movement = await ctx.StockMovements.SingleAsync(m => m.ItemId == item.Id);
+        Assert.Equal(StockMovementType.Issue, movement.MovementType);
+        Assert.Equal(5, movement.Quantity);
+        Assert.Equal(30, movement.UnitCost);
+        Assert.Equal(invoice.InvoiceNumber, movement.Reference);
+        Assert.Equal(cogsEntry.Id, movement.JournalEntryId);
+    }
+
+    [Fact]
+    public async Task CreateInvoice_WithItemLine_InsufficientStock_Throws()
+    {
+        var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
+        var (_, _, item, warehouse) = await AddInventoryAsync(ctx, quantityOnHand: 3, averageCost: 30);
+        var service = new SalesService(ctx);
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.CreateInvoiceAsync(new CreateSalesInvoiceDto
+        {
+            CustomerId = customer.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Cash,
+            WarehouseId = warehouse.Id,
+            Lines = { new SalesInvoiceLineInputDto { Description = "بيع منتج", Quantity = 10, UnitPrice = 100, ItemId = item.Id } }
+        }));
+
+        var unchangedItem = await ctx.Items.FirstAsync(i => i.Id == item.Id);
+        Assert.Equal(3, unchangedItem.QuantityOnHand);
+    }
+
+    [Fact]
+    public async Task CreateInvoice_WithItemLineButNoWarehouse_Throws()
+    {
+        var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
+        var (_, _, item, _) = await AddInventoryAsync(ctx, quantityOnHand: 50, averageCost: 30);
+        var service = new SalesService(ctx);
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.CreateInvoiceAsync(new CreateSalesInvoiceDto
+        {
+            CustomerId = customer.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Cash,
+            Lines = { new SalesInvoiceLineInputDto { Description = "بيع منتج", Quantity = 1, UnitPrice = 100, ItemId = item.Id } }
+        }));
     }
 }

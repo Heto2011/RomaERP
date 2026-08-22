@@ -30,6 +30,9 @@ public class SalesInvoiceLineInputDto
     public string Description { get; set; } = string.Empty;
     public decimal Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }
+
+    /// <summary>Optional — set to fulfill this line from inventory (issues stock and posts COGS).</summary>
+    public Guid? ItemId { get; set; }
 }
 
 public class CreateSalesInvoiceDto
@@ -39,6 +42,9 @@ public class CreateSalesInvoiceDto
     public Guid FiscalPeriodId { get; set; }
     public PaymentTerm PaymentTerm { get; set; }
     public string? Notes { get; set; }
+
+    /// <summary>Required only when at least one line has an ItemId.</summary>
+    public Guid? WarehouseId { get; set; }
     public List<SalesInvoiceLineInputDto> Lines { get; set; } = new();
 }
 
@@ -48,6 +54,9 @@ public class SalesInvoiceLineDto
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+    public Guid? ItemId { get; set; }
+    public string? ItemCode { get; set; }
+    public string? ItemName { get; set; }
 }
 
 public class SalesPaymentDto
@@ -84,6 +93,8 @@ public class SalesInvoiceDto
     public decimal OutstandingAmount { get; set; }
     public Guid? JournalEntryId { get; set; }
     public string? Notes { get; set; }
+    public Guid? WarehouseId { get; set; }
+    public string? WarehouseName { get; set; }
     public List<SalesInvoiceLineDto> Lines { get; set; } = new();
     public List<SalesPaymentDto> Payments { get; set; } = new();
 }

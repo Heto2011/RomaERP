@@ -49,6 +49,11 @@ public class SalesInvoiceConfiguration : IEntityTypeConfiguration<SalesInvoice>
             .HasForeignKey(i => i.JournalEntryId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(i => i.Warehouse)
+            .WithMany()
+            .HasForeignKey(i => i.WarehouseId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(i => i.Lines)
             .WithOne(l => l.SalesInvoice)
             .HasForeignKey(l => l.SalesInvoiceId)
@@ -71,6 +76,11 @@ public class SalesInvoiceLineConfiguration : IEntityTypeConfiguration<SalesInvoi
         builder.Property(l => l.Quantity).HasPrecision(18, 4);
         builder.Property(l => l.UnitPrice).HasPrecision(18, 2);
         builder.Property(l => l.LineTotal).HasPrecision(18, 2);
+
+        builder.HasOne(l => l.Item)
+            .WithMany()
+            .HasForeignKey(l => l.ItemId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

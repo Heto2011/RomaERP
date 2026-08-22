@@ -1,5 +1,6 @@
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
+using RomaERP.Domain.Inventory;
 
 namespace RomaERP.Domain.Sales;
 
@@ -13,6 +14,10 @@ public class SalesInvoice : AuditableEntity
 
     public Guid FiscalPeriodId { get; set; }
     public FiscalPeriod? FiscalPeriod { get; set; }
+
+    /// <summary>Warehouse stock is issued from — required only when at least one line is linked to an inventory Item.</summary>
+    public Guid? WarehouseId { get; set; }
+    public Warehouse? Warehouse { get; set; }
 
     public decimal SubTotal { get; set; }
     public decimal VatRate { get; set; }
@@ -43,6 +48,11 @@ public class SalesInvoiceLine : BaseEntity
     public decimal Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+
+    /// <summary>Set when this line is fulfilled from inventory — triggers a stock issue and COGS posting.
+    /// Left null for free-text/service lines that don't touch inventory.</summary>
+    public Guid? ItemId { get; set; }
+    public Item? Item { get; set; }
 }
 
 /// <summary>A cash/card collection recorded against a Credit invoice, reducing its outstanding AR balance.</summary>
