@@ -5,6 +5,7 @@ import type {
   BankStatementImportResult,
   BankStatementLine,
   ChatTurnResponse,
+  CompanySettingsLookup,
   CostCenterLookup,
   CreateCustomerInput,
   CreatePurchaseInvoiceInput,
@@ -65,6 +66,7 @@ export const JournalEntriesApi = {
 export const LookupsApi = {
   fiscalPeriods: () => apiClient.get<FiscalPeriod[]>("/lookups/fiscal-periods"),
   costCenters: () => apiClient.get<CostCenterLookup[]>("/lookups/cost-centers"),
+  companySettings: () => apiClient.get<CompanySettingsLookup>("/lookups/company-settings"),
 };
 
 export const DepartmentsApi = {

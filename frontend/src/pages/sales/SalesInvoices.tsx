@@ -11,6 +11,7 @@ export default function SalesInvoices() {
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
+  const [vatRate, setVatRate] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
@@ -25,15 +26,21 @@ export default function SalesInvoices() {
   const [payAmount, setPayAmount] = useState(0);
   const [payMethod, setPayMethod] = useState<PaymentTerm>(PaymentTerm.Cash);
 
+  const netTotal = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
+  const vatTotal = netTotal * vatRate;
+  const grandTotal = netTotal + vatTotal;
+
   async function load() {
-    const [invRes, custRes, periodRes] = await Promise.all([
+    const [invRes, custRes, periodRes, settingsRes] = await Promise.all([
       SalesApi.getInvoices(),
       SalesApi.getCustomers(),
       LookupsApi.fiscalPeriods(),
+      LookupsApi.companySettings(),
     ]);
     setInvoices(invRes.data);
     setCustomers(custRes.data);
     setPeriods(periodRes.data);
+    setVatRate(settingsRes.data.vatRate);
   }
 
   useEffect(() => {
@@ -151,6 +158,7 @@ export default function SalesInvoices() {
                     <th>{t.common.description}</th>
                     <th>{t.common.quantity}</th>
                     <th>{t.common.unitPrice}</th>
+                    <th>{t.common.vat}</th>
                     <th></th>
                   </tr>
                 </thead>
@@ -160,6 +168,7 @@ export default function SalesInvoices() {
                       <td><input value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} required /></td>
                       <td><input type="number" min={0.0001} step="0.01" value={line.quantity} onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })} style={{ width: 90 }} required /></td>
                       <td><input type="number" min={0} step="0.01" value={line.unitPrice} onChange={(e) => updateLine(idx, { unitPrice: Number(e.target.value) })} style={{ width: 110 }} required /></td>
+                      <td className="text-muted">{(vatRate * 100).toFixed(0)}%</td>
                       <td>
                         {lines.length > 1 && (
                           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setLines((prev) => prev.filter((_, i) => i !== idx))}>
@@ -174,6 +183,25 @@ export default function SalesInvoices() {
               <button type="button" className="btn btn-secondary btn-sm" style={{ marginTop: 8 }} onClick={() => setLines((prev) => [...prev, emptyLine()])}>
                 {t.sales.addLine}
               </button>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
+                <table style={{ width: 260 }}>
+                  <tbody>
+                    <tr>
+                      <td>{t.common.subtotal}</td>
+                      <td style={{ textAlign: "end" }}>{netTotal.toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                      <td>{t.common.vat} ({(vatRate * 100).toFixed(0)}%)</td>
+                      <td style={{ textAlign: "end" }}>{vatTotal.toLocaleString()}</td>
+                    </tr>
+                    <tr>
+                      <td><strong>{t.common.total}</strong></td>
+                      <td style={{ textAlign: "end" }}><strong>{grandTotal.toLocaleString()}</strong></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
             </div>
 
             <div className="form-field" style={{ marginTop: 14 }}>
@@ -195,6 +223,8 @@ export default function SalesInvoices() {
               <th>{t.sales.invoiceNumber}</th>
               <th>{t.common.date}</th>
               <th>{t.sales.customer}</th>
+              <th>{t.common.subtotal}</th>
+              <th>{t.common.vat}</th>
               <th>{t.common.total}</th>
               <th>{t.sales.paymentTerm}</th>
               <th>{t.common.outstanding}</th>
@@ -204,7 +234,7 @@ export default function SalesInvoices() {
           <tbody>
             {invoices.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
+                <td colSpan={9} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
                   {t.common.noData}
                 </td>
               </tr>
@@ -214,6 +244,8 @@ export default function SalesInvoices() {
                 <td>{inv.invoiceNumber}</td>
                 <td>{new Date(inv.invoiceDate).toLocaleDateString()}</td>
                 <td>{inv.customerName}</td>
+                <td>{inv.subTotal.toLocaleString()}</td>
+                <td>{inv.vatAmount.toLocaleString()}</td>
                 <td>{inv.totalAmount.toLocaleString()}</td>
                 <td>{paymentTermLabel[inv.paymentTerm]}</td>
                 <td>{inv.outstandingAmount.toLocaleString()}</td>

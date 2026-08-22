@@ -42,4 +42,11 @@ public class LookupsController : ControllerBase
 
         return Ok(costCenters);
     }
+
+    [HttpGet("company-settings")]
+    public async Task<ActionResult<CompanySettingsLookupDto>> GetCompanySettings(CancellationToken ct)
+    {
+        var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct);
+        return Ok(new CompanySettingsLookupDto(settings?.VatRate ?? 0, settings?.DefaultCurrency ?? "EGP"));
+    }
 }

@@ -187,6 +187,11 @@ export interface CostCenterLookup {
   nameAr: string;
 }
 
+export interface CompanySettingsLookup {
+  vatRate: number;
+  defaultCurrency: string;
+}
+
 export interface FiscalPeriod {
   id: string;
   name: string;
