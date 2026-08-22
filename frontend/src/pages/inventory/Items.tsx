@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { ItemCategoriesApi, ItemsApi } from "../../api/services";
 import type { Item, ItemCategory } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function Items() {
+  const { t } = useLanguage();
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -88,13 +90,13 @@ export default function Items() {
   return (
     <div>
       <div className="page-header">
-        <h1>الأصناف</h1>
+        <h1>{t.inventory.itemsTitle}</h1>
         <div style={{ display: "flex", gap: 10 }}>
           <button className="btn btn-secondary" onClick={() => setShowCategoryForm((v) => !v)}>
-            {showCategoryForm ? "إلغاء" : "+ تصنيف"}
+            {showCategoryForm ? t.common.cancel : t.inventory.newCategory}
           </button>
           <button className="btn" onClick={() => setShowForm((v) => !v)}>
-            {showForm ? "إلغاء" : "+ صنف جديد"}
+            {showForm ? t.common.cancel : t.inventory.newItem}
           </button>
         </div>
       </div>
@@ -106,20 +108,20 @@ export default function Items() {
           <form onSubmit={handleCategorySubmit}>
             <div className="form-grid">
               <div className="form-field">
-                <label>كود التصنيف</label>
+                <label>{t.inventory.categoryCode}</label>
                 <input value={categoryCode} onChange={(e) => setCategoryCode(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>الاسم بالعربي</label>
+                <label>{t.common.nameAr}</label>
                 <input value={categoryNameAr} onChange={(e) => setCategoryNameAr(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>الاسم بالإنجليزي</label>
+                <label>{t.common.nameEn}</label>
                 <input value={categoryNameEn} onChange={(e) => setCategoryNameEn(e.target.value)} required />
               </div>
             </div>
             <button className="btn" type="submit" style={{ marginTop: 14 }}>
-              حفظ التصنيف
+              {t.inventory.saveCategory}
             </button>
           </form>
         </div>
@@ -130,25 +132,25 @@ export default function Items() {
           <form onSubmit={handleSubmit}>
             <div className="form-grid">
               <div className="form-field">
-                <label>كود الصنف</label>
+                <label>{t.inventory.itemCode}</label>
                 <input value={code} onChange={(e) => setCode(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>الاسم بالعربي</label>
+                <label>{t.common.nameAr}</label>
                 <input value={nameAr} onChange={(e) => setNameAr(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>الاسم بالإنجليزي</label>
+                <label>{t.common.nameEn}</label>
                 <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>وحدة القياس</label>
-                <input value={unitOfMeasure} onChange={(e) => setUnitOfMeasure(e.target.value)} placeholder="مثال: قطعة، كجم" required />
+                <label>{t.inventory.unitOfMeasure}</label>
+                <input value={unitOfMeasure} onChange={(e) => setUnitOfMeasure(e.target.value)} placeholder={t.inventory.unitOfMeasurePlaceholder} required />
               </div>
               <div className="form-field">
-                <label>التصنيف</label>
+                <label>{t.inventory.category}</label>
                 <select value={itemCategoryId} onChange={(e) => setItemCategoryId(e.target.value)} required>
-                  <option value="">اختر التصنيف</option>
+                  <option value="">{t.inventory.selectCategory}</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
                       {c.code} - {c.nameAr}
@@ -157,12 +159,12 @@ export default function Items() {
                 </select>
               </div>
               <div className="form-field">
-                <label>حد إعادة الطلب</label>
+                <label>{t.inventory.reorderLevel}</label>
                 <input type="number" step="0.01" value={reorderLevel} onChange={(e) => setReorderLevel(e.target.value)} />
               </div>
             </div>
             <button className="btn" type="submit" style={{ marginTop: 14 }}>
-              حفظ
+              {t.common.save}
             </button>
           </form>
         </div>
@@ -172,13 +174,13 @@ export default function Items() {
         <table>
           <thead>
             <tr>
-              <th>الكود</th>
-              <th>الاسم</th>
-              <th>التصنيف</th>
-              <th>الوحدة</th>
-              <th>الرصيد الحالي</th>
-              <th>متوسط التكلفة</th>
-              <th>حد إعادة الطلب</th>
+              <th>{t.common.code}</th>
+              <th>{t.common.nameAr}</th>
+              <th>{t.inventory.category}</th>
+              <th>{t.inventory.unit}</th>
+              <th>{t.inventory.quantityOnHand}</th>
+              <th>{t.inventory.averageCost}</th>
+              <th>{t.inventory.reorderLevel}</th>
               <th></th>
             </tr>
           </thead>
@@ -196,7 +198,7 @@ export default function Items() {
                 <td>{item.reorderLevel.toLocaleString()}</td>
                 <td>
                   <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(item.id)}>
-                    حذف
+                    {t.common.delete}
                   </button>
                 </td>
               </tr>

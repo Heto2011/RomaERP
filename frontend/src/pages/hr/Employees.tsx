@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { DepartmentsApi, EmployeesApi, PositionsApi } from "../../api/services";
 import { Gender, MaritalStatus, type Department, type Employee, type Position } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function Employees() {
+  const { t } = useLanguage();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -84,9 +86,9 @@ export default function Employees() {
   return (
     <div>
       <div className="page-header">
-        <h1>الموظفون</h1>
+        <h1>{t.hr.employeesTitle}</h1>
         <button className="btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "إلغاء" : "+ موظف جديد"}
+          {showForm ? t.common.cancel : t.hr.newEmployee}
         </button>
       </div>
 
@@ -97,39 +99,39 @@ export default function Employees() {
           <form onSubmit={handleSubmit}>
             <div className="form-grid">
               <div className="form-field">
-                <label>كود الموظف</label>
+                <label>{t.hr.employeeCode}</label>
                 <input value={employeeCode} onChange={(e) => setEmployeeCode(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>الاسم بالعربي</label>
+                <label>{t.common.nameAr}</label>
                 <input value={fullNameAr} onChange={(e) => setFullNameAr(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>الاسم بالإنجليزي</label>
+                <label>{t.common.nameEn}</label>
                 <input value={fullNameEn} onChange={(e) => setFullNameEn(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>النوع</label>
+                <label>{t.hr.genderLabel}</label>
                 <select value={gender} onChange={(e) => setGender(Number(e.target.value))}>
-                  <option value={Gender.Male}>ذكر</option>
-                  <option value={Gender.Female}>أنثى</option>
+                  <option value={Gender.Male}>{t.hr.male}</option>
+                  <option value={Gender.Female}>{t.hr.female}</option>
                 </select>
               </div>
               <div className="form-field">
-                <label>الحالة الاجتماعية</label>
+                <label>{t.hr.maritalStatus}</label>
                 <select value={maritalStatus} onChange={(e) => setMaritalStatus(Number(e.target.value))}>
-                  <option value={MaritalStatus.Single}>أعزب</option>
-                  <option value={MaritalStatus.Married}>متزوج</option>
-                  <option value={MaritalStatus.Divorced}>مطلق</option>
-                  <option value={MaritalStatus.Widowed}>أرمل</option>
+                  <option value={MaritalStatus.Single}>{t.hr.single}</option>
+                  <option value={MaritalStatus.Married}>{t.hr.married}</option>
+                  <option value={MaritalStatus.Divorced}>{t.hr.divorced}</option>
+                  <option value={MaritalStatus.Widowed}>{t.hr.widowed}</option>
                 </select>
               </div>
               <div className="form-field">
-                <label>تاريخ التعيين</label>
+                <label>{t.hr.hireDate}</label>
                 <input type="date" value={hireDate} onChange={(e) => setHireDate(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>القسم</label>
+                <label>{t.hr.department}</label>
                 <select
                   value={departmentId}
                   onChange={(e) => {
@@ -138,7 +140,7 @@ export default function Employees() {
                   }}
                   required
                 >
-                  <option value="">اختر القسم</option>
+                  <option value="">{t.hr.selectDepartment}</option>
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.code} - {d.nameAr}
@@ -147,9 +149,9 @@ export default function Employees() {
                 </select>
               </div>
               <div className="form-field">
-                <label>الوظيفة</label>
+                <label>{t.hr.position}</label>
                 <select value={positionId} onChange={(e) => setPositionId(e.target.value)} required disabled={!departmentId}>
-                  <option value="">اختر الوظيفة</option>
+                  <option value="">{t.hr.selectPosition}</option>
                   {filteredPositions.map((p) => (
                     <option key={p.id} value={p.id}>
                       {p.titleAr}
@@ -158,20 +160,20 @@ export default function Employees() {
                 </select>
               </div>
               <div className="form-field">
-                <label>الراتب الأساسي</label>
+                <label>{t.hr.basicSalary}</label>
                 <input type="number" step="0.01" value={basicSalary} onChange={(e) => setBasicSalary(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>البريد الإلكتروني</label>
+                <label>{t.common.email}</label>
                 <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
               </div>
               <div className="form-field">
-                <label>الهاتف</label>
+                <label>{t.common.phone}</label>
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
             </div>
             <button className="btn" type="submit" style={{ marginTop: 14 }}>
-              حفظ
+              {t.common.save}
             </button>
           </form>
         </div>
@@ -181,11 +183,11 @@ export default function Employees() {
         <table>
           <thead>
             <tr>
-              <th>الكود</th>
-              <th>الاسم</th>
-              <th>القسم</th>
-              <th>الوظيفة</th>
-              <th>الراتب الأساسي</th>
+              <th>{t.common.code}</th>
+              <th>{t.common.nameAr}</th>
+              <th>{t.hr.department}</th>
+              <th>{t.hr.position}</th>
+              <th>{t.hr.basicSalary}</th>
               <th></th>
             </tr>
           </thead>
@@ -199,7 +201,7 @@ export default function Employees() {
                 <td>{emp.basicSalary.toLocaleString()}</td>
                 <td>
                   <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(emp.id)}>
-                    حذف
+                    {t.common.delete}
                   </button>
                 </td>
               </tr>

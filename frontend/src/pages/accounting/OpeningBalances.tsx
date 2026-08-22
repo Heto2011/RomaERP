@@ -2,14 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AccountsApi, FiscalPeriodsAdminApi, OpeningBalanceApi } from "../../api/services";
 import type { Account, FiscalYearDetail, JournalEntry } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
-
-const typeLabels: Record<number, string> = {
-  1: "الأصول",
-  2: "الخصوم",
-  3: "حقوق الملكية",
-  4: "الإيرادات",
-  5: "المصروفات",
-};
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface RowState {
   debit: string;
@@ -17,6 +10,14 @@ interface RowState {
 }
 
 export default function OpeningBalances() {
+  const { t } = useLanguage();
+  const typeLabels: Record<number, string> = {
+    1: t.accounting.types.asset,
+    2: t.accounting.types.liability,
+    3: t.accounting.types.equity,
+    4: t.accounting.types.revenue,
+    5: t.accounting.types.expense,
+  };
   const [years, setYears] = useState<FiscalYearDetail[]>([]);
   const [selectedYearId, setSelectedYearId] = useState("");
   const [accounts, setAccounts] = useState<Account[]>([]);
@@ -83,7 +84,7 @@ export default function OpeningBalances() {
   async function handleSubmit() {
     setError(null);
     if (!isBalanced) {
-      setError("الأرصدة غير متوازنة. إجمالي المدين يجب أن يساوي إجمالي الدائن.");
+      setError(t.accounting.unbalancedError);
       return;
     }
 
@@ -102,24 +103,22 @@ export default function OpeningBalances() {
     }
   }
 
-  if (loading) return <div className="page-header"><h1>الأرصدة الافتتاحية</h1></div>;
+  if (loading) return <div className="page-header"><h1>{t.accounting.openingBalancesTitle}</h1></div>;
 
   return (
     <div>
       <div className="page-header">
-        <h1>الأرصدة الافتتاحية</h1>
+        <h1>{t.accounting.openingBalancesTitle}</h1>
       </div>
 
       <div className="card">
         <p className="text-muted" style={{ marginTop: 0 }}>
-          عند بدء استخدام النظام لأول مرة بعد ترحيل من نظام قديم، أدخل هنا ميزان المراجعة النهائي من النظام
-          القديم كأرصدة افتتاحية لكل حساب. يتم إدخالها مرة واحدة لكل سنة مالية، ويجب أن يتساوى إجمالي المدين
-          مع إجمالي الدائن تمامًا مثل ميزان المراجعة الذي بين يديك.
+          {t.accounting.openingBalancesIntro}
         </p>
 
         <div className="form-grid">
           <div className="form-field">
-            <label>السنة المالية</label>
+            <label>{t.accounting.fiscalYear}</label>
             <select value={selectedYearId} onChange={(e) => setSelectedYearId(e.target.value)}>
               {years.map((y) => (
                 <option key={y.id} value={y.id}>
@@ -129,7 +128,7 @@ export default function OpeningBalances() {
             </select>
           </div>
           <div className="form-field">
-            <label>تاريخ الرصيد الافتتاحي</label>
+            <label>{t.accounting.openingBalanceDate}</label>
             <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} />
           </div>
         </div>
@@ -138,25 +137,24 @@ export default function OpeningBalances() {
       {error && <div className="alert-error">{error}</div>}
       {success && (
         <div className="card" style={{ borderColor: "var(--color-success)" }}>
-          <strong className="text-success">تم حفظ الأرصدة الافتتاحية وترحيلها بنجاح.</strong>
+          <strong className="text-success">{t.accounting.openingBalancesSaved}</strong>
         </div>
       )}
 
       {existingEntry ? (
         <div className="card">
           <h3 style={{ marginTop: 0 }}>
-            الأرصدة الافتتاحية لسنة {selectedYear?.name} — قيد رقم {existingEntry.entryNumber}
+            {t.accounting.openingBalancesForYearPrefix} {selectedYear?.name} — {t.accounting.entryNumberPrefix} {existingEntry.entryNumber}
           </h3>
           <p className="text-muted">
-            تم إدخال الأرصدة الافتتاحية لهذه السنة بالفعل. لتصحيحها، اعكس هذا القيد من شاشة القيود اليومية
-            ثم أعد إدخال الأرصدة الصحيحة هنا.
+            {t.accounting.alreadyEnteredNote}
           </p>
           <table>
             <thead>
               <tr>
-                <th>الحساب</th>
-                <th>مدين</th>
-                <th>دائن</th>
+                <th>{t.common.account}</th>
+                <th>{t.accounting.debit}</th>
+                <th>{t.accounting.credit}</th>
               </tr>
             </thead>
             <tbody>
@@ -170,7 +168,7 @@ export default function OpeningBalances() {
             </tbody>
             <tfoot>
               <tr>
-                <td><strong>الإجمالي</strong></td>
+                <td><strong>{t.common.total}</strong></td>
                 <td><strong>{existingEntry.totalDebit.toLocaleString()}</strong></td>
                 <td><strong>{existingEntry.totalCredit.toLocaleString()}</strong></td>
               </tr>
@@ -189,10 +187,10 @@ export default function OpeningBalances() {
                 <table>
                   <thead>
                     <tr>
-                      <th>الكود</th>
-                      <th>الحساب</th>
-                      <th>مدين</th>
-                      <th>دائن</th>
+                      <th>{t.common.code}</th>
+                      <th>{t.common.account}</th>
+                      <th>{t.accounting.debit}</th>
+                      <th>{t.accounting.credit}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -231,7 +229,7 @@ export default function OpeningBalances() {
           <table>
             <tfoot>
               <tr>
-                <td><strong>الإجمالي</strong></td>
+                <td><strong>{t.common.total}</strong></td>
                 <td>
                   <strong className={isBalanced ? "text-success" : "text-danger"}>{totalDebit.toLocaleString()}</strong>
                 </td>
@@ -243,7 +241,7 @@ export default function OpeningBalances() {
           </table>
 
           <button className="btn" style={{ marginTop: 14 }} onClick={handleSubmit} disabled={!isBalanced}>
-            حفظ وترحيل الأرصدة الافتتاحية
+            {t.accounting.saveAndPostOpeningBalances}
           </button>
         </div>
       )}

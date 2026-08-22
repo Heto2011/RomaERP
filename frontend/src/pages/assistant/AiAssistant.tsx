@@ -2,21 +2,22 @@ import { useRef, useState } from "react";
 import { AiAssistantApi } from "../../api/services";
 import { ChatRole, ExpenseCaptureStatus, type ChatMessage } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
-
-const statusLabel: Record<ExpenseCaptureStatus, string> = {
-  [ExpenseCaptureStatus.AwaitingDetails]: "محتاج تفاصيل أكتر",
-  [ExpenseCaptureStatus.AwaitingFundingSource]: "في انتظار تحديد مصدر الصرف (عهدة ولا جاري)",
-  [ExpenseCaptureStatus.AwaitingCustodyEmployee]: "في انتظار تحديد الموظف صاحب العهدة",
-  [ExpenseCaptureStatus.AwaitingPaymentMethod]: "في انتظار طريقة الدفع",
-  [ExpenseCaptureStatus.AwaitingReconciliation]: "في انتظار المطابقة البنكية",
-  [ExpenseCaptureStatus.PendingApproval]: "في انتظار اعتماد المدير",
-  [ExpenseCaptureStatus.Posted]: "تم الاعتماد والترحيل",
-  [ExpenseCaptureStatus.Rejected]: "مرفوض",
-};
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function AiAssistant() {
+  const { t } = useLanguage();
+  const statusLabel: Record<ExpenseCaptureStatus, string> = {
+    [ExpenseCaptureStatus.AwaitingDetails]: t.assistant.statuses.awaitingDetails,
+    [ExpenseCaptureStatus.AwaitingFundingSource]: t.assistant.statuses.awaitingFundingSource,
+    [ExpenseCaptureStatus.AwaitingCustodyEmployee]: t.assistant.statuses.awaitingCustodyEmployee,
+    [ExpenseCaptureStatus.AwaitingPaymentMethod]: t.assistant.statuses.awaitingPaymentMethod,
+    [ExpenseCaptureStatus.AwaitingReconciliation]: t.assistant.statuses.awaitingReconciliation,
+    [ExpenseCaptureStatus.PendingApproval]: t.assistant.statuses.pendingApproval,
+    [ExpenseCaptureStatus.Posted]: t.assistant.statuses.posted,
+    [ExpenseCaptureStatus.Rejected]: t.assistant.statuses.rejected,
+  };
   const [messages, setMessages] = useState<ChatMessage[]>([
-    { role: ChatRole.Assistant, content: "أهلاً! قولّي عملت مصروف إيه، وأنا هسجله وأترحّله في الحسابات. مثال: \"اشتريت بنزين بـ100 جنيه\".", createdAtUtc: new Date().toISOString() },
+    { role: ChatRole.Assistant, content: t.assistant.welcomeMessage, createdAtUtc: new Date().toISOString() },
   ]);
   const [captureId, setCaptureId] = useState<string | null>(null);
   const [status, setStatus] = useState<ExpenseCaptureStatus | null>(null);
@@ -52,7 +53,7 @@ export default function AiAssistant() {
     setError(null);
     try {
       await AiAssistantApi.uploadProof(captureId, file);
-      setMessages((prev) => [...prev, { role: ChatRole.Assistant, content: `تم إرفاق الإثبات: ${file.name} ✅`, createdAtUtc: new Date().toISOString() }]);
+      setMessages((prev) => [...prev, { role: ChatRole.Assistant, content: `${t.assistant.proofAttachedPrefix} ${file.name} ✅`, createdAtUtc: new Date().toISOString() }]);
     } catch (err) {
       setError(getErrorMessage(err));
     }
@@ -61,15 +62,15 @@ export default function AiAssistant() {
   function startNewExpense() {
     setCaptureId(null);
     setStatus(null);
-    setMessages([{ role: ChatRole.Assistant, content: "تمام، قولّي المصروف الجديد.", createdAtUtc: new Date().toISOString() }]);
+    setMessages([{ role: ChatRole.Assistant, content: t.assistant.newExpensePrompt, createdAtUtc: new Date().toISOString() }]);
   }
 
   return (
     <div>
       <div className="page-header">
-        <h1>المساعد الذكي للمصروفات</h1>
+        <h1>{t.assistant.chatTitle}</h1>
         <button className="btn btn-secondary" onClick={startNewExpense}>
-          + مصروف جديد
+          {t.assistant.newExpense}
         </button>
       </div>
 
@@ -78,9 +79,9 @@ export default function AiAssistant() {
           <span className="badge badge-draft">{statusLabel[status]}</span>
           {(status === ExpenseCaptureStatus.AwaitingReconciliation || status === ExpenseCaptureStatus.PendingApproval) && (
             <>
-              <span className="text-muted">تقدر ترفع صورة الإيصال كإثبات:</span>
+              <span className="text-muted">{t.assistant.uploadProofPrompt}</span>
               <button className="btn btn-secondary btn-sm" onClick={() => fileInputRef.current?.click()}>
-                رفع إثبات
+                {t.assistant.uploadProof}
               </button>
               <input
                 ref={fileInputRef}
@@ -112,7 +113,7 @@ export default function AiAssistant() {
               {m.content}
             </div>
           ))}
-          {sending && <div className="text-muted" style={{ alignSelf: "flex-end" }}>بيكتب...</div>}
+          {sending && <div className="text-muted" style={{ alignSelf: "flex-end" }}>{t.assistant.typing}</div>}
         </div>
 
         <form onSubmit={handleSend} style={{ display: "flex", gap: 10, borderTop: "1px solid var(--color-border)", paddingTop: 12 }}>
@@ -120,11 +121,11 @@ export default function AiAssistant() {
             style={{ flex: 1 }}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="اكتب المصروف هنا..."
+            placeholder={t.assistant.chatPlaceholder}
             disabled={sending}
           />
           <button className="btn" type="submit" disabled={sending || !input.trim()}>
-            إرسال
+            {t.assistant.send}
           </button>
         </form>
       </div>

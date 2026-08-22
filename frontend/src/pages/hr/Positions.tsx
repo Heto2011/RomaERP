@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { DepartmentsApi, PositionsApi } from "../../api/services";
 import type { Department, Position } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function Positions() {
+  const { t } = useLanguage();
   const [positions, setPositions] = useState<Position[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -56,9 +58,9 @@ export default function Positions() {
   return (
     <div>
       <div className="page-header">
-        <h1>الوظائف</h1>
+        <h1>{t.hr.positionsTitle}</h1>
         <button className="btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "إلغاء" : "+ وظيفة جديدة"}
+          {showForm ? t.common.cancel : t.hr.newPosition}
         </button>
       </div>
 
@@ -69,21 +71,21 @@ export default function Positions() {
           <form onSubmit={handleSubmit}>
             <div className="form-grid">
               <div className="form-field">
-                <label>كود الوظيفة</label>
+                <label>{t.hr.positionCode}</label>
                 <input value={code} onChange={(e) => setCode(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>المسمى بالعربي</label>
+                <label>{t.hr.titleAr}</label>
                 <input value={titleAr} onChange={(e) => setTitleAr(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>المسمى بالإنجليزي</label>
+                <label>{t.hr.titleEn}</label>
                 <input value={titleEn} onChange={(e) => setTitleEn(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>القسم</label>
+                <label>{t.hr.department}</label>
                 <select value={departmentId} onChange={(e) => setDepartmentId(e.target.value)} required>
-                  <option value="">اختر القسم</option>
+                  <option value="">{t.hr.selectDepartment}</option>
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.code} - {d.nameAr}
@@ -93,7 +95,7 @@ export default function Positions() {
               </div>
             </div>
             <button className="btn" type="submit" style={{ marginTop: 14 }}>
-              حفظ
+              {t.common.save}
             </button>
           </form>
         </div>
@@ -103,9 +105,9 @@ export default function Positions() {
         <table>
           <thead>
             <tr>
-              <th>الكود</th>
-              <th>المسمى الوظيفي</th>
-              <th>القسم</th>
+              <th>{t.common.code}</th>
+              <th>{t.hr.jobTitle}</th>
+              <th>{t.hr.department}</th>
               <th></th>
             </tr>
           </thead>
@@ -117,7 +119,7 @@ export default function Positions() {
                 <td>{departmentName(p.departmentId)}</td>
                 <td>
                   <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(p.id)}>
-                    حذف
+                    {t.common.delete}
                   </button>
                 </td>
               </tr>

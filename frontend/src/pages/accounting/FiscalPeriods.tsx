@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { FiscalPeriodsAdminApi } from "../../api/services";
 import type { FiscalYearDetail } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function FiscalPeriods() {
+  const { t } = useLanguage();
   const [years, setYears] = useState<FiscalYearDetail[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +40,7 @@ export default function FiscalPeriods() {
 
   async function handleCloseYear(id: string) {
     setError(null);
-    if (!confirm("إقفال السنة المالية سينشئ قيد إقفال يصفّر الإيرادات والمصروفات ويرحّل صافي الربح/الخسارة للأرباح المرحلة. متأكد؟")) return;
+    if (!confirm(t.accounting.closeYearConfirm)) return;
     try {
       await FiscalPeriodsAdminApi.closeYear(id);
       await load();
@@ -50,7 +52,7 @@ export default function FiscalPeriods() {
   return (
     <div>
       <div className="page-header">
-        <h1>إقفال الفترات المالية</h1>
+        <h1>{t.accounting.fiscalPeriodsTitle}</h1>
       </div>
 
       {error && <div className="alert-error">{error}</div>}
@@ -61,12 +63,12 @@ export default function FiscalPeriods() {
             <div>
               <strong>{year.name}</strong>{" "}
               <span className={`badge ${year.isClosed ? "badge-reversed" : "badge-posted"}`}>
-                {year.isClosed ? "مقفلة" : "مفتوحة"}
+                {year.isClosed ? t.accounting.closed : t.accounting.openStatus}
               </span>
             </div>
             {!year.isClosed && (
               <button className="btn" onClick={() => handleCloseYear(year.id)}>
-                إقفال السنة المالية
+                {t.accounting.closeYear}
               </button>
             )}
           </div>
@@ -74,33 +76,33 @@ export default function FiscalPeriods() {
           <table>
             <thead>
               <tr>
-                <th>الفترة</th>
-                <th>من</th>
-                <th>إلى</th>
-                <th>الحالة</th>
-                <th>إجراءات</th>
+                <th>{t.accounting.period}</th>
+                <th>{t.common.from}</th>
+                <th>{t.common.to}</th>
+                <th>{t.common.status}</th>
+                <th>{t.common.actions}</th>
               </tr>
             </thead>
             <tbody>
               {year.periods.map((p) => (
                 <tr key={p.id}>
                   <td>{p.name}</td>
-                  <td>{new Date(p.startDate).toLocaleDateString("ar-EG")}</td>
-                  <td>{new Date(p.endDate).toLocaleDateString("ar-EG")}</td>
+                  <td>{new Date(p.startDate).toLocaleDateString()}</td>
+                  <td>{new Date(p.endDate).toLocaleDateString()}</td>
                   <td>
                     <span className={`badge ${p.isClosed ? "badge-reversed" : "badge-posted"}`}>
-                      {p.isClosed ? "مقفلة" : "مفتوحة"}
+                      {p.isClosed ? t.accounting.closed : t.accounting.openStatus}
                     </span>
                   </td>
                   <td>
                     {!p.isClosed && (
                       <button className="btn btn-sm" onClick={() => handleClosePeriod(p.id)}>
-                        إقفال
+                        {t.accounting.closePeriod}
                       </button>
                     )}
                     {p.isClosed && !year.isClosed && (
                       <button className="btn btn-secondary btn-sm" onClick={() => handleReopenPeriod(p.id)}>
-                        فتح
+                        {t.accounting.reopenPeriod}
                       </button>
                     )}
                   </td>

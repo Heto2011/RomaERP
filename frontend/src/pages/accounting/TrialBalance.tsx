@@ -1,16 +1,17 @@
 import { useEffect, useState } from "react";
 import { JournalEntriesApi } from "../../api/services";
 import { AccountType, type TrialBalanceLine } from "../../api/types";
-
-const typeLabels: Record<AccountType, string> = {
-  [AccountType.Asset]: "أصول",
-  [AccountType.Liability]: "خصوم",
-  [AccountType.Equity]: "حقوق ملكية",
-  [AccountType.Revenue]: "إيرادات",
-  [AccountType.Expense]: "مصروفات",
-};
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function TrialBalance() {
+  const { t } = useLanguage();
+  const typeLabels: Record<AccountType, string> = {
+    [AccountType.Asset]: t.accounting.types.asset,
+    [AccountType.Liability]: t.accounting.types.liability,
+    [AccountType.Equity]: t.accounting.types.equity,
+    [AccountType.Revenue]: t.accounting.types.revenue,
+    [AccountType.Expense]: t.accounting.types.expense,
+  };
   const [lines, setLines] = useState<TrialBalanceLine[]>([]);
   const [asOfDate, setAsOfDate] = useState("");
 
@@ -30,16 +31,16 @@ export default function TrialBalance() {
   return (
     <div>
       <div className="page-header">
-        <h1>ميزان المراجعة</h1>
+        <h1>{t.accounting.trialBalanceTitle}</h1>
       </div>
 
       <div className="card toolbar">
         <div className="form-field">
-          <label>حتى تاريخ</label>
+          <label>{t.accounting.asOfDate}</label>
           <input type="date" value={asOfDate} onChange={(e) => setAsOfDate(e.target.value)} />
         </div>
         <button className="btn" style={{ alignSelf: "flex-end" }} onClick={load}>
-          تحديث
+          {t.common.refresh}
         </button>
       </div>
 
@@ -47,12 +48,12 @@ export default function TrialBalance() {
         <table>
           <thead>
             <tr>
-              <th>كود الحساب</th>
-              <th>اسم الحساب</th>
-              <th>النوع</th>
-              <th>مدين</th>
-              <th>دائن</th>
-              <th>الرصيد</th>
+              <th>{t.common.code}</th>
+              <th>{t.common.account}</th>
+              <th>{t.common.type}</th>
+              <th>{t.accounting.debit}</th>
+              <th>{t.accounting.credit}</th>
+              <th>{t.common.balance}</th>
             </tr>
           </thead>
           <tbody>
@@ -70,7 +71,7 @@ export default function TrialBalance() {
           <tfoot>
             <tr>
               <td colSpan={3}>
-                <strong>الإجمالي</strong>
+                <strong>{t.common.total}</strong>
               </td>
               <td>
                 <strong>{totalDebit.toLocaleString()}</strong>

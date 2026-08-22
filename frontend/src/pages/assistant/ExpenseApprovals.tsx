@@ -2,20 +2,20 @@ import { useEffect, useState } from "react";
 import { AiAssistantApi } from "../../api/services";
 import { ExpenseFundingSource, ExpensePaymentMethod, type ExpenseCapture } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
-
-const paymentLabel: Record<ExpensePaymentMethod, string> = {
-  [ExpensePaymentMethod.Unknown]: "-",
-  [ExpensePaymentMethod.Cash]: "كاش",
-  [ExpensePaymentMethod.Card]: "شبكة (متطابق مع كشف الحساب)",
-};
-
-const fundingSourceLabel: Record<ExpenseFundingSource, string> = {
-  [ExpenseFundingSource.Unknown]: "-",
-  [ExpenseFundingSource.CompanyAccount]: "جاري الشركة",
-  [ExpenseFundingSource.EmployeeCustody]: "عهدة موظف",
-};
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function ExpenseApprovals() {
+  const { t } = useLanguage();
+  const paymentLabel: Record<ExpensePaymentMethod, string> = {
+    [ExpensePaymentMethod.Unknown]: "-",
+    [ExpensePaymentMethod.Cash]: t.assistant.paymentMethods.cash,
+    [ExpensePaymentMethod.Card]: t.assistant.paymentMethods.card,
+  };
+  const fundingSourceLabel: Record<ExpenseFundingSource, string> = {
+    [ExpenseFundingSource.Unknown]: "-",
+    [ExpenseFundingSource.CompanyAccount]: t.assistant.fundingSources.companyAccount,
+    [ExpenseFundingSource.EmployeeCustody]: t.assistant.fundingSources.employeeCustody,
+  };
   const [captures, setCaptures] = useState<ExpenseCapture[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -40,7 +40,7 @@ export default function ExpenseApprovals() {
 
   async function handleReject(id: string) {
     setError(null);
-    if (!confirm("متأكد إنك عايز ترفض المصروف ده؟ لن يترحّل في الحسابات.")) return;
+    if (!confirm(t.assistant.rejectConfirm)) return;
     try {
       await AiAssistantApi.reject(id);
       await load();
@@ -52,12 +52,11 @@ export default function ExpenseApprovals() {
   return (
     <div>
       <div className="page-header">
-        <h1>اعتماد المصروفات</h1>
+        <h1>{t.assistant.approvalsTitle}</h1>
       </div>
 
       <p className="text-muted">
-        كل مصروف اتسجل عن طريق المساعد الذكي (كاش أو شبكة بعد ما يتطابق مع كشف الحساب) بيقف هنا لحد ما توافق
-        عليه — مفيش أي حاجة بترحّل في الحسابات من غير اعتمادك.
+        {t.assistant.approvalsIntro}
       </p>
 
       {error && <div className="alert-error">{error}</div>}
@@ -66,21 +65,21 @@ export default function ExpenseApprovals() {
         <table>
           <thead>
             <tr>
-              <th>الوصف</th>
-              <th>المبلغ</th>
-              <th>التاريخ</th>
-              <th>مصدر الصرف</th>
-              <th>طريقة الدفع</th>
-              <th>الحساب المقترح</th>
-              <th>إثبات</th>
-              <th>إجراءات</th>
+              <th>{t.common.description}</th>
+              <th>{t.common.amount}</th>
+              <th>{t.common.date}</th>
+              <th>{t.assistant.fundingSource}</th>
+              <th>{t.assistant.paymentMethod}</th>
+              <th>{t.assistant.suggestedAccount}</th>
+              <th>{t.assistant.proof}</th>
+              <th>{t.common.actions}</th>
             </tr>
           </thead>
           <tbody>
             {captures.length === 0 && (
               <tr>
                 <td colSpan={8} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
-                  مفيش مصروفات في انتظار الاعتماد دلوقتي.
+                  {t.assistant.noPendingApprovals}
                 </td>
               </tr>
             )}
@@ -88,7 +87,7 @@ export default function ExpenseApprovals() {
               <tr key={c.id}>
                 <td>{c.description}</td>
                 <td>{c.amount} {c.currency}</td>
-                <td>{new Date(c.entryDate).toLocaleDateString("ar-EG")}</td>
+                <td>{new Date(c.entryDate).toLocaleDateString()}</td>
                 <td>
                   {fundingSourceLabel[c.fundingSource]}
                   {c.fundingSource === ExpenseFundingSource.EmployeeCustody && c.custodyEmployeeName && (
@@ -100,10 +99,10 @@ export default function ExpenseApprovals() {
                 <td>{c.proofFileName ?? "-"}</td>
                 <td style={{ display: "flex", gap: 6 }}>
                   <button className="btn btn-sm" onClick={() => handleApprove(c.id)}>
-                    اعتماد وترحيل
+                    {t.assistant.approveAndPost}
                   </button>
                   <button className="btn btn-secondary btn-sm" onClick={() => handleReject(c.id)}>
-                    رفض
+                    {t.assistant.reject}
                   </button>
                 </td>
               </tr>

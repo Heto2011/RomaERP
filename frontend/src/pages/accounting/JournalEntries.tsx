@@ -2,12 +2,7 @@ import { useEffect, useState } from "react";
 import { AccountsApi, JournalEntriesApi, LookupsApi } from "../../api/services";
 import { JournalEntryStatus, type Account, type FiscalPeriod, type JournalEntry } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
-
-const statusLabel: Record<JournalEntryStatus, { text: string; cls: string }> = {
-  [JournalEntryStatus.Draft]: { text: "مسودة", cls: "badge-draft" },
-  [JournalEntryStatus.Posted]: { text: "مرحل", cls: "badge-posted" },
-  [JournalEntryStatus.Reversed]: { text: "معكوس", cls: "badge-reversed" },
-};
+import { useLanguage } from "../../i18n/LanguageContext";
 
 interface LineForm {
   accountId: string;
@@ -21,6 +16,12 @@ function emptyLine(): LineForm {
 }
 
 export default function JournalEntries() {
+  const { t } = useLanguage();
+  const statusLabel: Record<JournalEntryStatus, { text: string; cls: string }> = {
+    [JournalEntryStatus.Draft]: { text: t.accounting.draft, cls: "badge-draft" },
+    [JournalEntryStatus.Posted]: { text: t.accounting.posted, cls: "badge-posted" },
+    [JournalEntryStatus.Reversed]: { text: t.accounting.reversed, cls: "badge-reversed" },
+  };
   const [entries, setEntries] = useState<JournalEntry[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
@@ -109,9 +110,9 @@ export default function JournalEntries() {
   return (
     <div>
       <div className="page-header">
-        <h1>القيود اليومية</h1>
+        <h1>{t.accounting.journalEntriesTitle}</h1>
         <button className="btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "إلغاء" : "+ قيد جديد"}
+          {showForm ? t.common.cancel : t.accounting.newEntry}
         </button>
       </div>
 
@@ -122,13 +123,13 @@ export default function JournalEntries() {
           <form onSubmit={handleSubmit}>
             <div className="form-grid">
               <div className="form-field">
-                <label>تاريخ القيد</label>
+                <label>{t.accounting.entryDate}</label>
                 <input type="date" value={entryDate} onChange={(e) => setEntryDate(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>الفترة المالية</label>
+                <label>{t.accounting.fiscalPeriod}</label>
                 <select value={fiscalPeriodId} onChange={(e) => setFiscalPeriodId(e.target.value)} required>
-                  <option value="">اختر الفترة</option>
+                  <option value="">{t.accounting.selectPeriod}</option>
                   {periods.map((p) => (
                     <option key={p.id} value={p.id} disabled={p.isClosed}>
                       {p.name}
@@ -137,7 +138,7 @@ export default function JournalEntries() {
                 </select>
               </div>
               <div className="form-field" style={{ gridColumn: "1 / -1" }}>
-                <label>البيان</label>
+                <label>{t.accounting.statement}</label>
                 <input value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
             </div>
@@ -145,10 +146,10 @@ export default function JournalEntries() {
             <table style={{ marginTop: 16 }}>
               <thead>
                 <tr>
-                  <th>الحساب</th>
-                  <th>مدين</th>
-                  <th>دائن</th>
-                  <th>بيان السطر</th>
+                  <th>{t.common.account}</th>
+                  <th>{t.accounting.debit}</th>
+                  <th>{t.accounting.credit}</th>
+                  <th>{t.accounting.lineStatement}</th>
                   <th></th>
                 </tr>
               </thead>
@@ -157,7 +158,7 @@ export default function JournalEntries() {
                   <tr key={i}>
                     <td>
                       <select value={line.accountId} onChange={(e) => updateLine(i, "accountId", e.target.value)} required>
-                        <option value="">اختر الحساب</option>
+                        <option value="">{t.accounting.selectAccount}</option>
                         {accounts.map((a) => (
                           <option key={a.id} value={a.id}>
                             {a.code} - {a.nameAr}
@@ -189,7 +190,7 @@ export default function JournalEntries() {
                     <td>
                       {lines.length > 2 && (
                         <button type="button" className="btn btn-secondary btn-sm" onClick={() => removeLine(i)}>
-                          حذف
+                          {t.common.delete}
                         </button>
                       )}
                     </td>
@@ -200,7 +201,7 @@ export default function JournalEntries() {
                 <tr>
                   <td>
                     <button type="button" className="btn btn-secondary btn-sm" onClick={addLine}>
-                      + سطر
+                      {t.accounting.addLine}
                     </button>
                   </td>
                   <td>
@@ -219,7 +220,7 @@ export default function JournalEntries() {
             </table>
 
             <button className="btn" type="submit" style={{ marginTop: 14 }} disabled={totalDebit !== totalCredit || totalDebit === 0}>
-              حفظ كمسودة
+              {t.accounting.saveDraft}
             </button>
           </form>
         </div>
@@ -229,20 +230,20 @@ export default function JournalEntries() {
         <table>
           <thead>
             <tr>
-              <th>رقم القيد</th>
-              <th>التاريخ</th>
-              <th>البيان</th>
-              <th>مدين</th>
-              <th>دائن</th>
-              <th>الحالة</th>
-              <th>إجراءات</th>
+              <th>{t.accounting.entryNumber}</th>
+              <th>{t.common.date}</th>
+              <th>{t.accounting.statement}</th>
+              <th>{t.accounting.debit}</th>
+              <th>{t.accounting.credit}</th>
+              <th>{t.common.status}</th>
+              <th>{t.common.actions}</th>
             </tr>
           </thead>
           <tbody>
             {entries.map((entry) => (
               <tr key={entry.id}>
                 <td>{entry.entryNumber}</td>
-                <td>{new Date(entry.entryDate).toLocaleDateString("ar-EG")}</td>
+                <td>{new Date(entry.entryDate).toLocaleDateString()}</td>
                 <td>{entry.description}</td>
                 <td>{entry.totalDebit.toLocaleString()}</td>
                 <td>{entry.totalCredit.toLocaleString()}</td>
@@ -252,12 +253,12 @@ export default function JournalEntries() {
                 <td>
                   {entry.status === JournalEntryStatus.Draft && (
                     <button className="btn btn-sm" onClick={() => handlePost(entry.id)}>
-                      ترحيل
+                      {t.accounting.post}
                     </button>
                   )}
                   {entry.status === JournalEntryStatus.Posted && (
                     <button className="btn btn-secondary btn-sm" onClick={() => handleReverse(entry.id)}>
-                      عكس القيد
+                      {t.accounting.reverseEntry}
                     </button>
                   )}
                 </td>

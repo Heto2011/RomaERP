@@ -2,27 +2,21 @@ import { useEffect, useState } from "react";
 import { AccountsApi } from "../../api/services";
 import { AccountNature, AccountType, type Account } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
+import type { dictionaries } from "../../i18n/translations";
 
-const typeLabels: Record<AccountType, string> = {
-  [AccountType.Asset]: "أصول",
-  [AccountType.Liability]: "خصوم",
-  [AccountType.Equity]: "حقوق ملكية",
-  [AccountType.Revenue]: "إيرادات",
-  [AccountType.Expense]: "مصروفات",
-};
-
-function TreeNode({ account }: { account: Account }) {
+function TreeNode({ account, t }: { account: Account; t: (typeof dictionaries)["ar"] }) {
   return (
     <div className="tree-item">
       <div>
         <strong>{account.code}</strong> — {account.nameAr}
-        {account.isControlAccount && <span className="text-muted"> (إجمالي)</span>}
-        {!account.isActive && <span className="badge badge-reversed" style={{ marginRight: 8 }}>غير نشط</span>}
+        {account.isControlAccount && <span className="text-muted"> ({t.accounting.controlAccountBadge})</span>}
+        {!account.isActive && <span className="badge badge-reversed" style={{ marginRight: 8 }}>{t.accounting.inactiveBadge}</span>}
       </div>
       {account.children.length > 0 && (
         <div className="tree-children">
           {account.children.map((child) => (
-            <TreeNode key={child.id} account={child} />
+            <TreeNode key={child.id} account={child} t={t} />
           ))}
         </div>
       )}
@@ -31,6 +25,14 @@ function TreeNode({ account }: { account: Account }) {
 }
 
 export default function ChartOfAccounts() {
+  const { t } = useLanguage();
+  const typeLabels: Record<AccountType, string> = {
+    [AccountType.Asset]: t.accounting.types.asset,
+    [AccountType.Liability]: t.accounting.types.liability,
+    [AccountType.Equity]: t.accounting.types.equity,
+    [AccountType.Revenue]: t.accounting.types.revenue,
+    [AccountType.Expense]: t.accounting.types.expense,
+  };
   const [tree, setTree] = useState<Account[]>([]);
   const [flat, setFlat] = useState<Account[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -82,9 +84,9 @@ export default function ChartOfAccounts() {
   return (
     <div>
       <div className="page-header">
-        <h1>شجرة الحسابات</h1>
+        <h1>{t.nav.chartOfAccounts}</h1>
         <button className="btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "إلغاء" : "+ حساب جديد"}
+          {showForm ? t.common.cancel : t.accounting.newAccount}
         </button>
       </div>
 
@@ -94,19 +96,19 @@ export default function ChartOfAccounts() {
           <form onSubmit={handleSubmit}>
             <div className="form-grid">
               <div className="form-field">
-                <label>كود الحساب</label>
+                <label>{t.accounting.accountCode}</label>
                 <input value={code} onChange={(e) => setCode(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>الاسم بالعربي</label>
+                <label>{t.common.nameAr}</label>
                 <input value={nameAr} onChange={(e) => setNameAr(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>الاسم بالإنجليزي</label>
+                <label>{t.common.nameEn}</label>
                 <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>نوع الحساب</label>
+                <label>{t.accounting.accountType}</label>
                 <select value={accountType} onChange={(e) => setAccountType(Number(e.target.value))}>
                   {Object.entries(typeLabels).map(([value, label]) => (
                     <option key={value} value={value}>
@@ -116,16 +118,16 @@ export default function ChartOfAccounts() {
                 </select>
               </div>
               <div className="form-field">
-                <label>طبيعة الحساب</label>
+                <label>{t.accounting.accountNature}</label>
                 <select value={nature} onChange={(e) => setNature(Number(e.target.value))}>
-                  <option value={AccountNature.Debit}>مدين</option>
-                  <option value={AccountNature.Credit}>دائن</option>
+                  <option value={AccountNature.Debit}>{t.accounting.debit}</option>
+                  <option value={AccountNature.Credit}>{t.accounting.credit}</option>
                 </select>
               </div>
               <div className="form-field">
-                <label>الحساب الأب (اختياري)</label>
+                <label>{t.accounting.parentAccount}</label>
                 <select value={parentAccountId} onChange={(e) => setParentAccountId(e.target.value)}>
-                  <option value="">بدون</option>
+                  <option value="">{t.common.none}</option>
                   {flat.map((a) => (
                     <option key={a.id} value={a.id}>
                       {a.code} - {a.nameAr}
@@ -140,12 +142,12 @@ export default function ChartOfAccounts() {
                     checked={isControlAccount}
                     onChange={(e) => setIsControlAccount(e.target.checked)}
                   />{" "}
-                  حساب إجمالي (لا يقبل ترحيل مباشر)
+                  {t.accounting.controlAccountLabel}
                 </label>
               </div>
             </div>
             <button className="btn" type="submit" style={{ marginTop: 14 }}>
-              حفظ
+              {t.common.save}
             </button>
           </form>
         </div>
@@ -153,7 +155,7 @@ export default function ChartOfAccounts() {
 
       <div className="card">
         {tree.map((a) => (
-          <TreeNode key={a.id} account={a} />
+          <TreeNode key={a.id} account={a} t={t} />
         ))}
       </div>
     </div>

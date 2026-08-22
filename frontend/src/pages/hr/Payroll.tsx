@@ -2,14 +2,15 @@ import { Fragment, useEffect, useState } from "react";
 import { LookupsApi, PayrollApi } from "../../api/services";
 import { PayrollRunStatus, type FiscalPeriod, type PayrollRun } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
-
-const statusLabel: Record<PayrollRunStatus, { text: string; cls: string }> = {
-  [PayrollRunStatus.Draft]: { text: "مسودة", cls: "badge-draft" },
-  [PayrollRunStatus.Approved]: { text: "معتمد", cls: "badge-posted" },
-  [PayrollRunStatus.Posted]: { text: "مرحل", cls: "badge-posted" },
-};
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function Payroll() {
+  const { t } = useLanguage();
+  const statusLabel: Record<PayrollRunStatus, { text: string; cls: string }> = {
+    [PayrollRunStatus.Draft]: { text: t.accounting.draft, cls: "badge-draft" },
+    [PayrollRunStatus.Approved]: { text: t.hr.approved, cls: "badge-posted" },
+    [PayrollRunStatus.Posted]: { text: t.accounting.posted, cls: "badge-posted" },
+  };
   const [runs, setRuns] = useState<PayrollRun[]>([]);
   const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -66,9 +67,9 @@ export default function Payroll() {
   return (
     <div>
       <div className="page-header">
-        <h1>دورات الرواتب</h1>
+        <h1>{t.hr.payrollRunsTitle}</h1>
         <button className="btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "إلغاء" : "+ دورة رواتب جديدة"}
+          {showForm ? t.common.cancel : t.hr.newPayrollRun}
         </button>
       </div>
 
@@ -79,9 +80,9 @@ export default function Payroll() {
           <form onSubmit={handleSubmit}>
             <div className="form-grid">
               <div className="form-field">
-                <label>الفترة المالية</label>
+                <label>{t.accounting.fiscalPeriod}</label>
                 <select value={fiscalPeriodId} onChange={(e) => setFiscalPeriodId(e.target.value)} required>
-                  <option value="">اختر الفترة</option>
+                  <option value="">{t.accounting.selectPeriod}</option>
                   {periods.map((p) => (
                     <option key={p.id} value={p.id} disabled={p.isClosed}>
                       {p.name}
@@ -90,19 +91,19 @@ export default function Payroll() {
                 </select>
               </div>
               <div className="form-field">
-                <label>تاريخ الصرف</label>
+                <label>{t.hr.payDate}</label>
                 <input type="date" value={runDate} onChange={(e) => setRunDate(e.target.value)} required />
               </div>
               <div className="form-field" style={{ gridColumn: "1 / -1" }}>
-                <label>وصف</label>
+                <label>{t.accounting.statement}</label>
                 <input value={description} onChange={(e) => setDescription(e.target.value)} />
               </div>
             </div>
             <p className="text-muted" style={{ marginTop: 10 }}>
-              سيتم حساب الرواتب تلقائيًا لجميع الموظفين النشطين بناءً على الراتب الأساسي وعناصر الأجر المضافة لكل موظف.
+              {t.hr.payrollCalcNote}
             </p>
             <button className="btn" type="submit" style={{ marginTop: 8 }}>
-              إنشاء وحساب
+              {t.hr.createAndCalculate}
             </button>
           </form>
         </div>
@@ -112,19 +113,19 @@ export default function Payroll() {
         <table>
           <thead>
             <tr>
-              <th>تاريخ الصرف</th>
-              <th>الوصف</th>
-              <th>عدد الموظفين</th>
-              <th>إجمالي الصافي</th>
-              <th>الحالة</th>
-              <th>إجراءات</th>
+              <th>{t.hr.payDate}</th>
+              <th>{t.accounting.statement}</th>
+              <th>{t.hr.employeeCount}</th>
+              <th>{t.hr.totalNet}</th>
+              <th>{t.common.status}</th>
+              <th>{t.common.actions}</th>
             </tr>
           </thead>
           <tbody>
             {runs.map((run) => (
               <Fragment key={run.id}>
                 <tr>
-                  <td>{new Date(run.runDate).toLocaleDateString("ar-EG")}</td>
+                  <td>{new Date(run.runDate).toLocaleDateString()}</td>
                   <td>{run.description}</td>
                   <td>{run.lines.length}</td>
                   <td>{run.totalNet.toLocaleString()}</td>
@@ -133,16 +134,16 @@ export default function Payroll() {
                   </td>
                   <td style={{ display: "flex", gap: 6 }}>
                     <button className="btn btn-secondary btn-sm" onClick={() => setExpanded(expanded === run.id ? null : run.id)}>
-                      تفاصيل
+                      {t.hr.details}
                     </button>
                     {run.status === PayrollRunStatus.Draft && (
                       <button className="btn btn-sm" onClick={() => handleApprove(run.id)}>
-                        اعتماد
+                        {t.hr.approve}
                       </button>
                     )}
                     {run.status === PayrollRunStatus.Approved && (
                       <button className="btn btn-sm" onClick={() => handlePost(run.id)}>
-                        ترحيل
+                        {t.accounting.post}
                       </button>
                     )}
                   </td>
@@ -153,11 +154,11 @@ export default function Payroll() {
                       <table>
                         <thead>
                           <tr>
-                            <th>الموظف</th>
-                            <th>الأساسي</th>
-                            <th>البدلات</th>
-                            <th>الاستقطاعات</th>
-                            <th>الصافي</th>
+                            <th>{t.nav.employees}</th>
+                            <th>{t.hr.basicSalary}</th>
+                            <th>{t.hr.allowances}</th>
+                            <th>{t.hr.deductions}</th>
+                            <th>{t.hr.netSalary}</th>
                           </tr>
                         </thead>
                         <tbody>

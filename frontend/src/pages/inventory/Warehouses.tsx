@@ -2,8 +2,10 @@ import { useEffect, useState } from "react";
 import { WarehousesApi } from "../../api/services";
 import type { Warehouse } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
+import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function Warehouses() {
+  const { t } = useLanguage();
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -48,9 +50,9 @@ export default function Warehouses() {
   return (
     <div>
       <div className="page-header">
-        <h1>المخازن</h1>
+        <h1>{t.inventory.warehousesTitle}</h1>
         <button className="btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? "إلغاء" : "+ مخزن جديد"}
+          {showForm ? t.common.cancel : t.inventory.newWarehouse}
         </button>
       </div>
 
@@ -61,20 +63,20 @@ export default function Warehouses() {
           <form onSubmit={handleSubmit}>
             <div className="form-grid">
               <div className="form-field">
-                <label>كود المخزن</label>
+                <label>{t.inventory.warehouseCode}</label>
                 <input value={code} onChange={(e) => setCode(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>الاسم بالعربي</label>
+                <label>{t.common.nameAr}</label>
                 <input value={nameAr} onChange={(e) => setNameAr(e.target.value)} required />
               </div>
               <div className="form-field">
-                <label>الاسم بالإنجليزي</label>
+                <label>{t.common.nameEn}</label>
                 <input value={nameEn} onChange={(e) => setNameEn(e.target.value)} required />
               </div>
             </div>
             <button className="btn" type="submit" style={{ marginTop: 14 }}>
-              حفظ
+              {t.common.save}
             </button>
           </form>
         </div>
@@ -84,9 +86,9 @@ export default function Warehouses() {
         <table>
           <thead>
             <tr>
-              <th>الكود</th>
-              <th>الاسم بالعربي</th>
-              <th>الاسم بالإنجليزي</th>
+              <th>{t.common.code}</th>
+              <th>{t.common.nameAr}</th>
+              <th>{t.common.nameEn}</th>
               <th></th>
             </tr>
           </thead>
@@ -98,7 +100,7 @@ export default function Warehouses() {
                 <td>{w.nameEn}</td>
                 <td>
                   <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(w.id)}>
-                    حذف
+                    {t.common.delete}
                   </button>
                 </td>
               </tr>
