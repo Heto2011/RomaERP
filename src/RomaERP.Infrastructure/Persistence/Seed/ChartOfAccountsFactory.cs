@@ -40,15 +40,18 @@ public static class ChartOfAccountsFactory
 
         var fixedAssets = New("1200", "الأصول الثابتة", "Fixed Assets", AccountType.Asset, AccountNature.Debit, assets, true, 2);
         var landAndBuildings = New("1210", "أراضي ومباني", "Land & Buildings", AccountType.Asset, AccountNature.Debit, fixedAssets, false, 3);
+        var accumulatedDepreciationBuildings = New("1211", "مجمع إهلاك المباني", "Accumulated Depreciation - Buildings", AccountType.Asset, AccountNature.Credit, fixedAssets, false, 3);
         var machinery = New("1220", "آلات ومعدات", "Machinery & Equipment", AccountType.Asset, AccountNature.Debit, fixedAssets, false, 3);
+        var accumulatedDepreciationMachinery = New("1221", "مجمع إهلاك الآلات والمعدات", "Accumulated Depreciation - Machinery & Equipment", AccountType.Asset, AccountNature.Credit, fixedAssets, false, 3);
         var furniture = New("1230", "أثاث وتجهيزات", "Furniture & Fixtures", AccountType.Asset, AccountNature.Debit, fixedAssets, false, 3);
-        var accumulatedDepreciation = New("1240", "مجمع الإهلاك", "Accumulated Depreciation", AccountType.Asset, AccountNature.Credit, fixedAssets, false, 3);
+        var accumulatedDepreciationFurniture = New("1231", "مجمع إهلاك الأثاث والتجهيزات", "Accumulated Depreciation - Furniture & Fixtures", AccountType.Asset, AccountNature.Credit, fixedAssets, false, 3);
 
         accounts.AddRange(new[]
         {
             assets, currentAssets, cashAndEquivalents, cashOnHand, bank, accountsReceivable, notesReceivable,
             prepaidExpenses, accruedRevenue, inventory, employeeCustodies, inputVat,
-            fixedAssets, landAndBuildings, machinery, furniture, accumulatedDepreciation
+            fixedAssets, landAndBuildings, accumulatedDepreciationBuildings, machinery, accumulatedDepreciationMachinery,
+            furniture, accumulatedDepreciationFurniture
         });
 
         // ===== 2000 الخصوم =====
