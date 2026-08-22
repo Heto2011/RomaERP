@@ -1,6 +1,7 @@
 import { apiClient } from "./client";
 import type {
   Account,
+  AppUser,
   BalanceSheet,
   BankStatementImportResult,
   BankStatementLine,
@@ -10,6 +11,7 @@ import type {
   CreateCustomerInput,
   CreatePurchaseInvoiceInput,
   CreateSalesInvoiceInput,
+  CreateUserInput,
   CreateVendorInput,
   Customer,
   CustomerAging,
@@ -203,4 +205,12 @@ export const PurchasingApi = {
   createInvoice: (data: CreatePurchaseInvoiceInput) => apiClient.post<PurchaseInvoice>("/purchasing/invoices", data),
   recordPayment: (id: string, data: RecordPurchasePaymentInput) => apiClient.post<PurchaseInvoice>(`/purchasing/invoices/${id}/payments`, data),
   getAging: () => apiClient.get<VendorAging[]>("/purchasing/aging"),
+};
+
+export const UsersApi = {
+  getAll: () => apiClient.get<AppUser[]>("/users"),
+  create: (data: CreateUserInput) => apiClient.post<AppUser>("/users", data),
+  updateRoles: (id: string, roles: string[]) => apiClient.put<AppUser>(`/users/${id}/roles`, { roles }),
+  deactivate: (id: string) => apiClient.post<AppUser>(`/users/${id}/deactivate`),
+  activate: (id: string) => apiClient.post<AppUser>(`/users/${id}/activate`),
 };

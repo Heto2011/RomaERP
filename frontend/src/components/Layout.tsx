@@ -62,6 +62,9 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/inventory/movements", label: t.nav.stockMovements },
       ],
     },
+    ...(user?.roles.includes("Admin")
+      ? [{ section: t.nav.administration, items: [{ to: "/users", label: t.nav.users }] }]
+      : []),
   ];
 
   return (

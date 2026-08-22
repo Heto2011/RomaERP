@@ -557,3 +557,21 @@ export interface VendorAging {
   days61To90: number;
   over90Days: number;
 }
+
+export const AppRoles = ["Admin", "Accountant", "HR", "Employee"] as const;
+export type AppRole = (typeof AppRoles)[number];
+
+export interface AppUser {
+  id: string;
+  email: string;
+  fullName: string;
+  isActive: boolean;
+  roles: string[];
+}
+
+export interface CreateUserInput {
+  email: string;
+  password: string;
+  fullName: string;
+  roles: string[];
+}
