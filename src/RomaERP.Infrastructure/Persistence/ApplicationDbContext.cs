@@ -5,6 +5,8 @@ using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Assistant;
 using RomaERP.Domain.HR;
 using RomaERP.Domain.Inventory;
+using RomaERP.Domain.Purchasing;
+using RomaERP.Domain.Sales;
 using RomaERP.Domain.Tenancy;
 using RomaERP.Infrastructure.Identity;
 
@@ -42,6 +44,16 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<BankStatementLine> BankStatementLines => Set<BankStatementLine>();
 
     public DbSet<CompanySettings> CompanySettings => Set<CompanySettings>();
+
+    public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<SalesInvoice> SalesInvoices => Set<SalesInvoice>();
+    public DbSet<SalesInvoiceLine> SalesInvoiceLines => Set<SalesInvoiceLine>();
+    public DbSet<SalesPayment> SalesPayments => Set<SalesPayment>();
+
+    public DbSet<Vendor> Vendors => Set<Vendor>();
+    public DbSet<PurchaseInvoice> PurchaseInvoices => Set<PurchaseInvoice>();
+    public DbSet<PurchaseInvoiceLine> PurchaseInvoiceLines => Set<PurchaseInvoiceLine>();
+    public DbSet<PurchasePayment> PurchasePayments => Set<PurchasePayment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

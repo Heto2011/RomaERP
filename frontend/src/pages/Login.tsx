@@ -2,10 +2,12 @@ import { useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../api/client";
+import { useLanguage } from "../i18n/LanguageContext";
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const { t, lang, setLang } = useLanguage();
   const [companyCode, setCompanyCode] = useState(() => localStorage.getItem("companyCode") ?? "demo");
   const [email, setEmail] = useState("admin@romaerp.local");
   const [password, setPassword] = useState("");
@@ -29,24 +31,29 @@ export default function Login() {
   return (
     <div className="login-page">
       <div className="login-card">
-        <h1>RomaERP</h1>
-        <p>نظام تخطيط موارد المؤسسات</p>
+        <div style={{ display: "flex", justifyContent: "flex-end" }}>
+          <button className="btn btn-secondary btn-sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")}>
+            {t.language}
+          </button>
+        </div>
+        <h1>{t.login.title}</h1>
+        <p>{t.login.subtitle}</p>
         {error && <div className="alert-error">{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div className="form-field">
-            <label>كود الشركة</label>
+            <label>{t.login.companyCode}</label>
             <input type="text" value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} required />
           </div>
           <div className="form-field">
-            <label>البريد الإلكتروني</label>
+            <label>{t.login.email}</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
           </div>
           <div className="form-field">
-            <label>كلمة المرور</label>
+            <label>{t.login.password}</label>
             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
           </div>
           <button className="btn" type="submit" disabled={loading}>
-            {loading ? "جارٍ الدخول..." : "تسجيل الدخول"}
+            {loading ? t.login.submitting : t.login.submit}
           </button>
         </form>
       </div>

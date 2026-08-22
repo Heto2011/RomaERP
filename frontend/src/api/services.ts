@@ -6,6 +6,11 @@ import type {
   BankStatementLine,
   ChatTurnResponse,
   CostCenterLookup,
+  CreateCustomerInput,
+  CreatePurchaseInvoiceInput,
+  CreateSalesInvoiceInput,
+  CreateVendorInput,
+  Customer,
   Department,
   Employee,
   ExpenseCapture,
@@ -17,9 +22,14 @@ import type {
   JournalEntry,
   PayrollRun,
   Position,
+  PurchaseInvoice,
+  RecordPurchasePaymentInput,
+  RecordSalesPaymentInput,
   SalaryComponent,
+  SalesInvoice,
   StockMovement,
   TrialBalanceLine,
+  Vendor,
   Warehouse,
 } from "./types";
 
@@ -169,4 +179,22 @@ export const InventoryApi = {
   getMovements: () => apiClient.get<StockMovement[]>("/inventory/movements"),
   receive: (data: unknown) => apiClient.post<StockMovement>("/inventory/receive", data),
   issue: (data: unknown) => apiClient.post<StockMovement>("/inventory/issue", data),
+};
+
+export const SalesApi = {
+  getCustomers: () => apiClient.get<Customer[]>("/sales/customers"),
+  createCustomer: (data: CreateCustomerInput) => apiClient.post<Customer>("/sales/customers", data),
+  getInvoices: () => apiClient.get<SalesInvoice[]>("/sales/invoices"),
+  getInvoice: (id: string) => apiClient.get<SalesInvoice>(`/sales/invoices/${id}`),
+  createInvoice: (data: CreateSalesInvoiceInput) => apiClient.post<SalesInvoice>("/sales/invoices", data),
+  recordPayment: (id: string, data: RecordSalesPaymentInput) => apiClient.post<SalesInvoice>(`/sales/invoices/${id}/payments`, data),
+};
+
+export const PurchasingApi = {
+  getVendors: () => apiClient.get<Vendor[]>("/purchasing/vendors"),
+  createVendor: (data: CreateVendorInput) => apiClient.post<Vendor>("/purchasing/vendors", data),
+  getInvoices: () => apiClient.get<PurchaseInvoice[]>("/purchasing/invoices"),
+  getInvoice: (id: string) => apiClient.get<PurchaseInvoice>(`/purchasing/invoices/${id}`),
+  createInvoice: (data: CreatePurchaseInvoiceInput) => apiClient.post<PurchaseInvoice>("/purchasing/invoices", data),
+  recordPayment: (id: string, data: RecordPurchasePaymentInput) => apiClient.post<PurchaseInvoice>(`/purchasing/invoices/${id}/payments`, data),
 };

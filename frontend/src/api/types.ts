@@ -357,3 +357,169 @@ export interface StockMovement {
   description: string | null;
   journalEntryId: string | null;
 }
+
+export enum PaymentTerm {
+  Cash = 1,
+  Card = 2,
+  Credit = 3,
+}
+
+export interface Customer {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  phone: string | null;
+  email: string | null;
+  taxRegistrationNumber: string | null;
+  isActive: boolean;
+  arBalance: number;
+}
+
+export interface CreateCustomerInput {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  phone?: string | null;
+  email?: string | null;
+  taxRegistrationNumber?: string | null;
+}
+
+export interface SalesInvoiceLineInput {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface SalesInvoiceLine {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+}
+
+export interface SalesPayment {
+  id: string;
+  paymentDate: string;
+  amount: number;
+  method: PaymentTerm;
+  reference: string | null;
+  journalEntryId: string | null;
+}
+
+export interface CreateSalesInvoiceInput {
+  customerId: string;
+  invoiceDate: string;
+  fiscalPeriodId: string;
+  paymentTerm: PaymentTerm;
+  notes?: string | null;
+  lines: SalesInvoiceLineInput[];
+}
+
+export interface RecordSalesPaymentInput {
+  amount: number;
+  method: PaymentTerm;
+  paymentDate: string;
+  reference?: string | null;
+}
+
+export interface SalesInvoice {
+  id: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  customerId: string;
+  customerName: string;
+  subTotal: number;
+  vatRate: number;
+  vatAmount: number;
+  totalAmount: number;
+  paymentTerm: PaymentTerm;
+  paidAmount: number;
+  outstandingAmount: number;
+  journalEntryId: string | null;
+  notes: string | null;
+  lines: SalesInvoiceLine[];
+  payments: SalesPayment[];
+}
+
+export interface Vendor {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  phone: string | null;
+  email: string | null;
+  taxRegistrationNumber: string | null;
+  isActive: boolean;
+  apBalance: number;
+}
+
+export interface CreateVendorInput {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  phone?: string | null;
+  email?: string | null;
+  taxRegistrationNumber?: string | null;
+}
+
+export interface PurchaseInvoiceLineInput {
+  description: string;
+  accountId: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface PurchaseInvoiceLine {
+  description: string;
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+}
+
+export interface PurchasePayment {
+  id: string;
+  paymentDate: string;
+  amount: number;
+  method: PaymentTerm;
+  reference: string | null;
+  journalEntryId: string | null;
+}
+
+export interface CreatePurchaseInvoiceInput {
+  vendorId: string;
+  invoiceDate: string;
+  fiscalPeriodId: string;
+  paymentTerm: PaymentTerm;
+  notes?: string | null;
+  lines: PurchaseInvoiceLineInput[];
+}
+
+export interface RecordPurchasePaymentInput {
+  amount: number;
+  method: PaymentTerm;
+  paymentDate: string;
+  reference?: string | null;
+}
+
+export interface PurchaseInvoice {
+  id: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  vendorId: string;
+  vendorName: string;
+  subTotal: number;
+  vatRate: number;
+  vatAmount: number;
+  totalAmount: number;
+  paymentTerm: PaymentTerm;
+  paidAmount: number;
+  outstandingAmount: number;
+  journalEntryId: string | null;
+  notes: string | null;
+  lines: PurchaseInvoiceLine[];
+  payments: PurchasePayment[];
+}

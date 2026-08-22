@@ -1,0 +1,143 @@
+using Microsoft.EntityFrameworkCore;
+using RomaERP.Application.Purchasing.DTOs;
+using RomaERP.Application.Purchasing.Services;
+using RomaERP.Domain.Accounting;
+using RomaERP.Domain.Common;
+using RomaERP.Domain.Purchasing;
+using RomaERP.Domain.Tenancy;
+using RomaERP.Infrastructure.Persistence;
+using Xunit;
+
+namespace RomaERP.UnitTests;
+
+public class PurchasingServiceTests
+{
+    private static ApplicationDbContext CreateContext()
+    {
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(Guid.NewGuid().ToString())
+            .Options;
+        return new ApplicationDbContext(options);
+    }
+
+    private static async Task<(ApplicationDbContext ctx, Account cash, Account bank, Account ap, Account expense, Account inputVat, Vendor vendor, FiscalPeriod period)> SeedAsync(decimal vatRate = 0.14m)
+    {
+        var ctx = CreateContext();
+
+        var cash = new Account { Code = "1111", NameAr = "الصندوق", NameEn = "Cash", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+        var bank = new Account { Code = "1112", NameAr = "البنك", NameEn = "Bank", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+        var ap = new Account { Code = "2120", NameAr = "الموردون", NameEn = "AP", AccountType = AccountType.Liability, Nature = AccountNature.Credit };
+        var expense = new Account { Code = "5300", NameAr = "مصروفات إدارية", NameEn = "Admin Expense", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        var inputVat = new Account { Code = "1180", NameAr = "ضريبة مدخلات", NameEn = "Input VAT", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+
+        var today = DateTime.UtcNow.Date;
+        var year = new FiscalYear { Name = today.Year.ToString(), StartDate = new DateTime(today.Year, 1, 1), EndDate = new DateTime(today.Year, 12, 31) };
+        var period = new FiscalPeriod { FiscalYear = year, FiscalYearId = year.Id, Name = "Current", PeriodNumber = 1, StartDate = today.AddDays(-15), EndDate = today.AddDays(15) };
+
+        var vendor = new Vendor { Code = "VEND-1", NameAr = "مورد تجريبي", NameEn = "Test Vendor" };
+
+        ctx.Accounts.AddRange(cash, bank, ap, expense, inputVat);
+        ctx.FiscalYears.Add(year);
+        ctx.FiscalPeriods.Add(period);
+        ctx.Vendors.Add(vendor);
+        ctx.CompanySettings.Add(new CompanySettings { CompanyNameAr = "شركة", CompanyNameEn = "Co", Country = Country.Egypt, VatRate = vatRate, DefaultCurrency = "EGP" });
+        await ctx.SaveChangesAsync();
+
+        return (ctx, cash, bank, ap, expense, inputVat, vendor, period);
+    }
+
+    [Fact]
+    public async Task CreateInvoice_WithCashTerm_SettlesImmediatelyWithoutTouchingAp()
+    {
+        var (ctx, cash, _, _, expense, inputVat, vendor, period) = await SeedAsync();
+        var service = new PurchasingService(ctx);
+
+        var invoice = await service.CreateInvoiceAsync(new CreatePurchaseInvoiceDto
+        {
+            VendorId = vendor.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Cash,
+            Lines = { new PurchaseInvoiceLineInputDto { Description = "إيجار", AccountId = expense.Id, Quantity = 1, UnitPrice = 300 } }
+        });
+
+        Assert.Equal(300, invoice.SubTotal);
+        Assert.Equal(42, invoice.VatAmount);
+        Assert.Equal(342, invoice.TotalAmount);
+        Assert.Equal(342, invoice.PaidAmount);
+        Assert.Equal(0, invoice.OutstandingAmount);
+
+        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == invoice.JournalEntryId);
+        Assert.Contains(entry.Lines, l => l.AccountId == expense.Id && l.Debit == 300);
+        Assert.Contains(entry.Lines, l => l.AccountId == inputVat.Id && l.Debit == 42);
+        Assert.Contains(entry.Lines, l => l.AccountId == cash.Id && l.Credit == 342);
+
+        var updatedVendor = await ctx.Vendors.FirstAsync(v => v.Id == vendor.Id);
+        Assert.Equal(0, updatedVendor.ApBalance);
+    }
+
+    [Fact]
+    public async Task CreateInvoice_WithCreditTerm_PostsToApAndIncreasesVendorBalance()
+    {
+        var (ctx, _, _, ap, expense, inputVat, vendor, period) = await SeedAsync();
+        var service = new PurchasingService(ctx);
+
+        var invoice = await service.CreateInvoiceAsync(new CreatePurchaseInvoiceDto
+        {
+            VendorId = vendor.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Credit,
+            Lines = { new PurchaseInvoiceLineInputDto { Description = "خدمات", AccountId = expense.Id, Quantity = 2, UnitPrice = 250 } }
+        });
+
+        Assert.Equal(0, invoice.PaidAmount);
+        Assert.Equal(570, invoice.TotalAmount);
+        Assert.Equal(570, invoice.OutstandingAmount);
+
+        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == invoice.JournalEntryId);
+        Assert.Contains(entry.Lines, l => l.AccountId == expense.Id && l.Debit == 500);
+        Assert.Contains(entry.Lines, l => l.AccountId == inputVat.Id && l.Debit == 70);
+        Assert.Contains(entry.Lines, l => l.AccountId == ap.Id && l.Credit == 570);
+
+        var updatedVendor = await ctx.Vendors.FirstAsync(v => v.Id == vendor.Id);
+        Assert.Equal(570, updatedVendor.ApBalance);
+    }
+
+    [Fact]
+    public async Task RecordPayment_OnCreditInvoice_ReducesOutstandingAndVendorBalance()
+    {
+        var (ctx, cash, _, ap, expense, _, vendor, period) = await SeedAsync();
+        var service = new PurchasingService(ctx);
+
+        var invoice = await service.CreateInvoiceAsync(new CreatePurchaseInvoiceDto
+        {
+            VendorId = vendor.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Credit,
+            Lines = { new PurchaseInvoiceLineInputDto { Description = "خدمات", AccountId = expense.Id, Quantity = 1, UnitPrice = 1000 } }
+        });
+
+        var updated = await service.RecordPaymentAsync(invoice.Id, new RecordPurchasePaymentDto
+        {
+            Amount = 400,
+            Method = PaymentTerm.Cash,
+            PaymentDate = DateTime.UtcNow.Date
+        });
+
+        Assert.Equal(400, updated.PaidAmount);
+        Assert.Equal(740, updated.OutstandingAmount); // 1140 total - 400 paid
+
+        var updatedVendor = await ctx.Vendors.FirstAsync(v => v.Id == vendor.Id);
+        Assert.Equal(740, updatedVendor.ApBalance);
+
+        var paymentEntry = await ctx.JournalEntries
+            .Include(e => e.Lines)
+            .Where(e => e.Reference == "PURCHASE-INVOICE")
+            .OrderByDescending(e => e.EntryNumber)
+            .FirstAsync();
+        Assert.Contains(paymentEntry.Lines, l => l.AccountId == ap.Id && l.Debit == 400);
+        Assert.Contains(paymentEntry.Lines, l => l.AccountId == cash.Id && l.Credit == 400);
+    }
+}

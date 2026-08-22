@@ -26,7 +26,6 @@ body {
   margin: 0;
   background: var(--color-bg);
   color: var(--color-text);
-  direction: rtl;
 }
 
 a {
@@ -313,4 +312,12 @@ tr:hover td {
   margin-bottom: 16px;
   flex-wrap: wrap;
   align-items: center;
+}
+
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  overflow-y: auto;
 }

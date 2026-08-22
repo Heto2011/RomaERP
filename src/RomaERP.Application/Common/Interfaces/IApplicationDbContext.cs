@@ -3,6 +3,8 @@ using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Assistant;
 using RomaERP.Domain.HR;
 using RomaERP.Domain.Inventory;
+using RomaERP.Domain.Purchasing;
+using RomaERP.Domain.Sales;
 using RomaERP.Domain.Tenancy;
 
 namespace RomaERP.Application.Common.Interfaces;
@@ -35,6 +37,16 @@ public interface IApplicationDbContext
     DbSet<BankStatementLine> BankStatementLines { get; }
 
     DbSet<CompanySettings> CompanySettings { get; }
+
+    DbSet<Customer> Customers { get; }
+    DbSet<SalesInvoice> SalesInvoices { get; }
+    DbSet<SalesInvoiceLine> SalesInvoiceLines { get; }
+    DbSet<SalesPayment> SalesPayments { get; }
+
+    DbSet<Vendor> Vendors { get; }
+    DbSet<PurchaseInvoice> PurchaseInvoices { get; }
+    DbSet<PurchaseInvoiceLine> PurchaseInvoiceLines { get; }
+    DbSet<PurchasePayment> PurchasePayments { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
