@@ -6,7 +6,7 @@ using RomaERP.Application.HR.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin,HR")]
 [Route("api/[controller]")]
 public class EmployeesController : ControllerBase
 {

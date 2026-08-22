@@ -1,10 +1,13 @@
 import { apiClient } from "./client";
 import type {
   Account,
+  BalanceSheet,
   CostCenterLookup,
   Department,
   Employee,
   FiscalPeriod,
+  FiscalYearDetail,
+  IncomeStatement,
   Item,
   ItemCategory,
   JournalEntry,
@@ -86,6 +89,20 @@ export const PayrollApi = {
   create: (data: unknown) => apiClient.post<PayrollRun>("/payroll", data),
   approve: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/approve`),
   post: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/post`),
+};
+
+export const FinancialReportsApi = {
+  incomeStatement: (fromDate: string, toDate: string) =>
+    apiClient.get<IncomeStatement>("/financialreports/income-statement", { params: { fromDate, toDate } }),
+  balanceSheet: (asOfDate: string) =>
+    apiClient.get<BalanceSheet>("/financialreports/balance-sheet", { params: { asOfDate } }),
+};
+
+export const FiscalPeriodsAdminApi = {
+  getAllYears: () => apiClient.get<FiscalYearDetail[]>("/fiscalperiods/years"),
+  closePeriod: (id: string) => apiClient.post<FiscalPeriod>(`/fiscalperiods/${id}/close`),
+  reopenPeriod: (id: string) => apiClient.post<FiscalPeriod>(`/fiscalperiods/${id}/reopen`),
+  closeYear: (id: string) => apiClient.post<FiscalYearDetail>(`/fiscalperiods/years/${id}/close`),
 };
 
 export const ItemCategoriesApi = {

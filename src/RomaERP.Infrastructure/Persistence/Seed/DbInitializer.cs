@@ -34,20 +34,30 @@ public static class DbInitializer
                 await roleManager.CreateAsync(new ApplicationRole(role));
         }
 
-        const string adminEmail = "admin@romaerp.local";
-        if (await userManager.FindByEmailAsync(adminEmail) is null)
+        (string Email, string FullName, string Role)[] demoUsers =
         {
-            var admin = new ApplicationUser
+            ("admin@romaerp.local", "System Administrator", "Admin"),
+            ("accountant@romaerp.local", "محاسب النظام", "Accountant"),
+            ("hr@romaerp.local", "مسؤول الموارد البشرية", "HR"),
+            ("employee@romaerp.local", "مستخدم موظف", "Employee")
+        };
+
+        foreach (var (email, fullName, role) in demoUsers)
+        {
+            if (await userManager.FindByEmailAsync(email) is not null)
+                continue;
+
+            var user = new ApplicationUser
             {
-                UserName = adminEmail,
-                Email = adminEmail,
-                FullName = "System Administrator",
+                UserName = email,
+                Email = email,
+                FullName = fullName,
                 EmailConfirmed = true
             };
 
-            var result = await userManager.CreateAsync(admin, "Admin@12345");
+            var result = await userManager.CreateAsync(user, "Passw0rd!123");
             if (result.Succeeded)
-                await userManager.AddToRoleAsync(admin, "Admin");
+                await userManager.AddToRoleAsync(user, role);
         }
     }
 

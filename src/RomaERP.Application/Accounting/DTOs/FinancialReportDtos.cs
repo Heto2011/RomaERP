@@ -1,0 +1,33 @@
+namespace RomaERP.Application.Accounting.DTOs;
+
+public class ReportLineDto
+{
+    public string AccountCode { get; set; } = string.Empty;
+    public string AccountName { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+}
+
+public class IncomeStatementDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public List<ReportLineDto> RevenueLines { get; set; } = new();
+    public decimal TotalRevenue { get; set; }
+    public List<ReportLineDto> ExpenseLines { get; set; } = new();
+    public decimal TotalExpense { get; set; }
+    public decimal NetIncome { get; set; }
+}
+
+public class BalanceSheetDto
+{
+    public DateTime AsOfDate { get; set; }
+    public List<ReportLineDto> AssetLines { get; set; } = new();
+    public decimal TotalAssets { get; set; }
+    public List<ReportLineDto> LiabilityLines { get; set; } = new();
+    public decimal TotalLiabilities { get; set; }
+    public List<ReportLineDto> EquityLines { get; set; } = new();
+    public decimal CurrentYearNetIncome { get; set; }
+    public decimal TotalEquity { get; set; }
+    public decimal TotalLiabilitiesAndEquity { get; set; }
+    public bool IsBalanced { get; set; }
+}

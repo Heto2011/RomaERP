@@ -10,6 +10,9 @@ const links = [
       { to: "/accounting/chart-of-accounts", label: "شجرة الحسابات" },
       { to: "/accounting/journal-entries", label: "القيود اليومية" },
       { to: "/accounting/trial-balance", label: "ميزان المراجعة" },
+      { to: "/accounting/income-statement", label: "قائمة الدخل" },
+      { to: "/accounting/balance-sheet", label: "المركز المالي" },
+      { to: "/accounting/fiscal-periods", label: "إقفال الفترات" },
     ],
   },
   {

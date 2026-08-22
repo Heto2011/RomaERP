@@ -6,6 +6,9 @@ import Dashboard from "./pages/Dashboard";
 import ChartOfAccounts from "./pages/accounting/ChartOfAccounts";
 import JournalEntries from "./pages/accounting/JournalEntries";
 import TrialBalance from "./pages/accounting/TrialBalance";
+import IncomeStatementPage from "./pages/accounting/IncomeStatement";
+import BalanceSheetPage from "./pages/accounting/BalanceSheet";
+import FiscalPeriods from "./pages/accounting/FiscalPeriods";
 import Departments from "./pages/hr/Departments";
 import Positions from "./pages/hr/Positions";
 import Employees from "./pages/hr/Employees";
@@ -28,6 +31,9 @@ export default function App() {
       <Route path="/accounting/chart-of-accounts" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />
       <Route path="/accounting/journal-entries" element={<ProtectedRoute><JournalEntries /></ProtectedRoute>} />
       <Route path="/accounting/trial-balance" element={<ProtectedRoute><TrialBalance /></ProtectedRoute>} />
+      <Route path="/accounting/income-statement" element={<ProtectedRoute><IncomeStatementPage /></ProtectedRoute>} />
+      <Route path="/accounting/balance-sheet" element={<ProtectedRoute><BalanceSheetPage /></ProtectedRoute>} />
+      <Route path="/accounting/fiscal-periods" element={<ProtectedRoute><FiscalPeriods /></ProtectedRoute>} />
       <Route path="/hr/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />
       <Route path="/hr/positions" element={<ProtectedRoute><Positions /></ProtectedRoute>} />
       <Route path="/hr/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />

@@ -6,7 +6,7 @@ using RomaERP.Application.Accounting.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize]
+[Authorize(Roles = "Admin,Accountant")]
 [Route("api/[controller]")]
 public class AccountsController : ControllerBase
 {

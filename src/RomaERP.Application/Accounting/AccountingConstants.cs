@@ -7,4 +7,5 @@ public static class AccountingConstants
     public const string InventoryAccountCode = "1160";
     public const string AccountsPayableAccountCode = "2120";
     public const string CostOfGoodsSoldAccountCode = "5500";
+    public const string RetainedEarningsAccountCode = "3200";
 }

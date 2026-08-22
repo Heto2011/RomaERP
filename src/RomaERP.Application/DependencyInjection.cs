@@ -11,6 +11,8 @@ public static class DependencyInjection
     {
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IJournalEntryService, JournalEntryService>();
+        services.AddScoped<IFinancialReportService, FinancialReportService>();
+        services.AddScoped<IFiscalPeriodService, FiscalPeriodService>();
 
         services.AddScoped<IDepartmentService, DepartmentService>();
         services.AddScoped<IPositionService, PositionService>();

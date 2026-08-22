@@ -56,6 +56,44 @@ export interface JournalEntry {
   lines: JournalEntryLine[];
 }
 
+export interface ReportLine {
+  accountCode: string;
+  accountName: string;
+  amount: number;
+}
+
+export interface IncomeStatement {
+  fromDate: string;
+  toDate: string;
+  revenueLines: ReportLine[];
+  totalRevenue: number;
+  expenseLines: ReportLine[];
+  totalExpense: number;
+  netIncome: number;
+}
+
+export interface BalanceSheet {
+  asOfDate: string;
+  assetLines: ReportLine[];
+  totalAssets: number;
+  liabilityLines: ReportLine[];
+  totalLiabilities: number;
+  equityLines: ReportLine[];
+  currentYearNetIncome: number;
+  totalEquity: number;
+  totalLiabilitiesAndEquity: number;
+  isBalanced: boolean;
+}
+
+export interface FiscalYearDetail {
+  id: string;
+  name: string;
+  startDate: string;
+  endDate: string;
+  isClosed: boolean;
+  periods: FiscalPeriod[];
+}
+
 export interface TrialBalanceLine {
   accountCode: string;
   accountName: string;
