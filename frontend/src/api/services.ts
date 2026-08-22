@@ -91,6 +91,12 @@ export const PayrollApi = {
   post: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/post`),
 };
 
+export const OpeningBalanceApi = {
+  getForFiscalYear: (fiscalYearId: string) =>
+    apiClient.get<JournalEntry | null>(`/openingbalance/fiscal-years/${fiscalYearId}`),
+  create: (data: unknown) => apiClient.post<JournalEntry>("/openingbalance", data),
+};
+
 export const FinancialReportsApi = {
   incomeStatement: (fromDate: string, toDate: string) =>
     apiClient.get<IncomeStatement>("/financialreports/income-statement", { params: { fromDate, toDate } }),

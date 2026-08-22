@@ -8,6 +8,7 @@ const links = [
     section: "المحاسبة",
     items: [
       { to: "/accounting/chart-of-accounts", label: "شجرة الحسابات" },
+      { to: "/accounting/opening-balances", label: "الأرصدة الافتتاحية" },
       { to: "/accounting/journal-entries", label: "القيود اليومية" },
       { to: "/accounting/trial-balance", label: "ميزان المراجعة" },
       { to: "/accounting/income-statement", label: "قائمة الدخل" },
