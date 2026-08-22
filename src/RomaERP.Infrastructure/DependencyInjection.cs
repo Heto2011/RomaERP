@@ -7,6 +7,8 @@ using RomaERP.Application.Common.Interfaces;
 using RomaERP.Infrastructure.Assistant;
 using RomaERP.Infrastructure.Identity;
 using RomaERP.Infrastructure.Persistence;
+using RomaERP.Infrastructure.Persistence.Central;
+using RomaERP.Infrastructure.Tenancy;
 
 namespace RomaERP.Infrastructure;
 
@@ -14,10 +16,32 @@ public static class DependencyInjection
 {
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-        var connectionString = configuration.GetConnectionString("DefaultConnection");
+        services.AddMemoryCache();
 
-        services.AddDbContext<ApplicationDbContext>(options =>
-            options.UseSqlServer(connectionString));
+        services.AddDbContext<CentralDbContext>(options =>
+            options.UseSqlServer(configuration.GetConnectionString("Central")));
+
+        services.AddScoped<TenantContext>();
+        services.AddScoped<ITenantContext>(provider => provider.GetRequiredService<TenantContext>());
+        services.AddScoped<ITenantRegistry, TenantRegistry>();
+        services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
+
+        // Every tenant has its own, fully separate database. The connection string is only known once
+        // TenantResolutionMiddleware resolves the request's company code, so it's read lazily here from
+        // the scoped ITenantContext rather than a single fixed configuration value. `dotnet ef` tooling
+        // probes every registered DbContext through this same DI path with no request/tenant in scope —
+        // it only needs a syntactically valid connection string to build the model, never an unresolved
+        // exception, so it falls back to a placeholder that's never actually reached by a real request
+        // (TenantResolutionMiddleware always resolves the tenant before any request touches this context).
+        services.AddDbContext<ApplicationDbContext>((provider, options) =>
+        {
+            var tenantContext = provider.GetRequiredService<ITenantContext>();
+            var connectionString = tenantContext.IsResolved
+                ? tenantContext.ConnectionString
+                : "Server=localhost;Database=RomaERP_DesignTime;User Id=sa;Password=YourStrong@Passw0rd;TrustServerCertificate=True;";
+
+            options.UseSqlServer(connectionString);
+        });
 
         services.AddScoped<IApplicationDbContext>(provider => provider.GetRequiredService<ApplicationDbContext>());
 

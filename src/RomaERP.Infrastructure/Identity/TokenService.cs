@@ -16,7 +16,7 @@ public class TokenService : ITokenService
         _settings = settings.Value;
     }
 
-    public string GenerateToken(Guid userId, string userName, string email, IEnumerable<string> roles)
+    public string GenerateToken(Guid userId, string userName, string email, string companyCode, IEnumerable<string> roles)
     {
         var claims = new List<Claim>
         {
@@ -24,6 +24,7 @@ public class TokenService : ITokenService
             new(JwtRegisteredClaimNames.Email, email),
             new(ClaimTypes.NameIdentifier, userId.ToString()),
             new(ClaimTypes.Name, userName),
+            new("company_code", companyCode),
             new(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString())
         };
 

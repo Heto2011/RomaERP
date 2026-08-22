@@ -9,7 +9,7 @@ interface AuthUser {
 
 interface AuthContextValue {
   user: AuthUser | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (companyCode: string, email: string, password: string) => Promise<void>;
   logout: () => void;
 }
 
@@ -21,8 +21,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return stored ? JSON.parse(stored) : null;
   });
 
-  async function login(email: string, password: string) {
-    const { data } = await AuthApi.login(email, password);
+  async function login(companyCode: string, email: string, password: string) {
+    const { data } = await AuthApi.login(companyCode, email, password);
+    localStorage.setItem("companyCode", companyCode);
     localStorage.setItem("token", data.token);
     const authUser = { email: data.email, fullName: data.fullName, roles: data.roles };
     localStorage.setItem("user", JSON.stringify(authUser));

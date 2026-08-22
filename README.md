@@ -78,25 +78,25 @@ frontend/                 # React + TypeScript
 docker run -d --name romaerp-sql -e "ACCEPT_EULA=Y" -e "MSSQL_SA_PASSWORD=YourStrong@Passw0rd" -p 1433:1433 mcr.microsoft.com/mssql/server:2022-latest
 ```
 
-عدّل `ConnectionStrings:DefaultConnection` في `src/RomaERP.API/appsettings.json` عند الحاجة.
+عدّل `ConnectionStrings:Central` و`ConnectionStrings:TenantServer` في `src/RomaERP.API/appsettings.json` عند الحاجة (راجع "تعدد العملاء" تحت).
 
 ### 2. الـ Backend
 
 ```bash
 dotnet tool install --global dotnet-ef
-dotnet ef database update --project src/RomaERP.Infrastructure --startup-project src/RomaERP.API
 dotnet run --project src/RomaERP.API
 ```
 
-عند أول تشغيل (Development) يتم تلقائيًا زرع (Seed):
-- دليل الحسابات الأساسي، السنة المالية الحالية وفتراتها الشهرية، مخزن ومركز تكلفة وقسم افتراضي.
+عند أول تشغيل (Development) يتم تلقائيًا:
+- إنشاء قاعدة بيانات مركزية (`RomaERP_Central`) وتسجيل شركة تجريبية باسم `demo` فيها.
+- زرع قاعدة بيانات الشركة التجريبية (`RomaERP`): دليل الحسابات الأساسي، السنة المالية الحالية وفتراتها الشهرية، مخزن ومركز تكلفة وقسم افتراضي، وإعدادات الشركة (دولة مصر، ضريبة 14%).
 - مستخدمين تجريبيين لكل دور (كلمة المرور لكل الحسابات: `Passw0rd!123`):
   - `admin@romaerp.local` (Admin)
   - `accountant@romaerp.local` (Accountant)
   - `hr@romaerp.local` (HR)
   - `employee@romaerp.local` (Employee)
 
-الـ API متاح على `https://localhost:xxxx/swagger`.
+الـ API متاح على `https://localhost:xxxx/swagger`. أي طلب لازم يحمل الهيدر `X-Company-Code: demo` (راجع القسم التالي).
 
 ### تفعيل المساعد الذكي (اختياري)
 
@@ -123,8 +123,44 @@ npm run dev
 
 عدّل `VITE_API_URL` في `frontend/.env` إذا لزم.
 
+## تعدد العملاء (Multi-tenancy)
+
+كل شركة عميل ليها **قاعدة بيانات منفصلة بالكامل** — عزل تام، مفيش أي جدول مشترك بين شركتين. قاعدة بيانات واحدة صغيرة إضافية (`RomaERP_Central`) بتخزن سجل بسيط بيربط "كود الشركة" باسم قاعدة بياناتها، وهي الشيء الوحيد المشترك بين كل العملاء.
+
+### كيف يشتغل تسجيل الدخول
+كل طلب لأي endpoint (ما عدا إنشاء عملاء جدد) **لازم** يحمل هيدر `X-Company-Code` بكود الشركة (مثلاً `demo`). السيستم بيقرأ الهيدر، يدوّر على قاعدة بيانات الشركة دي، ويوجّه كل حاجة (تسجيل الدخول، الحسابات، الموظفين... إلخ) عليها تلقائيًا. الفرونت إند بيسأل عن "كود الشركة" في شاشة الدخول ويحفظه محليًا عشان يبعته مع كل طلب بعد كده.
+
+### إنشاء عميل جديد
+إنشاء شركة جديدة (قاعدة بيانات جديدة بالكامل + دليل حسابات + مستخدم Admin) بيتم عن طريق endpoint محمي بمفتاح نظام منفصل — **زي مفتاح Claude API، متحطوش في appsettings.json**:
+
+```bash
+# تطوير محلي
+export System__ProvisioningKey="اختار-مفتاح-عشوائي-طويل"
+
+curl -X POST http://localhost:5080/api/system/tenants \
+  -H "Content-Type: application/json" \
+  -H "X-System-Key: اختار-مفتاح-عشوائي-طويل" \
+  -d '{
+    "companyCode": "acme",
+    "companyNameAr": "شركة أكمي",
+    "companyNameEn": "Acme Co",
+    "country": 2,
+    "adminEmail": "admin@acme.example",
+    "adminPassword": "كلمة مرور قوية",
+    "taxRegistrationNumber": "123456789"
+  }'
+```
+
+قيم `country`: مصر=1، السعودية=2، الإمارات=3، البحرين=4، عُمان=5، قطر=6، الكويت=7. من غير `System:ProvisioningKey` الـ endpoint بيرجع 503 (مش مفعّل) بدل ما يكون مفتوح بدون حماية.
+
+### الضريبة (VAT) حسب الدولة
+كل شركة بيتحدد لها دولة عند الإنشاء، والسيستم بيزرع تلقائيًا:
+- حسابين في دليل الحسابات: **ضريبة القيمة المضافة (مدخلات)** كود `1180` أصول، و**ضريبة القيمة المضافة (مخرجات)** كود `2161` خصوم.
+- نسبة الضريبة الافتراضية والعملة حسب الدولة (`CountryTaxDefaults`): مصر 14%/EGP، السعودية 15%/SAR، الإمارات 5%/AED، البحرين 10%/BHD، عُمان 5%/OMR، قطر 0% حاليًا/QAR، الكويت 0% حاليًا/KWD. القيم دي متاحة كنقطة بداية قابلة للتوسعة لدول تانية أو تحديث النسب لاحقًا.
+
 ## الخطوات القادمة
-- تكامل المخزون مع المبيعات/المشتريات الفعلية (فواتير) بدل حركات يدوية.
+- شاشات فواتير المبيعات والمشتريات (AR/AP فعلي بدل قيود يدوية)، مع تطبيق الضريبة تلقائيًا على الفاتورة حسب إعدادات الشركة.
+- شاشة/endpoint لإدارة المستخدمين داخل كل شركة (دلوقتي محتاج SQL يدوي أو تمديد الـ API).
 - صلاحية "أشوف بياناتي أنا بس" للموظف العادي (تحتاج ربط ApplicationUser بسجل الموظف).
 - تقارير إضافية: تحليل مراكز التكلفة، تقادم الأرصدة (Aging).
 - ربط المساعد الذكي بـ WhatsApp Business API كقناة إضافية (نفس المنطق الخلفي، قناة دخول جديدة).

@@ -6,6 +6,7 @@ import { getErrorMessage } from "../api/client";
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [companyCode, setCompanyCode] = useState(() => localStorage.getItem("companyCode") ?? "demo");
   const [email, setEmail] = useState("admin@romaerp.local");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -16,7 +17,7 @@ export default function Login() {
     setError(null);
     setLoading(true);
     try {
-      await login(email, password);
+      await login(companyCode.trim().toLowerCase(), email, password);
       navigate("/");
     } catch (err) {
       setError(getErrorMessage(err));
@@ -32,6 +33,10 @@ export default function Login() {
         <p>نظام تخطيط موارد المؤسسات</p>
         {error && <div className="alert-error">{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div className="form-field">
+            <label>كود الشركة</label>
+            <input type="text" value={companyCode} onChange={(e) => setCompanyCode(e.target.value)} required />
+          </div>
           <div className="form-field">
             <label>البريد الإلكتروني</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />

@@ -5,6 +5,7 @@ using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Assistant;
 using RomaERP.Domain.HR;
 using RomaERP.Domain.Inventory;
+using RomaERP.Domain.Tenancy;
 using RomaERP.Infrastructure.Identity;
 
 namespace RomaERP.Infrastructure.Persistence;
@@ -39,6 +40,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<ExpenseCaptureMessage> ExpenseCaptureMessages => Set<ExpenseCaptureMessage>();
     public DbSet<BankStatementImport> BankStatementImports => Set<BankStatementImport>();
     public DbSet<BankStatementLine> BankStatementLines => Set<BankStatementLine>();
+
+    public DbSet<CompanySettings> CompanySettings => Set<CompanySettings>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

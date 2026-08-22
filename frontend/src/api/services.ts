@@ -24,10 +24,11 @@ import type {
 } from "./types";
 
 export const AuthApi = {
-  login: (email: string, password: string) =>
+  login: (companyCode: string, email: string, password: string) =>
     apiClient.post<{ token: string; email: string; fullName: string; roles: string[] }>(
       "/auth/login",
-      { email, password }
+      { email, password },
+      { headers: { "X-Company-Code": companyCode } }
     ),
 };
 

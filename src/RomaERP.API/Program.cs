@@ -1,13 +1,17 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using RomaERP.API.Middleware;
 using RomaERP.API.Services;
 using RomaERP.Application;
 using RomaERP.Application.Common.Interfaces;
+using RomaERP.Domain.Tenancy;
 using RomaERP.Infrastructure;
+using RomaERP.Infrastructure.Persistence.Central;
 using RomaERP.Infrastructure.Persistence.Seed;
+using RomaERP.Infrastructure.Tenancy;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -78,7 +82,7 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    await DbInitializer.SeedAsync(app.Services);
+    await SeedDemoTenantAsync(app.Services);
 }
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
@@ -87,12 +91,53 @@ app.UseHttpsRedirection();
 
 app.UseCors("Frontend");
 
+app.UseMiddleware<TenantResolutionMiddleware>();
+
 app.UseAuthentication();
+
+app.UseMiddleware<TenantClaimConsistencyMiddleware>();
+
 app.UseAuthorization();
 
 app.MapControllers();
 
 app.Run();
+
+// Creates/seeds the "demo" tenant on startup in Development so the existing dev database keeps working
+// unchanged after multi-tenancy was introduced. Manually borrows a scope and resolves its ITenantContext
+// to "demo" before touching ApplicationDbContext, since a plain app.Services.CreateScope() would otherwise
+// leave the tenant unresolved (see DependencyInjection.AddInfrastructure).
+static async Task SeedDemoTenantAsync(IServiceProvider services)
+{
+    using var scope = services.CreateScope();
+    var central = scope.ServiceProvider.GetRequiredService<CentralDbContext>();
+    await central.Database.MigrateAsync();
+
+    var demoTenant = await central.Tenants.FirstOrDefaultAsync(t => t.CompanyCode == "demo");
+    if (demoTenant is null)
+    {
+        demoTenant = new RomaERP.Domain.Tenancy.Tenant
+        {
+            CompanyCode = "demo",
+            CompanyNameAr = "شركة تجريبية",
+            CompanyNameEn = "Demo Company",
+            Country = Country.Egypt,
+            DatabaseName = "RomaERP",
+            IsActive = true
+        };
+        central.Tenants.Add(demoTenant);
+        await central.SaveChangesAsync();
+    }
+
+    var registry = scope.ServiceProvider.GetRequiredService<ITenantRegistry>();
+    var tenantContext = scope.ServiceProvider.GetRequiredService<TenantContext>();
+    tenantContext.Resolve(demoTenant, registry.BuildConnectionString(demoTenant.DatabaseName));
+
+    var db = scope.ServiceProvider.GetRequiredService<RomaERP.Infrastructure.Persistence.ApplicationDbContext>();
+    await db.Database.MigrateAsync();
+
+    await DbInitializer.SeedAsync(scope.ServiceProvider);
+}
 
 public partial class Program
 {
