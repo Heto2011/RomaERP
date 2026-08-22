@@ -85,6 +85,72 @@ export interface BalanceSheet {
   isBalanced: boolean;
 }
 
+export enum ChatRole {
+  User = 1,
+  Assistant = 2,
+}
+
+export enum ExpenseCaptureStatus {
+  AwaitingDetails = 1,
+  AwaitingPaymentMethod = 2,
+  AwaitingReconciliation = 3,
+  Posted = 4,
+  Rejected = 5,
+}
+
+export enum ExpensePaymentMethod {
+  Unknown = 0,
+  Cash = 1,
+  Card = 2,
+}
+
+export interface ChatMessage {
+  role: ChatRole;
+  content: string;
+  createdAtUtc: string;
+}
+
+export interface ExpenseCapture {
+  id: string;
+  rawText: string;
+  amount: number | null;
+  currency: string;
+  description: string | null;
+  entryDate: string;
+  suggestedAccountId: string | null;
+  suggestedAccountCode: string | null;
+  suggestedAccountName: string | null;
+  paymentMethod: ExpensePaymentMethod;
+  status: ExpenseCaptureStatus;
+  proofFileName: string | null;
+  journalEntryId: string | null;
+  submittedByUserId: string;
+}
+
+export interface ChatTurnResponse {
+  captureId: string;
+  status: ExpenseCaptureStatus;
+  assistantReply: string;
+  history: ChatMessage[];
+  capture: ExpenseCapture | null;
+}
+
+export interface BankStatementLine {
+  id: string;
+  transactionDate: string;
+  description: string;
+  amount: number;
+  isMatched: boolean;
+}
+
+export interface BankStatementImportResult {
+  id: string;
+  fileName: string;
+  bankAccountName: string;
+  lineCount: number;
+  matchedCount: number;
+}
+
 export interface FiscalYearDetail {
   id: string;
   name: string;

@@ -5,6 +5,13 @@ import { useAuth } from "../context/AuthContext";
 const links = [
   { section: "عام", items: [{ to: "/", label: "لوحة التحكم" }] },
   {
+    section: "المساعد الذكي",
+    items: [
+      { to: "/assistant/chat", label: "تسجيل مصروف" },
+      { to: "/assistant/bank-reconciliation", label: "المطابقة البنكية" },
+    ],
+  },
+  {
     section: "المحاسبة",
     items: [
       { to: "/accounting/chart-of-accounts", label: "شجرة الحسابات" },

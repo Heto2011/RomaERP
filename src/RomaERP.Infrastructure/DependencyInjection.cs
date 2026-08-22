@@ -2,7 +2,9 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using RomaERP.Application.Assistant.Services;
 using RomaERP.Application.Common.Interfaces;
+using RomaERP.Infrastructure.Assistant;
 using RomaERP.Infrastructure.Identity;
 using RomaERP.Infrastructure.Persistence;
 
@@ -30,6 +32,9 @@ public static class DependencyInjection
 
         services.Configure<JwtSettings>(configuration.GetSection(JwtSettings.SectionName));
         services.AddScoped<ITokenService, TokenService>();
+
+        services.Configure<ClaudeSettings>(configuration.GetSection(ClaudeSettings.SectionName));
+        services.AddHttpClient<IClaudeExpenseParser, ClaudeExpenseParser>();
 
         return services;
     }

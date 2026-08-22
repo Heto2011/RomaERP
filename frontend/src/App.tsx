@@ -17,6 +17,8 @@ import Payroll from "./pages/hr/Payroll";
 import Items from "./pages/inventory/Items";
 import Warehouses from "./pages/inventory/Warehouses";
 import StockMovements from "./pages/inventory/StockMovements";
+import AiAssistant from "./pages/assistant/AiAssistant";
+import BankReconciliation from "./pages/assistant/BankReconciliation";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
@@ -29,6 +31,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/assistant/chat" element={<ProtectedRoute><AiAssistant /></ProtectedRoute>} />
+      <Route path="/assistant/bank-reconciliation" element={<ProtectedRoute><BankReconciliation /></ProtectedRoute>} />
       <Route path="/accounting/chart-of-accounts" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />
       <Route path="/accounting/opening-balances" element={<ProtectedRoute><OpeningBalances /></ProtectedRoute>} />
       <Route path="/accounting/journal-entries" element={<ProtectedRoute><JournalEntries /></ProtectedRoute>} />

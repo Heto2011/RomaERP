@@ -239,3 +239,6 @@ yarn-error.log*
 # ===== EF Core =====
 *.mdf
 *.ldf
+
+# ===== App uploads =====
+src/RomaERP.API/App_Data/

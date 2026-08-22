@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using RomaERP.Application.Accounting.Services;
+using RomaERP.Application.Assistant.Services;
 using RomaERP.Application.HR.Services;
 using RomaERP.Application.Inventory.Services;
 
@@ -25,6 +26,9 @@ public static class DependencyInjection
         services.AddScoped<IWarehouseService, WarehouseService>();
         services.AddScoped<IItemService, ItemService>();
         services.AddScoped<IInventoryService, InventoryService>();
+
+        services.AddScoped<IExpenseAssistantService, ExpenseAssistantService>();
+        services.AddScoped<IBankReconciliationService, BankReconciliationService>();
 
         return services;
     }

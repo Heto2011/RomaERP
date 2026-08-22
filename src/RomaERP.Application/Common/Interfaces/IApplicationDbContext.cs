@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Domain.Accounting;
+using RomaERP.Domain.Assistant;
 using RomaERP.Domain.HR;
 using RomaERP.Domain.Inventory;
 
@@ -26,6 +27,11 @@ public interface IApplicationDbContext
     DbSet<Warehouse> Warehouses { get; }
     DbSet<Item> Items { get; }
     DbSet<StockMovement> StockMovements { get; }
+
+    DbSet<ExpenseCapture> ExpenseCaptures { get; }
+    DbSet<ExpenseCaptureMessage> ExpenseCaptureMessages { get; }
+    DbSet<BankStatementImport> BankStatementImports { get; }
+    DbSet<BankStatementLine> BankStatementLines { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

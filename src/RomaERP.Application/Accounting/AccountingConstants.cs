@@ -9,4 +9,6 @@ public static class AccountingConstants
     public const string CostOfGoodsSoldAccountCode = "5500";
     public const string RetainedEarningsAccountCode = "3200";
     public const string OpeningBalanceReference = "OPENING-BALANCE";
+    public const string CashOnHandAccountCode = "1111";
+    public const string GeneralAdminExpenseAccountCode = "5300";
 }

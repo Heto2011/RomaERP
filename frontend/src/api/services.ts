@@ -2,9 +2,13 @@ import { apiClient } from "./client";
 import type {
   Account,
   BalanceSheet,
+  BankStatementImportResult,
+  BankStatementLine,
+  ChatTurnResponse,
   CostCenterLookup,
   Department,
   Employee,
+  ExpenseCapture,
   FiscalPeriod,
   FiscalYearDetail,
   IncomeStatement,
@@ -89,6 +93,34 @@ export const PayrollApi = {
   create: (data: unknown) => apiClient.post<PayrollRun>("/payroll", data),
   approve: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/approve`),
   post: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/post`),
+};
+
+export const AiAssistantApi = {
+  sendMessage: (captureId: string | null, message: string) =>
+    apiClient.post<ChatTurnResponse>("/aiassistant/messages", { captureId, message }),
+  getPendingReconciliation: () => apiClient.get<ExpenseCapture[]>("/aiassistant/pending-reconciliation"),
+  uploadProof: (captureId: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient.post<ExpenseCapture>(`/aiassistant/captures/${captureId}/proof`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+};
+
+export const BankReconciliationApi = {
+  import: (file: File, bankAccountId: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("bankAccountId", bankAccountId);
+    return apiClient.post<BankStatementImportResult>("/bankreconciliation/import", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  getUnmatchedLines: () => apiClient.get<BankStatementLine[]>("/bankreconciliation/unmatched-lines"),
+  autoMatch: () => apiClient.post<number>("/bankreconciliation/auto-match"),
+  matchManual: (expenseCaptureId: string, bankStatementLineId: string) =>
+    apiClient.post<ExpenseCapture>("/bankreconciliation/match", { expenseCaptureId, bankStatementLineId }),
 };
 
 export const OpeningBalanceApi = {
