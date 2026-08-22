@@ -40,4 +40,8 @@ public class SalesController : ControllerBase
     [HttpPost("invoices/{id:guid}/payments")]
     public async Task<ActionResult<SalesInvoiceDto>> RecordPayment(Guid id, RecordSalesPaymentDto dto, CancellationToken ct)
         => Ok(await _salesService.RecordPaymentAsync(id, dto, ct));
+
+    [HttpGet("aging")]
+    public async Task<ActionResult<List<CustomerAgingDto>>> GetAging(DateTime? asOfDate, CancellationToken ct)
+        => Ok(await _salesService.GetArAgingAsync(asOfDate, ct));
 }

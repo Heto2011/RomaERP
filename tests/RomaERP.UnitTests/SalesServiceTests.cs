@@ -192,6 +192,72 @@ public class SalesServiceTests
     }
 
     [Fact]
+    public async Task GetArAging_BucketsOutstandingInvoicesByAge()
+    {
+        var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
+        var service = new SalesService(ctx);
+        var today = DateTime.UtcNow.Date;
+
+        async Task<SalesInvoiceDto> CreateAt(DateTime invoiceDate, decimal unitPrice)
+            => await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
+            {
+                CustomerId = customer.Id,
+                InvoiceDate = invoiceDate,
+                FiscalPeriodId = period.Id,
+                PaymentTerm = PaymentTerm.Credit,
+                Lines = { new SalesInvoiceLineInputDto { Description = "بند", Quantity = 1, UnitPrice = unitPrice } }
+            });
+
+        var current = await CreateAt(today, 100);          // age 0 -> Current
+        var d40 = await CreateAt(today.AddDays(-40), 200);   // age 40 -> 31-60
+        var d75 = await CreateAt(today.AddDays(-75), 300);   // age 75 -> 61-90
+        var d120 = await CreateAt(today.AddDays(-120), 400); // age 120 -> Over90
+
+        // Partially collect the 40-day-old invoice; only the remaining balance should still age.
+        await service.RecordPaymentAsync(d40.Id, new RecordSalesPaymentDto { Amount = 50, Method = PaymentTerm.Cash, PaymentDate = today });
+
+        var aging = await service.GetArAgingAsync(today);
+
+        var row = Assert.Single(aging);
+        Assert.Equal(customer.Id, row.CustomerId);
+        Assert.Equal(current.TotalAmount + (d40.TotalAmount - 50) + d75.TotalAmount + d120.TotalAmount, row.TotalOutstanding);
+        Assert.Equal(current.TotalAmount, row.Current);
+        Assert.Equal(d40.TotalAmount - 50, row.Days31To60);
+        Assert.Equal(d75.TotalAmount, row.Days61To90);
+        Assert.Equal(d120.TotalAmount, row.Over90Days);
+    }
+
+    [Fact]
+    public async Task GetArAging_ExcludesCashInvoicesAndFullyPaidCreditInvoices()
+    {
+        var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
+        var service = new SalesService(ctx);
+
+        await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
+        {
+            CustomerId = customer.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Cash,
+            Lines = { new SalesInvoiceLineInputDto { Description = "بند", Quantity = 1, UnitPrice = 100 } }
+        });
+
+        var creditInvoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
+        {
+            CustomerId = customer.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Credit,
+            Lines = { new SalesInvoiceLineInputDto { Description = "بند", Quantity = 1, UnitPrice = 100 } }
+        });
+        await service.RecordPaymentAsync(creditInvoice.Id, new RecordSalesPaymentDto { Amount = creditInvoice.TotalAmount, Method = PaymentTerm.Cash, PaymentDate = DateTime.UtcNow.Date });
+
+        var aging = await service.GetArAgingAsync();
+
+        Assert.Empty(aging);
+    }
+
+    [Fact]
     public async Task CreateInvoice_WithItemLine_IssuesStockAndPostsCogs()
     {
         var (ctx, cash, _, _, revenue, outputVat, customer, period) = await SeedAsync();

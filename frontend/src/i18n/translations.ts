@@ -22,9 +22,11 @@ const ar = {
     sales: "المبيعات",
     customers: "العملاء",
     salesInvoices: "فواتير المبيعات",
+    arAging: "أعمار ديون العملاء",
     purchasing: "المشتريات",
     vendors: "الموردون",
     purchaseInvoices: "فواتير المشتريات",
+    apAging: "أعمار ديون الموردين",
     hr: "الموارد البشرية",
     departments: "الأقسام",
     positions: "الوظائف",
@@ -77,6 +79,10 @@ const ar = {
     status: "الحالة",
     amount: "المبلغ",
     reference: "مرجع",
+    agingCurrent: "لغاية 30 يوم",
+    aging31to60: "31 - 60 يوم",
+    aging61to90: "61 - 90 يوم",
+    agingOver90: "أكتر من 90 يوم",
   },
   paymentTerm: {
     cash: "كاش",
@@ -96,6 +102,7 @@ const ar = {
     addLine: "+ إضافة بند",
     createInvoiceTitle: "فاتورة مبيعات جديدة",
     recordPaymentTitle: "تسجيل تحصيل دفعة",
+    agingTitle: "أعمار ديون العملاء",
     item: "الصنف",
     warehouse: "المخزن",
     serviceLine: "بند خدمة (بدون مخزون)",
@@ -113,6 +120,7 @@ const ar = {
     addLine: "+ إضافة بند",
     createInvoiceTitle: "فاتورة مشتريات جديدة",
     recordPaymentTitle: "تسجيل سداد دفعة",
+    agingTitle: "أعمار ديون الموردين",
   },
 };
 
@@ -138,9 +146,11 @@ const en: typeof ar = {
     sales: "Sales",
     customers: "Customers",
     salesInvoices: "Sales Invoices",
+    arAging: "AR Aging",
     purchasing: "Purchasing",
     vendors: "Vendors",
     purchaseInvoices: "Purchase Invoices",
+    apAging: "AP Aging",
     hr: "Human Resources",
     departments: "Departments",
     positions: "Positions",
@@ -193,6 +203,10 @@ const en: typeof ar = {
     status: "Status",
     amount: "Amount",
     reference: "Reference",
+    agingCurrent: "0-30 days",
+    aging31to60: "31-60 days",
+    aging61to90: "61-90 days",
+    agingOver90: "Over 90 days",
   },
   paymentTerm: {
     cash: "Cash",
@@ -215,6 +229,7 @@ const en: typeof ar = {
     item: "Item",
     warehouse: "Warehouse",
     serviceLine: "Service line (no inventory)",
+    agingTitle: "Customer AR Aging",
   },
   purchasing: {
     vendorsTitle: "Vendors",
@@ -229,6 +244,7 @@ const en: typeof ar = {
     addLine: "+ Add Line",
     createInvoiceTitle: "New Purchase Invoice",
     recordPaymentTitle: "Record Payment",
+    agingTitle: "Vendor AP Aging",
   },
 };
 

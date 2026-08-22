@@ -140,4 +140,69 @@ public class PurchasingServiceTests
         Assert.Contains(paymentEntry.Lines, l => l.AccountId == ap.Id && l.Debit == 400);
         Assert.Contains(paymentEntry.Lines, l => l.AccountId == cash.Id && l.Credit == 400);
     }
+
+    [Fact]
+    public async Task GetApAging_BucketsOutstandingInvoicesByAge()
+    {
+        var (ctx, _, _, _, expense, _, vendor, period) = await SeedAsync();
+        var service = new PurchasingService(ctx);
+        var today = DateTime.UtcNow.Date;
+
+        async Task<PurchaseInvoiceDto> CreateAt(DateTime invoiceDate, decimal unitPrice)
+            => await service.CreateInvoiceAsync(new CreatePurchaseInvoiceDto
+            {
+                VendorId = vendor.Id,
+                InvoiceDate = invoiceDate,
+                FiscalPeriodId = period.Id,
+                PaymentTerm = PaymentTerm.Credit,
+                Lines = { new PurchaseInvoiceLineInputDto { Description = "بند", AccountId = expense.Id, Quantity = 1, UnitPrice = unitPrice } }
+            });
+
+        var current = await CreateAt(today, 100);
+        var d40 = await CreateAt(today.AddDays(-40), 200);
+        var d75 = await CreateAt(today.AddDays(-75), 300);
+        var d120 = await CreateAt(today.AddDays(-120), 400);
+
+        await service.RecordPaymentAsync(d40.Id, new RecordPurchasePaymentDto { Amount = 50, Method = PaymentTerm.Cash, PaymentDate = today });
+
+        var aging = await service.GetApAgingAsync(today);
+
+        var row = Assert.Single(aging);
+        Assert.Equal(vendor.Id, row.VendorId);
+        Assert.Equal(current.TotalAmount + (d40.TotalAmount - 50) + d75.TotalAmount + d120.TotalAmount, row.TotalOutstanding);
+        Assert.Equal(current.TotalAmount, row.Current);
+        Assert.Equal(d40.TotalAmount - 50, row.Days31To60);
+        Assert.Equal(d75.TotalAmount, row.Days61To90);
+        Assert.Equal(d120.TotalAmount, row.Over90Days);
+    }
+
+    [Fact]
+    public async Task GetApAging_ExcludesCashInvoicesAndFullyPaidCreditInvoices()
+    {
+        var (ctx, _, _, _, expense, _, vendor, period) = await SeedAsync();
+        var service = new PurchasingService(ctx);
+
+        await service.CreateInvoiceAsync(new CreatePurchaseInvoiceDto
+        {
+            VendorId = vendor.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Cash,
+            Lines = { new PurchaseInvoiceLineInputDto { Description = "بند", AccountId = expense.Id, Quantity = 1, UnitPrice = 100 } }
+        });
+
+        var creditInvoice = await service.CreateInvoiceAsync(new CreatePurchaseInvoiceDto
+        {
+            VendorId = vendor.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Credit,
+            Lines = { new PurchaseInvoiceLineInputDto { Description = "بند", AccountId = expense.Id, Quantity = 1, UnitPrice = 100 } }
+        });
+        await service.RecordPaymentAsync(creditInvoice.Id, new RecordPurchasePaymentDto { Amount = creditInvoice.TotalAmount, Method = PaymentTerm.Cash, PaymentDate = DateTime.UtcNow.Date });
+
+        var aging = await service.GetApAgingAsync();
+
+        Assert.Empty(aging);
+    }
 }

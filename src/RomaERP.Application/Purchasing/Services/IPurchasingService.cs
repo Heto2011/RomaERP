@@ -11,4 +11,6 @@ public interface IPurchasingService
     Task<PurchaseInvoiceDto> GetInvoiceAsync(Guid id, CancellationToken ct = default);
     Task<PurchaseInvoiceDto> CreateInvoiceAsync(CreatePurchaseInvoiceDto dto, CancellationToken ct = default);
     Task<PurchaseInvoiceDto> RecordPaymentAsync(Guid invoiceId, RecordPurchasePaymentDto dto, CancellationToken ct = default);
+
+    Task<List<VendorAgingDto>> GetApAgingAsync(DateTime? asOfDate = null, CancellationToken ct = default);
 }

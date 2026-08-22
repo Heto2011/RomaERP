@@ -12,6 +12,7 @@ import type {
   CreateSalesInvoiceInput,
   CreateVendorInput,
   Customer,
+  CustomerAging,
   Department,
   Employee,
   ExpenseCapture,
@@ -31,6 +32,7 @@ import type {
   StockMovement,
   TrialBalanceLine,
   Vendor,
+  VendorAging,
   Warehouse,
 } from "./types";
 
@@ -190,6 +192,7 @@ export const SalesApi = {
   getInvoice: (id: string) => apiClient.get<SalesInvoice>(`/sales/invoices/${id}`),
   createInvoice: (data: CreateSalesInvoiceInput) => apiClient.post<SalesInvoice>("/sales/invoices", data),
   recordPayment: (id: string, data: RecordSalesPaymentInput) => apiClient.post<SalesInvoice>(`/sales/invoices/${id}/payments`, data),
+  getAging: () => apiClient.get<CustomerAging[]>("/sales/aging"),
 };
 
 export const PurchasingApi = {
@@ -199,4 +202,5 @@ export const PurchasingApi = {
   getInvoice: (id: string) => apiClient.get<PurchaseInvoice>(`/purchasing/invoices/${id}`),
   createInvoice: (data: CreatePurchaseInvoiceInput) => apiClient.post<PurchaseInvoice>("/purchasing/invoices", data),
   recordPayment: (id: string, data: RecordPurchasePaymentInput) => apiClient.post<PurchaseInvoice>(`/purchasing/invoices/${id}/payments`, data),
+  getAging: () => apiClient.get<VendorAging[]>("/purchasing/aging"),
 };

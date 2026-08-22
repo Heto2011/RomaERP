@@ -246,6 +246,37 @@ public class PurchasingService : IPurchasingService
         return await GetInvoiceAsync(invoice.Id, ct);
     }
 
+    public async Task<List<VendorAgingDto>> GetApAgingAsync(DateTime? asOfDate = null, CancellationToken ct = default)
+    {
+        var referenceDate = (asOfDate ?? DateTime.UtcNow).Date;
+
+        var outstandingInvoices = await _context.PurchaseInvoices
+            .AsNoTracking()
+            .Include(i => i.Vendor)
+            .Where(i => i.PaymentTerm == PaymentTerm.Credit && i.TotalAmount > i.PaidAmount)
+            .Select(i => new { i.VendorId, VendorCode = i.Vendor!.Code, VendorName = i.Vendor.NameAr, i.InvoiceDate, Outstanding = i.TotalAmount - i.PaidAmount })
+            .ToListAsync(ct);
+
+        var buckets = new Dictionary<Guid, VendorAgingDto>();
+        foreach (var inv in outstandingInvoices)
+        {
+            if (!buckets.TryGetValue(inv.VendorId, out var bucket))
+            {
+                bucket = new VendorAgingDto { VendorId = inv.VendorId, VendorCode = inv.VendorCode, VendorName = inv.VendorName };
+                buckets[inv.VendorId] = bucket;
+            }
+
+            var ageDays = (referenceDate - inv.InvoiceDate.Date).Days;
+            bucket.TotalOutstanding += inv.Outstanding;
+            if (ageDays <= 30) bucket.Current += inv.Outstanding;
+            else if (ageDays <= 60) bucket.Days31To60 += inv.Outstanding;
+            else if (ageDays <= 90) bucket.Days61To90 += inv.Outstanding;
+            else bucket.Over90Days += inv.Outstanding;
+        }
+
+        return buckets.Values.OrderByDescending(b => b.TotalOutstanding).ToList();
+    }
+
     private async Task<decimal> GetVatRateAsync(CancellationToken ct)
     {
         var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct);

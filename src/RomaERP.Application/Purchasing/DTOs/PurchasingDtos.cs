@@ -91,3 +91,17 @@ public class PurchaseInvoiceDto
     public List<PurchaseInvoiceLineDto> Lines { get; set; } = new();
     public List<PurchasePaymentDto> Payments { get; set; } = new();
 }
+
+/// <summary>One vendor's outstanding balance broken down by how overdue each invoice's remaining amount is,
+/// as of a given date (defaults to today). Only Credit-term invoices with an outstanding balance appear.</summary>
+public class VendorAgingDto
+{
+    public Guid VendorId { get; set; }
+    public string VendorCode { get; set; } = string.Empty;
+    public string VendorName { get; set; } = string.Empty;
+    public decimal TotalOutstanding { get; set; }
+    public decimal Current { get; set; }
+    public decimal Days31To60 { get; set; }
+    public decimal Days61To90 { get; set; }
+    public decimal Over90Days { get; set; }
+}

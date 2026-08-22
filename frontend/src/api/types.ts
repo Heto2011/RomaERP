@@ -535,3 +535,25 @@ export interface PurchaseInvoice {
   lines: PurchaseInvoiceLine[];
   payments: PurchasePayment[];
 }
+
+export interface CustomerAging {
+  customerId: string;
+  customerCode: string;
+  customerName: string;
+  totalOutstanding: number;
+  current: number;
+  days31To60: number;
+  days61To90: number;
+  over90Days: number;
+}
+
+export interface VendorAging {
+  vendorId: string;
+  vendorCode: string;
+  vendorName: string;
+  totalOutstanding: number;
+  current: number;
+  days31To60: number;
+  days61To90: number;
+  over90Days: number;
+}

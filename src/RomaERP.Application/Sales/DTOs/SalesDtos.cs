@@ -98,3 +98,17 @@ public class SalesInvoiceDto
     public List<SalesInvoiceLineDto> Lines { get; set; } = new();
     public List<SalesPaymentDto> Payments { get; set; } = new();
 }
+
+/// <summary>One customer's outstanding balance broken down by how overdue each invoice's remaining amount is,
+/// as of a given date (defaults to today). Only Credit-term invoices with an outstanding balance appear.</summary>
+public class CustomerAgingDto
+{
+    public Guid CustomerId { get; set; }
+    public string CustomerCode { get; set; } = string.Empty;
+    public string CustomerName { get; set; } = string.Empty;
+    public decimal TotalOutstanding { get; set; }
+    public decimal Current { get; set; }
+    public decimal Days31To60 { get; set; }
+    public decimal Days61To90 { get; set; }
+    public decimal Over90Days { get; set; }
+}
