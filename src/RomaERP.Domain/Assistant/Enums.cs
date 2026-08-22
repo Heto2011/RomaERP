@@ -18,10 +18,13 @@ public enum ExpenseCaptureStatus
     /// <summary>Paid by card; waiting to be matched against an imported bank statement line.</summary>
     AwaitingReconciliation = 3,
 
-    /// <summary>Matched (or cash, which needs no matching) and posted to the general ledger.</summary>
-    Posted = 4,
+    /// <summary>Ready to post (cash confirmed, or card matched to a bank line) but waiting on Admin approval.</summary>
+    PendingApproval = 4,
 
-    Rejected = 5
+    /// <summary>Approved and posted to the general ledger.</summary>
+    Posted = 5,
+
+    Rejected = 6
 }
 
 public enum ChatRole

@@ -53,7 +53,7 @@ export default function BankReconciliation() {
     setError(null);
     try {
       await BankReconciliationApi.matchManual(selectedCaptureId, selectedLineId);
-      setMessage("تمت المطابقة والترحيل بنجاح.");
+      setMessage("تمت المطابقة، وهيفضل المصروف في انتظار اعتماد المدير قبل الترحيل.");
       setSelectedCaptureId("");
       setSelectedLineId("");
       await load();
@@ -83,6 +83,7 @@ export default function BankReconciliation() {
         <p className="text-muted" style={{ marginTop: 0 }}>
           ارفع كشف حساب البنك (CSV بالأعمدة: Date, Description, Amount — بحيث تكون قيمة كل عملية سحب موجبة)
           أسبوعيًا أو شهريًا حسب حجم حركة الحساب، وهيتم مطابقته تلقائيًا مع مصروفات الشبكة المعلّقة من المساعد الذكي.
+          المصروفات المتطابقة بتروح بعد كده لشاشة "اعتماد المصروفات" ومش بترحّل إلا بعد موافقة المدير.
         </p>
         <div className="toolbar">
           <div className="form-field">

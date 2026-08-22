@@ -99,6 +99,9 @@ export const AiAssistantApi = {
   sendMessage: (captureId: string | null, message: string) =>
     apiClient.post<ChatTurnResponse>("/aiassistant/messages", { captureId, message }),
   getPendingReconciliation: () => apiClient.get<ExpenseCapture[]>("/aiassistant/pending-reconciliation"),
+  getPendingApproval: () => apiClient.get<ExpenseCapture[]>("/aiassistant/pending-approval"),
+  approve: (captureId: string) => apiClient.post<ExpenseCapture>(`/aiassistant/captures/${captureId}/approve`),
+  reject: (captureId: string) => apiClient.post<ExpenseCapture>(`/aiassistant/captures/${captureId}/reject`),
   uploadProof: (captureId: string, file: File) => {
     const formData = new FormData();
     formData.append("file", file);

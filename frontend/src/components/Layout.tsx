@@ -8,6 +8,7 @@ const links = [
     section: "المساعد الذكي",
     items: [
       { to: "/assistant/chat", label: "تسجيل مصروف" },
+      { to: "/assistant/approvals", label: "اعتماد المصروفات" },
       { to: "/assistant/bank-reconciliation", label: "المطابقة البنكية" },
     ],
   },

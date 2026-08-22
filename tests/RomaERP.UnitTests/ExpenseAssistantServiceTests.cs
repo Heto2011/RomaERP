@@ -48,7 +48,7 @@ public class ExpenseAssistantServiceTests
     }
 
     [Fact]
-    public async Task SendMessage_WithCashReply_PostsJournalEntryImmediately()
+    public async Task SendMessage_WithCashReply_WaitsForAdminApprovalBeforePosting()
     {
         var (ctx, cash, fuelExpense, _) = await SeedAsync();
         var parser = new FakeClaudeExpenseParser();
@@ -59,13 +59,34 @@ public class ExpenseAssistantServiceTests
 
         var second = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "كاش" }, "user-1");
 
-        Assert.Equal(ExpenseCaptureStatus.Posted, second.Status);
-        Assert.NotNull(second.Capture!.JournalEntryId);
+        Assert.Equal(ExpenseCaptureStatus.PendingApproval, second.Status);
+        Assert.Null(second.Capture!.JournalEntryId);
 
-        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == second.Capture.JournalEntryId);
+        var approved = await service.ApproveAsync(first.CaptureId);
+
+        Assert.Equal(ExpenseCaptureStatus.Posted, approved.Status);
+        Assert.NotNull(approved.JournalEntryId);
+
+        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == approved.JournalEntryId);
         Assert.Equal(100, entry.TotalDebit);
         Assert.Contains(entry.Lines, l => l.AccountId == fuelExpense.Id && l.Debit == 100);
         Assert.Contains(entry.Lines, l => l.AccountId == cash.Id && l.Credit == 100);
+    }
+
+    [Fact]
+    public async Task Reject_OnPendingApprovalCapture_MarksRejectedWithoutPosting()
+    {
+        var (ctx, _, _, _) = await SeedAsync();
+        var service = new ExpenseAssistantService(ctx, new FakeClaudeExpenseParser());
+
+        var first = await service.SendMessageAsync(new ChatTurnRequestDto { Message = "اشتريت بنزين بـ100 جنيه" }, "user-1");
+        await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "كاش" }, "user-1");
+
+        var rejected = await service.RejectAsync(first.CaptureId);
+
+        Assert.Equal(ExpenseCaptureStatus.Rejected, rejected.Status);
+        Assert.Null(rejected.JournalEntryId);
+        Assert.Empty(await ctx.JournalEntries.ToListAsync());
     }
 
     [Fact]
@@ -101,7 +122,7 @@ public class ExpenseAssistantServiceTests
     }
 
     [Fact]
-    public async Task BankReconciliation_AutoMatchesCardExpenseWithinWindowAndPosts()
+    public async Task BankReconciliation_AutoMatchesCardExpenseWithinWindow_ThenNeedsApprovalToPost()
     {
         var (ctx, cash, fuelExpense, period) = await SeedAsync();
         var assistant = new ExpenseAssistantService(ctx, new FakeClaudeExpenseParser());
@@ -122,11 +143,14 @@ public class ExpenseAssistantServiceTests
 
         Assert.Equal(1, import.MatchedCount);
 
-        var capture = await ctx.ExpenseCaptures.FirstAsync(c => c.Id == first.CaptureId);
-        Assert.Equal(ExpenseCaptureStatus.Posted, capture.Status);
-        Assert.NotNull(capture.JournalEntryId);
+        var matchedCapture = await ctx.ExpenseCaptures.FirstAsync(c => c.Id == first.CaptureId);
+        Assert.Equal(ExpenseCaptureStatus.PendingApproval, matchedCapture.Status);
+        Assert.Null(matchedCapture.JournalEntryId);
 
-        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == capture.JournalEntryId);
+        var approved = await assistant.ApproveAsync(first.CaptureId);
+
+        Assert.Equal(ExpenseCaptureStatus.Posted, approved.Status);
+        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == approved.JournalEntryId);
         Assert.Contains(entry.Lines, l => l.AccountId == bankAccount.Id && l.Credit == 100);
         Assert.Contains(entry.Lines, l => l.AccountId == fuelExpense.Id && l.Debit == 100);
     }

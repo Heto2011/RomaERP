@@ -7,8 +7,9 @@ const statusLabel: Record<ExpenseCaptureStatus, string> = {
   [ExpenseCaptureStatus.AwaitingDetails]: "محتاج تفاصيل أكتر",
   [ExpenseCaptureStatus.AwaitingPaymentMethod]: "في انتظار طريقة الدفع",
   [ExpenseCaptureStatus.AwaitingReconciliation]: "في انتظار المطابقة البنكية",
-  [ExpenseCaptureStatus.Posted]: "تم الترحيل",
-  [ExpenseCaptureStatus.Rejected]: "ملغي",
+  [ExpenseCaptureStatus.PendingApproval]: "في انتظار اعتماد المدير",
+  [ExpenseCaptureStatus.Posted]: "تم الاعتماد والترحيل",
+  [ExpenseCaptureStatus.Rejected]: "مرفوض",
 };
 
 export default function AiAssistant() {
@@ -73,7 +74,7 @@ export default function AiAssistant() {
       {status && (
         <div className="card toolbar" style={{ marginBottom: 12 }}>
           <span className="badge badge-draft">{statusLabel[status]}</span>
-          {status === ExpenseCaptureStatus.AwaitingReconciliation && (
+          {(status === ExpenseCaptureStatus.AwaitingReconciliation || status === ExpenseCaptureStatus.PendingApproval) && (
             <>
               <span className="text-muted">تقدر ترفع صورة الإيصال كإثبات:</span>
               <button className="btn btn-secondary btn-sm" onClick={() => fileInputRef.current?.click()}>

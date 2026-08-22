@@ -32,6 +32,21 @@ public class AiAssistantController : ControllerBase
     public async Task<ActionResult<List<ExpenseCaptureDto>>> GetPendingReconciliation(CancellationToken ct)
         => Ok(await _assistantService.GetPendingReconciliationAsync(ct));
 
+    [HttpGet("pending-approval")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<List<ExpenseCaptureDto>>> GetPendingApproval(CancellationToken ct)
+        => Ok(await _assistantService.GetPendingApprovalAsync(ct));
+
+    [HttpPost("captures/{id:guid}/approve")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ExpenseCaptureDto>> Approve(Guid id, CancellationToken ct)
+        => Ok(await _assistantService.ApproveAsync(id, ct));
+
+    [HttpPost("captures/{id:guid}/reject")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ExpenseCaptureDto>> Reject(Guid id, CancellationToken ct)
+        => Ok(await _assistantService.RejectAsync(id, ct));
+
     [HttpPost("captures/{id:guid}/proof")]
     [RequestSizeLimit(10 * 1024 * 1024)]
     public async Task<ActionResult<ExpenseCaptureDto>> UploadProof(Guid id, IFormFile file, CancellationToken ct)

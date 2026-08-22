@@ -94,8 +94,9 @@ export enum ExpenseCaptureStatus {
   AwaitingDetails = 1,
   AwaitingPaymentMethod = 2,
   AwaitingReconciliation = 3,
-  Posted = 4,
-  Rejected = 5,
+  PendingApproval = 4,
+  Posted = 5,
+  Rejected = 6,
 }
 
 export enum ExpensePaymentMethod {

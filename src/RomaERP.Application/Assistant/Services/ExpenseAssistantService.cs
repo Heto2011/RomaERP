@@ -53,7 +53,7 @@ public class ExpenseAssistantService : IExpenseAssistantService
         var assistantReply = capture.Status switch
         {
             ExpenseCaptureStatus.AwaitingDetails => await HandleDetailsAsync(capture, request.Message, ct),
-            ExpenseCaptureStatus.AwaitingPaymentMethod => await HandlePaymentMethodAsync(capture, request.Message, ct),
+            ExpenseCaptureStatus.AwaitingPaymentMethod => HandlePaymentMethod(capture, request.Message),
             _ => "المصروف ده اتسجل خلاصه، مفيش حاجة تانية مطلوبة منك دلوقتي في نفس المحادثة."
         };
 
@@ -111,7 +111,7 @@ public class ExpenseAssistantService : IExpenseAssistantService
         return $"تمام، هسجل \"{capture.Description}\" بمبلغ {capture.Amount} {capture.Currency} تحت بند ({account.Code} - {account.NameAr}). الدفع كان كاش ولا شبكة؟";
     }
 
-    private async Task<string> HandlePaymentMethodAsync(ExpenseCapture capture, string message, CancellationToken ct)
+    private static string HandlePaymentMethod(ExpenseCapture capture, string message)
     {
         var normalized = message.Trim();
         var isCash = CashKeywords.Any(k => normalized.Contains(k, StringComparison.OrdinalIgnoreCase));
@@ -123,24 +123,9 @@ public class ExpenseAssistantService : IExpenseAssistantService
         if (isCash)
         {
             capture.PaymentMethod = PaymentMethod.Cash;
+            capture.Status = ExpenseCaptureStatus.PendingApproval;
 
-            var period = await FindOpenPeriodAsync(capture.EntryDate, ct);
-            var cashAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == AccountingConstants.CashOnHandAccountCode && !a.IsDeleted, ct)
-                ?? throw new ValidationAppException($"حساب الصندوق ({AccountingConstants.CashOnHandAccountCode}) غير موجود في دليل الحسابات.");
-
-            var entry = await SimpleJournalEntryFactory.CreatePostedAsync(
-                _context, capture.EntryDate, period.Id,
-                $"مصروف عبر المساعد الذكي: {capture.Description}",
-                debitAccountId: capture.SuggestedAccountId!.Value,
-                creditAccountId: cashAccount.Id,
-                amount: capture.Amount!.Value,
-                reference: "AI-ASSISTANT",
-                ct: ct);
-
-            capture.JournalEntry = entry;
-            capture.Status = ExpenseCaptureStatus.Posted;
-
-            return $"تم تسجيل المصروف نقدًا وترحيله في القيد {entry.EntryNumber} ✅";
+            return "تمام، المصروف اتسجل وهيتراجع من المدير للاعتماد قبل ما يترحّل نهائيًا في الحسابات.";
         }
 
         capture.PaymentMethod = PaymentMethod.Card;
@@ -179,6 +164,87 @@ public class ExpenseAssistantService : IExpenseAssistantService
             .ToListAsync(ct);
 
         return captures.Select(Map).ToList();
+    }
+
+    public async Task<List<ExpenseCaptureDto>> GetPendingApprovalAsync(CancellationToken ct = default)
+    {
+        var captures = await _context.ExpenseCaptures
+            .AsNoTracking()
+            .Include(c => c.SuggestedAccount)
+            .Where(c => c.Status == ExpenseCaptureStatus.PendingApproval && !c.IsDeleted)
+            .OrderBy(c => c.CreatedAtUtc)
+            .ToListAsync(ct);
+
+        return captures.Select(Map).ToList();
+    }
+
+    public async Task<ExpenseCaptureDto> ApproveAsync(Guid captureId, CancellationToken ct = default)
+    {
+        var capture = await _context.ExpenseCaptures
+            .Include(c => c.SuggestedAccount)
+            .Include(c => c.MatchedBankStatementLine).ThenInclude(l => l!.BankStatementImport)
+            .FirstOrDefaultAsync(c => c.Id == captureId, ct)
+            ?? throw new NotFoundException(nameof(ExpenseCapture), captureId);
+
+        if (capture.Status != ExpenseCaptureStatus.PendingApproval)
+            throw new ValidationAppException("هذا المصروف ليس في انتظار الاعتماد.");
+
+        Guid creditAccountId;
+        DateTime entryDate;
+
+        if (capture.PaymentMethod == PaymentMethod.Cash)
+        {
+            var cashAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == AccountingConstants.CashOnHandAccountCode && !a.IsDeleted, ct)
+                ?? throw new ValidationAppException($"حساب الصندوق ({AccountingConstants.CashOnHandAccountCode}) غير موجود في دليل الحسابات.");
+            creditAccountId = cashAccount.Id;
+            entryDate = capture.EntryDate;
+        }
+        else
+        {
+            if (capture.MatchedBankStatementLine?.BankStatementImport is null)
+                throw new ValidationAppException("لا يوجد تطابق بنكي مؤكد لهذا المصروف بعد.");
+
+            creditAccountId = capture.MatchedBankStatementLine.BankStatementImport.BankAccountId;
+            entryDate = capture.MatchedBankStatementLine.TransactionDate;
+        }
+
+        var period = await FindOpenPeriodAsync(entryDate, ct);
+
+        var entry = await SimpleJournalEntryFactory.CreatePostedAsync(
+            _context, entryDate, period.Id,
+            $"مصروف عبر المساعد الذكي (معتمد): {capture.Description}",
+            debitAccountId: capture.SuggestedAccountId!.Value,
+            creditAccountId: creditAccountId,
+            amount: capture.Amount!.Value,
+            reference: "AI-ASSISTANT",
+            ct: ct);
+
+        capture.JournalEntry = entry;
+        capture.Status = ExpenseCaptureStatus.Posted;
+
+        await _context.SaveChangesAsync(ct);
+        return Map(capture);
+    }
+
+    public async Task<ExpenseCaptureDto> RejectAsync(Guid captureId, CancellationToken ct = default)
+    {
+        var capture = await _context.ExpenseCaptures
+            .Include(c => c.SuggestedAccount)
+            .Include(c => c.MatchedBankStatementLine)
+            .FirstOrDefaultAsync(c => c.Id == captureId, ct)
+            ?? throw new NotFoundException(nameof(ExpenseCapture), captureId);
+
+        if (capture.Status != ExpenseCaptureStatus.PendingApproval)
+            throw new ValidationAppException("هذا المصروف ليس في انتظار الاعتماد.");
+
+        if (capture.MatchedBankStatementLine is not null)
+            capture.MatchedBankStatementLine.IsMatched = false;
+
+        capture.MatchedBankStatementLineId = null;
+        capture.Status = ExpenseCaptureStatus.Rejected;
+
+        await _context.SaveChangesAsync(ct);
+        return Map(capture);
     }
 
     public async Task<ExpenseCaptureDto> AttachProofAsync(Guid captureId, string fileName, string storagePath, CancellationToken ct = default)

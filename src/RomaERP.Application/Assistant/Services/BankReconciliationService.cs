@@ -1,6 +1,5 @@
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
-using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Assistant.DTOs;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
@@ -12,7 +11,8 @@ namespace RomaERP.Application.Assistant.Services;
 /// <summary>
 /// Imports a bank statement (CSV: Date,Description,Amount — Amount positive for money leaving the
 /// account) and matches its lines against card expenses captured through the AI assistant that are
-/// still waiting on reconciliation, posting the matching journal entry once matched.
+/// still waiting on reconciliation. A match moves the capture to PendingApproval — it still needs
+/// Admin sign-off (ExpenseAssistantService.ApproveAsync) before the journal entry is posted.
 /// </summary>
 public class BankReconciliationService : IBankReconciliationService
 {
@@ -139,7 +139,7 @@ public class BankReconciliationService : IBankReconciliationService
             if (candidates.Count != 1)
                 continue;
 
-            await PostMatchAsync(capture, candidates[0], ct);
+            MarkMatched(capture, candidates[0]);
             matchedCount++;
         }
 
@@ -165,7 +165,7 @@ public class BankReconciliationService : IBankReconciliationService
         if (line.IsMatched)
             throw new ValidationAppException("حركة كشف الحساب هذه متطابقة بالفعل مع مصروف آخر.");
 
-        await PostMatchAsync(capture, line, ct);
+        MarkMatched(capture, line);
         await _context.SaveChangesAsync(ct);
 
         return new ExpenseCaptureDto
@@ -187,27 +187,15 @@ public class BankReconciliationService : IBankReconciliationService
         };
     }
 
-    private async Task PostMatchAsync(ExpenseCapture capture, BankStatementLine line, CancellationToken ct)
+    /// <summary>
+    /// Marks the bank line and capture as matched but does NOT post a journal entry — matched card
+    /// expenses still need Admin approval (see ExpenseAssistantService.ApproveAsync) before they hit the GL.
+    /// </summary>
+    private static void MarkMatched(ExpenseCapture capture, BankStatementLine line)
     {
-        var period = await _context.FiscalPeriods
-            .FirstOrDefaultAsync(p => p.StartDate <= line.TransactionDate && p.EndDate >= line.TransactionDate && !p.IsClosed, ct)
-            ?? throw new ValidationAppException("لا توجد فترة محاسبية مفتوحة تغطي تاريخ حركة كشف الحساب.");
-
-        var import = line.BankStatementImport ?? await _context.BankStatementImports.FirstAsync(i => i.Id == line.BankStatementImportId, ct);
-
-        var entry = await SimpleJournalEntryFactory.CreatePostedAsync(
-            _context, line.TransactionDate, period.Id,
-            $"مصروف عبر المساعد الذكي (مطابق بكشف الحساب): {capture.Description}",
-            debitAccountId: capture.SuggestedAccountId!.Value,
-            creditAccountId: import.BankAccountId,
-            amount: capture.Amount!.Value,
-            reference: "AI-ASSISTANT",
-            ct: ct);
-
         line.IsMatched = true;
         capture.MatchedBankStatementLineId = line.Id;
-        capture.JournalEntry = entry;
-        capture.Status = ExpenseCaptureStatus.Posted;
+        capture.Status = ExpenseCaptureStatus.PendingApproval;
     }
 
     private static BankStatementLineDto Map(BankStatementLine l) => new()
