@@ -1,11 +1,13 @@
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
+using RomaERP.Domain.HR;
 
 namespace RomaERP.Domain.Assistant;
 
 /// <summary>
 /// One expense captured through the natural-language chat assistant, tracked through its
-/// lifecycle: parse -> ask cash/card -> (card) wait for bank match -> post to the GL.
+/// lifecycle: parse -> ask custody/company -> (company) ask cash/card -> (card) wait for bank
+/// match -> wait on Admin approval -> post to the GL.
 /// </summary>
 public class ExpenseCapture : AuditableEntity
 {
@@ -18,8 +20,13 @@ public class ExpenseCapture : AuditableEntity
     public Guid? SuggestedAccountId { get; set; }
     public Account? SuggestedAccount { get; set; }
 
+    public FundingSource FundingSource { get; set; } = FundingSource.Unknown;
+
+    public Guid? CustodyEmployeeId { get; set; }
+    public Employee? CustodyEmployee { get; set; }
+
     public PaymentMethod PaymentMethod { get; set; } = PaymentMethod.Unknown;
-    public ExpenseCaptureStatus Status { get; set; } = ExpenseCaptureStatus.AwaitingPaymentMethod;
+    public ExpenseCaptureStatus Status { get; set; } = ExpenseCaptureStatus.AwaitingDetails;
 
     public string? ProofFileName { get; set; }
     public string? ProofStoragePath { get; set; }

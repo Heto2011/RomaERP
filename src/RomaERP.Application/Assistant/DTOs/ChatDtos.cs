@@ -35,6 +35,9 @@ public class ExpenseCaptureDto
     public Guid? SuggestedAccountId { get; set; }
     public string? SuggestedAccountCode { get; set; }
     public string? SuggestedAccountName { get; set; }
+    public FundingSource FundingSource { get; set; }
+    public Guid? CustodyEmployeeId { get; set; }
+    public string? CustodyEmployeeName { get; set; }
     public PaymentMethod PaymentMethod { get; set; }
     public ExpenseCaptureStatus Status { get; set; }
     public string? ProofFileName { get; set; }

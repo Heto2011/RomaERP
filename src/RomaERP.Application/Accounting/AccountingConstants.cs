@@ -11,4 +11,5 @@ public static class AccountingConstants
     public const string OpeningBalanceReference = "OPENING-BALANCE";
     public const string CashOnHandAccountCode = "1111";
     public const string GeneralAdminExpenseAccountCode = "5300";
+    public const string EmployeeCustodyAccountCode = "1170";
 }

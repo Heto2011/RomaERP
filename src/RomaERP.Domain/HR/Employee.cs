@@ -30,5 +30,8 @@ public class Employee : AuditableEntity
     public string? BankAccountNumber { get; set; }
     public string? Iban { get; set; }
 
+    /// <summary>Running balance of the employee's custody advance (عهدة) — increases when issued, decreases as approved custody-funded expenses are posted.</summary>
+    public decimal CustodyBalance { get; set; }
+
     public ICollection<EmployeeSalaryComponent> SalaryComponents { get; set; } = new List<EmployeeSalaryComponent>();
 }

@@ -1,12 +1,18 @@
 import { useEffect, useState } from "react";
 import { AiAssistantApi } from "../../api/services";
-import { ExpensePaymentMethod, type ExpenseCapture } from "../../api/types";
+import { ExpenseFundingSource, ExpensePaymentMethod, type ExpenseCapture } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 
 const paymentLabel: Record<ExpensePaymentMethod, string> = {
   [ExpensePaymentMethod.Unknown]: "-",
   [ExpensePaymentMethod.Cash]: "كاش",
   [ExpensePaymentMethod.Card]: "شبكة (متطابق مع كشف الحساب)",
+};
+
+const fundingSourceLabel: Record<ExpenseFundingSource, string> = {
+  [ExpenseFundingSource.Unknown]: "-",
+  [ExpenseFundingSource.CompanyAccount]: "جاري الشركة",
+  [ExpenseFundingSource.EmployeeCustody]: "عهدة موظف",
 };
 
 export default function ExpenseApprovals() {
@@ -63,6 +69,7 @@ export default function ExpenseApprovals() {
               <th>الوصف</th>
               <th>المبلغ</th>
               <th>التاريخ</th>
+              <th>مصدر الصرف</th>
               <th>طريقة الدفع</th>
               <th>الحساب المقترح</th>
               <th>إثبات</th>
@@ -72,7 +79,7 @@ export default function ExpenseApprovals() {
           <tbody>
             {captures.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
+                <td colSpan={8} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
                   مفيش مصروفات في انتظار الاعتماد دلوقتي.
                 </td>
               </tr>
@@ -82,7 +89,13 @@ export default function ExpenseApprovals() {
                 <td>{c.description}</td>
                 <td>{c.amount} {c.currency}</td>
                 <td>{new Date(c.entryDate).toLocaleDateString("ar-EG")}</td>
-                <td>{paymentLabel[c.paymentMethod]}</td>
+                <td>
+                  {fundingSourceLabel[c.fundingSource]}
+                  {c.fundingSource === ExpenseFundingSource.EmployeeCustody && c.custodyEmployeeName && (
+                    <div className="text-muted" style={{ fontSize: 12 }}>{c.custodyEmployeeName}</div>
+                  )}
+                </td>
+                <td>{c.fundingSource === ExpenseFundingSource.EmployeeCustody ? "-" : paymentLabel[c.paymentMethod]}</td>
                 <td>{c.suggestedAccountCode} - {c.suggestedAccountName}</td>
                 <td>{c.proofFileName ?? "-"}</td>
                 <td style={{ display: "flex", gap: 6 }}>

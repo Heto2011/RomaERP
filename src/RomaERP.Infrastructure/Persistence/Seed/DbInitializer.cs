@@ -93,6 +93,7 @@ public static class DbInitializer
         var prepaidExpenses = New("1140", "مصروفات مقدمة", "Prepaid Expenses", AccountType.Asset, AccountNature.Debit, currentAssets, false, 3);
         var accruedRevenue = New("1150", "إيرادات مستحقة", "Accrued Revenue", AccountType.Asset, AccountNature.Debit, currentAssets, false, 3);
         var inventory = New("1160", "المخزون", "Inventory", AccountType.Asset, AccountNature.Debit, currentAssets, false, 3);
+        var employeeCustodies = New("1170", "عهد الموظفين", "Employee Custodies", AccountType.Asset, AccountNature.Debit, currentAssets, false, 3);
 
         var fixedAssets = New("1200", "الأصول الثابتة", "Fixed Assets", AccountType.Asset, AccountNature.Debit, assets, true, 2);
         var landAndBuildings = New("1210", "أراضي ومباني", "Land & Buildings", AccountType.Asset, AccountNature.Debit, fixedAssets, false, 3);
@@ -103,7 +104,7 @@ public static class DbInitializer
         accounts.AddRange(new[]
         {
             assets, currentAssets, cashAndEquivalents, cashOnHand, bank, accountsReceivable, notesReceivable,
-            prepaidExpenses, accruedRevenue, inventory,
+            prepaidExpenses, accruedRevenue, inventory, employeeCustodies,
             fixedAssets, landAndBuildings, machinery, furniture, accumulatedDepreciation
         });
 

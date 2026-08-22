@@ -31,6 +31,11 @@ public class ExpenseCaptureConfiguration : IEntityTypeConfiguration<ExpenseCaptu
             .HasForeignKey(c => c.MatchedBankStatementLineId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(c => c.CustodyEmployee)
+            .WithMany()
+            .HasForeignKey(c => c.CustodyEmployeeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(c => c.Messages)
             .WithOne(m => m.ExpenseCapture)
             .HasForeignKey(m => m.ExpenseCaptureId)

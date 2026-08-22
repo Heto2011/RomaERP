@@ -3,6 +3,7 @@ using RomaERP.Application.Assistant.DTOs;
 using RomaERP.Application.Assistant.Services;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Assistant;
+using RomaERP.Domain.HR;
 using RomaERP.Infrastructure.Persistence;
 using Xunit;
 
@@ -28,39 +29,43 @@ public class ExpenseAssistantServiceTests
         return new ApplicationDbContext(options);
     }
 
-    private static async Task<(ApplicationDbContext ctx, Account cash, Account fuelExpense, FiscalPeriod period)> SeedAsync()
+    private static async Task<(ApplicationDbContext ctx, Account cash, Account fuelExpense, Account custody, FiscalPeriod period)> SeedAsync()
     {
         var ctx = CreateContext();
 
         var cash = new Account { Code = "1111", NameAr = "الصندوق", NameEn = "Cash", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
         var fuelExpense = new Account { Code = "5300", NameAr = "مصروفات إدارية وعمومية", NameEn = "Admin Expenses", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        var custody = new Account { Code = "1170", NameAr = "عهد الموظفين", NameEn = "Employee Custodies", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
 
         var today = DateTime.UtcNow.Date;
         var year = new FiscalYear { Name = today.Year.ToString(), StartDate = new DateTime(today.Year, 1, 1), EndDate = new DateTime(today.Year, 12, 31) };
         var period = new FiscalPeriod { FiscalYear = year, FiscalYearId = year.Id, Name = "Current", PeriodNumber = 1, StartDate = today.AddDays(-15), EndDate = today.AddDays(15) };
 
-        ctx.Accounts.AddRange(cash, fuelExpense);
+        ctx.Accounts.AddRange(cash, fuelExpense, custody);
         ctx.FiscalYears.Add(year);
         ctx.FiscalPeriods.Add(period);
         await ctx.SaveChangesAsync();
 
-        return (ctx, cash, fuelExpense, period);
+        return (ctx, cash, fuelExpense, custody, period);
     }
 
     [Fact]
-    public async Task SendMessage_WithCashReply_WaitsForAdminApprovalBeforePosting()
+    public async Task SendMessage_WithCompanyAccountThenCash_WaitsForAdminApprovalBeforePosting()
     {
-        var (ctx, cash, fuelExpense, _) = await SeedAsync();
+        var (ctx, cash, fuelExpense, _, _) = await SeedAsync();
         var parser = new FakeClaudeExpenseParser();
         var service = new ExpenseAssistantService(ctx, parser);
 
         var first = await service.SendMessageAsync(new ChatTurnRequestDto { Message = "اشتريت بنزين بـ100 جنيه" }, "user-1");
-        Assert.Equal(ExpenseCaptureStatus.AwaitingPaymentMethod, first.Status);
+        Assert.Equal(ExpenseCaptureStatus.AwaitingFundingSource, first.Status);
 
-        var second = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "كاش" }, "user-1");
+        var second = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "جاري" }, "user-1");
+        Assert.Equal(ExpenseCaptureStatus.AwaitingPaymentMethod, second.Status);
 
-        Assert.Equal(ExpenseCaptureStatus.PendingApproval, second.Status);
-        Assert.Null(second.Capture!.JournalEntryId);
+        var third = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "كاش" }, "user-1");
+
+        Assert.Equal(ExpenseCaptureStatus.PendingApproval, third.Status);
+        Assert.Null(third.Capture!.JournalEntryId);
 
         var approved = await service.ApproveAsync(first.CaptureId);
 
@@ -76,10 +81,11 @@ public class ExpenseAssistantServiceTests
     [Fact]
     public async Task Reject_OnPendingApprovalCapture_MarksRejectedWithoutPosting()
     {
-        var (ctx, _, _, _) = await SeedAsync();
+        var (ctx, _, _, _, _) = await SeedAsync();
         var service = new ExpenseAssistantService(ctx, new FakeClaudeExpenseParser());
 
         var first = await service.SendMessageAsync(new ChatTurnRequestDto { Message = "اشتريت بنزين بـ100 جنيه" }, "user-1");
+        await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "جاري" }, "user-1");
         await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "كاش" }, "user-1");
 
         var rejected = await service.RejectAsync(first.CaptureId);
@@ -90,22 +96,23 @@ public class ExpenseAssistantServiceTests
     }
 
     [Fact]
-    public async Task SendMessage_WithCardReply_LeavesCaptureAwaitingReconciliation()
+    public async Task SendMessage_WithCompanyAccountThenCard_LeavesCaptureAwaitingReconciliation()
     {
-        var (ctx, _, _, _) = await SeedAsync();
+        var (ctx, _, _, _, _) = await SeedAsync();
         var service = new ExpenseAssistantService(ctx, new FakeClaudeExpenseParser());
 
         var first = await service.SendMessageAsync(new ChatTurnRequestDto { Message = "اشتريت بنزين بـ100 جنيه" }, "user-1");
-        var second = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "شبكة" }, "user-1");
+        await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "جاري" }, "user-1");
+        var third = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "شبكة" }, "user-1");
 
-        Assert.Equal(ExpenseCaptureStatus.AwaitingReconciliation, second.Status);
-        Assert.Null(second.Capture!.JournalEntryId);
+        Assert.Equal(ExpenseCaptureStatus.AwaitingReconciliation, third.Status);
+        Assert.Null(third.Capture!.JournalEntryId);
     }
 
     [Fact]
     public async Task SendMessage_WhenAmountMissing_AsksForClarificationThenResolves()
     {
-        var (ctx, _, _, _) = await SeedAsync();
+        var (ctx, _, _, _, _) = await SeedAsync();
         var parser = new FakeClaudeExpenseParser
         {
             Handler = (msg, prior) => msg.Contains("100")
@@ -118,13 +125,60 @@ public class ExpenseAssistantServiceTests
         Assert.Equal(ExpenseCaptureStatus.AwaitingDetails, first.Status);
 
         var second = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "100 جنيه" }, "user-1");
-        Assert.Equal(ExpenseCaptureStatus.AwaitingPaymentMethod, second.Status);
+        Assert.Equal(ExpenseCaptureStatus.AwaitingFundingSource, second.Status);
+    }
+
+    [Fact]
+    public async Task SendMessage_WithCustodyFunding_ResolvesEmployeeAndPostsAgainstCustodyOnApproval()
+    {
+        var (ctx, _, fuelExpense, custody, _) = await SeedAsync();
+
+        var department = new Department { Code = "DEP-1", NameAr = "المبيعات", NameEn = "Sales" };
+        ctx.Departments.Add(department);
+        await ctx.SaveChangesAsync();
+        var position = new Position { Code = "POS-1", TitleAr = "مندوب", TitleEn = "Rep", DepartmentId = department.Id };
+        ctx.Positions.Add(position);
+        await ctx.SaveChangesAsync();
+
+        var employee = new Employee
+        {
+            EmployeeCode = "EMP-1",
+            FullNameAr = "أحمد علي",
+            FullNameEn = "Ahmed Ali",
+            HireDate = DateTime.UtcNow.Date,
+            DepartmentId = department.Id,
+            PositionId = position.Id,
+            EmploymentStatus = EmploymentStatus.Active,
+            CustodyBalance = 500
+        };
+        ctx.Employees.Add(employee);
+        await ctx.SaveChangesAsync();
+
+        var service = new ExpenseAssistantService(ctx, new FakeClaudeExpenseParser());
+
+        var first = await service.SendMessageAsync(new ChatTurnRequestDto { Message = "اشتريت بنزين بـ100 جنيه" }, "user-1");
+        var second = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "عهدة" }, "user-1");
+        Assert.Equal(ExpenseCaptureStatus.AwaitingCustodyEmployee, second.Status);
+
+        var third = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "أحمد علي" }, "user-1");
+        Assert.Equal(ExpenseCaptureStatus.PendingApproval, third.Status);
+        Assert.Equal(employee.Id, third.Capture!.CustodyEmployeeId);
+
+        var approved = await service.ApproveAsync(first.CaptureId);
+
+        Assert.Equal(ExpenseCaptureStatus.Posted, approved.Status);
+        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == approved.JournalEntryId);
+        Assert.Contains(entry.Lines, l => l.AccountId == fuelExpense.Id && l.Debit == 100);
+        Assert.Contains(entry.Lines, l => l.AccountId == custody.Id && l.Credit == 100);
+
+        var updatedEmployee = await ctx.Employees.FirstAsync(e => e.Id == employee.Id);
+        Assert.Equal(400, updatedEmployee.CustodyBalance);
     }
 
     [Fact]
     public async Task BankReconciliation_AutoMatchesCardExpenseWithinWindow_ThenNeedsApprovalToPost()
     {
-        var (ctx, cash, fuelExpense, period) = await SeedAsync();
+        var (ctx, cash, fuelExpense, _, period) = await SeedAsync();
         var assistant = new ExpenseAssistantService(ctx, new FakeClaudeExpenseParser());
         var reconciliation = new BankReconciliationService(ctx);
 
@@ -133,6 +187,7 @@ public class ExpenseAssistantServiceTests
         await ctx.SaveChangesAsync();
 
         var first = await assistant.SendMessageAsync(new ChatTurnRequestDto { Message = "اشتريت بنزين بـ100 جنيه" }, "user-1");
+        await assistant.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "جاري" }, "user-1");
         await assistant.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "شبكة" }, "user-1");
 
         var bankLineDate = DateTime.UtcNow.Date.AddDays(2).ToString("yyyy-MM-dd");

@@ -6,6 +6,7 @@ using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Assistant;
+using RomaERP.Domain.HR;
 
 namespace RomaERP.Application.Assistant.Services;
 
@@ -13,6 +14,8 @@ public class ExpenseAssistantService : IExpenseAssistantService
 {
     private static readonly string[] CashKeywords = { "كاش", "نقد", "نقدي", "cash" };
     private static readonly string[] CardKeywords = { "شبكة", "شبكه", "فيزا", "فيزه", "بطاقة", "بطاقه", "كارت", "card", "فوري", "انستاباي" };
+    private static readonly string[] CustodyKeywords = { "عهدة", "عهده", "عهدتي" };
+    private static readonly string[] CompanyAccountKeywords = { "جاري", "الشركة", "شركة", "company" };
 
     private readonly IApplicationDbContext _context;
     private readonly IClaudeExpenseParser _parser;
@@ -53,6 +56,8 @@ public class ExpenseAssistantService : IExpenseAssistantService
         var assistantReply = capture.Status switch
         {
             ExpenseCaptureStatus.AwaitingDetails => await HandleDetailsAsync(capture, request.Message, ct),
+            ExpenseCaptureStatus.AwaitingFundingSource => HandleFundingSource(capture, request.Message),
+            ExpenseCaptureStatus.AwaitingCustodyEmployee => await HandleCustodyEmployeeAsync(capture, request.Message, ct),
             ExpenseCaptureStatus.AwaitingPaymentMethod => HandlePaymentMethod(capture, request.Message),
             _ => "المصروف ده اتسجل خلاصه، مفيش حاجة تانية مطلوبة منك دلوقتي في نفس المحادثة."
         };
@@ -106,9 +111,56 @@ public class ExpenseAssistantService : IExpenseAssistantService
         var account = await ResolveAccountAsync(result.SuggestedAccountCode, ct);
         capture.SuggestedAccountId = account.Id;
         capture.SuggestedAccount = account;
-        capture.Status = ExpenseCaptureStatus.AwaitingPaymentMethod;
+        capture.Status = ExpenseCaptureStatus.AwaitingFundingSource;
 
-        return $"تمام، هسجل \"{capture.Description}\" بمبلغ {capture.Amount} {capture.Currency} تحت بند ({account.Code} - {account.NameAr}). الدفع كان كاش ولا شبكة؟";
+        return $"تمام، هسجل \"{capture.Description}\" بمبلغ {capture.Amount} {capture.Currency} تحت بند ({account.Code} - {account.NameAr}). الصرف ده من عهدتك ولا من جاري الشركة؟";
+    }
+
+    private static string HandleFundingSource(ExpenseCapture capture, string message)
+    {
+        var normalized = message.Trim();
+        var isCustody = CustodyKeywords.Any(k => normalized.Contains(k, StringComparison.OrdinalIgnoreCase));
+        var isCompanyAccount = CompanyAccountKeywords.Any(k => normalized.Contains(k, StringComparison.OrdinalIgnoreCase));
+
+        if (!isCustody && !isCompanyAccount)
+            return "من فضلك اكتب \"عهدة\" لو الصرف من عهدتك، أو \"جاري\" لو من حساب الشركة مباشرة.";
+
+        if (isCustody)
+        {
+            capture.FundingSource = FundingSource.EmployeeCustody;
+            capture.Status = ExpenseCaptureStatus.AwaitingCustodyEmployee;
+            return "تمام، عهدة مين؟ اكتب اسم الموظف أو كوده.";
+        }
+
+        capture.FundingSource = FundingSource.CompanyAccount;
+        capture.Status = ExpenseCaptureStatus.AwaitingPaymentMethod;
+        return "تمام، الدفع كان كاش ولا شبكة؟";
+    }
+
+    private async Task<string> HandleCustodyEmployeeAsync(ExpenseCapture capture, string message, CancellationToken ct)
+    {
+        var query = message.Trim();
+
+        var matches = await _context.Employees
+            .AsNoTracking()
+            .Where(e => !e.IsDeleted && e.EmploymentStatus == EmploymentStatus.Active
+                        && (e.EmployeeCode == query || e.FullNameAr.Contains(query) || e.FullNameEn.Contains(query)))
+            .ToListAsync(ct);
+
+        if (matches.Count == 0)
+            return $"مش لاقي موظف بالاسم أو الكود \"{query}\"، جرب تاني.";
+
+        if (matches.Count > 1)
+        {
+            var options = string.Join("، ", matches.Select(e => $"{e.EmployeeCode} - {e.FullNameAr}"));
+            return $"في أكتر من موظف بنفس الاسم، اكتب الكود بالظبط: {options}";
+        }
+
+        var employee = matches[0];
+        capture.CustodyEmployeeId = employee.Id;
+        capture.Status = ExpenseCaptureStatus.PendingApproval;
+
+        return $"تمام، هيتسجل على عهدة {employee.FullNameAr} وهيتراجع من المدير للاعتماد قبل ما يترحّل نهائيًا.";
     }
 
     private static string HandlePaymentMethod(ExpenseCapture capture, string message)
@@ -171,6 +223,7 @@ public class ExpenseAssistantService : IExpenseAssistantService
         var captures = await _context.ExpenseCaptures
             .AsNoTracking()
             .Include(c => c.SuggestedAccount)
+            .Include(c => c.CustodyEmployee)
             .Where(c => c.Status == ExpenseCaptureStatus.PendingApproval && !c.IsDeleted)
             .OrderBy(c => c.CreatedAtUtc)
             .ToListAsync(ct);
@@ -183,6 +236,7 @@ public class ExpenseAssistantService : IExpenseAssistantService
         var capture = await _context.ExpenseCaptures
             .Include(c => c.SuggestedAccount)
             .Include(c => c.MatchedBankStatementLine).ThenInclude(l => l!.BankStatementImport)
+            .Include(c => c.CustodyEmployee)
             .FirstOrDefaultAsync(c => c.Id == captureId, ct)
             ?? throw new NotFoundException(nameof(ExpenseCapture), captureId);
 
@@ -191,13 +245,29 @@ public class ExpenseAssistantService : IExpenseAssistantService
 
         Guid creditAccountId;
         DateTime entryDate;
+        string descriptionSuffix;
 
-        if (capture.PaymentMethod == PaymentMethod.Cash)
+        if (capture.FundingSource == FundingSource.EmployeeCustody)
+        {
+            if (capture.CustodyEmployee is null)
+                throw new ValidationAppException("لم يتم تحديد الموظف صاحب العهدة لهذا المصروف.");
+
+            var custodyAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == AccountingConstants.EmployeeCustodyAccountCode && !a.IsDeleted, ct)
+                ?? throw new ValidationAppException($"حساب عهد الموظفين ({AccountingConstants.EmployeeCustodyAccountCode}) غير موجود في دليل الحسابات.");
+
+            creditAccountId = custodyAccount.Id;
+            entryDate = capture.EntryDate;
+            descriptionSuffix = $"من عهدة {capture.CustodyEmployee.FullNameAr}";
+
+            capture.CustodyEmployee.CustodyBalance -= capture.Amount!.Value;
+        }
+        else if (capture.PaymentMethod == PaymentMethod.Cash)
         {
             var cashAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == AccountingConstants.CashOnHandAccountCode && !a.IsDeleted, ct)
                 ?? throw new ValidationAppException($"حساب الصندوق ({AccountingConstants.CashOnHandAccountCode}) غير موجود في دليل الحسابات.");
             creditAccountId = cashAccount.Id;
             entryDate = capture.EntryDate;
+            descriptionSuffix = "نقدًا";
         }
         else
         {
@@ -206,13 +276,14 @@ public class ExpenseAssistantService : IExpenseAssistantService
 
             creditAccountId = capture.MatchedBankStatementLine.BankStatementImport.BankAccountId;
             entryDate = capture.MatchedBankStatementLine.TransactionDate;
+            descriptionSuffix = "عبر الشبكة (مطابق بكشف الحساب)";
         }
 
         var period = await FindOpenPeriodAsync(entryDate, ct);
 
         var entry = await SimpleJournalEntryFactory.CreatePostedAsync(
             _context, entryDate, period.Id,
-            $"مصروف عبر المساعد الذكي (معتمد): {capture.Description}",
+            $"مصروف عبر المساعد الذكي (معتمد) {descriptionSuffix}: {capture.Description}",
             debitAccountId: capture.SuggestedAccountId!.Value,
             creditAccountId: creditAccountId,
             amount: capture.Amount!.Value,
@@ -270,6 +341,9 @@ public class ExpenseAssistantService : IExpenseAssistantService
         SuggestedAccountId = c.SuggestedAccountId,
         SuggestedAccountCode = c.SuggestedAccount?.Code,
         SuggestedAccountName = c.SuggestedAccount?.NameAr,
+        FundingSource = c.FundingSource,
+        CustodyEmployeeId = c.CustodyEmployeeId,
+        CustodyEmployeeName = c.CustodyEmployee?.FullNameAr,
         PaymentMethod = c.PaymentMethod,
         Status = c.Status,
         ProofFileName = c.ProofFileName,

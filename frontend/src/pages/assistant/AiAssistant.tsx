@@ -5,6 +5,8 @@ import { getErrorMessage } from "../../api/client";
 
 const statusLabel: Record<ExpenseCaptureStatus, string> = {
   [ExpenseCaptureStatus.AwaitingDetails]: "محتاج تفاصيل أكتر",
+  [ExpenseCaptureStatus.AwaitingFundingSource]: "في انتظار تحديد مصدر الصرف (عهدة ولا جاري)",
+  [ExpenseCaptureStatus.AwaitingCustodyEmployee]: "في انتظار تحديد الموظف صاحب العهدة",
   [ExpenseCaptureStatus.AwaitingPaymentMethod]: "في انتظار طريقة الدفع",
   [ExpenseCaptureStatus.AwaitingReconciliation]: "في انتظار المطابقة البنكية",
   [ExpenseCaptureStatus.PendingApproval]: "في انتظار اعتماد المدير",

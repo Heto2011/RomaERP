@@ -92,17 +92,25 @@ export enum ChatRole {
 
 export enum ExpenseCaptureStatus {
   AwaitingDetails = 1,
-  AwaitingPaymentMethod = 2,
-  AwaitingReconciliation = 3,
-  PendingApproval = 4,
-  Posted = 5,
-  Rejected = 6,
+  AwaitingFundingSource = 2,
+  AwaitingCustodyEmployee = 3,
+  AwaitingPaymentMethod = 4,
+  AwaitingReconciliation = 5,
+  PendingApproval = 6,
+  Posted = 7,
+  Rejected = 8,
 }
 
 export enum ExpensePaymentMethod {
   Unknown = 0,
   Cash = 1,
   Card = 2,
+}
+
+export enum ExpenseFundingSource {
+  Unknown = 0,
+  CompanyAccount = 1,
+  EmployeeCustody = 2,
 }
 
 export interface ChatMessage {
@@ -121,6 +129,9 @@ export interface ExpenseCapture {
   suggestedAccountId: string | null;
   suggestedAccountCode: string | null;
   suggestedAccountName: string | null;
+  fundingSource: ExpenseFundingSource;
+  custodyEmployeeId: string | null;
+  custodyEmployeeName: string | null;
   paymentMethod: ExpensePaymentMethod;
   status: ExpenseCaptureStatus;
   proofFileName: string | null;
