@@ -103,6 +103,25 @@ frontend/                 # React + TypeScript
 
 ## التشغيل محليًا
 
+### أسهل طريقة: أمر واحد عن طريق Docker
+
+لو مش عايز تثبّت .NET وNode.js وSQL Server لوحدهم على جهازك، ده أسرع طريق:
+
+1. ثبّت **Docker Desktop** (مجاني): [docker.com/products/docker-desktop](https://www.docker.com/products/docker-desktop/) — بعد التثبيت افتحه وسيبه شغال.
+2. حمّل كود المشروع: من صفحة الريبو على GitHub اضغط **Code ← Download ZIP** وفك الضغط، أو لو عندك Git: `git clone` وبعدين `git checkout` للفرع المطلوب.
+3. افتح Terminal (أو PowerShell على ويندوز) جوه فولدر المشروع اللي فكيته، واكتب:
+   ```bash
+   docker compose up --build
+   ```
+   أول مرة هياخد كام دقيقة (بيحمّل ويبني كل حاجة)، وبعد كده هيبقى فيه 3 حاجات شغالة: قاعدة البيانات، الـ Backend، والـ Frontend.
+4. افتح المتصفح على: **http://localhost:5173**
+5. بيانات الدخول التجريبية (كود الشركة `demo`، كلمة المرور واحدة لكل الحسابات `Passw0rd!123`):
+   - `admin@romaerp.local` (Admin) — أو `accountant@romaerp.local` / `hr@romaerp.local` / `employee@romaerp.local`
+
+لإيقاف كل حاجة: `Ctrl+C` في نفس الـ Terminal، وبعدين `docker compose down` لو عايز تشيل الـ containers خالص (البيانات بتفضل محفوظة في volume لحد ما تعمل `docker compose down -v`).
+
+### التشغيل بدون Docker (للمطورين)
+
 ### المتطلبات
 - .NET 8 SDK
 - SQL Server (أو container عبر Docker)
