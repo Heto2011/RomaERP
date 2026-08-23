@@ -97,6 +97,10 @@ public class SalesInvoiceDto
     public string? WarehouseName { get; set; }
     public List<SalesInvoiceLineDto> Lines { get; set; } = new();
     public List<SalesPaymentDto> Payments { get; set; } = new();
+    public RomaERP.Domain.EInvoicing.EInvoiceStatus EInvoiceStatus { get; set; }
+    public string? EInvoiceExternalUuid { get; set; }
+    public DateTime? EInvoiceSubmittedAtUtc { get; set; }
+    public string? EInvoiceErrorMessage { get; set; }
 }
 
 /// <summary>One customer's outstanding balance broken down by how overdue each invoice's remaining amount is,

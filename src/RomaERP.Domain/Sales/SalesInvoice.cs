@@ -1,5 +1,6 @@
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
+using RomaERP.Domain.EInvoicing;
 using RomaERP.Domain.Inventory;
 
 namespace RomaERP.Domain.Sales;
@@ -33,6 +34,14 @@ public class SalesInvoice : AuditableEntity
     public JournalEntry? JournalEntry { get; set; }
 
     public string? Notes { get; set; }
+
+    // ----- E-invoicing (government tax authority integration) -----
+    public EInvoiceStatus EInvoiceStatus { get; set; } = EInvoiceStatus.NotSubmitted;
+    public string? EInvoiceExternalUuid { get; set; }
+    /// <summary>Base64 SHA-256 hash of the submitted document — ZATCA chains this into the next invoice's PIH.</summary>
+    public string? EInvoiceHash { get; set; }
+    public DateTime? EInvoiceSubmittedAtUtc { get; set; }
+    public string? EInvoiceErrorMessage { get; set; }
 
     public ICollection<SalesInvoiceLine> Lines { get; set; } = new List<SalesInvoiceLine>();
     public ICollection<SalesPayment> Payments { get; set; } = new List<SalesPayment>();

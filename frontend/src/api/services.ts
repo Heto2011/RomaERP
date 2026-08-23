@@ -19,6 +19,8 @@ import type {
   CustomerAging,
   Department,
   DepreciationRun,
+  EInvoiceStatusDto,
+  EInvoicingSettings,
   Employee,
   FixedAsset,
   ExpenseCapture,
@@ -38,6 +40,7 @@ import type {
   SalesInvoice,
   StockMovement,
   TrialBalanceLine,
+  UpdateEInvoicingSettingsInput,
   Vendor,
   VendorAging,
   Warehouse,
@@ -215,6 +218,12 @@ export const SalesApi = {
   createInvoice: (data: CreateSalesInvoiceInput) => apiClient.post<SalesInvoice>("/sales/invoices", data),
   recordPayment: (id: string, data: RecordSalesPaymentInput) => apiClient.post<SalesInvoice>(`/sales/invoices/${id}/payments`, data),
   getAging: () => apiClient.get<CustomerAging[]>("/sales/aging"),
+  submitEInvoice: (id: string) => apiClient.post<EInvoiceStatusDto>(`/sales/invoices/${id}/submit-einvoice`),
+};
+
+export const EInvoicingApi = {
+  getSettings: () => apiClient.get<EInvoicingSettings>("/einvoicing/settings"),
+  updateSettings: (data: UpdateEInvoicingSettingsInput) => apiClient.put<EInvoicingSettings>("/einvoicing/settings", data),
 };
 
 export const PurchasingApi = {

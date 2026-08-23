@@ -65,7 +65,15 @@ export default function Layout({ children }: { children: ReactNode }) {
       ],
     },
     ...(user?.roles.includes("Admin")
-      ? [{ section: t.nav.administration, items: [{ to: "/users", label: t.nav.users }] }]
+      ? [
+          {
+            section: t.nav.administration,
+            items: [
+              { to: "/users", label: t.nav.users },
+              { to: "/einvoicing", label: t.nav.eInvoicing },
+            ],
+          },
+        ]
       : []),
   ];
 

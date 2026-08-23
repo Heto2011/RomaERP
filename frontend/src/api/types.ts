@@ -538,6 +538,10 @@ export interface SalesInvoice {
   warehouseName: string | null;
   lines: SalesInvoiceLine[];
   payments: SalesPayment[];
+  eInvoiceStatus: EInvoiceStatus;
+  eInvoiceExternalUuid: string | null;
+  eInvoiceSubmittedAtUtc: string | null;
+  eInvoiceErrorMessage: string | null;
 }
 
 export interface Vendor {
@@ -662,4 +666,46 @@ export interface CreateUserInput {
   password: string;
   fullName: string;
   roles: string[];
+}
+
+export enum EInvoicingProvider {
+  None = 0,
+  Eta = 1,
+  Zatca = 2,
+}
+
+export enum EInvoicingEnvironment {
+  Sandbox = 1,
+  Production = 2,
+}
+
+export enum EInvoiceStatus {
+  NotSubmitted = 1,
+  Submitted = 2,
+  Accepted = 3,
+  Rejected = 4,
+}
+
+export interface EInvoicingSettings {
+  provider: EInvoicingProvider;
+  environment: EInvoicingEnvironment;
+  hasClientCredentials: boolean;
+  hasCertificate: boolean;
+}
+
+export interface UpdateEInvoicingSettingsInput {
+  provider: EInvoicingProvider;
+  environment: EInvoicingEnvironment;
+  clientId?: string | null;
+  clientSecret?: string | null;
+  certificate?: string | null;
+  privateKey?: string | null;
+}
+
+export interface EInvoiceStatusDto {
+  salesInvoiceId: string;
+  status: EInvoiceStatus;
+  externalUuid: string | null;
+  submittedAtUtc: string | null;
+  errorMessage: string | null;
 }

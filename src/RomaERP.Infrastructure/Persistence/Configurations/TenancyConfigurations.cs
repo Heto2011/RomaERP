@@ -14,6 +14,9 @@ public class CompanySettingsConfiguration : IEntityTypeConfiguration<CompanySett
         builder.Property(c => c.VatRate).HasPrecision(5, 4);
         builder.Property(c => c.DefaultCurrency).HasMaxLength(10).IsRequired();
 
+        builder.Property(c => c.EInvoicingClientId).HasMaxLength(200);
+        builder.Property(c => c.EInvoicingLastInvoiceHash).HasMaxLength(200);
+
         builder.HasQueryFilter(c => !c.IsDeleted);
     }
 }

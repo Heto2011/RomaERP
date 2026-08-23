@@ -74,6 +74,7 @@ const ar = {
     administration: "الإدارة",
     users: "المستخدمون",
     myProfile: "بياناتي",
+    eInvoicing: "الفاتورة الإلكترونية",
   },
   login: {
     title: "RomaERP",
@@ -151,6 +152,7 @@ const ar = {
     item: "الصنف",
     warehouse: "المخزن",
     serviceLine: "بند خدمة (بدون مخزون)",
+    eInvoice: "الفاتورة الإلكترونية",
   },
   purchasing: {
     vendorsTitle: "الموردون",
@@ -354,6 +356,39 @@ const ar = {
     notLinked: "حسابك مش مرتبط بسجل موظف حاليًا. تواصل مع مدير النظام لربط حسابك ببياناتك الوظيفية.",
     payslipsTitle: "سجل الرواتب",
   },
+  eInvoicing: {
+    title: "الفاتورة الإلكترونية",
+    intro:
+      "فعّل منظومة الفاتورة الإلكترونية المطابقة لدولة شركتك، وأدخل بيانات الاعتماد الخاصة بحسابك في المنظومة الحكومية. البيانات السرية بتتخزن مشفّرة، ومفيش حد بيقدر يشوفها تاني بعد الحفظ — لو عايز تغيّرها ادخل قيمة جديدة، ولو سايبها فاضية هتفضل القيمة المحفوظة زي ما هي.",
+    provider: "منظومة الفاتورة الإلكترونية",
+    providers: {
+      none: "غير مفعّلة",
+      eta: "مصر - منظومة الفاتورة الإلكترونية (ETA)",
+      zatca: "السعودية - فاتورة (ZATCA)",
+    },
+    environment: "البيئة",
+    environments: { sandbox: "بيئة تجريبية", production: "بيئة فعلية" },
+    clientId: "معرّف العميل (Client ID)",
+    clientSecret: "السر (Client Secret)",
+    certificate: "الشهادة (Certificate) - خاص بالسعودية",
+    privateKey: "المفتاح الخاص (Private Key) - خاص بالسعودية",
+    leaveBlankToKeep: "سيبها فاضية لو مش عايز تغيّر القيمة المحفوظة حاليًا.",
+    hasClientCredentials: "بيانات الاعتماد محفوظة",
+    hasCertificate: "الشهادة محفوظة",
+    stored: "محفوظة",
+    notStored: "غير محفوظة",
+    saveSettings: "حفظ الإعدادات",
+    savedSuccessfully: "تم حفظ إعدادات الفاتورة الإلكترونية بنجاح.",
+    statuses: {
+      notSubmitted: "لم تُرسل",
+      submitted: "قيد الإرسال",
+      accepted: "مقبولة",
+      rejected: "مرفوضة",
+    },
+    submit: "إرسال للفاتورة الإلكترونية",
+    submitting: "جارٍ الإرسال...",
+    submittedSuccessfully: "تم إرسال الفاتورة الإلكترونية بنجاح.",
+  },
   assistant: {
     statuses: {
       awaitingDetails: "محتاج تفاصيل أكتر",
@@ -492,6 +527,7 @@ const en: typeof ar = {
     administration: "Administration",
     users: "Users",
     myProfile: "My Profile",
+    eInvoicing: "E-Invoicing",
   },
   login: {
     title: "RomaERP",
@@ -569,6 +605,7 @@ const en: typeof ar = {
     warehouse: "Warehouse",
     serviceLine: "Service line (no inventory)",
     agingTitle: "Customer AR Aging",
+    eInvoice: "E-Invoice",
   },
   purchasing: {
     vendorsTitle: "Vendors",
@@ -771,6 +808,39 @@ const en: typeof ar = {
     title: "My Profile",
     notLinked: "Your account is not linked to an employee record yet. Contact the system administrator to link your account.",
     payslipsTitle: "Payslip History",
+  },
+  eInvoicing: {
+    title: "E-Invoicing",
+    intro:
+      "Enable the e-invoicing system that matches your company's country, and enter your credentials for the government platform. Secret values are stored encrypted and cannot be viewed again after saving — enter a new value to change one, or leave it blank to keep the stored value unchanged.",
+    provider: "E-Invoicing Provider",
+    providers: {
+      none: "Not enabled",
+      eta: "Egypt - E-Invoicing (ETA)",
+      zatca: "Saudi Arabia - Fatoora (ZATCA)",
+    },
+    environment: "Environment",
+    environments: { sandbox: "Sandbox", production: "Production" },
+    clientId: "Client ID",
+    clientSecret: "Client Secret",
+    certificate: "Certificate (ZATCA only)",
+    privateKey: "Private Key (ZATCA only)",
+    leaveBlankToKeep: "Leave blank to keep the currently stored value unchanged.",
+    hasClientCredentials: "Credentials stored",
+    hasCertificate: "Certificate stored",
+    stored: "Stored",
+    notStored: "Not stored",
+    saveSettings: "Save Settings",
+    savedSuccessfully: "E-invoicing settings saved successfully.",
+    statuses: {
+      notSubmitted: "Not submitted",
+      submitted: "Submitted",
+      accepted: "Accepted",
+      rejected: "Rejected",
+    },
+    submit: "Submit E-Invoice",
+    submitting: "Submitting...",
+    submittedSuccessfully: "Invoice submitted successfully.",
   },
   assistant: {
     statuses: {

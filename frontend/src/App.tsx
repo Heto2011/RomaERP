@@ -5,6 +5,7 @@ import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import MyProfile from "./pages/MyProfile";
+import EInvoicing from "./pages/EInvoicing";
 import ChartOfAccounts from "./pages/accounting/ChartOfAccounts";
 import OpeningBalances from "./pages/accounting/OpeningBalances";
 import JournalEntries from "./pages/accounting/JournalEntries";
@@ -44,6 +45,7 @@ export default function App() {
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/my-profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
+      <Route path="/einvoicing" element={<ProtectedRoute><EInvoicing /></ProtectedRoute>} />
       <Route path="/assistant/chat" element={<ProtectedRoute><AiAssistant /></ProtectedRoute>} />
       <Route path="/assistant/approvals" element={<ProtectedRoute><ExpenseApprovals /></ProtectedRoute>} />
       <Route path="/assistant/bank-reconciliation" element={<ProtectedRoute><BankReconciliation /></ProtectedRoute>} />

@@ -32,6 +32,9 @@ public class SalesInvoiceConfiguration : IEntityTypeConfiguration<SalesInvoice>
         builder.Property(i => i.TotalAmount).HasPrecision(18, 2);
         builder.Property(i => i.PaidAmount).HasPrecision(18, 2);
         builder.Property(i => i.Notes).HasMaxLength(1000);
+        builder.Property(i => i.EInvoiceExternalUuid).HasMaxLength(100);
+        builder.Property(i => i.EInvoiceHash).HasMaxLength(200);
+        builder.Property(i => i.EInvoiceErrorMessage).HasMaxLength(1000);
         builder.HasIndex(i => i.InvoiceNumber).IsUnique();
 
         builder.HasOne(i => i.Customer)

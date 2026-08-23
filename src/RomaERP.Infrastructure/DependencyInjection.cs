@@ -8,6 +8,7 @@ using RomaERP.Infrastructure.Assistant;
 using RomaERP.Infrastructure.Identity;
 using RomaERP.Infrastructure.Persistence;
 using RomaERP.Infrastructure.Persistence.Central;
+using RomaERP.Infrastructure.Security;
 using RomaERP.Infrastructure.Tenancy;
 
 namespace RomaERP.Infrastructure;
@@ -17,6 +18,8 @@ public static class DependencyInjection
     public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddMemoryCache();
+        services.AddDataProtection();
+        services.AddScoped<ISecretProtector, DataProtectionSecretProtector>();
 
         services.AddDbContext<CentralDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("Central")));

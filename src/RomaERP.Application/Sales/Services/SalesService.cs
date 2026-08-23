@@ -438,6 +438,10 @@ public class SalesService : ISalesService
             Method = p.Method,
             Reference = p.Reference,
             JournalEntryId = p.JournalEntryId
-        }).ToList()
+        }).ToList(),
+        EInvoiceStatus = i.EInvoiceStatus,
+        EInvoiceExternalUuid = i.EInvoiceExternalUuid,
+        EInvoiceSubmittedAtUtc = i.EInvoiceSubmittedAtUtc,
+        EInvoiceErrorMessage = i.EInvoiceErrorMessage
     };
 }

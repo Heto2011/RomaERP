@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { ItemsApi, LookupsApi, SalesApi, WarehousesApi } from "../../api/services";
-import { PaymentTerm, type Customer, type FiscalPeriod, type Item, type SalesInvoice, type SalesInvoiceLineInput, type Warehouse } from "../../api/types";
+import { EInvoiceStatus, PaymentTerm, type Customer, type FiscalPeriod, type Item, type SalesInvoice, type SalesInvoiceLineInput, type Warehouse } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 
@@ -28,6 +28,8 @@ export default function SalesInvoices() {
   const [payingInvoice, setPayingInvoice] = useState<SalesInvoice | null>(null);
   const [payAmount, setPayAmount] = useState(0);
   const [payMethod, setPayMethod] = useState<PaymentTerm>(PaymentTerm.Cash);
+
+  const [submittingEInvoiceId, setSubmittingEInvoiceId] = useState<string | null>(null);
 
   const netTotal = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
   const vatTotal = netTotal * vatRate;
@@ -121,10 +123,37 @@ export default function SalesInvoices() {
     }
   }
 
+  async function handleSubmitEInvoice(invoiceId: string) {
+    setError(null);
+    setSubmittingEInvoiceId(invoiceId);
+    try {
+      await SalesApi.submitEInvoice(invoiceId);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setSubmittingEInvoiceId(null);
+    }
+  }
+
   const paymentTermLabel: Record<PaymentTerm, string> = {
     [PaymentTerm.Cash]: t.paymentTerm.cash,
     [PaymentTerm.Card]: t.paymentTerm.card,
     [PaymentTerm.Credit]: t.paymentTerm.credit,
+  };
+
+  const eInvoiceStatusLabel: Record<EInvoiceStatus, string> = {
+    [EInvoiceStatus.NotSubmitted]: t.eInvoicing.statuses.notSubmitted,
+    [EInvoiceStatus.Submitted]: t.eInvoicing.statuses.submitted,
+    [EInvoiceStatus.Accepted]: t.eInvoicing.statuses.accepted,
+    [EInvoiceStatus.Rejected]: t.eInvoicing.statuses.rejected,
+  };
+
+  const eInvoiceStatusClass: Record<EInvoiceStatus, string> = {
+    [EInvoiceStatus.NotSubmitted]: "text-muted",
+    [EInvoiceStatus.Submitted]: "text-muted",
+    [EInvoiceStatus.Accepted]: "text-success",
+    [EInvoiceStatus.Rejected]: "text-danger",
   };
 
   return (
@@ -269,13 +298,14 @@ export default function SalesInvoices() {
               <th>{t.common.total}</th>
               <th>{t.sales.paymentTerm}</th>
               <th>{t.common.outstanding}</th>
+              <th>{t.sales.eInvoice}</th>
               <th>{t.common.actions}</th>
             </tr>
           </thead>
           <tbody>
             {invoices.length === 0 && (
               <tr>
-                <td colSpan={9} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
+                <td colSpan={10} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
                   {t.common.noData}
                 </td>
               </tr>
@@ -291,9 +321,23 @@ export default function SalesInvoices() {
                 <td>{paymentTermLabel[inv.paymentTerm]}</td>
                 <td>{inv.outstandingAmount.toLocaleString()}</td>
                 <td>
+                  <span className={eInvoiceStatusClass[inv.eInvoiceStatus]} title={inv.eInvoiceErrorMessage ?? undefined}>
+                    {eInvoiceStatusLabel[inv.eInvoiceStatus]}
+                  </span>
+                </td>
+                <td style={{ display: "flex", gap: 6 }}>
                   {inv.paymentTerm === PaymentTerm.Credit && inv.outstandingAmount > 0 && (
                     <button className="btn btn-secondary btn-sm" title={t.sales.recordPayment} onClick={() => openPaymentDialog(inv)}>
                       💰 {t.sales.recordPayment}
+                    </button>
+                  )}
+                  {inv.eInvoiceStatus !== EInvoiceStatus.Accepted && inv.eInvoiceStatus !== EInvoiceStatus.Submitted && (
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      disabled={submittingEInvoiceId === inv.id}
+                      onClick={() => handleSubmitEInvoice(inv.id)}
+                    >
+                      {submittingEInvoiceId === inv.id ? t.eInvoicing.submitting : `🧾 ${t.eInvoicing.submit}`}
                     </button>
                   )}
                 </td>

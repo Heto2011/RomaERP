@@ -1,6 +1,9 @@
 using Microsoft.Extensions.DependencyInjection;
 using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Assistant.Services;
+using RomaERP.Application.EInvoicing.Services;
+using RomaERP.Application.EInvoicing.Services.Eta;
+using RomaERP.Application.EInvoicing.Services.Zatca;
 using RomaERP.Application.HR.Services;
 using RomaERP.Application.Inventory.Services;
 using RomaERP.Application.Purchasing.Services;
@@ -36,6 +39,16 @@ public static class DependencyInjection
 
         services.AddScoped<ISalesService, SalesService>();
         services.AddScoped<IPurchasingService, PurchasingService>();
+
+        // E-invoicing: mock signers/API clients by default — swap for real implementations once a
+        // customer has real ETA (USB token) or ZATCA (CSID certificate) credentials to test against.
+        services.AddScoped<IEInvoicingService, EInvoicingService>();
+        services.AddScoped<IEInvoicingProvider, EtaEInvoicingProvider>();
+        services.AddScoped<IEInvoicingProvider, ZatcaEInvoicingProvider>();
+        services.AddScoped<IEtaDocumentSigner, MockEtaDocumentSigner>();
+        services.AddScoped<IEtaApiClient, MockEtaApiClient>();
+        services.AddScoped<IZatcaDocumentSigner, MockZatcaDocumentSigner>();
+        services.AddScoped<IZatcaApiClient, MockZatcaApiClient>();
 
         return services;
     }

@@ -232,6 +232,15 @@ tr:hover td {
   font-size: 14px;
 }
 
+.alert-success {
+  background: #d1fae5;
+  color: #065f46;
+  padding: 10px 14px;
+  border-radius: var(--radius);
+  margin-bottom: 14px;
+  font-size: 14px;
+}
+
 .login-page {
   height: 100vh;
   display: flex;

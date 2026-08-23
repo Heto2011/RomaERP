@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RomaERP.Application.EInvoicing.DTOs;
+using RomaERP.Application.EInvoicing.Services;
 using RomaERP.Application.Sales.DTOs;
 using RomaERP.Application.Sales.Services;
 
@@ -11,10 +13,12 @@ namespace RomaERP.API.Controllers;
 public class SalesController : ControllerBase
 {
     private readonly ISalesService _salesService;
+    private readonly IEInvoicingService _eInvoicingService;
 
-    public SalesController(ISalesService salesService)
+    public SalesController(ISalesService salesService, IEInvoicingService eInvoicingService)
     {
         _salesService = salesService;
+        _eInvoicingService = eInvoicingService;
     }
 
     [HttpGet("customers")]
@@ -44,4 +48,8 @@ public class SalesController : ControllerBase
     [HttpGet("aging")]
     public async Task<ActionResult<List<CustomerAgingDto>>> GetAging(DateTime? asOfDate, CancellationToken ct)
         => Ok(await _salesService.GetArAgingAsync(asOfDate, ct));
+
+    [HttpPost("invoices/{id:guid}/submit-einvoice")]
+    public async Task<ActionResult<EInvoiceStatusDto>> SubmitEInvoice(Guid id, CancellationToken ct)
+        => Ok(await _eInvoicingService.SubmitInvoiceAsync(id, ct));
 }
