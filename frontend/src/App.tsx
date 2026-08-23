@@ -12,6 +12,8 @@ import TrialBalance from "./pages/accounting/TrialBalance";
 import IncomeStatementPage from "./pages/accounting/IncomeStatement";
 import BalanceSheetPage from "./pages/accounting/BalanceSheet";
 import FiscalPeriods from "./pages/accounting/FiscalPeriods";
+import FixedAssets from "./pages/accounting/FixedAssets";
+import DepreciationRuns from "./pages/accounting/DepreciationRuns";
 import Customers from "./pages/sales/Customers";
 import SalesInvoices from "./pages/sales/SalesInvoices";
 import ArAging from "./pages/sales/ArAging";
@@ -52,6 +54,8 @@ export default function App() {
       <Route path="/accounting/income-statement" element={<ProtectedRoute><IncomeStatementPage /></ProtectedRoute>} />
       <Route path="/accounting/balance-sheet" element={<ProtectedRoute><BalanceSheetPage /></ProtectedRoute>} />
       <Route path="/accounting/fiscal-periods" element={<ProtectedRoute><FiscalPeriods /></ProtectedRoute>} />
+      <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssets /></ProtectedRoute>} />
+      <Route path="/accounting/depreciation-runs" element={<ProtectedRoute><DepreciationRuns /></ProtectedRoute>} />
       <Route path="/sales/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
       <Route path="/sales/invoices" element={<ProtectedRoute><SalesInvoices /></ProtectedRoute>} />
       <Route path="/sales/aging" element={<ProtectedRoute><ArAging /></ProtectedRoute>} />

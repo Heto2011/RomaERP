@@ -104,3 +104,71 @@ public class JournalEntryLineConfiguration : IEntityTypeConfiguration<JournalEnt
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public class FixedAssetConfiguration : IEntityTypeConfiguration<FixedAsset>
+{
+    public void Configure(EntityTypeBuilder<FixedAsset> builder)
+    {
+        builder.Property(a => a.Code).HasMaxLength(20).IsRequired();
+        builder.Property(a => a.NameAr).HasMaxLength(200).IsRequired();
+        builder.Property(a => a.NameEn).HasMaxLength(200).IsRequired();
+        builder.Property(a => a.AcquisitionCost).HasPrecision(18, 2);
+        builder.Property(a => a.SalvageValue).HasPrecision(18, 2);
+        builder.Property(a => a.DecliningBalanceRate).HasPrecision(9, 4);
+        builder.Property(a => a.AccumulatedDepreciation).HasPrecision(18, 2);
+        builder.HasIndex(a => a.Code).IsUnique();
+
+        builder.HasOne(a => a.AssetAccount)
+            .WithMany()
+            .HasForeignKey(a => a.AssetAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(a => a.AccumulatedDepreciationAccount)
+            .WithMany()
+            .HasForeignKey(a => a.AccumulatedDepreciationAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Ignore(a => a.DepreciableBase);
+        builder.Ignore(a => a.BookValue);
+
+        builder.HasQueryFilter(a => !a.IsDeleted);
+    }
+}
+
+public class DepreciationRunConfiguration : IEntityTypeConfiguration<DepreciationRun>
+{
+    public void Configure(EntityTypeBuilder<DepreciationRun> builder)
+    {
+        builder.Property(r => r.Description).HasMaxLength(500);
+
+        builder.HasOne(r => r.FiscalPeriod)
+            .WithMany()
+            .HasForeignKey(r => r.FiscalPeriodId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(r => r.JournalEntry)
+            .WithMany()
+            .HasForeignKey(r => r.JournalEntryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(r => r.Lines)
+            .WithOne(l => l.DepreciationRun)
+            .HasForeignKey(l => l.DepreciationRunId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(r => !r.IsDeleted);
+    }
+}
+
+public class DepreciationRunLineConfiguration : IEntityTypeConfiguration<DepreciationRunLine>
+{
+    public void Configure(EntityTypeBuilder<DepreciationRunLine> builder)
+    {
+        builder.Property(l => l.Amount).HasPrecision(18, 2);
+
+        builder.HasOne(l => l.FixedAsset)
+            .WithMany()
+            .HasForeignKey(l => l.FixedAssetId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}

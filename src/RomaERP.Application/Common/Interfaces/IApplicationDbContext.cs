@@ -17,6 +17,9 @@ public interface IApplicationDbContext
     DbSet<FiscalPeriod> FiscalPeriods { get; }
     DbSet<JournalEntry> JournalEntries { get; }
     DbSet<JournalEntryLine> JournalEntryLines { get; }
+    DbSet<FixedAsset> FixedAssets { get; }
+    DbSet<DepreciationRun> DepreciationRuns { get; }
+    DbSet<DepreciationRunLine> DepreciationRunLines { get; }
 
     DbSet<Department> Departments { get; }
     DbSet<Position> Positions { get; }

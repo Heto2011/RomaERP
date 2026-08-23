@@ -56,6 +56,81 @@ export interface JournalEntry {
   lines: JournalEntryLine[];
 }
 
+export enum DepreciationMethod {
+  StraightLine = 1,
+  DecliningBalance = 2,
+}
+
+export enum FixedAssetStatus {
+  Active = 1,
+  Disposed = 2,
+}
+
+export enum DepreciationRunStatus {
+  Draft = 1,
+  Posted = 2,
+}
+
+export interface FixedAsset {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  assetAccountId: string;
+  assetAccountCode: string;
+  assetAccountName: string;
+  accumulatedDepreciationAccountId: string;
+  accumulatedDepreciationAccountCode: string;
+  accumulatedDepreciationAccountName: string;
+  acquisitionCost: number;
+  acquisitionDate: string;
+  usefulLifeYears: number;
+  salvageValue: number;
+  depreciationMethod: DepreciationMethod;
+  decliningBalanceRate: number | null;
+  accumulatedDepreciation: number;
+  bookValue: number;
+  status: FixedAssetStatus;
+}
+
+export interface CreateFixedAssetInput {
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  assetAccountId: string;
+  accumulatedDepreciationAccountId: string;
+  acquisitionCost: number;
+  acquisitionDate: string;
+  usefulLifeYears: number;
+  salvageValue: number;
+  depreciationMethod: DepreciationMethod;
+  decliningBalanceRate: number | null;
+}
+
+export interface DepreciationRunLine {
+  fixedAssetId: string;
+  assetCode: string;
+  assetName: string;
+  amount: number;
+}
+
+export interface DepreciationRun {
+  id: string;
+  fiscalPeriodId: string;
+  runDate: string;
+  status: DepreciationRunStatus;
+  description: string | null;
+  journalEntryId: string | null;
+  lines: DepreciationRunLine[];
+  totalAmount: number;
+}
+
+export interface CreateDepreciationRunInput {
+  fiscalPeriodId: string;
+  runDate: string;
+  description: string | null;
+}
+
 export interface ReportLine {
   accountCode: string;
   accountName: string;

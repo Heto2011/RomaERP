@@ -10,13 +10,17 @@ import type {
   CostCenterLookup,
   CreateCustomerInput,
   CreatePurchaseInvoiceInput,
+  CreateDepreciationRunInput,
+  CreateFixedAssetInput,
   CreateSalesInvoiceInput,
   CreateUserInput,
   CreateVendorInput,
   Customer,
   CustomerAging,
   Department,
+  DepreciationRun,
   Employee,
+  FixedAsset,
   ExpenseCapture,
   FiscalPeriod,
   FiscalYearDetail,
@@ -72,6 +76,19 @@ export const LookupsApi = {
   fiscalPeriods: () => apiClient.get<FiscalPeriod[]>("/lookups/fiscal-periods"),
   costCenters: () => apiClient.get<CostCenterLookup[]>("/lookups/cost-centers"),
   companySettings: () => apiClient.get<CompanySettingsLookup>("/lookups/company-settings"),
+};
+
+export const FixedAssetsApi = {
+  getAll: () => apiClient.get<FixedAsset[]>("/fixedassets"),
+  getById: (id: string) => apiClient.get<FixedAsset>(`/fixedassets/${id}`),
+  create: (data: CreateFixedAssetInput) => apiClient.post<FixedAsset>("/fixedassets", data),
+};
+
+export const DepreciationApi = {
+  getAll: () => apiClient.get<DepreciationRun[]>("/depreciation"),
+  getById: (id: string) => apiClient.get<DepreciationRun>(`/depreciation/${id}`),
+  create: (data: CreateDepreciationRunInput) => apiClient.post<DepreciationRun>("/depreciation", data),
+  post: (id: string) => apiClient.post<DepreciationRun>(`/depreciation/${id}/post`),
 };
 
 export const DepartmentsApi = {

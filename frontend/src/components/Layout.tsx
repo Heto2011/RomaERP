@@ -27,6 +27,8 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/accounting/income-statement", label: t.nav.incomeStatement },
         { to: "/accounting/balance-sheet", label: t.nav.balanceSheet },
         { to: "/accounting/fiscal-periods", label: t.nav.fiscalPeriods },
+        { to: "/accounting/fixed-assets", label: t.nav.fixedAssets },
+        { to: "/accounting/depreciation-runs", label: t.nav.depreciationRuns },
       ],
     },
     {
