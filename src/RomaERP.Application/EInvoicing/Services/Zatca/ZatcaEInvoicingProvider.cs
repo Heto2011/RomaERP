@@ -1,5 +1,3 @@
-using System.Security.Cryptography;
-using System.Text;
 using System.Xml.Linq;
 using RomaERP.Domain.EInvoicing;
 using RomaERP.Domain.Sales;
@@ -31,23 +29,21 @@ public class ZatcaEInvoicingProvider : IEInvoicingProvider
         var icv = settings.EInvoicingSubmittedCount + 1;
         var pih = string.IsNullOrEmpty(settings.EInvoicingLastInvoiceHash) ? FirstInvoicePih : settings.EInvoicingLastInvoiceHash;
 
-        var qrCode = ZatcaQrCodeBuilder.Build(settings.CompanyNameAr, settings.TaxRegistrationNumber ?? string.Empty, invoice.InvoiceDate, invoice.TotalAmount, invoice.VatAmount);
-        var (xmlDocument, _) = ZatcaInvoiceDocumentBuilder.Build(invoice, customer, settings, icv, pih, qrCode);
-        var xml = xmlDocument.ToString(SaveOptions.DisableFormatting);
+        var (unsignedDocument, _) = ZatcaInvoiceDocumentBuilder.Build(invoice, customer, settings, icv, pih);
+        var unsignedXml = unsignedDocument.ToString(SaveOptions.DisableFormatting);
 
-        var hash = Convert.ToBase64String(SHA256.HashData(Encoding.UTF8.GetBytes(xml)));
-        var signed = await _signer.SignInvoiceXmlAsync(xml, settings, ct);
+        var signingResult = await _signer.SignInvoiceXmlAsync(unsignedXml, settings, ct);
 
         var response = invoiceType == ZatcaInvoiceType.Standard
-            ? await _apiClient.ClearStandardInvoiceAsync(signed, settings, ct)
-            : await _apiClient.ReportSimplifiedInvoiceAsync(signed, settings, ct);
+            ? await _apiClient.ClearStandardInvoiceAsync(signingResult.SignedXml, settings, ct)
+            : await _apiClient.ReportSimplifiedInvoiceAsync(signingResult.SignedXml, settings, ct);
 
         if (response.Success)
         {
             settings.EInvoicingSubmittedCount = icv;
-            settings.EInvoicingLastInvoiceHash = hash;
+            settings.EInvoicingLastInvoiceHash = signingResult.InvoiceHash;
         }
 
-        return new EInvoiceSubmissionResult(response.Success, invoice.Id.ToString(), hash, response.ErrorMessage);
+        return new EInvoiceSubmissionResult(response.Success, invoice.Id.ToString(), signingResult.InvoiceHash, response.ErrorMessage);
     }
 }

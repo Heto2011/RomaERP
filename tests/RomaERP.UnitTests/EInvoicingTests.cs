@@ -90,37 +90,61 @@ public class EInvoicingTests
         var customer = B2BCustomer();
         var invoice = NewInvoice(customer);
 
-        var (document, uuid) = ZatcaInvoiceDocumentBuilder.Build(invoice, customer, settings, invoiceCounterValue: 7, previousInvoiceHash: "PREV-HASH", qrCodeBase64: "QR-DATA");
+        var (document, uuid) = ZatcaInvoiceDocumentBuilder.Build(invoice, customer, settings, invoiceCounterValue: 7, previousInvoiceHash: "PREV-HASH");
 
         Assert.False(string.IsNullOrWhiteSpace(uuid));
         var xml = document.ToString();
         Assert.Contains("7", xml);
         Assert.Contains("PREV-HASH", xml);
-        Assert.Contains("QR-DATA", xml);
         Assert.Contains(invoice.TotalAmount.ToString(), xml);
+        // The QR code/UBLExtensions/Signature only exist once IZatcaDocumentSigner has processed this
+        // "unsigned" document (see ZatcaXadesDocumentSignerTests) — this builder must NOT include them,
+        // since their absence is exactly what the real signer's hash computation assumes.
+        Assert.DoesNotContain("<cac:AdditionalDocumentReference><cbc:ID>QR</cbc:ID>", xml.Replace(" ", ""));
     }
 
     [Fact]
-    public void ZatcaQrCodeBuilder_Build_RoundTripsAllFiveTlvFields()
+    public void ZatcaQrCodeBuilder_Build_RoundTripsStandardEightTlvFields()
     {
-        var qr = ZatcaQrCodeBuilder.Build("شركة روما", "300987654300003", new DateTime(2026, 8, 23, 10, 0, 0, DateTimeKind.Utc), 1150.00m, 150.00m);
-        var bytes = Convert.FromBase64String(qr);
+        var qr = ZatcaQrCodeBuilder.Build(
+            "شركة روما", "300987654300003", "2026-08-23T10:00:00Z", 1150.00m, 150.00m,
+            invoiceHashBase64: "SGFzaA==", digitalSignatureBase64: "U2ln", publicKeyDer: new byte[] { 1, 2, 3 }, certificateSignature: null);
+        var fields = ParseTlv(qr);
 
-        var fields = new Dictionary<byte, string>();
+        Assert.Equal("شركة روما", Encoding.UTF8.GetString(fields[1]));
+        Assert.Equal("300987654300003", Encoding.UTF8.GetString(fields[2]));
+        Assert.Equal("1150.00", Encoding.UTF8.GetString(fields[4]));
+        Assert.Equal("150.00", Encoding.UTF8.GetString(fields[5]));
+        Assert.Equal("SGFzaA==", Encoding.UTF8.GetString(fields[6]));
+        Assert.Equal("U2ln", Encoding.UTF8.GetString(fields[7]));
+        Assert.Equal(new byte[] { 1, 2, 3 }, fields[8]);
+        Assert.False(fields.ContainsKey(9));
+    }
+
+    [Fact]
+    public void ZatcaQrCodeBuilder_Build_IncludesTag9OnlyWhenCertificateSignatureProvided()
+    {
+        var qr = ZatcaQrCodeBuilder.Build(
+            "شركة روما", "300987654300003", "2026-08-23T10:00:00Z", 1150.00m, 150.00m,
+            "SGFzaA==", "U2ln", new byte[] { 1, 2, 3 }, certificateSignature: new byte[] { 9, 9 });
+        var fields = ParseTlv(qr);
+
+        Assert.Equal(new byte[] { 9, 9 }, fields[9]);
+    }
+
+    private static Dictionary<byte, byte[]> ParseTlv(string base64)
+    {
+        var bytes = Convert.FromBase64String(base64);
+        var fields = new Dictionary<byte, byte[]>();
         var i = 0;
         while (i < bytes.Length)
         {
             var tag = bytes[i];
             var len = bytes[i + 1];
-            var value = Encoding.UTF8.GetString(bytes, i + 2, len);
-            fields[tag] = value;
+            fields[tag] = bytes[(i + 2)..(i + 2 + len)];
             i += 2 + len;
         }
-
-        Assert.Equal("شركة روما", fields[1]);
-        Assert.Equal("300987654300003", fields[2]);
-        Assert.Equal("1150.00", fields[4]);
-        Assert.Equal("150.00", fields[5]);
+        return fields;
     }
 
     // ---------- ETA document building ----------

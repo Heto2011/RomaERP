@@ -14,15 +14,17 @@ public enum ZatcaInvoiceType
 }
 
 /// <summary>Maps a RomaERP SalesInvoice to a ZATCA-compliant UBL 2.1 XML invoice, including the ICV/PIH hash
-/// chain and QR code as AdditionalDocumentReference elements. This covers the core required structure —
-/// full production compliance (exact XML canonicalization, UBLExtensions placement for the cryptographic
-/// stamp, XAdES signature envelope) needs validation against ZATCA's official XSD/validator once a real
-/// sandbox account is available; this session had no live ZATCA access to verify against.</summary>
+/// chain as AdditionalDocumentReference elements. Deliberately produces the document WITHOUT the QR code,
+/// ext:UBLExtensions, or cac:Signature elements — those depend on the invoice hash and digital signature,
+/// which only exist once IZatcaDocumentSigner has processed this "unsigned" document, so it builds the exact
+/// shape ZATCA's algorithm hashes (see ZatcaXadesDocumentSigner) rather than a placeholder that would change
+/// the hash. The line/party mapping here is this session's best-effort reading of the UBL 2.1 invoice shape;
+/// it has not been validated against ZATCA's official XSD.</summary>
 public static class ZatcaInvoiceDocumentBuilder
 {
-    private static readonly XNamespace Ns = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2";
-    private static readonly XNamespace Cac = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2";
-    private static readonly XNamespace Cbc = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2";
+    public static readonly XNamespace Ns = "urn:oasis:names:specification:ubl:schema:xsd:Invoice-2";
+    public static readonly XNamespace Cac = "urn:oasis:names:specification:ubl:schema:xsd:CommonAggregateComponents-2";
+    public static readonly XNamespace Cbc = "urn:oasis:names:specification:ubl:schema:xsd:CommonBasicComponents-2";
 
     public static ZatcaInvoiceType DetermineInvoiceType(Customer customer)
         => string.IsNullOrWhiteSpace(customer.TaxRegistrationNumber) ? ZatcaInvoiceType.Simplified : ZatcaInvoiceType.Standard;
@@ -32,8 +34,7 @@ public static class ZatcaInvoiceDocumentBuilder
         Customer customer,
         CompanySettings settings,
         int invoiceCounterValue,
-        string previousInvoiceHash,
-        string qrCodeBase64)
+        string previousInvoiceHash)
     {
         var uuid = Guid.NewGuid().ToString();
         var invoiceType = DetermineInvoiceType(customer);
@@ -79,10 +80,6 @@ public static class ZatcaInvoiceDocumentBuilder
                     new XElement(Cbc + "ID", "PIH"),
                     new XElement(Cac + "Attachment",
                         new XElement(Cbc + "EmbeddedDocumentBinaryObject", new XAttribute("mimeCode", "text/plain"), previousInvoiceHash))),
-                new XElement(Cac + "AdditionalDocumentReference",
-                    new XElement(Cbc + "ID", "QR"),
-                    new XElement(Cac + "Attachment",
-                        new XElement(Cbc + "EmbeddedDocumentBinaryObject", new XAttribute("mimeCode", "text/plain"), qrCodeBase64))),
 
                 new XElement(Cac + "AccountingSupplierParty",
                     new XElement(Cac + "Party",
