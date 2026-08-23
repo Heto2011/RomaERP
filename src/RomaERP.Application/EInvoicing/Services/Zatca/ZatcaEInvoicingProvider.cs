@@ -35,8 +35,8 @@ public class ZatcaEInvoicingProvider : IEInvoicingProvider
         var signingResult = await _signer.SignInvoiceXmlAsync(unsignedXml, settings, ct);
 
         var response = invoiceType == ZatcaInvoiceType.Standard
-            ? await _apiClient.ClearStandardInvoiceAsync(signingResult.SignedXml, settings, ct)
-            : await _apiClient.ReportSimplifiedInvoiceAsync(signingResult.SignedXml, settings, ct);
+            ? await _apiClient.ClearStandardInvoiceAsync(signingResult.SignedXml, signingResult.InvoiceHash, signingResult.Uuid, settings, ct)
+            : await _apiClient.ReportSimplifiedInvoiceAsync(signingResult.SignedXml, signingResult.InvoiceHash, signingResult.Uuid, settings, ct);
 
         if (response.Success)
         {

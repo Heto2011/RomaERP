@@ -709,3 +709,31 @@ export interface EInvoiceStatusDto {
   submittedAtUtc: string | null;
   errorMessage: string | null;
 }
+
+export enum ZatcaOnboardingStage {
+  NotStarted = 1,
+  CsrGenerated = 2,
+  ComplianceCsidObtained = 3,
+  ComplianceChecksPassed = 4,
+  ProductionCsidObtained = 5,
+}
+
+export interface SaveZatcaOnboardingDetailsInput {
+  organizationIdentifier: string;
+  solutionName: string;
+  model: string;
+  deviceSerialNumber: string;
+  organizationUnitName: string;
+  address: string;
+  businessCategory: string;
+  invoiceType: string;
+}
+
+export interface ZatcaOnboardingStatus {
+  stage: ZatcaOnboardingStage;
+  hasCsr: boolean;
+  complianceRequestId: string | null;
+  hasCertificate: boolean;
+  hasSecret: boolean;
+  lastComplianceCheckStatus: string | null;
+}

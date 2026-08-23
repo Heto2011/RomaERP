@@ -3,6 +3,7 @@ import { EInvoicingApi } from "../api/services";
 import { EInvoicingEnvironment, EInvoicingProvider, type EInvoicingSettings } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
+import ZatcaOnboardingWizard from "./ZatcaOnboardingWizard";
 
 export default function EInvoicing() {
   const { t } = useLanguage();
@@ -126,6 +127,8 @@ export default function EInvoicing() {
           </button>
         </form>
       </div>
+
+      {provider === EInvoicingProvider.Zatca && <ZatcaOnboardingWizard />}
     </div>
   );
 }

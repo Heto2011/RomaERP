@@ -1,5 +1,6 @@
 using System.Text.Json;
 using RomaERP.Application.Common.Exceptions;
+using RomaERP.Infrastructure.EInvoicing.Zatca;
 
 namespace RomaERP.API.Middleware;
 
@@ -27,6 +28,9 @@ public class ExceptionHandlingMiddleware
                 ValidationAppException => (StatusCodes.Status400BadRequest, ex.Message),
                 NotFoundException => (StatusCodes.Status404NotFound, ex.Message),
                 UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "غير مصرح."),
+                // A failure reaching ZATCA's own servers (network, or ZATCA returning an error) — not a bug
+                // in RomaERP, so its message is safe (and useful) to show the admin directly, unlike a 500.
+                ZatcaApiException => (StatusCodes.Status502BadGateway, ex.Message),
                 _ => (StatusCodes.Status500InternalServerError, "حدث خطأ غير متوقع.")
             };
 

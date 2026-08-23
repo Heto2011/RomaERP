@@ -27,4 +27,22 @@ public class CompanySettings : AuditableEntity
     public string? EInvoicingLastInvoiceHash { get; set; }
     /// <summary>ZATCA only: running count of invoices submitted, used as the next invoice's ICV (Invoice Counter Value).</summary>
     public int EInvoicingSubmittedCount { get; set; }
+
+    // ----- ZATCA CSID onboarding wizard (Create CSR → Compliance CSID → Compliance Checks → Production CSID) -----
+    public ZatcaOnboardingStage EInvoicingZatcaOnboardingStage { get; set; } = ZatcaOnboardingStage.NotStarted;
+    /// <summary>15-digit VAT/organization identifier for the CSR — starts and ends with '3'. Distinct from the
+    /// general TaxRegistrationNumber field since ZATCA validates this exact format for the certificate subject.</summary>
+    public string? EInvoicingZatcaOrganizationIdentifier { get; set; }
+    public string? EInvoicingZatcaSolutionName { get; set; }
+    public string? EInvoicingZatcaModel { get; set; }
+    public string? EInvoicingZatcaDeviceSerialNumber { get; set; }
+    public string? EInvoicingZatcaOrganizationUnitName { get; set; }
+    public string? EInvoicingZatcaAddress { get; set; }
+    public string? EInvoicingZatcaBusinessCategory { get; set; }
+    /// <summary>4-digit bitmask, e.g. "1100" for Standard+Simplified. Defaults to both.</summary>
+    public string EInvoicingZatcaInvoiceType { get; set; } = "1100";
+    /// <summary>The CSR itself — not confidential (it's sent to ZATCA and contains only the public key), so
+    /// stored in plain text unlike the certificate/private key/secret fields above.</summary>
+    public string? EInvoicingZatcaCsrPem { get; set; }
+    public string? EInvoicingZatcaComplianceRequestId { get; set; }
 }

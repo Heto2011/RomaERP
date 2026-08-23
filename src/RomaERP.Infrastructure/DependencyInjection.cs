@@ -23,6 +23,8 @@ public static class DependencyInjection
         services.AddDataProtection();
         services.AddScoped<ISecretProtector, DataProtectionSecretProtector>();
         services.AddScoped<IZatcaDocumentSigner, ZatcaXadesDocumentSigner>();
+        services.AddHttpClient<IZatcaApiClient, ZatcaHttpApiClient>();
+        services.AddScoped<IZatcaOnboardingService, ZatcaOnboardingService>();
 
         services.AddDbContext<CentralDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("Central")));

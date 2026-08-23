@@ -40,16 +40,15 @@ public static class DependencyInjection
         services.AddScoped<ISalesService, SalesService>();
         services.AddScoped<IPurchasingService, PurchasingService>();
 
-        // E-invoicing: ZATCA's document signer is real (see Infrastructure.AddInfrastructure —
-        // ZatcaXadesDocumentSigner). Everything else here is still mock — the ETA signer needs a physical
-        // USB signing token that can't run server-side, and neither government API client has anywhere real
-        // to call yet — swap for real implementations once a customer's credentials are available to test against.
+        // E-invoicing: ZATCA's document signer AND API client are real (see Infrastructure.AddInfrastructure —
+        // ZatcaXadesDocumentSigner / ZatcaHttpApiClient). The ETA side is still mock — the ETA signer needs a
+        // physical USB signing token that can't run server-side, and its government API client has nowhere
+        // real to call yet — swap for a real implementation once a customer's credentials are available.
         services.AddScoped<IEInvoicingService, EInvoicingService>();
         services.AddScoped<IEInvoicingProvider, EtaEInvoicingProvider>();
         services.AddScoped<IEInvoicingProvider, ZatcaEInvoicingProvider>();
         services.AddScoped<IEtaDocumentSigner, MockEtaDocumentSigner>();
         services.AddScoped<IEtaApiClient, MockEtaApiClient>();
-        services.AddScoped<IZatcaApiClient, MockZatcaApiClient>();
 
         return services;
     }

@@ -72,6 +72,7 @@ public class ZatcaXadesDocumentSigner : IZatcaDocumentSigner
 
         var unsignedDocument = XDocument.Parse(unsignedInvoiceXml);
         var root = unsignedDocument.Root ?? throw new ValidationAppException("مستند الفاتورة غير صالح.");
+        var uuid = root.Element(Cbc + "UUID")?.Value ?? throw new ValidationAppException("مستند الفاتورة ناقص عنصر UUID.");
 
         var invoiceHashBytes = ComputeCanonicalSha256(unsignedDocument);
         var invoiceHash = Convert.ToBase64String(invoiceHashBytes);
@@ -123,7 +124,7 @@ public class ZatcaXadesDocumentSigner : IZatcaDocumentSigner
             root.Add(qrNode, signatureMarker);
 
         var signedXml = unsignedDocument.ToString(SaveOptions.DisableFormatting);
-        return Task.FromResult(new ZatcaSigningResult(signedXml, invoiceHash));
+        return Task.FromResult(new ZatcaSigningResult(signedXml, invoiceHash, uuid));
     }
 
     private static byte[] ComputeCanonicalSha256(XDocument document)

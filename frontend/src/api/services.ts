@@ -39,11 +39,13 @@ import type {
   SalaryComponent,
   SalesInvoice,
   StockMovement,
+  SaveZatcaOnboardingDetailsInput,
   TrialBalanceLine,
   UpdateEInvoicingSettingsInput,
   Vendor,
   VendorAging,
   Warehouse,
+  ZatcaOnboardingStatus,
 } from "./types";
 
 export const AuthApi = {
@@ -224,6 +226,14 @@ export const SalesApi = {
 export const EInvoicingApi = {
   getSettings: () => apiClient.get<EInvoicingSettings>("/einvoicing/settings"),
   updateSettings: (data: UpdateEInvoicingSettingsInput) => apiClient.put<EInvoicingSettings>("/einvoicing/settings", data),
+};
+
+export const ZatcaOnboardingApi = {
+  getStatus: () => apiClient.get<ZatcaOnboardingStatus>("/einvoicing/zatca/onboarding"),
+  generateCsr: (data: SaveZatcaOnboardingDetailsInput) => apiClient.post<ZatcaOnboardingStatus>("/einvoicing/zatca/onboarding/csr", data),
+  requestComplianceCsid: (otp: string) => apiClient.post<ZatcaOnboardingStatus>("/einvoicing/zatca/onboarding/compliance-csid", { otp }),
+  runComplianceChecks: () => apiClient.post<ZatcaOnboardingStatus>("/einvoicing/zatca/onboarding/compliance-checks"),
+  requestProductionCsid: () => apiClient.post<ZatcaOnboardingStatus>("/einvoicing/zatca/onboarding/production-csid"),
 };
 
 export const PurchasingApi = {
