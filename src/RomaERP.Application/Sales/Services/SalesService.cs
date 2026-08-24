@@ -7,16 +7,19 @@ using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
 using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Sales;
+using RomaERP.Domain.Tenancy;
 
 namespace RomaERP.Application.Sales.Services;
 
 public class SalesService : ISalesService
 {
     private readonly IApplicationDbContext _context;
+    private readonly IHtmlToPdfRenderer _pdfRenderer;
 
-    public SalesService(IApplicationDbContext context)
+    public SalesService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer)
     {
         _context = context;
+        _pdfRenderer = pdfRenderer;
     }
 
     public async Task<List<CustomerDto>> GetCustomersAsync(CancellationToken ct = default)
@@ -69,6 +72,16 @@ public class SalesService : ISalesService
     {
         var invoice = await LoadInvoiceAsync(id, ct);
         return Map(invoice);
+    }
+
+    public async Task<byte[]> GetInvoicePdfAsync(Guid id, CancellationToken ct = default)
+    {
+        var invoice = await LoadInvoiceAsync(id, ct);
+        var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException(nameof(CompanySettings), Guid.Empty);
+
+        var html = SalesInvoiceHtmlTemplate.Build(invoice, settings);
+        return await _pdfRenderer.RenderAsync(html, ct);
     }
 
     public async Task<SalesInvoiceDto> CreateInvoiceAsync(CreateSalesInvoiceDto dto, CancellationToken ct = default)

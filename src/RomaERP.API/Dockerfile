@@ -13,4 +13,9 @@ RUN dotnet publish src/RomaERP.API/RomaERP.API.csproj -c Release -o /app/publish
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS runtime
 WORKDIR /app
 COPY --from=build /app/publish .
+# Installs the headless Chromium build (and its OS-level shared library dependencies) used to render
+# invoice PDFs — see PlaywrightHtmlToPdfRenderer. Uses the Node runtime the Microsoft.Playwright NuGet
+# package already bundles under .playwright/, so no separate Node.js install is needed.
+RUN .playwright/node/linux-x64/node .playwright/package/cli.js install --with-deps chromium \
+    && rm -rf /var/lib/apt/lists/*
 ENTRYPOINT ["dotnet", "RomaERP.API.dll"]

@@ -221,6 +221,7 @@ export const SalesApi = {
   recordPayment: (id: string, data: RecordSalesPaymentInput) => apiClient.post<SalesInvoice>(`/sales/invoices/${id}/payments`, data),
   getAging: () => apiClient.get<CustomerAging[]>("/sales/aging"),
   submitEInvoice: (id: string) => apiClient.post<EInvoiceStatusDto>(`/sales/invoices/${id}/submit-einvoice`),
+  downloadInvoicePdf: (id: string) => apiClient.get(`/sales/invoices/${id}/pdf`, { responseType: "blob" }),
 };
 
 export const EInvoicingApi = {

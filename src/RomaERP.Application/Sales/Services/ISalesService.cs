@@ -11,6 +11,7 @@ public interface ISalesService
     Task<SalesInvoiceDto> GetInvoiceAsync(Guid id, CancellationToken ct = default);
     Task<SalesInvoiceDto> CreateInvoiceAsync(CreateSalesInvoiceDto dto, CancellationToken ct = default);
     Task<SalesInvoiceDto> RecordPaymentAsync(Guid invoiceId, RecordSalesPaymentDto dto, CancellationToken ct = default);
+    Task<byte[]> GetInvoicePdfAsync(Guid id, CancellationToken ct = default);
 
     Task<List<CustomerAgingDto>> GetArAgingAsync(DateTime? asOfDate = null, CancellationToken ct = default);
 }

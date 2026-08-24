@@ -8,6 +8,7 @@ using RomaERP.Application.EInvoicing.Services.Zatca;
 using RomaERP.Infrastructure.Assistant;
 using RomaERP.Infrastructure.EInvoicing.Zatca;
 using RomaERP.Infrastructure.Identity;
+using RomaERP.Infrastructure.Pdf;
 using RomaERP.Infrastructure.Persistence;
 using RomaERP.Infrastructure.Persistence.Central;
 using RomaERP.Infrastructure.Security;
@@ -22,6 +23,7 @@ public static class DependencyInjection
         services.AddMemoryCache();
         services.AddDataProtection();
         services.AddScoped<ISecretProtector, DataProtectionSecretProtector>();
+        services.AddSingleton<IHtmlToPdfRenderer, PlaywrightHtmlToPdfRenderer>();
         services.AddScoped<IZatcaDocumentSigner, ZatcaXadesDocumentSigner>();
         services.AddHttpClient<IZatcaApiClient, ZatcaHttpApiClient>();
         services.AddScoped<IZatcaOnboardingService, ZatcaOnboardingService>();

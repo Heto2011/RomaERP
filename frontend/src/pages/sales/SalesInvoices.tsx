@@ -123,6 +123,21 @@ export default function SalesInvoices() {
     }
   }
 
+  async function handleDownloadPdf(invoice: SalesInvoice) {
+    setError(null);
+    try {
+      const res = await SalesApi.downloadInvoicePdf(invoice.id);
+      const url = window.URL.createObjectURL(res.data as Blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${invoice.invoiceNumber}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function handleSubmitEInvoice(invoiceId: string) {
     setError(null);
     setSubmittingEInvoiceId(invoiceId);
@@ -326,6 +341,9 @@ export default function SalesInvoices() {
                   </span>
                 </td>
                 <td style={{ display: "flex", gap: 6 }}>
+                  <button className="btn btn-secondary btn-sm" title={t.sales.downloadPdf} onClick={() => handleDownloadPdf(inv)}>
+                    🖨️ {t.sales.downloadPdf}
+                  </button>
                   {inv.paymentTerm === PaymentTerm.Credit && inv.outstandingAmount > 0 && (
                     <button className="btn btn-secondary btn-sm" title={t.sales.recordPayment} onClick={() => openPaymentDialog(inv)}>
                       💰 {t.sales.recordPayment}

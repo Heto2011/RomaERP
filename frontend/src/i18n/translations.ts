@@ -153,6 +153,7 @@ const ar = {
     warehouse: "المخزن",
     serviceLine: "بند خدمة (بدون مخزون)",
     eInvoice: "الفاتورة الإلكترونية",
+    downloadPdf: "PDF",
   },
   purchasing: {
     vendorsTitle: "الموردون",
@@ -637,6 +638,7 @@ const en: typeof ar = {
     serviceLine: "Service line (no inventory)",
     agingTitle: "Customer AR Aging",
     eInvoice: "E-Invoice",
+    downloadPdf: "PDF",
   },
   purchasing: {
     vendorsTitle: "Vendors",

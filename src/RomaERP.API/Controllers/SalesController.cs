@@ -37,6 +37,13 @@ public class SalesController : ControllerBase
     public async Task<ActionResult<SalesInvoiceDto>> GetInvoice(Guid id, CancellationToken ct)
         => Ok(await _salesService.GetInvoiceAsync(id, ct));
 
+    [HttpGet("invoices/{id:guid}/pdf")]
+    public async Task<IActionResult> GetInvoicePdf(Guid id, CancellationToken ct)
+    {
+        var pdfBytes = await _salesService.GetInvoicePdfAsync(id, ct);
+        return File(pdfBytes, "application/pdf", $"invoice-{id}.pdf");
+    }
+
     [HttpPost("invoices")]
     public async Task<ActionResult<SalesInvoiceDto>> CreateInvoice(CreateSalesInvoiceDto dto, CancellationToken ct)
         => Ok(await _salesService.CreateInvoiceAsync(dto, ct));
