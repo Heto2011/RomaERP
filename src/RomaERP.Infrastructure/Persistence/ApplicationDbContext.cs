@@ -52,6 +52,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<SalesInvoice> SalesInvoices => Set<SalesInvoice>();
     public DbSet<SalesInvoiceLine> SalesInvoiceLines => Set<SalesInvoiceLine>();
     public DbSet<SalesPayment> SalesPayments => Set<SalesPayment>();
+    public DbSet<SalesNote> SalesNotes => Set<SalesNote>();
+    public DbSet<SalesNoteLine> SalesNoteLines => Set<SalesNoteLine>();
 
     public DbSet<Vendor> Vendors => Set<Vendor>();
     public DbSet<PurchaseInvoice> PurchaseInvoices => Set<PurchaseInvoice>();

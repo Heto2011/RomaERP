@@ -363,6 +363,193 @@ public class SalesService : ISalesService
         return buckets.Values.OrderByDescending(b => b.TotalOutstanding).ToList();
     }
 
+    public async Task<List<SalesNoteDto>> GetNotesAsync(CancellationToken ct = default)
+    {
+        var notes = await _context.SalesNotes
+            .AsNoTracking()
+            .Include(n => n.Customer)
+            .Include(n => n.OriginalInvoice)
+            .Include(n => n.Lines)
+            .OrderByDescending(n => n.NoteDate)
+            .ThenByDescending(n => n.NoteNumber)
+            .ToListAsync(ct);
+
+        return notes.Select(Map).ToList();
+    }
+
+    public async Task<SalesNoteDto> GetNoteAsync(Guid id, CancellationToken ct = default)
+    {
+        var note = await LoadNoteAsync(id, ct);
+        return Map(note);
+    }
+
+    public async Task<byte[]> GetNotePdfAsync(Guid id, CancellationToken ct = default)
+    {
+        var note = await LoadNoteAsync(id, ct);
+        var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException(nameof(CompanySettings), Guid.Empty);
+
+        var html = SalesNoteHtmlTemplate.Build(note, settings);
+        return await _pdfRenderer.RenderAsync(html, ct);
+    }
+
+    /// <summary>Credit/Debit note against an existing invoice. v1 always posts through Accounts Receivable
+    /// regardless of the original invoice's payment term (Cash/Card/Credit) — a stated simplification, since
+    /// refunding a Cash/Card sale in real cash is a separate operational step outside this system for now.
+    /// Credit note: decreases what the customer owes (Dr Revenue + Dr Output VAT / Cr AR).
+    /// Debit note: increases what the customer owes (Dr AR / Cr Revenue + Cr Output VAT).</summary>
+    public async Task<SalesNoteDto> CreateNoteAsync(CreateSalesNoteDto dto, CancellationToken ct = default)
+    {
+        if (dto.Lines.Count == 0)
+            throw new ValidationAppException("لازم يكون في بند واحد على الأقل في الإشعار.");
+
+        foreach (var line in dto.Lines)
+        {
+            if (line.Quantity <= 0)
+                throw new ValidationAppException("الكمية يجب أن تكون أكبر من صفر.");
+            if (line.UnitPrice < 0)
+                throw new ValidationAppException("سعر الوحدة لا يمكن أن يكون سالبًا.");
+        }
+
+        if (string.IsNullOrWhiteSpace(dto.Reason))
+            throw new ValidationAppException("سبب الإشعار مطلوب.");
+
+        var originalInvoice = await _context.SalesInvoices
+            .Include(i => i.Customer)
+            .FirstOrDefaultAsync(i => i.Id == dto.OriginalInvoiceId, ct)
+            ?? throw new NotFoundException(nameof(SalesInvoice), dto.OriginalInvoiceId);
+
+        var customer = originalInvoice.Customer!;
+
+        var period = await _context.FiscalPeriods.FirstOrDefaultAsync(p => p.Id == dto.FiscalPeriodId, ct)
+            ?? throw new NotFoundException(nameof(FiscalPeriod), dto.FiscalPeriodId);
+        if (period.IsClosed)
+            throw new ValidationAppException("لا يمكن تسجيل إشعار لفترة محاسبية مقفلة.");
+
+        var vatRate = await GetVatRateAsync(ct);
+
+        var lines = dto.Lines.Select((l, idx) => new SalesNoteLine
+        {
+            LineNumber = idx + 1,
+            Description = l.Description,
+            Quantity = l.Quantity,
+            UnitPrice = l.UnitPrice,
+            LineTotal = Math.Round(l.Quantity * l.UnitPrice, 2)
+        }).ToList();
+
+        var subTotal = lines.Sum(l => l.LineTotal);
+        var vatAmount = Math.Round(subTotal * vatRate, 2);
+        var totalAmount = subTotal + vatAmount;
+
+        var salesRevenueAccount = await GetAccountAsync(AccountingConstants.SalesRevenueAccountCode, "إيرادات المبيعات", ct);
+        var arAccount = await GetAccountAsync(AccountingConstants.AccountsReceivableAccountCode, "العملاء", ct);
+        var outputVatAccount = vatAmount > 0 ? await GetAccountAsync(AccountingConstants.OutputVatAccountCode, "ضريبة القيمة المضافة (مخرجات)", ct) : null;
+
+        var isCredit = dto.NoteType == SalesNoteType.Credit;
+        var noteNumber = await GenerateNoteNumberAsync(dto.NoteType, ct);
+        var description = (isCredit ? "إشعار دائن" : "إشعار مدين") + $" {noteNumber} - {customer.NameAr}";
+
+        var journalLines = new List<JournalEntryLine>();
+        if (isCredit)
+        {
+            journalLines.Add(new JournalEntryLine { LineNumber = 1, AccountId = salesRevenueAccount.Id, Debit = subTotal, Credit = 0, Description = "خصم إيرادات مبيعات" });
+            if (outputVatAccount is not null)
+                journalLines.Add(new JournalEntryLine { LineNumber = 2, AccountId = outputVatAccount.Id, Debit = vatAmount, Credit = 0, Description = "خصم ضريبة مخرجات" });
+            journalLines.Add(new JournalEntryLine { LineNumber = journalLines.Count + 1, AccountId = arAccount.Id, Debit = 0, Credit = totalAmount, Description = "تخفيض رصيد العميل" });
+            customer.ArBalance -= totalAmount;
+        }
+        else
+        {
+            journalLines.Add(new JournalEntryLine { LineNumber = 1, AccountId = arAccount.Id, Debit = totalAmount, Credit = 0, Description = "زيادة رصيد العميل" });
+            journalLines.Add(new JournalEntryLine { LineNumber = 2, AccountId = salesRevenueAccount.Id, Debit = 0, Credit = subTotal, Description = "إيرادات إضافية" });
+            if (outputVatAccount is not null)
+                journalLines.Add(new JournalEntryLine { LineNumber = 3, AccountId = outputVatAccount.Id, Debit = 0, Credit = vatAmount, Description = "ضريبة مخرجات إضافية" });
+            customer.ArBalance += totalAmount;
+        }
+
+        var entry = new JournalEntry
+        {
+            EntryNumber = await GenerateEntryNumberAsync(ct),
+            EntryDate = dto.NoteDate,
+            FiscalPeriodId = dto.FiscalPeriodId,
+            Description = description,
+            Reference = isCredit ? AccountingConstants.SalesCreditNoteReference : AccountingConstants.SalesDebitNoteReference,
+            Status = JournalEntryStatus.Posted,
+            Lines = journalLines
+        };
+        _context.JournalEntries.Add(entry);
+
+        var note = new SalesNote
+        {
+            NoteNumber = noteNumber,
+            NoteType = dto.NoteType,
+            NoteDate = dto.NoteDate,
+            OriginalInvoiceId = originalInvoice.Id,
+            CustomerId = customer.Id,
+            FiscalPeriodId = dto.FiscalPeriodId,
+            Reason = dto.Reason,
+            SubTotal = subTotal,
+            VatRate = vatRate,
+            VatAmount = vatAmount,
+            TotalAmount = totalAmount,
+            Notes = dto.Notes,
+            JournalEntry = entry,
+            Lines = lines
+        };
+        _context.SalesNotes.Add(note);
+
+        await _context.SaveChangesAsync(ct);
+
+        return await GetNoteAsync(note.Id, ct);
+    }
+
+    private async Task<string> GenerateNoteNumberAsync(SalesNoteType noteType, CancellationToken ct)
+    {
+        var count = await _context.SalesNotes.CountAsync(n => n.NoteType == noteType, ct);
+        var prefix = noteType == SalesNoteType.Credit ? "CN" : "DN";
+        return $"{prefix}-{(count + 1):D6}";
+    }
+
+    private async Task<SalesNote> LoadNoteAsync(Guid id, CancellationToken ct)
+        => await _context.SalesNotes
+            .AsNoTracking()
+            .Include(n => n.Customer)
+            .Include(n => n.OriginalInvoice)
+            .Include(n => n.Lines)
+            .FirstOrDefaultAsync(n => n.Id == id, ct)
+            ?? throw new NotFoundException(nameof(SalesNote), id);
+
+    private static SalesNoteDto Map(SalesNote n) => new()
+    {
+        Id = n.Id,
+        NoteNumber = n.NoteNumber,
+        NoteType = n.NoteType,
+        NoteDate = n.NoteDate,
+        OriginalInvoiceId = n.OriginalInvoiceId,
+        OriginalInvoiceNumber = n.OriginalInvoice?.InvoiceNumber ?? string.Empty,
+        CustomerId = n.CustomerId,
+        CustomerName = n.Customer?.NameAr ?? string.Empty,
+        FiscalPeriodId = n.FiscalPeriodId,
+        Reason = n.Reason,
+        SubTotal = n.SubTotal,
+        VatRate = n.VatRate,
+        VatAmount = n.VatAmount,
+        TotalAmount = n.TotalAmount,
+        JournalEntryId = n.JournalEntryId,
+        Notes = n.Notes,
+        Lines = n.Lines.OrderBy(l => l.LineNumber).Select(l => new SalesNoteLineDto
+        {
+            Description = l.Description,
+            Quantity = l.Quantity,
+            UnitPrice = l.UnitPrice,
+            LineTotal = l.LineTotal
+        }).ToList(),
+        EInvoiceStatus = n.EInvoiceStatus,
+        EInvoiceExternalUuid = n.EInvoiceExternalUuid,
+        EInvoiceSubmittedAtUtc = n.EInvoiceSubmittedAtUtc,
+        EInvoiceErrorMessage = n.EInvoiceErrorMessage
+    };
+
     private async Task<decimal> GetVatRateAsync(CancellationToken ct)
     {
         var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct);

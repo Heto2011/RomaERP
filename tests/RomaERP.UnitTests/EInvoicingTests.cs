@@ -57,6 +57,30 @@ public class EInvoicingTests
         };
     }
 
+    private static SalesNote NewCreditNote(Customer customer, SalesInvoice originalInvoice, decimal subTotal = 100, decimal vatRate = 0.15m)
+    {
+        var vat = subTotal * vatRate;
+        return new SalesNote
+        {
+            NoteNumber = "CN-000001",
+            NoteType = SalesNoteType.Credit,
+            NoteDate = DateTime.UtcNow.Date,
+            Customer = customer,
+            CustomerId = customer.Id,
+            OriginalInvoice = originalInvoice,
+            OriginalInvoiceId = originalInvoice.Id,
+            Reason = "إرجاع بضاعة",
+            SubTotal = subTotal,
+            VatRate = vatRate,
+            VatAmount = vat,
+            TotalAmount = subTotal + vat,
+            Lines = new List<SalesNoteLine>
+            {
+                new() { LineNumber = 1, Description = "إرجاع منتج", Quantity = 1, UnitPrice = subTotal, LineTotal = subTotal }
+            }
+        };
+    }
+
     private static CompanySettings SaudiSettings() => new()
     {
         CompanyNameAr = "شركة روما التجريبية",
@@ -101,6 +125,38 @@ public class EInvoicingTests
         // "unsigned" document (see ZatcaXadesDocumentSignerTests) — this builder must NOT include them,
         // since their absence is exactly what the real signer's hash computation assumes.
         Assert.DoesNotContain("<cac:AdditionalDocumentReference><cbc:ID>QR</cbc:ID>", xml.Replace(" ", ""));
+    }
+
+    [Fact]
+    public void ZatcaInvoiceDocumentBuilder_BuildNote_UsesCreditNoteTypeCodeAndBillingReference()
+    {
+        var settings = SaudiSettings();
+        var customer = B2BCustomer();
+        var originalInvoice = NewInvoice(customer);
+        var note = NewCreditNote(customer, originalInvoice);
+
+        var (document, uuid) = ZatcaInvoiceDocumentBuilder.BuildNote(note, originalInvoice.InvoiceNumber, customer, settings, invoiceCounterValue: 8, previousInvoiceHash: "PREV-HASH-2");
+
+        Assert.False(string.IsNullOrWhiteSpace(uuid));
+        var xml = document.ToString();
+        Assert.Contains("InvoiceTypeCode name=\"0100000\">381<", xml);
+        Assert.Contains($"<cac:BillingReference><cac:InvoiceDocumentReference><cbc:ID>{originalInvoice.InvoiceNumber}</cbc:ID>", xml.Replace(" ", "").Replace("\n", ""));
+        Assert.Contains(note.TotalAmount.ToString(), xml);
+    }
+
+    [Fact]
+    public void ZatcaInvoiceDocumentBuilder_BuildNote_DebitNote_UsesDebitNoteTypeCode()
+    {
+        var settings = SaudiSettings();
+        var customer = B2BCustomer();
+        var originalInvoice = NewInvoice(customer);
+        var note = NewCreditNote(customer, originalInvoice);
+        note.NoteType = SalesNoteType.Debit;
+
+        var (document, _) = ZatcaInvoiceDocumentBuilder.BuildNote(note, originalInvoice.InvoiceNumber, customer, settings, invoiceCounterValue: 9, previousInvoiceHash: "PREV-HASH-3");
+
+        var xml = document.ToString();
+        Assert.Contains("InvoiceTypeCode name=\"0100000\">383<", xml);
     }
 
     [Fact]

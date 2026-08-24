@@ -17,6 +17,7 @@ import FixedAssets from "./pages/accounting/FixedAssets";
 import DepreciationRuns from "./pages/accounting/DepreciationRuns";
 import Customers from "./pages/sales/Customers";
 import SalesInvoices from "./pages/sales/SalesInvoices";
+import SalesNotes from "./pages/sales/SalesNotes";
 import ArAging from "./pages/sales/ArAging";
 import Vendors from "./pages/purchasing/Vendors";
 import PurchaseInvoices from "./pages/purchasing/PurchaseInvoices";
@@ -60,6 +61,7 @@ export default function App() {
       <Route path="/accounting/depreciation-runs" element={<ProtectedRoute><DepreciationRuns /></ProtectedRoute>} />
       <Route path="/sales/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
       <Route path="/sales/invoices" element={<ProtectedRoute><SalesInvoices /></ProtectedRoute>} />
+      <Route path="/sales/notes" element={<ProtectedRoute><SalesNotes /></ProtectedRoute>} />
       <Route path="/sales/aging" element={<ProtectedRoute><ArAging /></ProtectedRoute>} />
       <Route path="/purchasing/vendors" element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
       <Route path="/purchasing/invoices" element={<ProtectedRoute><PurchaseInvoices /></ProtectedRoute>} />

@@ -19,6 +19,8 @@ public static class AccountingConstants
     public const string InputVatAccountCode = "1180";
     public const string SalesInvoiceReference = "SALES-INVOICE";
     public const string PurchaseInvoiceReference = "PURCHASE-INVOICE";
+    public const string SalesCreditNoteReference = "SALES-CREDIT-NOTE";
+    public const string SalesDebitNoteReference = "SALES-DEBIT-NOTE";
     public const string DepreciationExpenseAccountCode = "5400";
     public const string DepreciationRunReference = "DEPRECIATION-RUN";
 }

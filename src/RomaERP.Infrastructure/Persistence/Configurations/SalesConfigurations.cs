@@ -102,3 +102,59 @@ public class SalesPaymentConfiguration : IEntityTypeConfiguration<SalesPayment>
         builder.HasQueryFilter(p => !p.IsDeleted);
     }
 }
+
+public class SalesNoteConfiguration : IEntityTypeConfiguration<SalesNote>
+{
+    public void Configure(EntityTypeBuilder<SalesNote> builder)
+    {
+        builder.Property(n => n.NoteNumber).HasMaxLength(20).IsRequired();
+        builder.Property(n => n.Reason).HasMaxLength(500).IsRequired();
+        builder.Property(n => n.SubTotal).HasPrecision(18, 2);
+        builder.Property(n => n.VatRate).HasPrecision(5, 4);
+        builder.Property(n => n.VatAmount).HasPrecision(18, 2);
+        builder.Property(n => n.TotalAmount).HasPrecision(18, 2);
+        builder.Property(n => n.Notes).HasMaxLength(1000);
+        builder.Property(n => n.EInvoiceExternalUuid).HasMaxLength(100);
+        builder.Property(n => n.EInvoiceHash).HasMaxLength(200);
+        builder.Property(n => n.EInvoiceErrorMessage).HasMaxLength(1000);
+        builder.HasIndex(n => n.NoteNumber).IsUnique();
+
+        builder.HasOne(n => n.OriginalInvoice)
+            .WithMany()
+            .HasForeignKey(n => n.OriginalInvoiceId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(n => n.Customer)
+            .WithMany()
+            .HasForeignKey(n => n.CustomerId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(n => n.FiscalPeriod)
+            .WithMany()
+            .HasForeignKey(n => n.FiscalPeriodId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(n => n.JournalEntry)
+            .WithMany()
+            .HasForeignKey(n => n.JournalEntryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(n => n.Lines)
+            .WithOne(l => l.SalesNote)
+            .HasForeignKey(l => l.SalesNoteId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(n => !n.IsDeleted);
+    }
+}
+
+public class SalesNoteLineConfiguration : IEntityTypeConfiguration<SalesNoteLine>
+{
+    public void Configure(EntityTypeBuilder<SalesNoteLine> builder)
+    {
+        builder.Property(l => l.Description).HasMaxLength(500).IsRequired();
+        builder.Property(l => l.Quantity).HasPrecision(18, 4);
+        builder.Property(l => l.UnitPrice).HasPrecision(18, 2);
+        builder.Property(l => l.LineTotal).HasPrecision(18, 2);
+    }
+}

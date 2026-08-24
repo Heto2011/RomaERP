@@ -59,4 +59,27 @@ public class SalesController : ControllerBase
     [HttpPost("invoices/{id:guid}/submit-einvoice")]
     public async Task<ActionResult<EInvoiceStatusDto>> SubmitEInvoice(Guid id, CancellationToken ct)
         => Ok(await _eInvoicingService.SubmitInvoiceAsync(id, ct));
+
+    [HttpGet("notes")]
+    public async Task<ActionResult<List<SalesNoteDto>>> GetNotes(CancellationToken ct)
+        => Ok(await _salesService.GetNotesAsync(ct));
+
+    [HttpGet("notes/{id:guid}")]
+    public async Task<ActionResult<SalesNoteDto>> GetNote(Guid id, CancellationToken ct)
+        => Ok(await _salesService.GetNoteAsync(id, ct));
+
+    [HttpPost("notes")]
+    public async Task<ActionResult<SalesNoteDto>> CreateNote(CreateSalesNoteDto dto, CancellationToken ct)
+        => Ok(await _salesService.CreateNoteAsync(dto, ct));
+
+    [HttpGet("notes/{id:guid}/pdf")]
+    public async Task<IActionResult> GetNotePdf(Guid id, CancellationToken ct)
+    {
+        var pdfBytes = await _salesService.GetNotePdfAsync(id, ct);
+        return File(pdfBytes, "application/pdf", $"note-{id}.pdf");
+    }
+
+    [HttpPost("notes/{id:guid}/submit-einvoice")]
+    public async Task<ActionResult<EInvoiceNoteStatusDto>> SubmitNoteEInvoice(Guid id, CancellationToken ct)
+        => Ok(await _eInvoicingService.SubmitNoteAsync(id, ct));
 }

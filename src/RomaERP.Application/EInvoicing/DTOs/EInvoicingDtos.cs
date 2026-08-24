@@ -32,3 +32,12 @@ public class EInvoiceStatusDto
     public DateTime? SubmittedAtUtc { get; set; }
     public string? ErrorMessage { get; set; }
 }
+
+public class EInvoiceNoteStatusDto
+{
+    public Guid SalesNoteId { get; set; }
+    public EInvoiceStatus Status { get; set; }
+    public string? ExternalUuid { get; set; }
+    public DateTime? SubmittedAtUtc { get; set; }
+    public string? ErrorMessage { get; set; }
+}

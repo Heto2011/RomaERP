@@ -14,4 +14,9 @@ public interface ISalesService
     Task<byte[]> GetInvoicePdfAsync(Guid id, CancellationToken ct = default);
 
     Task<List<CustomerAgingDto>> GetArAgingAsync(DateTime? asOfDate = null, CancellationToken ct = default);
+
+    Task<List<SalesNoteDto>> GetNotesAsync(CancellationToken ct = default);
+    Task<SalesNoteDto> GetNoteAsync(Guid id, CancellationToken ct = default);
+    Task<SalesNoteDto> CreateNoteAsync(CreateSalesNoteDto dto, CancellationToken ct = default);
+    Task<byte[]> GetNotePdfAsync(Guid id, CancellationToken ct = default);
 }

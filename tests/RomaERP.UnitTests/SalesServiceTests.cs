@@ -335,6 +335,112 @@ public class SalesServiceTests
     }
 
     [Fact]
+    public async Task CreateNote_Credit_DecreasesCustomerArBalanceAndDebitsRevenue()
+    {
+        var (ctx, _, _, ar, revenue, outputVat, customer, period) = await SeedAsync();
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer());
+
+        var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
+        {
+            CustomerId = customer.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Credit,
+            Lines = { new SalesInvoiceLineInputDto { Description = "منتج", Quantity = 1, UnitPrice = 500 } }
+        });
+        // invoice.TotalAmount = 570, customer.ArBalance = 570
+
+        var note = await service.CreateNoteAsync(new CreateSalesNoteDto
+        {
+            OriginalInvoiceId = invoice.Id,
+            NoteType = SalesNoteType.Credit,
+            NoteDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            Reason = "إرجاع بضاعة تالفة",
+            Lines = { new SalesNoteLineInputDto { Description = "إرجاع", Quantity = 1, UnitPrice = 100 } }
+        });
+
+        Assert.StartsWith("CN-", note.NoteNumber);
+        Assert.Equal(100, note.SubTotal);
+        Assert.Equal(14, note.VatAmount);
+        Assert.Equal(114, note.TotalAmount);
+        Assert.Equal(invoice.InvoiceNumber, note.OriginalInvoiceNumber);
+
+        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == note.JournalEntryId);
+        Assert.Contains(entry.Lines, l => l.AccountId == revenue.Id && l.Debit == 100);
+        Assert.Contains(entry.Lines, l => l.AccountId == outputVat.Id && l.Debit == 14);
+        Assert.Contains(entry.Lines, l => l.AccountId == ar.Id && l.Credit == 114);
+
+        var updatedCustomer = await ctx.Customers.FirstAsync(c => c.Id == customer.Id);
+        Assert.Equal(570 - 114, updatedCustomer.ArBalance);
+    }
+
+    [Fact]
+    public async Task CreateNote_Debit_IncreasesCustomerArBalanceAndCreditsRevenue()
+    {
+        var (ctx, _, _, ar, revenue, outputVat, customer, period) = await SeedAsync();
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer());
+
+        var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
+        {
+            CustomerId = customer.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Credit,
+            Lines = { new SalesInvoiceLineInputDto { Description = "منتج", Quantity = 1, UnitPrice = 500 } }
+        });
+
+        var note = await service.CreateNoteAsync(new CreateSalesNoteDto
+        {
+            OriginalInvoiceId = invoice.Id,
+            NoteType = SalesNoteType.Debit,
+            NoteDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            Reason = "رسوم شحن إضافية",
+            Lines = { new SalesNoteLineInputDto { Description = "شحن", Quantity = 1, UnitPrice = 50 } }
+        });
+
+        Assert.StartsWith("DN-", note.NoteNumber);
+        Assert.Equal(50, note.SubTotal);
+        Assert.Equal(7, note.VatAmount);
+        Assert.Equal(57, note.TotalAmount);
+
+        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == note.JournalEntryId);
+        Assert.Contains(entry.Lines, l => l.AccountId == ar.Id && l.Debit == 57);
+        Assert.Contains(entry.Lines, l => l.AccountId == revenue.Id && l.Credit == 50);
+        Assert.Contains(entry.Lines, l => l.AccountId == outputVat.Id && l.Credit == 7);
+
+        var updatedCustomer = await ctx.Customers.FirstAsync(c => c.Id == customer.Id);
+        Assert.Equal(570 + 57, updatedCustomer.ArBalance);
+    }
+
+    [Fact]
+    public async Task CreateNote_WithoutReason_Throws()
+    {
+        var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer());
+
+        var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
+        {
+            CustomerId = customer.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Cash,
+            Lines = { new SalesInvoiceLineInputDto { Description = "منتج", Quantity = 1, UnitPrice = 100 } }
+        });
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.CreateNoteAsync(new CreateSalesNoteDto
+        {
+            OriginalInvoiceId = invoice.Id,
+            NoteType = SalesNoteType.Credit,
+            NoteDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            Reason = "",
+            Lines = { new SalesNoteLineInputDto { Description = "إرجاع", Quantity = 1, UnitPrice = 10 } }
+        }));
+    }
+
+    [Fact]
     public async Task CreateInvoice_WithItemLineButNoWarehouse_Throws()
     {
         var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();

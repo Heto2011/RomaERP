@@ -36,6 +36,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       items: [
         { to: "/sales/customers", label: t.nav.customers },
         { to: "/sales/invoices", label: t.nav.salesInvoices },
+        { to: "/sales/notes", label: t.nav.salesNotes },
         { to: "/sales/aging", label: t.nav.arAging },
       ],
     },

@@ -103,6 +103,60 @@ public class SalesInvoiceDto
     public string? EInvoiceErrorMessage { get; set; }
 }
 
+public class SalesNoteLineInputDto
+{
+    public string Description { get; set; } = string.Empty;
+    public decimal Quantity { get; set; } = 1;
+    public decimal UnitPrice { get; set; }
+}
+
+/// <summary>Credit/Debit note against an existing invoice. v1 is financial-only — it does not restock/issue
+/// inventory even when the original invoice line was fulfilled from stock. A goods-return credit note that
+/// should also put items back on hand needs a separate stock-movement step for now.</summary>
+public class CreateSalesNoteDto
+{
+    public Guid OriginalInvoiceId { get; set; }
+    public RomaERP.Domain.Sales.SalesNoteType NoteType { get; set; }
+    public DateTime NoteDate { get; set; }
+    public Guid FiscalPeriodId { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public string? Notes { get; set; }
+    public List<SalesNoteLineInputDto> Lines { get; set; } = new();
+}
+
+public class SalesNoteLineDto
+{
+    public string Description { get; set; } = string.Empty;
+    public decimal Quantity { get; set; }
+    public decimal UnitPrice { get; set; }
+    public decimal LineTotal { get; set; }
+}
+
+public class SalesNoteDto
+{
+    public Guid Id { get; set; }
+    public string NoteNumber { get; set; } = string.Empty;
+    public RomaERP.Domain.Sales.SalesNoteType NoteType { get; set; }
+    public DateTime NoteDate { get; set; }
+    public Guid OriginalInvoiceId { get; set; }
+    public string OriginalInvoiceNumber { get; set; } = string.Empty;
+    public Guid CustomerId { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+    public Guid FiscalPeriodId { get; set; }
+    public string Reason { get; set; } = string.Empty;
+    public decimal SubTotal { get; set; }
+    public decimal VatRate { get; set; }
+    public decimal VatAmount { get; set; }
+    public decimal TotalAmount { get; set; }
+    public Guid? JournalEntryId { get; set; }
+    public string? Notes { get; set; }
+    public List<SalesNoteLineDto> Lines { get; set; } = new();
+    public RomaERP.Domain.EInvoicing.EInvoiceStatus EInvoiceStatus { get; set; }
+    public string? EInvoiceExternalUuid { get; set; }
+    public DateTime? EInvoiceSubmittedAtUtc { get; set; }
+    public string? EInvoiceErrorMessage { get; set; }
+}
+
 /// <summary>One customer's outstanding balance broken down by how overdue each invoice's remaining amount is,
 /// as of a given date (defaults to today). Only Credit-term invoices with an outstanding balance appear.</summary>
 public class CustomerAgingDto

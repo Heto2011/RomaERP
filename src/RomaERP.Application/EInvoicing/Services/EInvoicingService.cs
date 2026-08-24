@@ -85,6 +85,44 @@ public class EInvoicingService : IEInvoicingService
         };
     }
 
+    public async Task<EInvoiceNoteStatusDto> SubmitNoteAsync(Guid salesNoteId, CancellationToken ct = default)
+    {
+        var note = await _context.SalesNotes
+            .Include(n => n.Customer)
+            .Include(n => n.OriginalInvoice)
+            .Include(n => n.Lines)
+            .FirstOrDefaultAsync(n => n.Id == salesNoteId, ct)
+            ?? throw new NotFoundException(nameof(SalesNote), salesNoteId);
+
+        var settings = await _context.CompanySettings.FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException(nameof(CompanySettings), Guid.Empty);
+
+        if (settings.EInvoicingProvider == EInvoicingProvider.None)
+            throw new ValidationAppException("لسه مفيش منظومة فاتورة إلكترونية مفعّلة لهذه الشركة.");
+
+        var provider = _providers.FirstOrDefault(p => p.ProviderType == settings.EInvoicingProvider)
+            ?? throw new ValidationAppException("منظومة الفاتورة الإلكترونية المختارة غير مدعومة حاليًا.");
+
+        var result = await provider.SubmitNoteAsync(note, note.Customer!, settings, ct);
+
+        note.EInvoiceStatus = result.Success ? EInvoiceStatus.Accepted : EInvoiceStatus.Rejected;
+        note.EInvoiceExternalUuid = result.ExternalUuid;
+        note.EInvoiceHash = result.DocumentHash;
+        note.EInvoiceSubmittedAtUtc = DateTime.UtcNow;
+        note.EInvoiceErrorMessage = result.ErrorMessage;
+
+        await _context.SaveChangesAsync(ct);
+
+        return new EInvoiceNoteStatusDto
+        {
+            SalesNoteId = note.Id,
+            Status = note.EInvoiceStatus,
+            ExternalUuid = note.EInvoiceExternalUuid,
+            SubmittedAtUtc = note.EInvoiceSubmittedAtUtc,
+            ErrorMessage = note.EInvoiceErrorMessage
+        };
+    }
+
     private static EInvoicingSettingsDto Map(CompanySettings? settings) => new()
     {
         Provider = settings?.EInvoicingProvider ?? EInvoicingProvider.None,

@@ -544,6 +544,66 @@ export interface SalesInvoice {
   eInvoiceErrorMessage: string | null;
 }
 
+export enum SalesNoteType {
+  Credit = 1,
+  Debit = 2,
+}
+
+export interface SalesNoteLineInput {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface SalesNoteLine {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+}
+
+export interface CreateSalesNoteInput {
+  originalInvoiceId: string;
+  noteType: SalesNoteType;
+  noteDate: string;
+  fiscalPeriodId: string;
+  reason: string;
+  notes?: string | null;
+  lines: SalesNoteLineInput[];
+}
+
+export interface SalesNote {
+  id: string;
+  noteNumber: string;
+  noteType: SalesNoteType;
+  noteDate: string;
+  originalInvoiceId: string;
+  originalInvoiceNumber: string;
+  customerId: string;
+  customerName: string;
+  fiscalPeriodId: string;
+  reason: string;
+  subTotal: number;
+  vatRate: number;
+  vatAmount: number;
+  totalAmount: number;
+  journalEntryId: string | null;
+  notes: string | null;
+  lines: SalesNoteLine[];
+  eInvoiceStatus: EInvoiceStatus;
+  eInvoiceExternalUuid: string | null;
+  eInvoiceSubmittedAtUtc: string | null;
+  eInvoiceErrorMessage: string | null;
+}
+
+export interface EInvoiceNoteStatusDto {
+  salesNoteId: string;
+  status: EInvoiceStatus;
+  externalUuid: string | null;
+  submittedAtUtc: string | null;
+  errorMessage: string | null;
+}
+
 export interface Vendor {
   id: string;
   code: string;

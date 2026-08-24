@@ -17,4 +17,10 @@ public interface IEInvoicingProvider
         Customer customer,
         CompanySettings settings,
         CancellationToken ct = default);
+
+    Task<EInvoiceSubmissionResult> SubmitNoteAsync(
+        SalesNote note,
+        Customer customer,
+        CompanySettings settings,
+        CancellationToken ct = default);
 }

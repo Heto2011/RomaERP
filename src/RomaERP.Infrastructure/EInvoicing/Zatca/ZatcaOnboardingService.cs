@@ -16,13 +16,12 @@ namespace RomaERP.Infrastructure.EInvoicing.Zatca;
 /// network access to zatca.gov.sa, so every step beyond CSR generation can only be considered "correctly
 /// wired" (compiles, sends the right shape) rather than "confirmed working."
 ///
-/// The compliance-checks step (RunComplianceChecksAsync) is a known simplification: ZATCA's official
-/// compliance suite exercises 6 document types (standard invoice, standard credit note, standard debit note,
-/// simplified invoice, simplified credit note, simplified debit note). RomaERP doesn't model credit/debit
-/// notes yet, so this only submits two synthetic sample invoices (one Standard/B2B-shaped, one
-/// Simplified/B2C-shaped) built in-memory rather than from real data. Add credit/debit note support and wire
-/// the remaining 4 document types before treating a "PassedComplianceChecks" result as equivalent to ZATCA's
-/// own compliance sign-off.
+/// The compliance-checks step (RunComplianceChecksAsync) submits all 6 document types ZATCA's official
+/// compliance suite exercises (standard invoice, standard credit note, standard debit note, simplified
+/// invoice, simplified credit note, simplified debit note) — built in-memory from synthetic sample data
+/// (BuildSampleDocuments), not from real SalesInvoice/SalesNote records, since compliance checks run before
+/// any real invoice exists for this tenant. This is still not "confirmed working" against a real ZATCA
+/// environment (see above), but it no longer skips document types ZATCA's suite requires.
 /// </summary>
 public class ZatcaOnboardingService : IZatcaOnboardingService
 {
@@ -112,16 +111,15 @@ public class ZatcaOnboardingService : IZatcaOnboardingService
         var complianceCertificatePem = _secretProtector.Unprotect(settings.EInvoicingCertificateEncrypted);
         var complianceSecret = _secretProtector.Unprotect(settings.EInvoicingClientSecretEncrypted);
 
-        var sampleInvoices = BuildSampleInvoices();
+        var sampleDocuments = BuildSampleDocuments(settings);
         string? pih = null;
         var icv = 0;
         var lastStatus = "PASS";
 
-        foreach (var (invoice, customer) in sampleInvoices)
+        foreach (var (buildDocument, label) in sampleDocuments)
         {
             icv++;
-            var (unsignedDocument, _) = ZatcaInvoiceDocumentBuilder.Build(
-                invoice, customer, settings, icv, pih ?? RomaERP.Application.EInvoicing.Services.Zatca.ZatcaEInvoicingProvider.FirstInvoicePih);
+            var (unsignedDocument, _) = buildDocument(icv, pih ?? RomaERP.Application.EInvoicing.Services.Zatca.ZatcaEInvoicingProvider.FirstInvoicePih);
             var unsignedXml = unsignedDocument.ToString(SaveOptions.DisableFormatting);
             var signingResult = await _signer.SignInvoiceXmlAsync(unsignedXml, settings, ct);
             pih = signingResult.InvoiceHash;
@@ -130,7 +128,7 @@ public class ZatcaOnboardingService : IZatcaOnboardingService
                 complianceCertificatePem, complianceSecret, signingResult.SignedXml, signingResult.InvoiceHash, signingResult.Uuid, settings, ct);
 
             if (!checkResult.Success)
-                throw new ValidationAppException($"فشل اختبار المطابقة على فاتورة تجريبية ({(customer.TaxRegistrationNumber is null ? "مبسّطة" : "عادية")}): {checkResult.ErrorMessage}");
+                throw new ValidationAppException($"فشل اختبار المطابقة على مستند تجريبي ({label}): {checkResult.ErrorMessage}");
 
             lastStatus = checkResult.Status ?? lastStatus;
         }
@@ -172,7 +170,13 @@ public class ZatcaOnboardingService : IZatcaOnboardingService
     private async Task<CompanySettings> LoadTrackedSettingsAsync(CancellationToken ct)
         => await _context.CompanySettings.FirstOrDefaultAsync(ct) ?? throw new NotFoundException(nameof(CompanySettings), Guid.Empty);
 
-    private static List<(SalesInvoice Invoice, Customer Customer)> BuildSampleInvoices()
+    private delegate (XDocument Document, string Uuid) SampleDocumentBuilder(int invoiceCounterValue, string previousInvoiceHash);
+
+    /// <summary>Builds the 6 synthetic sample documents ZATCA's compliance suite exercises: a standard and a
+    /// simplified invoice, plus a credit note and a debit note against each. Every document is built purely
+    /// in-memory (never persisted) — this only exists to satisfy the compliance-check API, not to represent
+    /// real transactions.</summary>
+    private static List<(SampleDocumentBuilder Build, string Label)> BuildSampleDocuments(CompanySettings settings)
     {
         var standardCustomer = new Customer { Id = Guid.NewGuid(), Code = "COMPLIANCE-B2B", NameAr = "عميل تجريبي (عادية)", NameEn = "Compliance Test Standard", TaxRegistrationNumber = "399999999900003" };
         var simplifiedCustomer = new Customer { Id = Guid.NewGuid(), Code = "COMPLIANCE-B2C", NameAr = "عميل تجريبي (مبسّطة)", NameEn = "Compliance Test Simplified" };
@@ -200,10 +204,48 @@ public class ZatcaOnboardingService : IZatcaOnboardingService
             };
         }
 
-        return new List<(SalesInvoice, Customer)>
+        SalesNote BuildNote(string number, SalesNoteType type, Customer customer, SalesInvoice originalInvoice)
         {
-            (BuildInvoice("COMPLIANCE-STD-1", standardCustomer), standardCustomer),
-            (BuildInvoice("COMPLIANCE-SIM-1", simplifiedCustomer), simplifiedCustomer),
+            const decimal subTotal = 20m;
+            const decimal vatRate = 0.15m;
+            var vat = subTotal * vatRate;
+            return new SalesNote
+            {
+                Id = Guid.NewGuid(),
+                NoteNumber = number,
+                NoteType = type,
+                NoteDate = DateTime.UtcNow,
+                Customer = customer,
+                CustomerId = customer.Id,
+                OriginalInvoice = originalInvoice,
+                OriginalInvoiceId = originalInvoice.Id,
+                Reason = "Compliance test note",
+                SubTotal = subTotal,
+                VatRate = vatRate,
+                VatAmount = vat,
+                TotalAmount = subTotal + vat,
+                Lines = new List<SalesNoteLine>
+                {
+                    new() { LineNumber = 1, Description = "Compliance test note item", Quantity = 1, UnitPrice = subTotal, LineTotal = subTotal }
+                }
+            };
+        }
+
+        var standardInvoice = BuildInvoice("COMPLIANCE-STD-1", standardCustomer);
+        var simplifiedInvoice = BuildInvoice("COMPLIANCE-SIM-1", simplifiedCustomer);
+        var standardCreditNote = BuildNote("COMPLIANCE-STD-CN-1", SalesNoteType.Credit, standardCustomer, standardInvoice);
+        var standardDebitNote = BuildNote("COMPLIANCE-STD-DN-1", SalesNoteType.Debit, standardCustomer, standardInvoice);
+        var simplifiedCreditNote = BuildNote("COMPLIANCE-SIM-CN-1", SalesNoteType.Credit, simplifiedCustomer, simplifiedInvoice);
+        var simplifiedDebitNote = BuildNote("COMPLIANCE-SIM-DN-1", SalesNoteType.Debit, simplifiedCustomer, simplifiedInvoice);
+
+        return new List<(SampleDocumentBuilder, string)>
+        {
+            ((icv, pih) => ZatcaInvoiceDocumentBuilder.Build(standardInvoice, standardCustomer, settings, icv, pih), "فاتورة عادية"),
+            ((icv, pih) => ZatcaInvoiceDocumentBuilder.BuildNote(standardCreditNote, standardInvoice.InvoiceNumber, standardCustomer, settings, icv, pih), "إشعار دائن عادي"),
+            ((icv, pih) => ZatcaInvoiceDocumentBuilder.BuildNote(standardDebitNote, standardInvoice.InvoiceNumber, standardCustomer, settings, icv, pih), "إشعار مدين عادي"),
+            ((icv, pih) => ZatcaInvoiceDocumentBuilder.Build(simplifiedInvoice, simplifiedCustomer, settings, icv, pih), "فاتورة مبسّطة"),
+            ((icv, pih) => ZatcaInvoiceDocumentBuilder.BuildNote(simplifiedCreditNote, simplifiedInvoice.InvoiceNumber, simplifiedCustomer, settings, icv, pih), "إشعار دائن مبسّط"),
+            ((icv, pih) => ZatcaInvoiceDocumentBuilder.BuildNote(simplifiedDebitNote, simplifiedInvoice.InvoiceNumber, simplifiedCustomer, settings, icv, pih), "إشعار مدين مبسّط"),
         };
     }
 
