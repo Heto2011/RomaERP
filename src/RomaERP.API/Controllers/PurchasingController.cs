@@ -41,6 +41,13 @@ public class PurchasingController : ControllerBase
     public async Task<ActionResult<PurchaseInvoiceDto>> RecordPayment(Guid id, RecordPurchasePaymentDto dto, CancellationToken ct)
         => Ok(await _purchasingService.RecordPaymentAsync(id, dto, ct));
 
+    [HttpGet("invoices/{id:guid}/pdf")]
+    public async Task<IActionResult> GetInvoicePdf(Guid id, CancellationToken ct)
+    {
+        var pdfBytes = await _purchasingService.GetInvoicePdfAsync(id, ct);
+        return File(pdfBytes, "application/pdf", $"purchase-invoice-{id}.pdf");
+    }
+
     [HttpGet("aging")]
     public async Task<ActionResult<List<VendorAgingDto>>> GetAging(DateTime? asOfDate, CancellationToken ct)
         => Ok(await _purchasingService.GetApAgingAsync(asOfDate, ct));

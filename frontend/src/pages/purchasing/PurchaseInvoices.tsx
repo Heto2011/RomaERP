@@ -111,6 +111,21 @@ export default function PurchaseInvoices() {
     }
   }
 
+  async function handleDownloadPdf(invoice: PurchaseInvoice) {
+    setError(null);
+    try {
+      const res = await PurchasingApi.downloadInvoicePdf(invoice.id);
+      const url = window.URL.createObjectURL(res.data as Blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${invoice.invoiceNumber}.pdf`;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   const paymentTermLabel: Record<PaymentTerm, string> = {
     [PaymentTerm.Cash]: t.paymentTerm.cash,
     [PaymentTerm.Card]: t.paymentTerm.card,
@@ -275,7 +290,10 @@ export default function PurchaseInvoices() {
                 <td>{inv.totalAmount.toLocaleString()}</td>
                 <td>{paymentTermLabel[inv.paymentTerm]}</td>
                 <td>{inv.outstandingAmount.toLocaleString()}</td>
-                <td>
+                <td style={{ display: "flex", gap: 6 }}>
+                  <button className="btn btn-secondary btn-sm" title={t.sales.downloadPdf} onClick={() => handleDownloadPdf(inv)}>
+                    🖨️ {t.sales.downloadPdf}
+                  </button>
                   {inv.paymentTerm === PaymentTerm.Credit && inv.outstandingAmount > 0 && (
                     <button className="btn btn-secondary btn-sm" title={t.purchasing.recordPayment} onClick={() => openPaymentDialog(inv)}>
                       💰 {t.purchasing.recordPayment}

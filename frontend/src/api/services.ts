@@ -253,6 +253,7 @@ export const PurchasingApi = {
   createInvoice: (data: CreatePurchaseInvoiceInput) => apiClient.post<PurchaseInvoice>("/purchasing/invoices", data),
   recordPayment: (id: string, data: RecordPurchasePaymentInput) => apiClient.post<PurchaseInvoice>(`/purchasing/invoices/${id}/payments`, data),
   getAging: () => apiClient.get<VendorAging[]>("/purchasing/aging"),
+  downloadInvoicePdf: (id: string) => apiClient.get(`/purchasing/invoices/${id}/pdf`, { responseType: "blob" }),
 };
 
 export const UsersApi = {

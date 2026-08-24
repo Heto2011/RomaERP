@@ -6,16 +6,19 @@ using RomaERP.Application.Purchasing.DTOs;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
 using RomaERP.Domain.Purchasing;
+using RomaERP.Domain.Tenancy;
 
 namespace RomaERP.Application.Purchasing.Services;
 
 public class PurchasingService : IPurchasingService
 {
     private readonly IApplicationDbContext _context;
+    private readonly IHtmlToPdfRenderer _pdfRenderer;
 
-    public PurchasingService(IApplicationDbContext context)
+    public PurchasingService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer)
     {
         _context = context;
+        _pdfRenderer = pdfRenderer;
     }
 
     public async Task<List<VendorDto>> GetVendorsAsync(CancellationToken ct = default)
@@ -244,6 +247,16 @@ public class PurchasingService : IPurchasingService
         await _context.SaveChangesAsync(ct);
 
         return await GetInvoiceAsync(invoice.Id, ct);
+    }
+
+    public async Task<byte[]> GetInvoicePdfAsync(Guid id, CancellationToken ct = default)
+    {
+        var invoice = await LoadInvoiceAsync(id, ct);
+        var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException(nameof(CompanySettings), Guid.Empty);
+
+        var html = PurchaseInvoiceHtmlTemplate.Build(invoice, settings);
+        return await _pdfRenderer.RenderAsync(html, ct);
     }
 
     public async Task<List<VendorAgingDto>> GetApAgingAsync(DateTime? asOfDate = null, CancellationToken ct = default)
