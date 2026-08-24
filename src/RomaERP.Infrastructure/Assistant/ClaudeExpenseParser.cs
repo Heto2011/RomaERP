@@ -27,12 +27,6 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
         IReadOnlyList<ExpenseAccountCandidate> expenseAccounts,
         CancellationToken ct = default)
     {
-        if (string.IsNullOrWhiteSpace(_settings.ApiKey))
-        {
-            throw new ValidationAppException(
-                "المساعد الذكي مش مفعّل لسه — لازم تضيف مفتاح Claude API في إعدادات السيرفر (Claude:ApiKey) عشان يشتغل.");
-        }
-
         var accountsList = string.Join("\n", expenseAccounts.Select(a => $"- {a.Code}: {a.NameAr}"));
         var systemPrompt = $"""
             أنت مساعد محاسبي بيساعد موظف يسجّل مصروفات الشركة عن طريق الكلام العادي (مصري أو عربي أو إنجليزي).
@@ -44,31 +38,87 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
             """;
 
         var messageContent = priorContext is null ? userMessage : $"(الرسالة السابقة: {priorContext})\n{userMessage}";
+        var userContent = JsonValue.Create(messageContent);
+
+        return await SendExtractionRequestAsync(systemPrompt, userContent!, ct);
+    }
+
+    public async Task<ExpenseExtractionResult> ExtractFromReceiptImageAsync(
+        byte[] imageBytes,
+        string mediaType,
+        IReadOnlyList<ExpenseAccountCandidate> expenseAccounts,
+        CancellationToken ct = default)
+    {
+        var accountsList = string.Join("\n", expenseAccounts.Select(a => $"- {a.Code}: {a.NameAr}"));
+        var systemPrompt = $"""
+            أنت مساعد محاسبي بيساعد موظف يسجّل مصروف الشركة عن طريق صورة إيصال أو فاتورة.
+            اقرا الصورة المرفقة، واستخرج منها: المبلغ الإجمالي، اسم المحل/المورد كوصف قصير للمصروف،
+            تاريخ الإيصال لو ظاهر وواضح (بصيغة yyyy-MM-dd)، وأنسب حساب مصروفات من القائمة دي:
+            {accountsList}
+
+            لو الصورة مش واضحة أو المبلغ مش مقروء، اطلب توضيح بسؤال عربي قصير ومباشر بدل ما تخمّن رقم.
+            استخدم أداة extract_expense دايمًا للرد.
+            """;
+
+        var userContent = new JsonArray
+        {
+            new JsonObject
+            {
+                ["type"] = "image",
+                ["source"] = new JsonObject
+                {
+                    ["type"] = "base64",
+                    ["media_type"] = mediaType,
+                    ["data"] = Convert.ToBase64String(imageBytes)
+                }
+            },
+            new JsonObject
+            {
+                ["type"] = "text",
+                ["text"] = "استخرج بيانات المصروف من صورة الإيصال دي."
+            }
+        };
+
+        return await SendExtractionRequestAsync(systemPrompt, userContent, ct, includeEntryDate: true);
+    }
+
+    private async Task<ExpenseExtractionResult> SendExtractionRequestAsync(
+        string systemPrompt, JsonNode userContent, CancellationToken ct, bool includeEntryDate = false)
+    {
+        if (string.IsNullOrWhiteSpace(_settings.ApiKey))
+        {
+            throw new ValidationAppException(
+                "المساعد الذكي مش مفعّل لسه — لازم تضيف مفتاح Claude API في إعدادات السيرفر (Claude:ApiKey) عشان يشتغل.");
+        }
+
+        var properties = new JsonObject
+        {
+            ["amount"] = new JsonObject { ["type"] = new JsonArray { "number", "null" } },
+            ["currency"] = new JsonObject { ["type"] = "string" },
+            ["description"] = new JsonObject { ["type"] = "string" },
+            ["suggested_account_code"] = new JsonObject { ["type"] = "string" },
+            ["needs_clarification"] = new JsonObject { ["type"] = "boolean" },
+            ["clarifying_question"] = new JsonObject { ["type"] = new JsonArray { "string", "null" } }
+        };
+        if (includeEntryDate)
+            properties["entry_date"] = new JsonObject { ["type"] = new JsonArray { "string", "null" }, ["description"] = "yyyy-MM-dd, only if clearly legible on the receipt" };
 
         var requestBody = new JsonObject
         {
             ["model"] = _settings.Model,
             ["max_tokens"] = 1024,
             ["system"] = systemPrompt,
-            ["messages"] = new JsonArray { new JsonObject { ["role"] = "user", ["content"] = messageContent } },
+            ["messages"] = new JsonArray { new JsonObject { ["role"] = "user", ["content"] = userContent } },
             ["tools"] = new JsonArray
             {
                 new JsonObject
                 {
                     ["name"] = "extract_expense",
-                    ["description"] = "Extract structured expense details from the user's message.",
+                    ["description"] = "Extract structured expense details from the user's message or receipt image.",
                     ["input_schema"] = new JsonObject
                     {
                         ["type"] = "object",
-                        ["properties"] = new JsonObject
-                        {
-                            ["amount"] = new JsonObject { ["type"] = new JsonArray { "number", "null" } },
-                            ["currency"] = new JsonObject { ["type"] = "string" },
-                            ["description"] = new JsonObject { ["type"] = "string" },
-                            ["suggested_account_code"] = new JsonObject { ["type"] = "string" },
-                            ["needs_clarification"] = new JsonObject { ["type"] = "boolean" },
-                            ["clarifying_question"] = new JsonObject { ["type"] = new JsonArray { "string", "null" } }
-                        },
+                        ["properties"] = properties,
                         ["required"] = new JsonArray { "needs_clarification" }
                     }
                 }
@@ -103,12 +153,18 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
             ? amountNode.GetValue<decimal>()
             : null;
 
+        DateTime? entryDate = input["entry_date"] is { } dateNode && dateNode.GetValueKind() == JsonValueKind.String
+            && DateTime.TryParse(dateNode.GetValue<string>(), out var parsedDate)
+            ? parsedDate.Date
+            : null;
+
         return new ExpenseExtractionResult(
             Amount: amount,
             Currency: input["currency"]?.GetValue<string>(),
             Description: input["description"]?.GetValue<string>(),
             SuggestedAccountCode: input["suggested_account_code"]?.GetValue<string>(),
             NeedsClarification: input["needs_clarification"]?.GetValue<bool>() ?? amount is null,
-            ClarifyingQuestion: input["clarifying_question"]?.GetValue<string>());
+            ClarifyingQuestion: input["clarifying_question"]?.GetValue<string>(),
+            EntryDate: entryDate);
     }
 }

@@ -87,6 +87,69 @@ public class ExpenseAssistantService : IExpenseAssistantService
         };
     }
 
+    public async Task<ChatTurnResponseDto> StartFromReceiptImageAsync(byte[] imageBytes, string mediaType, string userId, CancellationToken ct = default)
+    {
+        var candidates = await _context.Accounts
+            .AsNoTracking()
+            .Where(a => a.AccountType == AccountType.Expense && !a.IsControlAccount && a.IsActive && !a.IsDeleted)
+            .Select(a => new ExpenseAccountCandidate(a.Code, a.NameAr))
+            .ToListAsync(ct);
+
+        var result = await _parser.ExtractFromReceiptImageAsync(imageBytes, mediaType, candidates, ct);
+
+        var capture = new ExpenseCapture
+        {
+            RawText = "[صورة إيصال]",
+            EntryDate = result.EntryDate ?? DateTime.UtcNow.Date,
+            SubmittedByUserId = userId,
+            Status = ExpenseCaptureStatus.AwaitingDetails
+        };
+        _context.ExpenseCaptures.Add(capture);
+        _context.ExpenseCaptureMessages.Add(new ExpenseCaptureMessage { ExpenseCaptureId = capture.Id, Role = ChatRole.User, Content = "📷 صورة إيصال" });
+
+        string assistantReply;
+        if (result.NeedsClarification || result.Amount is null)
+        {
+            assistantReply = result.ClarifyingQuestion ?? "مقدرتش أقرا المبلغ من الصورة بوضوح، تقدر تكتبه لي؟";
+        }
+        else
+        {
+            capture.Amount = result.Amount;
+            capture.Currency = string.IsNullOrWhiteSpace(result.Currency) ? "EGP" : result.Currency!;
+            capture.Description = string.IsNullOrWhiteSpace(result.Description) ? "مصروف من صورة إيصال" : result.Description;
+
+            var account = await ResolveAccountAsync(result.SuggestedAccountCode, ct);
+            capture.SuggestedAccountId = account.Id;
+            capture.SuggestedAccount = account;
+            capture.Status = ExpenseCaptureStatus.AwaitingFundingSource;
+
+            assistantReply = $"قريت من الإيصال: \"{capture.Description}\" بمبلغ {capture.Amount} {capture.Currency} بتاريخ {capture.EntryDate:yyyy-MM-dd}، تحت بند ({account.Code} - {account.NameAr}). الصرف ده من عهدتك ولا من جاري الشركة؟";
+        }
+
+        _context.ExpenseCaptureMessages.Add(new ExpenseCaptureMessage { ExpenseCaptureId = capture.Id, Role = ChatRole.Assistant, Content = assistantReply });
+        await _context.SaveChangesAsync(ct);
+
+        var history = await _context.ExpenseCaptureMessages
+            .AsNoTracking()
+            .Where(m => m.ExpenseCaptureId == capture.Id)
+            .OrderBy(m => m.CreatedAtUtc)
+            .ToListAsync(ct);
+
+        return new ChatTurnResponseDto
+        {
+            CaptureId = capture.Id,
+            Status = capture.Status,
+            AssistantReply = assistantReply,
+            History = history.Select(m => new ChatMessageDto
+            {
+                Role = m.Role,
+                Content = m.Content,
+                CreatedAtUtc = m.CreatedAtUtc
+            }).ToList(),
+            Capture = Map(capture)
+        };
+    }
+
     private async Task<string> HandleDetailsAsync(ExpenseCapture capture, string message, CancellationToken ct)
     {
         var candidates = await _context.Accounts

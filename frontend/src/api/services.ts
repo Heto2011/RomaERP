@@ -154,6 +154,13 @@ export const AiAssistantApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+  startFromReceipt: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient.post<ChatTurnResponse>("/aiassistant/captures/from-receipt", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };
 
 export const BankReconciliationApi = {

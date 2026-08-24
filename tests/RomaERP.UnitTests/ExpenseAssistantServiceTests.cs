@@ -15,8 +15,14 @@ public class FakeClaudeExpenseParser : IClaudeExpenseParser
     public Func<string, string?, ExpenseExtractionResult> Handler { get; set; } =
         (_, _) => new ExpenseExtractionResult(100, "EGP", "مصروف تجريبي", "5300", false, null);
 
+    public Func<byte[], string, ExpenseExtractionResult> ImageHandler { get; set; } =
+        (_, _) => new ExpenseExtractionResult(75, "EGP", "إيصال تجريبي", "5300", false, null, new DateTime(2026, 8, 20));
+
     public Task<ExpenseExtractionResult> ExtractAsync(string userMessage, string? priorContext, IReadOnlyList<ExpenseAccountCandidate> expenseAccounts, CancellationToken ct = default)
         => Task.FromResult(Handler(userMessage, priorContext));
+
+    public Task<ExpenseExtractionResult> ExtractFromReceiptImageAsync(byte[] imageBytes, string mediaType, IReadOnlyList<ExpenseAccountCandidate> expenseAccounts, CancellationToken ct = default)
+        => Task.FromResult(ImageHandler(imageBytes, mediaType));
 }
 
 public class ExpenseAssistantServiceTests
@@ -76,6 +82,51 @@ public class ExpenseAssistantServiceTests
         Assert.Equal(100, entry.TotalDebit);
         Assert.Contains(entry.Lines, l => l.AccountId == fuelExpense.Id && l.Debit == 100);
         Assert.Contains(entry.Lines, l => l.AccountId == cash.Id && l.Credit == 100);
+    }
+
+    [Fact]
+    public async Task StartFromReceiptImage_WithReadableAmount_JumpsStraightToFundingSourceQuestion()
+    {
+        var (ctx, cash, fuelExpense, _, _) = await SeedAsync();
+        var parser = new FakeClaudeExpenseParser
+        {
+            ImageHandler = (_, _) => new ExpenseExtractionResult(145, "EGP", "مطعم الشيف", "5300", false, null, new DateTime(2026, 8, 20))
+        };
+        var service = new ExpenseAssistantService(ctx, parser);
+
+        var first = await service.StartFromReceiptImageAsync(new byte[] { 1, 2, 3 }, "image/jpeg", "user-1");
+
+        Assert.Equal(ExpenseCaptureStatus.AwaitingFundingSource, first.Status);
+        Assert.Equal(145, first.Capture!.Amount);
+        Assert.Equal("مطعم الشيف", first.Capture.Description);
+        Assert.Equal(new DateTime(2026, 8, 20), first.Capture.EntryDate);
+        Assert.Equal("5300", first.Capture.SuggestedAccountCode);
+
+        var second = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "جاري" }, "user-1");
+        var third = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "كاش" }, "user-1");
+        Assert.Equal(ExpenseCaptureStatus.PendingApproval, third.Status);
+
+        var approved = await service.ApproveAsync(first.CaptureId);
+        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == approved.JournalEntryId);
+        Assert.Contains(entry.Lines, l => l.AccountId == fuelExpense.Id && l.Debit == 145);
+        Assert.Contains(entry.Lines, l => l.AccountId == cash.Id && l.Credit == 145);
+    }
+
+    [Fact]
+    public async Task StartFromReceiptImage_WhenAmountUnreadable_AsksForClarificationInstead()
+    {
+        var (ctx, _, _, _, _) = await SeedAsync();
+        var parser = new FakeClaudeExpenseParser
+        {
+            ImageHandler = (_, _) => new ExpenseExtractionResult(null, null, null, null, true, "الصورة مش واضحة، تقدر تكتب المبلغ؟")
+        };
+        var service = new ExpenseAssistantService(ctx, parser);
+
+        var first = await service.StartFromReceiptImageAsync(new byte[] { 1, 2, 3 }, "image/jpeg", "user-1");
+
+        Assert.Equal(ExpenseCaptureStatus.AwaitingDetails, first.Status);
+        Assert.Null(first.Capture!.Amount);
+        Assert.Equal("الصورة مش واضحة، تقدر تكتب المبلغ؟", first.AssistantReply);
     }
 
     [Fact]

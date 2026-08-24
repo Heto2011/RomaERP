@@ -25,6 +25,7 @@ export default function AiAssistant() {
   const [error, setError] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const receiptInputRef = useRef<HTMLInputElement>(null);
 
   async function handleSend(e: React.FormEvent) {
     e.preventDefault();
@@ -38,6 +39,22 @@ export default function AiAssistant() {
 
     try {
       const res = await AiAssistantApi.sendMessage(captureId, userMessage.content);
+      setCaptureId(res.data.captureId);
+      setStatus(res.data.status);
+      setMessages((prev) => [...prev, { role: ChatRole.Assistant, content: res.data.assistantReply, createdAtUtc: new Date().toISOString() }]);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  async function handleStartFromReceipt(file: File) {
+    setError(null);
+    setMessages((prev) => [...prev, { role: ChatRole.User, content: `📷 ${t.assistant.receiptPhotoLabel}: ${file.name}`, createdAtUtc: new Date().toISOString() }]);
+    setSending(true);
+    try {
+      const res = await AiAssistantApi.startFromReceipt(file);
       setCaptureId(res.data.captureId);
       setStatus(res.data.status);
       setMessages((prev) => [...prev, { role: ChatRole.Assistant, content: res.data.assistantReply, createdAtUtc: new Date().toISOString() }]);
@@ -69,9 +86,24 @@ export default function AiAssistant() {
     <div>
       <div className="page-header">
         <h1>{t.assistant.chatTitle}</h1>
-        <button className="btn btn-secondary" onClick={startNewExpense}>
-          {t.assistant.newExpense}
-        </button>
+        <div style={{ display: "flex", gap: 8 }}>
+          <button className="btn btn-secondary" onClick={() => receiptInputRef.current?.click()} disabled={sending}>
+            {t.assistant.startFromReceipt}
+          </button>
+          <input
+            ref={receiptInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp,image/gif"
+            style={{ display: "none" }}
+            onChange={(e) => {
+              if (e.target.files?.[0]) handleStartFromReceipt(e.target.files[0]);
+              e.target.value = "";
+            }}
+          />
+          <button className="btn btn-secondary" onClick={startNewExpense}>
+            {t.assistant.newExpense}
+          </button>
+        </div>
       </div>
 
       {status && (

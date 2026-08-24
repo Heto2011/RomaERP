@@ -47,6 +47,44 @@ public class AiAssistantController : ControllerBase
     public async Task<ActionResult<ExpenseCaptureDto>> Reject(Guid id, CancellationToken ct)
         => Ok(await _assistantService.RejectAsync(id, ct));
 
+    [HttpPost("captures/from-receipt")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    public async Task<ActionResult<ChatTurnResponseDto>> StartFromReceipt(IFormFile file, CancellationToken ct)
+    {
+        if (file.Length == 0)
+            throw new ValidationAppException("الملف المرفوع فارغ.");
+
+        var mediaType = file.ContentType?.ToLowerInvariant() switch
+        {
+            "image/jpeg" or "image/jpg" => "image/jpeg",
+            "image/png" => "image/png",
+            "image/webp" => "image/webp",
+            "image/gif" => "image/gif",
+            _ => throw new ValidationAppException("صيغة الصورة غير مدعومة — لازم تكون JPEG أو PNG أو WEBP أو GIF.")
+        };
+
+        byte[] imageBytes;
+        using (var memoryStream = new MemoryStream())
+        {
+            await file.CopyToAsync(memoryStream, ct);
+            imageBytes = memoryStream.ToArray();
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
+        var response = await _assistantService.StartFromReceiptImageAsync(imageBytes, mediaType, userId, ct);
+
+        var uploadsDir = Path.Combine(_environment.ContentRootPath, "App_Data", "expense-proofs");
+        Directory.CreateDirectory(uploadsDir);
+        var storedFileName = $"{response.CaptureId}{Path.GetExtension(file.FileName)}";
+        await using (var stream = System.IO.File.Create(Path.Combine(uploadsDir, storedFileName)))
+        {
+            await file.CopyToAsync(stream, ct);
+        }
+        await _assistantService.AttachProofAsync(response.CaptureId, file.FileName, storedFileName, ct);
+
+        return Ok(response);
+    }
+
     [HttpPost("captures/{id:guid}/proof")]
     [RequestSizeLimit(10 * 1024 * 1024)]
     public async Task<ActionResult<ExpenseCaptureDto>> UploadProof(Guid id, IFormFile file, CancellationToken ct)
