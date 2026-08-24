@@ -31,3 +31,25 @@ public class BalanceSheetDto
     public decimal TotalLiabilitiesAndEquity { get; set; }
     public bool IsBalanced { get; set; }
 }
+
+/// <summary>One cost center's revenue/expense activity within the report period — including a synthetic
+/// row (CostCenterId = null) for posted journal lines on Revenue/Expense accounts that carry no cost center
+/// at all, so the report is honest about how much activity isn't actually being tracked by center.</summary>
+public class CostCenterAnalysisLineDto
+{
+    public Guid? CostCenterId { get; set; }
+    public string CostCenterCode { get; set; } = string.Empty;
+    public string CostCenterName { get; set; } = string.Empty;
+    public List<ReportLineDto> RevenueBreakdown { get; set; } = new();
+    public decimal TotalRevenue { get; set; }
+    public List<ReportLineDto> ExpenseBreakdown { get; set; } = new();
+    public decimal TotalExpense { get; set; }
+    public decimal NetAmount { get; set; }
+}
+
+public class CostCenterAnalysisDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public List<CostCenterAnalysisLineDto> CostCenters { get; set; } = new();
+}

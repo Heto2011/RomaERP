@@ -51,6 +51,7 @@ const ar = {
     trialBalance: "ميزان المراجعة",
     incomeStatement: "قائمة الدخل",
     balanceSheet: "المركز المالي",
+    costCenterAnalysis: "تحليل مراكز التكلفة",
     fiscalPeriods: "إقفال الفترات",
     fixedAssets: "الأصول الثابتة",
     depreciationRuns: "قيود الإهلاك",
@@ -248,6 +249,10 @@ const ar = {
     totalLiabilitiesAndEquity: "إجمالي الخصوم وحقوق الملكية",
     balanced: "(متوازنة)",
     notBalanced: "(غير متوازنة!)",
+
+    costCenterAnalysisTitle: "تحليل مراكز التكلفة",
+    unassignedCostCenter: "بدون مركز تكلفة",
+    netAmount: "الصافي",
 
     fiscalPeriodsTitle: "إقفال الفترات المالية",
     closeYear: "إقفال السنة المالية",
@@ -593,6 +598,7 @@ const en: typeof ar = {
     trialBalance: "Trial Balance",
     incomeStatement: "Income Statement",
     balanceSheet: "Balance Sheet",
+    costCenterAnalysis: "Cost Center Analysis",
     fiscalPeriods: "Period Closing",
     fixedAssets: "Fixed Assets",
     depreciationRuns: "Depreciation Runs",
@@ -790,6 +796,10 @@ const en: typeof ar = {
     totalLiabilitiesAndEquity: "Total Liabilities and Equity",
     balanced: "(Balanced)",
     notBalanced: "(Not Balanced!)",
+
+    costCenterAnalysisTitle: "Cost Center Analysis",
+    unassignedCostCenter: "Unassigned",
+    netAmount: "Net",
 
     fiscalPeriodsTitle: "Period Closing",
     closeYear: "Close Fiscal Year",

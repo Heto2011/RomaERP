@@ -160,6 +160,23 @@ export interface BalanceSheet {
   isBalanced: boolean;
 }
 
+export interface CostCenterAnalysisLine {
+  costCenterId: string | null;
+  costCenterCode: string;
+  costCenterName: string;
+  revenueBreakdown: ReportLine[];
+  totalRevenue: number;
+  expenseBreakdown: ReportLine[];
+  totalExpense: number;
+  netAmount: number;
+}
+
+export interface CostCenterAnalysis {
+  fromDate: string;
+  toDate: string;
+  costCenters: CostCenterAnalysisLine[];
+}
+
 export enum ChatRole {
   User = 1,
   Assistant = 2,

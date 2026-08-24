@@ -3,6 +3,7 @@ import type {
   Account,
   AppUser,
   BalanceSheet,
+  CostCenterAnalysis,
   BankStatementImportResult,
   BankStatementLine,
   ChatTurnResponse,
@@ -199,6 +200,8 @@ export const FinancialReportsApi = {
     apiClient.get<IncomeStatement>("/financialreports/income-statement", { params: { fromDate, toDate } }),
   balanceSheet: (asOfDate: string) =>
     apiClient.get<BalanceSheet>("/financialreports/balance-sheet", { params: { asOfDate } }),
+  costCenterAnalysis: (fromDate: string, toDate: string) =>
+    apiClient.get<CostCenterAnalysis>("/financialreports/cost-center-analysis", { params: { fromDate, toDate } }),
 };
 
 export const FiscalPeriodsAdminApi = {

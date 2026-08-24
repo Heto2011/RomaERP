@@ -25,4 +25,9 @@ public class FinancialReportsController : ControllerBase
     [HttpGet("balance-sheet")]
     public async Task<ActionResult<BalanceSheetDto>> GetBalanceSheet([FromQuery] DateTime asOfDate, CancellationToken ct)
         => Ok(await _financialReportService.GetBalanceSheetAsync(asOfDate, ct));
+
+    [HttpGet("cost-center-analysis")]
+    public async Task<ActionResult<CostCenterAnalysisDto>> GetCostCenterAnalysis(
+        [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
+        => Ok(await _financialReportService.GetCostCenterAnalysisAsync(fromDate, toDate, ct));
 }

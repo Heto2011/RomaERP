@@ -92,6 +92,51 @@ public class FinancialReportService : IFinancialReportService
         };
     }
 
+    public async Task<CostCenterAnalysisDto> GetCostCenterAnalysisAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var lines = await _context.JournalEntryLines
+            .AsNoTracking()
+            .Include(l => l.Account)
+            .Include(l => l.CostCenter)
+            .Include(l => l.JournalEntry)
+            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+                        && !l.JournalEntry.IsDeleted
+                        && l.JournalEntry.EntryDate >= fromDate
+                        && l.JournalEntry.EntryDate <= toDate
+                        && (l.Account!.AccountType == AccountType.Revenue || l.Account.AccountType == AccountType.Expense))
+            .ToListAsync(ct);
+
+        var costCenters = lines
+            .GroupBy(l => l.CostCenterId)
+            .Select(g =>
+            {
+                var groupLines = g.ToList();
+                var revenueBreakdown = BuildLines(groupLines, AccountType.Revenue, creditPositive: true);
+                var expenseBreakdown = BuildLines(groupLines, AccountType.Expense, creditPositive: false);
+                var totalRevenue = revenueBreakdown.Sum(l => l.Amount);
+                var totalExpense = expenseBreakdown.Sum(l => l.Amount);
+                var costCenter = g.Key.HasValue ? groupLines.First().CostCenter : null;
+
+                return new CostCenterAnalysisLineDto
+                {
+                    CostCenterId = g.Key,
+                    CostCenterCode = costCenter?.Code ?? string.Empty,
+                    CostCenterName = costCenter?.NameAr ?? string.Empty,
+                    RevenueBreakdown = revenueBreakdown,
+                    TotalRevenue = totalRevenue,
+                    ExpenseBreakdown = expenseBreakdown,
+                    TotalExpense = totalExpense,
+                    NetAmount = totalRevenue - totalExpense
+                };
+            })
+            .Where(c => c.TotalRevenue != 0 || c.TotalExpense != 0)
+            .OrderBy(c => c.CostCenterId.HasValue ? 0 : 1)
+            .ThenBy(c => c.CostCenterCode)
+            .ToList();
+
+        return new CostCenterAnalysisDto { FromDate = fromDate, ToDate = toDate, CostCenters = costCenters };
+    }
+
     private static List<ReportLineDto> BuildLines(List<JournalEntryLine> lines, AccountType type, bool creditPositive)
     {
         return lines

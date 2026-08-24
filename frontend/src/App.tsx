@@ -12,6 +12,7 @@ import JournalEntries from "./pages/accounting/JournalEntries";
 import TrialBalance from "./pages/accounting/TrialBalance";
 import IncomeStatementPage from "./pages/accounting/IncomeStatement";
 import BalanceSheetPage from "./pages/accounting/BalanceSheet";
+import CostCenterAnalysisPage from "./pages/accounting/CostCenterAnalysis";
 import FiscalPeriods from "./pages/accounting/FiscalPeriods";
 import FixedAssets from "./pages/accounting/FixedAssets";
 import DepreciationRuns from "./pages/accounting/DepreciationRuns";
@@ -59,6 +60,7 @@ export default function App() {
       <Route path="/accounting/trial-balance" element={<ProtectedRoute><TrialBalance /></ProtectedRoute>} />
       <Route path="/accounting/income-statement" element={<ProtectedRoute><IncomeStatementPage /></ProtectedRoute>} />
       <Route path="/accounting/balance-sheet" element={<ProtectedRoute><BalanceSheetPage /></ProtectedRoute>} />
+      <Route path="/accounting/cost-center-analysis" element={<ProtectedRoute><CostCenterAnalysisPage /></ProtectedRoute>} />
       <Route path="/accounting/fiscal-periods" element={<ProtectedRoute><FiscalPeriods /></ProtectedRoute>} />
       <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssets /></ProtectedRoute>} />
       <Route path="/accounting/depreciation-runs" element={<ProtectedRoute><DepreciationRuns /></ProtectedRoute>} />
