@@ -6,6 +6,7 @@ using RomaERP.Domain.Assistant;
 using RomaERP.Domain.HR;
 using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Purchasing;
+using RomaERP.Domain.Restaurant;
 using RomaERP.Domain.Sales;
 using RomaERP.Domain.Tenancy;
 using RomaERP.Infrastructure.Identity;
@@ -40,6 +41,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
     public DbSet<Item> Items => Set<Item>();
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+
+    public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
+    public DbSet<RestaurantOrder> RestaurantOrders => Set<RestaurantOrder>();
+    public DbSet<RestaurantOrderLine> RestaurantOrderLines => Set<RestaurantOrderLine>();
+    public DbSet<MenuRecipeLine> MenuRecipeLines => Set<MenuRecipeLine>();
 
     public DbSet<ExpenseCapture> ExpenseCaptures => Set<ExpenseCapture>();
     public DbSet<ExpenseCaptureMessage> ExpenseCaptureMessages => Set<ExpenseCaptureMessage>();

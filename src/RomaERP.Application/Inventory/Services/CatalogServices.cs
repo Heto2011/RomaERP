@@ -184,6 +184,8 @@ public class ItemService : IItemService
         ReorderLevel = i.ReorderLevel,
         QuantityOnHand = i.QuantityOnHand,
         AverageCost = i.AverageCost,
-        IsActive = i.IsActive
+        IsActive = i.IsActive,
+        IsMenuItem = i.IsMenuItem,
+        MenuPrice = i.MenuPrice
     };
 }

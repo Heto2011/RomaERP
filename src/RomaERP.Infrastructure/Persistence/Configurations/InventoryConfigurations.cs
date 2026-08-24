@@ -39,6 +39,7 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         builder.Property(i => i.ReorderLevel).HasPrecision(18, 4);
         builder.Property(i => i.QuantityOnHand).HasPrecision(18, 4);
         builder.Property(i => i.AverageCost).HasPrecision(18, 4);
+        builder.Property(i => i.MenuPrice).HasPrecision(18, 2);
         builder.HasIndex(i => i.Code).IsUnique();
 
         builder.HasOne(i => i.ItemCategory)

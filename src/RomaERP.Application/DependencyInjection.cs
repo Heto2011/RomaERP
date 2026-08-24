@@ -7,6 +7,7 @@ using RomaERP.Application.EInvoicing.Services.Zatca;
 using RomaERP.Application.HR.Services;
 using RomaERP.Application.Inventory.Services;
 using RomaERP.Application.Purchasing.Services;
+using RomaERP.Application.Restaurant.Services;
 using RomaERP.Application.Sales.Services;
 
 namespace RomaERP.Application;
@@ -39,6 +40,7 @@ public static class DependencyInjection
 
         services.AddScoped<ISalesService, SalesService>();
         services.AddScoped<IPurchasingService, PurchasingService>();
+        services.AddScoped<IRestaurantService, RestaurantService>();
 
         // E-invoicing: ZATCA's document signer AND API client are real (see Infrastructure.AddInfrastructure —
         // ZatcaXadesDocumentSigner / ZatcaHttpApiClient). The ETA side is still mock — the ETA signer needs a

@@ -4,6 +4,7 @@ using RomaERP.Domain.Assistant;
 using RomaERP.Domain.HR;
 using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Purchasing;
+using RomaERP.Domain.Restaurant;
 using RomaERP.Domain.Sales;
 using RomaERP.Domain.Tenancy;
 
@@ -33,6 +34,11 @@ public interface IApplicationDbContext
     DbSet<Warehouse> Warehouses { get; }
     DbSet<Item> Items { get; }
     DbSet<StockMovement> StockMovements { get; }
+
+    DbSet<RestaurantTable> RestaurantTables { get; }
+    DbSet<RestaurantOrder> RestaurantOrders { get; }
+    DbSet<RestaurantOrderLine> RestaurantOrderLines { get; }
+    DbSet<MenuRecipeLine> MenuRecipeLines { get; }
 
     DbSet<ExpenseCapture> ExpenseCaptures { get; }
     DbSet<ExpenseCaptureMessage> ExpenseCaptureMessages { get; }

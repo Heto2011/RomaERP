@@ -424,6 +424,8 @@ export interface Item {
   quantityOnHand: number;
   averageCost: number;
   isActive: boolean;
+  isMenuItem: boolean;
+  menuPrice: number;
 }
 
 export enum StockMovementType {
@@ -796,4 +798,122 @@ export interface ZatcaOnboardingStatus {
   hasCertificate: boolean;
   hasSecret: boolean;
   lastComplianceCheckStatus: string | null;
+}
+
+export enum RestaurantTableStatus {
+  Available = 1,
+  Occupied = 2,
+  Reserved = 3,
+}
+
+export interface RestaurantTable {
+  id: string;
+  number: string;
+  sectionName: string | null;
+  capacity: number;
+  status: RestaurantTableStatus;
+}
+
+export interface CreateRestaurantTableInput {
+  number: string;
+  sectionName?: string | null;
+  capacity: number;
+}
+
+export interface MenuItem {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  menuPrice: number;
+  itemCategoryId: string;
+  categoryName: string;
+  hasRecipe: boolean;
+}
+
+export interface RecipeLine {
+  rawMaterialItemId: string;
+  rawMaterialCode: string;
+  rawMaterialName: string;
+  quantityPerUnit: number;
+}
+
+export interface SetRecipeLineInput {
+  rawMaterialItemId: string;
+  quantityPerUnit: number;
+}
+
+export interface SetMenuItemInput {
+  isMenuItem: boolean;
+  menuPrice: number;
+  recipeLines: SetRecipeLineInput[];
+}
+
+export enum RestaurantOrderType {
+  DineIn = 1,
+  Takeaway = 2,
+  Delivery = 3,
+}
+
+export enum RestaurantOrderStatus {
+  Open = 1,
+  Billed = 2,
+  Cancelled = 3,
+}
+
+export interface CreateRestaurantOrderInput {
+  orderType: RestaurantOrderType;
+  tableId?: string | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  deliveryAddress?: string | null;
+  waiterEmployeeId?: string | null;
+  warehouseId: string;
+  notes?: string | null;
+}
+
+export interface AddOrderLineInput {
+  itemId: string;
+  quantity: number;
+  notes?: string | null;
+}
+
+export interface RestaurantOrderLine {
+  id: string;
+  lineNumber: number;
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  unitPrice: number;
+  lineTotal: number;
+  notes: string | null;
+}
+
+export interface RestaurantOrder {
+  id: string;
+  orderNumber: string;
+  orderType: RestaurantOrderType;
+  orderDate: string;
+  tableId: string | null;
+  tableNumber: string | null;
+  customerName: string | null;
+  customerPhone: string | null;
+  deliveryAddress: string | null;
+  waiterEmployeeId: string | null;
+  waiterName: string | null;
+  warehouseId: string;
+  status: RestaurantOrderStatus;
+  notes: string | null;
+  salesInvoiceId: string | null;
+  salesInvoiceNumber: string | null;
+  subTotal: number;
+  vatRate: number;
+  vatAmount: number;
+  totalAmount: number;
+  lines: RestaurantOrderLine[];
+}
+
+export interface BillOrderInput {
+  paymentTerm: PaymentTerm;
+  fiscalPeriodId: string;
 }

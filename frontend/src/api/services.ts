@@ -49,6 +49,16 @@ import type {
   VendorAging,
   Warehouse,
   ZatcaOnboardingStatus,
+  RestaurantTable,
+  CreateRestaurantTableInput,
+  RestaurantTableStatus,
+  MenuItem,
+  RecipeLine,
+  SetMenuItemInput,
+  RestaurantOrder,
+  CreateRestaurantOrderInput,
+  AddOrderLineInput,
+  BillOrderInput,
 } from "./types";
 
 export const AuthApi = {
@@ -261,6 +271,27 @@ export const PurchasingApi = {
   recordPayment: (id: string, data: RecordPurchasePaymentInput) => apiClient.post<PurchaseInvoice>(`/purchasing/invoices/${id}/payments`, data),
   getAging: () => apiClient.get<VendorAging[]>("/purchasing/aging"),
   downloadInvoicePdf: (id: string) => apiClient.get(`/purchasing/invoices/${id}/pdf`, { responseType: "blob" }),
+};
+
+export const RestaurantApi = {
+  getTables: () => apiClient.get<RestaurantTable[]>("/restaurant/tables"),
+  createTable: (data: CreateRestaurantTableInput) => apiClient.post<RestaurantTable>("/restaurant/tables", data),
+  setTableStatus: (id: string, status: RestaurantTableStatus) =>
+    apiClient.put<RestaurantTable>(`/restaurant/tables/${id}/status`, { status }),
+
+  getMenu: () => apiClient.get<MenuItem[]>("/restaurant/menu"),
+  getRecipe: (itemId: string) => apiClient.get<RecipeLine[]>(`/restaurant/menu/${itemId}/recipe`),
+  setMenuItem: (itemId: string, data: SetMenuItemInput) => apiClient.put(`/restaurant/menu/${itemId}`, data),
+
+  getOrders: (includeClosed = false) => apiClient.get<RestaurantOrder[]>("/restaurant/orders", { params: { includeClosed } }),
+  getOrder: (id: string) => apiClient.get<RestaurantOrder>(`/restaurant/orders/${id}`),
+  createOrder: (data: CreateRestaurantOrderInput) => apiClient.post<RestaurantOrder>("/restaurant/orders", data),
+  addLine: (orderId: string, data: AddOrderLineInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/lines`, data),
+  updateLineQuantity: (orderId: string, lineId: string, quantity: number) =>
+    apiClient.put<RestaurantOrder>(`/restaurant/orders/${orderId}/lines/${lineId}`, { quantity }),
+  removeLine: (orderId: string, lineId: string) => apiClient.delete<RestaurantOrder>(`/restaurant/orders/${orderId}/lines/${lineId}`),
+  cancelOrder: (orderId: string) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/cancel`),
+  billOrder: (orderId: string, data: BillOrderInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/bill`, data),
 };
 
 export const UsersApi = {

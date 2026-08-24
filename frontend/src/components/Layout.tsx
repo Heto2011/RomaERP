@@ -65,6 +65,14 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/inventory/movements", label: t.nav.stockMovements },
       ],
     },
+    {
+      section: t.nav.restaurant,
+      items: [
+        { to: "/restaurant/pos", label: t.nav.restaurantPos },
+        { to: "/restaurant/tables", label: t.nav.restaurantTables },
+        { to: "/restaurant/menu", label: t.nav.restaurantMenu },
+      ],
+    },
     ...(user?.roles.includes("Admin")
       ? [
           {

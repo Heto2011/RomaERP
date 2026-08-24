@@ -1,4 +1,5 @@
 using RomaERP.Domain.Common;
+using RomaERP.Domain.Restaurant;
 
 namespace RomaERP.Domain.Inventory;
 
@@ -21,5 +22,14 @@ public class Item : AuditableEntity
     /// <summary>Weighted-average unit cost, recalculated on each stock receipt.</summary>
     public decimal AverageCost { get; set; }
 
+    /// <summary>Set when this item appears on the restaurant/POS menu (either sold directly, or as the
+    /// finished product of a recipe — see RecipeLines).</summary>
+    public bool IsMenuItem { get; set; }
+    public decimal MenuPrice { get; set; }
+
     public ICollection<StockMovement> Movements { get; set; } = new List<StockMovement>();
+
+    /// <summary>Ingredients consumed when this item (as a menu item) is sold. Empty means this item is its
+    /// own raw material — sold and decremented directly.</summary>
+    public ICollection<MenuRecipeLine> RecipeLines { get; set; } = new List<MenuRecipeLine>();
 }

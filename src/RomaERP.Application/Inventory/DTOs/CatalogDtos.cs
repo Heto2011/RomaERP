@@ -45,6 +45,8 @@ public class ItemDto
     public decimal QuantityOnHand { get; set; }
     public decimal AverageCost { get; set; }
     public bool IsActive { get; set; }
+    public bool IsMenuItem { get; set; }
+    public decimal MenuPrice { get; set; }
 }
 
 public class CreateItemDto
