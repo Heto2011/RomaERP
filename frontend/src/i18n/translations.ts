@@ -37,6 +37,8 @@ const ar = {
     Employee: "موظف",
   },
   language: "English",
+  collapseSidebar: "طي القائمة",
+  expandSidebar: "توسيع القائمة",
   nav: {
     general: "عام",
     dashboard: "لوحة التحكم",
@@ -551,6 +553,8 @@ const en: typeof ar = {
   appName: "RomaERP",
   logout: "Logout",
   language: "العربية",
+  collapseSidebar: "Collapse menu",
+  expandSidebar: "Expand menu",
   dashboard: {
     title: "Dashboard",
     accountsCount: "Accounts",

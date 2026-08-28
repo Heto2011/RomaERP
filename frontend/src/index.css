@@ -50,6 +50,16 @@ button {
   flex-direction: column;
   padding: 16px 0;
   flex-shrink: 0;
+  transition: width 0.15s ease;
+}
+
+.sidebar.collapsed {
+  width: 60px;
+}
+
+.sidebar-scroll {
+  overflow-y: auto;
+  flex: 1;
 }
 
 .sidebar-brand {
@@ -58,6 +68,28 @@ button {
   padding: 0 20px 20px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.15);
   margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.sidebar.collapsed .sidebar-brand {
+  padding: 0 10px 20px;
+  justify-content: center;
+}
+
+.sidebar-toggle {
+  background: transparent;
+  border: none;
+  color: #fff;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  border-radius: 4px;
+}
+
+.sidebar-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .sidebar-section {
@@ -67,11 +99,30 @@ button {
 }
 
 .sidebar-link {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 10px;
   padding: 10px 20px;
   color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   font-size: 14px;
+}
+
+.sidebar.collapsed .sidebar-link {
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.sidebar-icon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sidebar-link .link-text {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .sidebar-link:hover {
@@ -88,6 +139,12 @@ button {
   margin-top: auto;
   padding: 12px 20px;
   border-top: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.sidebar.collapsed .sidebar-footer {
+  padding: 12px 0;
+  display: flex;
+  justify-content: center;
 }
 
 .main-content {
