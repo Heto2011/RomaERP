@@ -130,6 +130,7 @@ export default function PurchaseInvoices() {
     [PaymentTerm.Cash]: t.paymentTerm.cash,
     [PaymentTerm.Card]: t.paymentTerm.card,
     [PaymentTerm.Credit]: t.paymentTerm.credit,
+    [PaymentTerm.Installment]: t.paymentTerm.installment,
   };
 
   return (

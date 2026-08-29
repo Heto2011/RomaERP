@@ -26,7 +26,8 @@ public class SalesInvoice : AuditableEntity
     public decimal TotalAmount { get; set; }
 
     /// <summary>Chosen once at invoice creation: Cash/Card settle it immediately (no AR involved);
-    /// Credit posts it to the customer's Accounts Receivable balance for later collection.</summary>
+    /// Credit and Installment both post the full amount to the customer's Accounts Receivable balance for
+    /// later collection — Installment additionally carries a due-date schedule (InstallmentLines).</summary>
     public PaymentTerm PaymentTerm { get; set; }
     public decimal PaidAmount { get; set; }
 
@@ -45,6 +46,7 @@ public class SalesInvoice : AuditableEntity
 
     public ICollection<SalesInvoiceLine> Lines { get; set; } = new List<SalesInvoiceLine>();
     public ICollection<SalesPayment> Payments { get; set; } = new List<SalesPayment>();
+    public ICollection<SalesInstallmentLine> InstallmentLines { get; set; } = new List<SalesInstallmentLine>();
 }
 
 public class SalesInvoiceLine : BaseEntity
@@ -64,7 +66,20 @@ public class SalesInvoiceLine : BaseEntity
     public Item? Item { get; set; }
 }
 
-/// <summary>A cash/card collection recorded against a Credit invoice, reducing its outstanding AR balance.</summary>
+/// <summary>One due date in an Installment invoice's payment schedule. Collections-tracking only — whether a
+/// line is "paid" is derived by comparing cumulative schedule amount against SalesInvoice.PaidAmount rather
+/// than stored here, so it always agrees with the single source of truth (SalesPayment records).</summary>
+public class SalesInstallmentLine : BaseEntity
+{
+    public Guid SalesInvoiceId { get; set; }
+    public SalesInvoice? SalesInvoice { get; set; }
+
+    public int InstallmentNumber { get; set; }
+    public DateTime DueDate { get; set; }
+    public decimal Amount { get; set; }
+}
+
+/// <summary>A cash/card collection recorded against a Credit or Installment invoice, reducing its outstanding AR balance.</summary>
 public class SalesPayment : AuditableEntity
 {
     public Guid SalesInvoiceId { get; set; }

@@ -144,6 +144,67 @@ public class SalesServiceTests
     }
 
     [Fact]
+    public async Task CreateInvoice_WithInstallmentTerm_PostsToArAndGeneratesEqualMonthlySchedule()
+    {
+        var (ctx, _, _, ar, revenue, outputVat, customer, period) = await SeedAsync();
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer());
+        var firstDue = DateTime.UtcNow.Date;
+
+        var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
+        {
+            CustomerId = customer.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Installment,
+            NumberOfInstallments = 3,
+            FirstInstallmentDueDate = firstDue,
+            Lines = { new SalesInvoiceLineInputDto { Description = "منتج", Quantity = 1, UnitPrice = 500 } }
+        });
+
+        Assert.Equal(0, invoice.PaidAmount);
+        Assert.Equal(570, invoice.TotalAmount);
+        Assert.Equal(570, invoice.OutstandingAmount);
+
+        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == invoice.JournalEntryId);
+        Assert.Contains(entry.Lines, l => l.AccountId == ar.Id && l.Debit == 570);
+        Assert.Contains(entry.Lines, l => l.AccountId == revenue.Id && l.Credit == 500);
+        Assert.Contains(entry.Lines, l => l.AccountId == outputVat.Id && l.Credit == 70);
+
+        Assert.Equal(3, invoice.InstallmentLines.Count);
+        Assert.Equal(190, invoice.InstallmentLines[0].Amount);
+        Assert.Equal(firstDue, invoice.InstallmentLines[0].DueDate);
+        Assert.Equal(firstDue.AddMonths(1), invoice.InstallmentLines[1].DueDate);
+        Assert.Equal(firstDue.AddMonths(2), invoice.InstallmentLines[2].DueDate);
+        Assert.All(invoice.InstallmentLines, l => Assert.False(l.IsPaid));
+
+        var updated = await service.RecordPaymentAsync(invoice.Id, new RecordSalesPaymentDto
+        {
+            Amount = 190,
+            Method = PaymentTerm.Cash,
+            PaymentDate = DateTime.UtcNow.Date
+        });
+
+        Assert.True(updated.InstallmentLines[0].IsPaid);
+        Assert.False(updated.InstallmentLines[1].IsPaid);
+    }
+
+    [Fact]
+    public async Task CreateInvoice_WithInstallmentTerm_RequiresScheduleFields()
+    {
+        var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer());
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.CreateInvoiceAsync(new CreateSalesInvoiceDto
+        {
+            CustomerId = customer.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            PaymentTerm = PaymentTerm.Installment,
+            Lines = { new SalesInvoiceLineInputDto { Description = "منتج", Quantity = 1, UnitPrice = 500 } }
+        }));
+    }
+
+    [Fact]
     public async Task RecordPayment_OnCreditInvoice_ReducesOutstandingAndCustomerBalance()
     {
         var (ctx, _, bank, ar, _, _, customer, period) = await SeedAsync();

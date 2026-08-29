@@ -61,6 +61,7 @@ public class SalesService : ISalesService
             .Include(i => i.Warehouse)
             .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Payments)
+            .Include(i => i.InstallmentLines)
             .OrderByDescending(i => i.InvoiceDate)
             .ThenByDescending(i => i.InvoiceNumber)
             .ToListAsync(ct);
@@ -163,8 +164,16 @@ public class SalesService : ISalesService
         if (outputVatAccount is not null)
             journalLines.Add(new JournalEntryLine { LineNumber = 3, AccountId = outputVatAccount.Id, Debit = 0, Credit = vatAmount, Description = "ضريبة مخرجات" });
 
+        if (dto.PaymentTerm == PaymentTerm.Installment)
+        {
+            if (dto.NumberOfInstallments is null or <= 0)
+                throw new ValidationAppException("لازم تحدد عدد الأقساط لفاتورة البيع بالتقسيط.");
+            if (dto.FirstInstallmentDueDate is null)
+                throw new ValidationAppException("لازم تحدد تاريخ استحقاق القسط الأول.");
+        }
+
         decimal paidAmount;
-        if (dto.PaymentTerm == PaymentTerm.Credit)
+        if (dto.PaymentTerm is PaymentTerm.Credit or PaymentTerm.Installment)
         {
             var arAccount = await GetAccountAsync(AccountingConstants.AccountsReceivableAccountCode, "العملاء", ct);
             journalLines.Insert(0, new JournalEntryLine { LineNumber = 1, AccountId = arAccount.Id, Debit = totalAmount, Credit = 0, Description = $"فاتورة مبيعات آجلة - {customer.NameAr}" });
@@ -209,6 +218,27 @@ public class SalesService : ISalesService
             JournalEntry = entry,
             Lines = lines
         };
+
+        if (dto.PaymentTerm == PaymentTerm.Installment)
+        {
+            var count = dto.NumberOfInstallments!.Value;
+            var baseAmount = Math.Round(totalAmount / count, 2);
+            var installmentLines = new List<SalesInstallmentLine>();
+            decimal allocated = 0;
+            for (var n = 1; n <= count; n++)
+            {
+                var amount = n == count ? totalAmount - allocated : baseAmount;
+                allocated += amount;
+                installmentLines.Add(new SalesInstallmentLine
+                {
+                    SalesInvoiceId = invoice.Id,
+                    InstallmentNumber = n,
+                    DueDate = dto.FirstInstallmentDueDate!.Value.AddMonths(n - 1),
+                    Amount = amount
+                });
+            }
+            invoice.InstallmentLines = installmentLines;
+        }
 
         _context.SalesInvoices.Add(invoice);
 
@@ -285,7 +315,7 @@ public class SalesService : ISalesService
             .FirstOrDefaultAsync(i => i.Id == invoiceId, ct)
             ?? throw new NotFoundException(nameof(SalesInvoice), invoiceId);
 
-        if (invoice.PaymentTerm != PaymentTerm.Credit)
+        if (invoice.PaymentTerm is not (PaymentTerm.Credit or PaymentTerm.Installment))
             throw new ValidationAppException("الفاتورة دي متحصلة بالكامل عند الإنشاء، مفيش تحصيل إضافي مطلوب.");
 
         var outstanding = invoice.TotalAmount - invoice.PaidAmount;
@@ -339,7 +369,7 @@ public class SalesService : ISalesService
         var outstandingInvoices = await _context.SalesInvoices
             .AsNoTracking()
             .Include(i => i.Customer)
-            .Where(i => i.PaymentTerm == PaymentTerm.Credit && i.TotalAmount > i.PaidAmount)
+            .Where(i => (i.PaymentTerm == PaymentTerm.Credit || i.PaymentTerm == PaymentTerm.Installment) && i.TotalAmount > i.PaidAmount)
             .Select(i => new { i.CustomerId, CustomerCode = i.Customer!.Code, CustomerName = i.Customer.NameAr, i.InvoiceDate, Outstanding = i.TotalAmount - i.PaidAmount })
             .ToListAsync(ct);
 
@@ -586,6 +616,7 @@ public class SalesService : ISalesService
             .Include(i => i.Warehouse)
             .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Payments)
+            .Include(i => i.InstallmentLines)
             .FirstOrDefaultAsync(i => i.Id == id, ct)
             ?? throw new NotFoundException(nameof(SalesInvoice), id);
 
@@ -601,6 +632,24 @@ public class SalesService : ISalesService
         IsActive = c.IsActive,
         ArBalance = c.ArBalance
     };
+
+    /// <summary>A line is "paid" once cumulative payments (invoice.PaidAmount) cover its cumulative schedule
+    /// amount through that installment — derived from the one real balance, not a separately-tracked flag.</summary>
+    private static List<SalesInstallmentLineDto> MapInstallmentLines(SalesInvoice i)
+    {
+        decimal cumulative = 0;
+        return i.InstallmentLines.OrderBy(l => l.InstallmentNumber).Select(l =>
+        {
+            cumulative += l.Amount;
+            return new SalesInstallmentLineDto
+            {
+                InstallmentNumber = l.InstallmentNumber,
+                DueDate = l.DueDate,
+                Amount = l.Amount,
+                IsPaid = i.PaidAmount >= cumulative
+            };
+        }).ToList();
+    }
 
     private static SalesInvoiceDto Map(SalesInvoice i) => new()
     {
@@ -639,6 +688,7 @@ public class SalesService : ISalesService
             Reference = p.Reference,
             JournalEntryId = p.JournalEntryId
         }).ToList(),
+        InstallmentLines = MapInstallmentLines(i),
         EInvoiceStatus = i.EInvoiceStatus,
         EInvoiceExternalUuid = i.EInvoiceExternalUuid,
         EInvoiceSubmittedAtUtc = i.EInvoiceSubmittedAtUtc,

@@ -54,6 +54,7 @@ public interface IApplicationDbContext
     DbSet<SalesInvoice> SalesInvoices { get; }
     DbSet<SalesInvoiceLine> SalesInvoiceLines { get; }
     DbSet<SalesPayment> SalesPayments { get; }
+    DbSet<SalesInstallmentLine> SalesInstallmentLines { get; }
     DbSet<SalesNote> SalesNotes { get; }
     DbSet<SalesNoteLine> SalesNoteLines { get; }
 

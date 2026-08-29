@@ -711,6 +711,7 @@ export enum PaymentTerm {
   Cash = 1,
   Card = 2,
   Credit = 3,
+  Installment = 4,
 }
 
 export interface Customer {
@@ -768,6 +769,16 @@ export interface CreateSalesInvoiceInput {
   notes?: string | null;
   warehouseId?: string | null;
   lines: SalesInvoiceLineInput[];
+  /// Required only when paymentTerm is Installment.
+  numberOfInstallments?: number | null;
+  firstInstallmentDueDate?: string | null;
+}
+
+export interface SalesInstallmentLine {
+  installmentNumber: number;
+  dueDate: string;
+  amount: number;
+  isPaid: boolean;
 }
 
 export interface RecordSalesPaymentInput {
@@ -796,6 +807,7 @@ export interface SalesInvoice {
   warehouseName: string | null;
   lines: SalesInvoiceLine[];
   payments: SalesPayment[];
+  installmentLines: SalesInstallmentLine[];
   eInvoiceStatus: EInvoiceStatus;
   eInvoiceExternalUuid: string | null;
   eInvoiceSubmittedAtUtc: string | null;

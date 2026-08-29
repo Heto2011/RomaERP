@@ -46,6 +46,13 @@ public class CreateSalesInvoiceDto
     /// <summary>Required only when at least one line has an ItemId.</summary>
     public Guid? WarehouseId { get; set; }
     public List<SalesInvoiceLineInputDto> Lines { get; set; } = new();
+
+    /// <summary>Required only when PaymentTerm is Installment — how many equal monthly installments to
+    /// split the total into (the last one absorbs any rounding remainder).</summary>
+    public int? NumberOfInstallments { get; set; }
+    /// <summary>Required only when PaymentTerm is Installment — the due date of installment #1; each
+    /// subsequent installment falls one month later.</summary>
+    public DateTime? FirstInstallmentDueDate { get; set; }
 }
 
 public class SalesInvoiceLineDto
@@ -67,6 +74,14 @@ public class SalesPaymentDto
     public PaymentTerm Method { get; set; }
     public string? Reference { get; set; }
     public Guid? JournalEntryId { get; set; }
+}
+
+public class SalesInstallmentLineDto
+{
+    public int InstallmentNumber { get; set; }
+    public DateTime DueDate { get; set; }
+    public decimal Amount { get; set; }
+    public bool IsPaid { get; set; }
 }
 
 public class RecordSalesPaymentDto
@@ -97,6 +112,7 @@ public class SalesInvoiceDto
     public string? WarehouseName { get; set; }
     public List<SalesInvoiceLineDto> Lines { get; set; } = new();
     public List<SalesPaymentDto> Payments { get; set; } = new();
+    public List<SalesInstallmentLineDto> InstallmentLines { get; set; } = new();
     public RomaERP.Domain.EInvoicing.EInvoiceStatus EInvoiceStatus { get; set; }
     public string? EInvoiceExternalUuid { get; set; }
     public DateTime? EInvoiceSubmittedAtUtc { get; set; }

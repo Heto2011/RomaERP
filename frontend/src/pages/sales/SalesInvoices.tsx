@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Fragment, useEffect, useState } from "react";
 import { ItemsApi, LookupsApi, SalesApi, WarehousesApi } from "../../api/services";
 import { EInvoiceStatus, PaymentTerm, type Customer, type FiscalPeriod, type Item, type SalesInvoice, type SalesInvoiceLineInput, type Warehouse } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -22,8 +22,11 @@ export default function SalesInvoices() {
   const [warehouseId, setWarehouseId] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [paymentTerm, setPaymentTerm] = useState<PaymentTerm>(PaymentTerm.Cash);
+  const [numberOfInstallments, setNumberOfInstallments] = useState(3);
+  const [firstInstallmentDueDate, setFirstInstallmentDueDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<SalesInvoiceLineInput[]>([emptyLine()]);
+  const [expandedInvoiceId, setExpandedInvoiceId] = useState<string | null>(null);
 
   const [payingInvoice, setPayingInvoice] = useState<SalesInvoice | null>(null);
   const [payAmount, setPayAmount] = useState(0);
@@ -86,6 +89,8 @@ export default function SalesInvoices() {
         notes: notes || null,
         warehouseId: warehouseId || null,
         lines,
+        numberOfInstallments: paymentTerm === PaymentTerm.Installment ? numberOfInstallments : null,
+        firstInstallmentDueDate: paymentTerm === PaymentTerm.Installment ? firstInstallmentDueDate : null,
       });
       setShowForm(false);
       setCustomerId("");
@@ -155,6 +160,7 @@ export default function SalesInvoices() {
     [PaymentTerm.Cash]: t.paymentTerm.cash,
     [PaymentTerm.Card]: t.paymentTerm.card,
     [PaymentTerm.Credit]: t.paymentTerm.credit,
+    [PaymentTerm.Installment]: t.paymentTerm.installment,
   };
 
   const eInvoiceStatusLabel: Record<EInvoiceStatus, string> = {
@@ -214,6 +220,7 @@ export default function SalesInvoices() {
                   <option value={PaymentTerm.Cash}>💵 {t.paymentTerm.cash}</option>
                   <option value={PaymentTerm.Card}>💳 {t.paymentTerm.card}</option>
                   <option value={PaymentTerm.Credit}>🗓 {t.paymentTerm.credit}</option>
+                  <option value={PaymentTerm.Installment}>📅 {t.paymentTerm.installment}</option>
                 </select>
               </div>
               <div className="form-field">
@@ -225,6 +232,18 @@ export default function SalesInvoices() {
                   ))}
                 </select>
               </div>
+              {paymentTerm === PaymentTerm.Installment && (
+                <>
+                  <div className="form-field">
+                    <label>{t.sales.numberOfInstallments}</label>
+                    <input type="number" min={2} step={1} value={numberOfInstallments} onChange={(e) => setNumberOfInstallments(Number(e.target.value))} required />
+                  </div>
+                  <div className="form-field">
+                    <label>{t.sales.firstInstallmentDueDate}</label>
+                    <input type="date" value={firstInstallmentDueDate} onChange={(e) => setFirstInstallmentDueDate(e.target.value)} required />
+                  </div>
+                </>
+              )}
             </div>
 
             <div style={{ marginTop: 16 }}>
@@ -326,40 +345,80 @@ export default function SalesInvoices() {
               </tr>
             )}
             {invoices.map((inv) => (
-              <tr key={inv.id}>
-                <td>{inv.invoiceNumber}</td>
-                <td>{new Date(inv.invoiceDate).toLocaleDateString()}</td>
-                <td>{inv.customerName}</td>
-                <td>{inv.subTotal.toLocaleString()}</td>
-                <td>{inv.vatAmount.toLocaleString()}</td>
-                <td>{inv.totalAmount.toLocaleString()}</td>
-                <td>{paymentTermLabel[inv.paymentTerm]}</td>
-                <td>{inv.outstandingAmount.toLocaleString()}</td>
-                <td>
-                  <span className={eInvoiceStatusClass[inv.eInvoiceStatus]} title={inv.eInvoiceErrorMessage ?? undefined}>
-                    {eInvoiceStatusLabel[inv.eInvoiceStatus]}
-                  </span>
-                </td>
-                <td style={{ display: "flex", gap: 6 }}>
-                  <button className="btn btn-secondary btn-sm" title={t.sales.downloadPdf} onClick={() => handleDownloadPdf(inv)}>
-                    🖨️ {t.sales.downloadPdf}
-                  </button>
-                  {inv.paymentTerm === PaymentTerm.Credit && inv.outstandingAmount > 0 && (
-                    <button className="btn btn-secondary btn-sm" title={t.sales.recordPayment} onClick={() => openPaymentDialog(inv)}>
-                      💰 {t.sales.recordPayment}
+              <Fragment key={inv.id}>
+                <tr>
+                  <td>{inv.invoiceNumber}</td>
+                  <td>{new Date(inv.invoiceDate).toLocaleDateString()}</td>
+                  <td>{inv.customerName}</td>
+                  <td>{inv.subTotal.toLocaleString()}</td>
+                  <td>{inv.vatAmount.toLocaleString()}</td>
+                  <td>{inv.totalAmount.toLocaleString()}</td>
+                  <td>{paymentTermLabel[inv.paymentTerm]}</td>
+                  <td>{inv.outstandingAmount.toLocaleString()}</td>
+                  <td>
+                    <span className={eInvoiceStatusClass[inv.eInvoiceStatus]} title={inv.eInvoiceErrorMessage ?? undefined}>
+                      {eInvoiceStatusLabel[inv.eInvoiceStatus]}
+                    </span>
+                  </td>
+                  <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                    <button className="btn btn-secondary btn-sm" title={t.sales.downloadPdf} onClick={() => handleDownloadPdf(inv)}>
+                      🖨️ {t.sales.downloadPdf}
                     </button>
-                  )}
-                  {inv.eInvoiceStatus !== EInvoiceStatus.Accepted && inv.eInvoiceStatus !== EInvoiceStatus.Submitted && (
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      disabled={submittingEInvoiceId === inv.id}
-                      onClick={() => handleSubmitEInvoice(inv.id)}
-                    >
-                      {submittingEInvoiceId === inv.id ? t.eInvoicing.submitting : `🧾 ${t.eInvoicing.submit}`}
-                    </button>
-                  )}
-                </td>
-              </tr>
+                    {(inv.paymentTerm === PaymentTerm.Credit || inv.paymentTerm === PaymentTerm.Installment) && inv.outstandingAmount > 0 && (
+                      <button className="btn btn-secondary btn-sm" title={t.sales.recordPayment} onClick={() => openPaymentDialog(inv)}>
+                        💰 {t.sales.recordPayment}
+                      </button>
+                    )}
+                    {inv.paymentTerm === PaymentTerm.Installment && (
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        onClick={() => setExpandedInvoiceId(expandedInvoiceId === inv.id ? null : inv.id)}
+                      >
+                        📅 {t.sales.viewInstallments}
+                      </button>
+                    )}
+                    {inv.eInvoiceStatus !== EInvoiceStatus.Accepted && inv.eInvoiceStatus !== EInvoiceStatus.Submitted && (
+                      <button
+                        className="btn btn-secondary btn-sm"
+                        disabled={submittingEInvoiceId === inv.id}
+                        onClick={() => handleSubmitEInvoice(inv.id)}
+                      >
+                        {submittingEInvoiceId === inv.id ? t.eInvoicing.submitting : `🧾 ${t.eInvoicing.submit}`}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+                {expandedInvoiceId === inv.id && (
+                  <tr>
+                    <td colSpan={10}>
+                      <table>
+                        <thead>
+                          <tr>
+                            <th>{t.sales.installmentNumber}</th>
+                            <th>{t.sales.dueDate}</th>
+                            <th>{t.common.amount}</th>
+                            <th>{t.common.status}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {inv.installmentLines.map((l) => (
+                            <tr key={l.installmentNumber}>
+                              <td>{l.installmentNumber}</td>
+                              <td>{new Date(l.dueDate).toLocaleDateString()}</td>
+                              <td>{l.amount.toLocaleString()}</td>
+                              <td>
+                                <span className={l.isPaid ? "badge badge-posted" : "badge badge-draft"}>
+                                  {l.isPaid ? t.sales.installmentPaid : t.sales.installmentUnpaid}
+                                </span>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </td>
+                  </tr>
+                )}
+              </Fragment>
             ))}
           </tbody>
         </table>

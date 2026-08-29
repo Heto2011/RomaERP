@@ -87,6 +87,19 @@ public class SalesInvoiceLineConfiguration : IEntityTypeConfiguration<SalesInvoi
     }
 }
 
+public class SalesInstallmentLineConfiguration : IEntityTypeConfiguration<SalesInstallmentLine>
+{
+    public void Configure(EntityTypeBuilder<SalesInstallmentLine> builder)
+    {
+        builder.Property(l => l.Amount).HasPrecision(18, 2);
+
+        builder.HasOne(l => l.SalesInvoice)
+            .WithMany(i => i.InstallmentLines)
+            .HasForeignKey(l => l.SalesInvoiceId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 public class SalesPaymentConfiguration : IEntityTypeConfiguration<SalesPayment>
 {
     public void Configure(EntityTypeBuilder<SalesPayment> builder)
