@@ -30,4 +30,14 @@ public class FinancialReportsController : ControllerBase
     public async Task<ActionResult<CostCenterAnalysisDto>> GetCostCenterAnalysis(
         [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
         => Ok(await _financialReportService.GetCostCenterAnalysisAsync(fromDate, toDate, ct));
+
+    [HttpGet("vat-summary")]
+    public async Task<ActionResult<VatSummaryDto>> GetVatSummary(
+        [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
+        => Ok(await _financialReportService.GetVatSummaryAsync(fromDate, toDate, ct));
+
+    [HttpGet("cash-flow")]
+    public async Task<ActionResult<CashFlowStatementDto>> GetCashFlow(
+        [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
+        => Ok(await _financialReportService.GetCashFlowStatementAsync(fromDate, toDate, ct));
 }

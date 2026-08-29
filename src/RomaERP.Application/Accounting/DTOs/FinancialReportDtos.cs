@@ -53,3 +53,35 @@ public class CostCenterAnalysisDto
     public DateTime ToDate { get; set; }
     public List<CostCenterAnalysisLineDto> CostCenters { get; set; } = new();
 }
+
+public class VatSummaryDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public decimal OutputVat { get; set; }
+    public decimal InputVat { get; set; }
+    public decimal NetVatPayable { get; set; }
+}
+
+public class CashFlowLineDto
+{
+    public string CategoryCode { get; set; } = string.Empty;
+    public string CategoryName { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+}
+
+/// <summary>Simplified direct-method cash flow: nets every posted entry's cash+bank lines and attributes the
+/// movement to that entry's other (non-cash) account, so the reader sees "what was the money for" rather than
+/// a formal operating/investing/financing split.</summary>
+public class CashFlowStatementDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public decimal BeginningCash { get; set; }
+    public List<CashFlowLineDto> CashInLines { get; set; } = new();
+    public decimal TotalCashIn { get; set; }
+    public List<CashFlowLineDto> CashOutLines { get; set; } = new();
+    public decimal TotalCashOut { get; set; }
+    public decimal NetCashChange { get; set; }
+    public decimal EndingCash { get; set; }
+}

@@ -4,6 +4,8 @@ import type {
   AppUser,
   BalanceSheet,
   CostCenterAnalysis,
+  VatSummary,
+  CashFlowStatement,
   BankStatementImportResult,
   BankStatementLine,
   ChatTurnResponse,
@@ -202,6 +204,10 @@ export const FinancialReportsApi = {
     apiClient.get<BalanceSheet>("/financialreports/balance-sheet", { params: { asOfDate } }),
   costCenterAnalysis: (fromDate: string, toDate: string) =>
     apiClient.get<CostCenterAnalysis>("/financialreports/cost-center-analysis", { params: { fromDate, toDate } }),
+  vatSummary: (fromDate: string, toDate: string) =>
+    apiClient.get<VatSummary>("/financialreports/vat-summary", { params: { fromDate, toDate } }),
+  cashFlow: (fromDate: string, toDate: string) =>
+    apiClient.get<CashFlowStatement>("/financialreports/cash-flow", { params: { fromDate, toDate } }),
 };
 
 export const FiscalPeriodsAdminApi = {

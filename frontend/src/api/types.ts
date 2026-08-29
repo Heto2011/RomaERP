@@ -177,6 +177,32 @@ export interface CostCenterAnalysis {
   costCenters: CostCenterAnalysisLine[];
 }
 
+export interface VatSummary {
+  fromDate: string;
+  toDate: string;
+  outputVat: number;
+  inputVat: number;
+  netVatPayable: number;
+}
+
+export interface CashFlowLine {
+  categoryCode: string;
+  categoryName: string;
+  amount: number;
+}
+
+export interface CashFlowStatement {
+  fromDate: string;
+  toDate: string;
+  beginningCash: number;
+  cashInLines: CashFlowLine[];
+  totalCashIn: number;
+  cashOutLines: CashFlowLine[];
+  totalCashOut: number;
+  netCashChange: number;
+  endingCash: number;
+}
+
 export enum ChatRole {
   User = 1,
   Assistant = 2,

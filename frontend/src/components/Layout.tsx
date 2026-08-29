@@ -90,13 +90,24 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/accounting/chart-of-accounts", label: t.nav.chartOfAccounts, icon: <IconList /> },
         { to: "/accounting/opening-balances", label: t.nav.openingBalances, icon: <IconWallet /> },
         { to: "/accounting/journal-entries", label: t.nav.journalEntries, icon: <IconBook /> },
-        { to: "/accounting/trial-balance", label: t.nav.trialBalance, icon: <IconBarChart /> },
-        { to: "/accounting/income-statement", label: t.nav.incomeStatement, icon: <IconBarChart /> },
-        { to: "/accounting/balance-sheet", label: t.nav.balanceSheet, icon: <IconFile /> },
-        { to: "/accounting/cost-center-analysis", label: t.nav.costCenterAnalysis, icon: <IconBarChart /> },
         { to: "/accounting/fiscal-periods", label: t.nav.fiscalPeriods, icon: <IconCalendar /> },
         { to: "/accounting/fixed-assets", label: t.nav.fixedAssets, icon: <IconBox /> },
         { to: "/accounting/depreciation-runs", label: t.nav.depreciationRuns, icon: <IconTrendDown /> },
+      ],
+    },
+    {
+      section: t.nav.reports,
+      items: [
+        { to: "/accounting/trial-balance", label: t.nav.trialBalance, icon: <IconBarChart /> },
+        { to: "/accounting/income-statement", label: t.nav.incomeStatement, icon: <IconBarChart /> },
+        { to: "/accounting/balance-sheet", label: t.nav.balanceSheet, icon: <IconFile /> },
+        { to: "/accounting/cash-flow", label: t.nav.cashFlow, icon: <IconSwap /> },
+        { to: "/accounting/vat-summary", label: t.nav.vatSummary, icon: <IconEdit /> },
+        { to: "/accounting/cost-center-analysis", label: t.nav.costCenterAnalysis, icon: <IconBarChart /> },
+        { to: "/accounting/money-flow", label: t.nav.moneyFlow, icon: <IconDollar /> },
+        { to: "", label: t.nav.hiddenProfitSoon, icon: <IconTrendDown />, comingSoon: true },
+        { to: "", label: t.nav.healthScoreSoon, icon: <IconShield />, comingSoon: true },
+        { to: "", label: t.nav.whatIfSoon, icon: <IconRefresh />, comingSoon: true },
       ],
     },
     {
@@ -156,7 +167,10 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const active = links.find((group) =>
-      group.items.some((item) => (item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to)))
+      group.items.some((item) => {
+        if (!item.to) return false;
+        return item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to);
+      })
     );
     if (active && !openSections[active.section]) {
       setOpenSections((prev) => {
@@ -201,18 +215,29 @@ export default function Layout({ children }: { children: ReactNode }) {
                   </button>
                 )}
                 {isOpen &&
-                  group.items.map((item) => (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      end={item.to === "/"}
-                      className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}
-                      title={collapsed ? item.label : undefined}
-                    >
-                      <span className="sidebar-icon">{item.icon}</span>
-                      {!collapsed && <span className="link-text">{item.label}</span>}
-                    </NavLink>
-                  ))}
+                  group.items.map((item) =>
+                    item.comingSoon ? (
+                      <span key={item.label} className="sidebar-link sidebar-link-soon" title={collapsed ? item.label : undefined}>
+                        <span className="sidebar-icon">{item.icon}</span>
+                        {!collapsed && (
+                          <span className="link-text">
+                            {item.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
+                          </span>
+                        )}
+                      </span>
+                    ) : (
+                      <NavLink
+                        key={item.to}
+                        to={item.to}
+                        end={item.to === "/"}
+                        className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}
+                        title={collapsed ? item.label : undefined}
+                      >
+                        <span className="sidebar-icon">{item.icon}</span>
+                        {!collapsed && <span className="link-text">{item.label}</span>}
+                      </NavLink>
+                    )
+                  )}
               </div>
             );
           })}

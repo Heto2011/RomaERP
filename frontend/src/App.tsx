@@ -13,6 +13,9 @@ import TrialBalance from "./pages/accounting/TrialBalance";
 import IncomeStatementPage from "./pages/accounting/IncomeStatement";
 import BalanceSheetPage from "./pages/accounting/BalanceSheet";
 import CostCenterAnalysisPage from "./pages/accounting/CostCenterAnalysis";
+import CashFlowPage from "./pages/accounting/CashFlow";
+import VatSummaryPage from "./pages/accounting/VatSummary";
+import MoneyFlowPage from "./pages/accounting/MoneyFlow";
 import FiscalPeriods from "./pages/accounting/FiscalPeriods";
 import FixedAssets from "./pages/accounting/FixedAssets";
 import DepreciationRuns from "./pages/accounting/DepreciationRuns";
@@ -61,6 +64,9 @@ export default function App() {
       <Route path="/accounting/income-statement" element={<ProtectedRoute><IncomeStatementPage /></ProtectedRoute>} />
       <Route path="/accounting/balance-sheet" element={<ProtectedRoute><BalanceSheetPage /></ProtectedRoute>} />
       <Route path="/accounting/cost-center-analysis" element={<ProtectedRoute><CostCenterAnalysisPage /></ProtectedRoute>} />
+      <Route path="/accounting/cash-flow" element={<ProtectedRoute><CashFlowPage /></ProtectedRoute>} />
+      <Route path="/accounting/vat-summary" element={<ProtectedRoute><VatSummaryPage /></ProtectedRoute>} />
+      <Route path="/accounting/money-flow" element={<ProtectedRoute><MoneyFlowPage /></ProtectedRoute>} />
       <Route path="/accounting/fiscal-periods" element={<ProtectedRoute><FiscalPeriods /></ProtectedRoute>} />
       <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssets /></ProtectedRoute>} />
       <Route path="/accounting/depreciation-runs" element={<ProtectedRoute><DepreciationRuns /></ProtectedRoute>} />

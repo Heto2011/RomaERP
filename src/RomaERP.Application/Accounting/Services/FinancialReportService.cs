@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RomaERP.Application.Accounting;
 using RomaERP.Application.Accounting.DTOs;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Accounting;
@@ -135,6 +136,110 @@ public class FinancialReportService : IFinancialReportService
             .ToList();
 
         return new CostCenterAnalysisDto { FromDate = fromDate, ToDate = toDate, CostCenters = costCenters };
+    }
+
+    public async Task<VatSummaryDto> GetVatSummaryAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var lines = await _context.JournalEntryLines
+            .AsNoTracking()
+            .Include(l => l.Account)
+            .Include(l => l.JournalEntry)
+            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+                        && !l.JournalEntry.IsDeleted
+                        && l.JournalEntry.EntryDate >= fromDate
+                        && l.JournalEntry.EntryDate <= toDate
+                        && (l.Account!.Code == AccountingConstants.OutputVatAccountCode
+                            || l.Account.Code == AccountingConstants.InputVatAccountCode))
+            .ToListAsync(ct);
+
+        var outputVat = lines.Where(l => l.Account!.Code == AccountingConstants.OutputVatAccountCode).Sum(l => l.Credit - l.Debit);
+        var inputVat = lines.Where(l => l.Account!.Code == AccountingConstants.InputVatAccountCode).Sum(l => l.Debit - l.Credit);
+
+        return new VatSummaryDto
+        {
+            FromDate = fromDate,
+            ToDate = toDate,
+            OutputVat = outputVat,
+            InputVat = inputVat,
+            NetVatPayable = outputVat - inputVat
+        };
+    }
+
+    public async Task<CashFlowStatementDto> GetCashFlowStatementAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var cashCodes = new[] { AccountingConstants.CashOnHandAccountCode, AccountingConstants.BankAccountCode };
+
+        var beginningLines = await _context.JournalEntryLines
+            .AsNoTracking()
+            .Include(l => l.Account)
+            .Include(l => l.JournalEntry)
+            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+                        && !l.JournalEntry.IsDeleted
+                        && l.JournalEntry.EntryDate < fromDate
+                        && cashCodes.Contains(l.Account!.Code))
+            .ToListAsync(ct);
+        var beginningCash = beginningLines.Sum(l => l.Debit - l.Credit);
+
+        var periodCashLines = await _context.JournalEntryLines
+            .AsNoTracking()
+            .Include(l => l.Account)
+            .Include(l => l.JournalEntry)
+            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+                        && !l.JournalEntry.IsDeleted
+                        && l.JournalEntry.EntryDate >= fromDate
+                        && l.JournalEntry.EntryDate <= toDate
+                        && cashCodes.Contains(l.Account!.Code))
+            .ToListAsync(ct);
+
+        var entryIds = periodCashLines.Select(l => l.JournalEntryId).Distinct().ToList();
+        var linesByEntry = (await _context.JournalEntryLines
+                .AsNoTracking()
+                .Include(l => l.Account)
+                .Where(l => entryIds.Contains(l.JournalEntryId))
+                .ToListAsync(ct))
+            .GroupBy(l => l.JournalEntryId)
+            .ToDictionary(g => g.Key, g => g.ToList());
+
+        var categoryTotals = new Dictionary<string, (string Name, decimal Amount)>();
+        foreach (var group in periodCashLines.GroupBy(l => l.JournalEntryId))
+        {
+            var netCashDelta = group.Sum(l => l.Debit - l.Credit);
+            if (netCashDelta == 0) continue;
+
+            var counterLine = linesByEntry[group.Key].FirstOrDefault(l => !cashCodes.Contains(l.Account!.Code));
+            var categoryCode = counterLine?.Account?.Code ?? "OTHER";
+            var categoryName = counterLine?.Account?.NameAr ?? "أخرى";
+
+            categoryTotals.TryGetValue(categoryCode, out var existing);
+            categoryTotals[categoryCode] = (categoryName, existing.Amount + netCashDelta);
+        }
+
+        var cashInLines = categoryTotals
+            .Where(kv => kv.Value.Amount > 0)
+            .Select(kv => new CashFlowLineDto { CategoryCode = kv.Key, CategoryName = kv.Value.Name, Amount = kv.Value.Amount })
+            .OrderByDescending(l => l.Amount)
+            .ToList();
+        var cashOutLines = categoryTotals
+            .Where(kv => kv.Value.Amount < 0)
+            .Select(kv => new CashFlowLineDto { CategoryCode = kv.Key, CategoryName = kv.Value.Name, Amount = -kv.Value.Amount })
+            .OrderByDescending(l => l.Amount)
+            .ToList();
+
+        var totalIn = cashInLines.Sum(l => l.Amount);
+        var totalOut = cashOutLines.Sum(l => l.Amount);
+
+        return new CashFlowStatementDto
+        {
+            FromDate = fromDate,
+            ToDate = toDate,
+            BeginningCash = beginningCash,
+            CashInLines = cashInLines,
+            TotalCashIn = totalIn,
+            CashOutLines = cashOutLines,
+            TotalCashOut = totalOut,
+            NetCashChange = totalIn - totalOut,
+            EndingCash = beginningCash + totalIn - totalOut
+        };
     }
 
     private static List<ReportLineDto> BuildLines(List<JournalEntryLine> lines, AccountType type, bool creditPositive)
