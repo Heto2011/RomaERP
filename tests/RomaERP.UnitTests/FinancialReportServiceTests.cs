@@ -404,4 +404,88 @@ public class FinancialReportServiceTests
         Assert.Equal(10, report.Items[1].Cost);
         Assert.Equal(20, report.Items[1].GrossProfit);
     }
+
+    [Fact]
+    public async Task GetCustomerProfitability_GroupsItemLinkedLinesByCustomerAndSkipsFreeTextAndOutOfRange()
+    {
+        var ctx = CreateContext();
+
+        var category = new ItemCategory { NameAr = "عام", NameEn = "General" };
+        var item = new Item { Code = "ITM-A", NameAr = "صنف أ", NameEn = "Item A", UnitOfMeasure = "قطعة", ItemCategory = category, AverageCost = 10 };
+        var customerA = new Customer { Code = "C-001", NameAr = "عميل أ", NameEn = "Customer A" };
+        var customerB = new Customer { Code = "C-002", NameAr = "عميل ب", NameEn = "Customer B" };
+
+        ctx.ItemCategories.Add(category);
+        ctx.Items.Add(item);
+        ctx.Customers.AddRange(customerA, customerB);
+        await ctx.SaveChangesAsync();
+
+        var invoiceA = new SalesInvoice
+        {
+            InvoiceNumber = "SI-000001",
+            InvoiceDate = new DateTime(2026, 8, 5),
+            Customer = customerA,
+            CustomerId = customerA.Id,
+            SubTotal = 70,
+            VatRate = 0,
+            VatAmount = 0,
+            TotalAmount = 70,
+            Lines = new List<SalesInvoiceLine>
+            {
+                new() { LineNumber = 1, Description = "صنف أ", Quantity = 3, UnitPrice = 20, LineTotal = 60, ItemId = item.Id },
+                new() { LineNumber = 2, Description = "خدمة توصيل", Quantity = 1, UnitPrice = 10, LineTotal = 10, ItemId = null }
+            }
+        };
+        var invoiceB = new SalesInvoice
+        {
+            InvoiceNumber = "SI-000002",
+            InvoiceDate = new DateTime(2026, 8, 20),
+            Customer = customerB,
+            CustomerId = customerB.Id,
+            SubTotal = 20,
+            VatRate = 0,
+            VatAmount = 0,
+            TotalAmount = 20,
+            Lines = new List<SalesInvoiceLine>
+            {
+                new() { LineNumber = 1, Description = "صنف أ", Quantity = 1, UnitPrice = 20, LineTotal = 20, ItemId = item.Id }
+            }
+        };
+        // Should be excluded: outside the requested date range.
+        var outOfRangeInvoice = new SalesInvoice
+        {
+            InvoiceNumber = "SI-000003",
+            InvoiceDate = new DateTime(2026, 1, 1),
+            Customer = customerA,
+            CustomerId = customerA.Id,
+            SubTotal = 2000,
+            VatRate = 0,
+            VatAmount = 0,
+            TotalAmount = 2000,
+            Lines = new List<SalesInvoiceLine>
+            {
+                new() { LineNumber = 1, Description = "صنف أ", Quantity = 100, UnitPrice = 20, LineTotal = 2000, ItemId = item.Id }
+            }
+        };
+
+        ctx.SalesInvoices.AddRange(invoiceA, invoiceB, outOfRangeInvoice);
+        await ctx.SaveChangesAsync();
+
+        var service = new FinancialReportService(ctx);
+        var report = await service.GetCustomerProfitabilityAsync(new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+
+        Assert.Equal(2, report.Customers.Count);
+
+        // Sorted by gross profit descending: Customer A (30) before Customer B (10).
+        Assert.Equal("عميل أ", report.Customers[0].CustomerName);
+        Assert.Equal(60, report.Customers[0].Revenue);
+        Assert.Equal(30, report.Customers[0].Cost);
+        Assert.Equal(30, report.Customers[0].GrossProfit);
+        Assert.Equal(50, report.Customers[0].MarginPercent);
+
+        Assert.Equal("عميل ب", report.Customers[1].CustomerName);
+        Assert.Equal(20, report.Customers[1].Revenue);
+        Assert.Equal(10, report.Customers[1].Cost);
+        Assert.Equal(10, report.Customers[1].GrossProfit);
+    }
 }

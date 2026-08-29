@@ -108,3 +108,23 @@ public class ItemProfitabilityReportDto
     public DateTime ToDate { get; set; }
     public List<ItemProfitabilityLineDto> Items { get; set; } = new();
 }
+
+public class CustomerProfitabilityLineDto
+{
+    public Guid CustomerId { get; set; }
+    public string CustomerName { get; set; } = string.Empty;
+    public decimal Revenue { get; set; }
+    public decimal Cost { get; set; }
+    public decimal GrossProfit { get; set; }
+    public decimal MarginPercent { get; set; }
+}
+
+/// <summary>Same coverage limitation as ItemProfitabilityReportDto: only invoice lines linked to an inventory
+/// Item carry a cost, so a customer whose invoices are all recipe-based (restaurant) items will show revenue
+/// with no attributed cost.</summary>
+public class CustomerProfitabilityReportDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public List<CustomerProfitabilityLineDto> Customers { get; set; } = new();
+}

@@ -10,4 +10,5 @@ public interface IFinancialReportService
     Task<VatSummaryDto> GetVatSummaryAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
     Task<CashFlowStatementDto> GetCashFlowStatementAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
     Task<ItemProfitabilityReportDto> GetItemProfitabilityAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
+    Task<CustomerProfitabilityReportDto> GetCustomerProfitabilityAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
 }

@@ -89,6 +89,8 @@ const ar = {
     costCenterAnalysis: "تحليل مراكز التكلفة",
     moneyFlow: "فين الفلوس؟",
     itemProfitability: "ربحية الأصناف",
+    customerProfitability: "ربحية العملاء",
+    marginAnalysis: "تحليل الهوامش",
     breakEven: "كام لازم أبيع؟",
     bottleneck: "نقطة الاختناق",
     hiddenProfitSoon: "الربح المخفي",
@@ -323,6 +325,18 @@ const ar = {
     margin: "الهامش",
     topWinners: "أكثر 10 أصناف ربحية",
     topLosers: "أكثر 10 أصناف خسارة",
+
+    customerProfitabilityTitle: "ربحية العملاء",
+    customerProfitabilityIntro:
+      "أكتر العملاء تحقيقاً للربح وأكتر العملاء بهامش ربح منخفض، محسوبة من الفواتير المرتبطة بأصناف من المخزون. (فواتير المطعم بالوصفة لسه مش مشمولة، هنضيفها في تحديث قادم.)",
+
+    marginAnalysisTitle: "تحليل الهوامش",
+    marginAnalysisIntro: "هامش الربح الإجمالي والصافي وهامش المساهمة، والربح الحقيقي بعد خصم كل التكاليف، لفترة محددة.",
+    grossMarginRatio: "هامش الربح الإجمالي (Gross Margin)",
+    netMarginRatio: "هامش الربح الصافي (Net Margin)",
+    operatingExpenses: "المصروفات التشغيلية",
+    realProfitTitle: "الربح الحقيقي بعد جميع التكاليف",
+    profitWaterfall: "من الإيراد للربح الصافي",
 
     breakEvenTitle: "كام لازم أبيع؟",
     breakEvenIntro: "نقطة التعادل، وكام محتاج تبيع لو عايز تحقق ربح مستهدف، مبني على أرقام الفترة المختارة.",
@@ -732,6 +746,8 @@ const en: typeof ar = {
     costCenterAnalysis: "Cost Center Analysis",
     moneyFlow: "Where's the Money?",
     itemProfitability: "Item Profitability",
+    customerProfitability: "Customer Profitability",
+    marginAnalysis: "Margin Analysis",
     breakEven: "How Much to Sell?",
     bottleneck: "Bottleneck Analysis",
     hiddenProfitSoon: "Hidden Profit",
@@ -966,6 +982,18 @@ const en: typeof ar = {
     margin: "Margin",
     topWinners: "Top 10 Most Profitable",
     topLosers: "Top 10 Least Profitable",
+
+    customerProfitabilityTitle: "Customer Profitability",
+    customerProfitabilityIntro:
+      "Your most and least profitable customers, computed from invoices linked to inventory items. (Recipe-based restaurant invoices aren't covered yet — coming in a future update.)",
+
+    marginAnalysisTitle: "Margin Analysis",
+    marginAnalysisIntro: "Gross margin, net margin, contribution margin, and the real profit left after every cost, for a chosen period.",
+    grossMarginRatio: "Gross Margin",
+    netMarginRatio: "Net Margin",
+    operatingExpenses: "Operating Expenses",
+    realProfitTitle: "Real Profit After All Costs",
+    profitWaterfall: "From Revenue to Net Profit",
 
     breakEvenTitle: "How Much Do I Need to Sell?",
     breakEvenIntro: "Break-even point, and how much you'd need to sell to hit a target profit, based on the selected period's numbers.",

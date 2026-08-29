@@ -220,6 +220,21 @@ export interface ItemProfitabilityReport {
   items: ItemProfitabilityLine[];
 }
 
+export interface CustomerProfitabilityLine {
+  customerId: string;
+  customerName: string;
+  revenue: number;
+  cost: number;
+  grossProfit: number;
+  marginPercent: number;
+}
+
+export interface CustomerProfitabilityReport {
+  fromDate: string;
+  toDate: string;
+  customers: CustomerProfitabilityLine[];
+}
+
 export enum ChatRole {
   User = 1,
   Assistant = 2,

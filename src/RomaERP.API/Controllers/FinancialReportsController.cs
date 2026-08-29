@@ -45,4 +45,9 @@ public class FinancialReportsController : ControllerBase
     public async Task<ActionResult<ItemProfitabilityReportDto>> GetItemProfitability(
         [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
         => Ok(await _financialReportService.GetItemProfitabilityAsync(fromDate, toDate, ct));
+
+    [HttpGet("customer-profitability")]
+    public async Task<ActionResult<CustomerProfitabilityReportDto>> GetCustomerProfitability(
+        [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
+        => Ok(await _financialReportService.GetCustomerProfitabilityAsync(fromDate, toDate, ct));
 }

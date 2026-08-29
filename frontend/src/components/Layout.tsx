@@ -106,6 +106,8 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/accounting/cost-center-analysis", label: t.nav.costCenterAnalysis, icon: <IconBarChart /> },
         { to: "/accounting/money-flow", label: t.nav.moneyFlow, icon: <IconDollar /> },
         { to: "/accounting/item-profitability", label: t.nav.itemProfitability, icon: <IconTrendDown /> },
+        { to: "/accounting/customer-profitability", label: t.nav.customerProfitability, icon: <IconUsers /> },
+        { to: "/accounting/margin-analysis", label: t.nav.marginAnalysis, icon: <IconBarChart /> },
         { to: "/accounting/break-even", label: t.nav.breakEven, icon: <IconDollar /> },
         { to: "/accounting/bottleneck", label: t.nav.bottleneck, icon: <IconClock /> },
         { to: "", label: t.nav.hiddenProfitSoon, icon: <IconTrendDown />, comingSoon: true },

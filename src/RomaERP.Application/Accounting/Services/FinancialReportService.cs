@@ -281,6 +281,43 @@ public class FinancialReportService : IFinancialReportService
         return new ItemProfitabilityReportDto { FromDate = fromDate, ToDate = toDate, Items = items };
     }
 
+    public async Task<CustomerProfitabilityReportDto> GetCustomerProfitabilityAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var lines = await _context.SalesInvoiceLines
+            .AsNoTracking()
+            .Include(l => l.Item)
+            .Include(l => l.SalesInvoice)
+                .ThenInclude(i => i!.Customer)
+            .Where(l => l.ItemId != null
+                        && l.SalesInvoice!.InvoiceDate >= fromDate
+                        && l.SalesInvoice.InvoiceDate <= toDate)
+            .ToListAsync(ct);
+
+        var customers = lines
+            .GroupBy(l => l.SalesInvoice!.CustomerId)
+            .Select(g =>
+            {
+                var customer = g.First().SalesInvoice!.Customer!;
+                var revenue = g.Sum(l => l.LineTotal);
+                var cost = g.Sum(l => Math.Round(l.Quantity * l.Item!.AverageCost, 2));
+                var grossProfit = revenue - cost;
+
+                return new CustomerProfitabilityLineDto
+                {
+                    CustomerId = customer.Id,
+                    CustomerName = customer.NameAr,
+                    Revenue = revenue,
+                    Cost = cost,
+                    GrossProfit = grossProfit,
+                    MarginPercent = revenue != 0 ? Math.Round(grossProfit / revenue * 100, 2) : 0
+                };
+            })
+            .OrderByDescending(l => l.GrossProfit)
+            .ToList();
+
+        return new CustomerProfitabilityReportDto { FromDate = fromDate, ToDate = toDate, Customers = customers };
+    }
+
     private static List<ReportLineDto> BuildLines(List<JournalEntryLine> lines, AccountType type, bool creditPositive)
     {
         return lines
