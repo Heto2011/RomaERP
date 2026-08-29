@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Accounting.Services;
 using RomaERP.Domain.Accounting;
+using RomaERP.Domain.Inventory;
+using RomaERP.Domain.Sales;
 using RomaERP.Infrastructure.Persistence;
 using Xunit;
 
@@ -314,5 +316,92 @@ public class FinancialReportServiceTests
 
         Assert.Equal(1200, report.NetCashChange);
         Assert.Equal(6200, report.EndingCash);
+    }
+
+    [Fact]
+    public async Task GetItemProfitability_GroupsItemLinkedLinesAndSkipsFreeTextAndOutOfRange()
+    {
+        var ctx = CreateContext();
+
+        var category = new ItemCategory { NameAr = "عام", NameEn = "General" };
+        var itemA = new Item { Code = "ITM-A", NameAr = "صنف أ", NameEn = "Item A", UnitOfMeasure = "قطعة", ItemCategory = category, AverageCost = 10 };
+        var itemB = new Item { Code = "ITM-B", NameAr = "صنف ب", NameEn = "Item B", UnitOfMeasure = "قطعة", ItemCategory = category, AverageCost = 5 };
+        var customer = new Customer { Code = "C-001", NameAr = "عميل تجريبي", NameEn = "Test Customer" };
+
+        ctx.ItemCategories.Add(category);
+        ctx.Items.AddRange(itemA, itemB);
+        ctx.Customers.Add(customer);
+        await ctx.SaveChangesAsync();
+
+        var invoice1 = new SalesInvoice
+        {
+            InvoiceNumber = "SI-000001",
+            InvoiceDate = new DateTime(2026, 8, 5),
+            Customer = customer,
+            CustomerId = customer.Id,
+            SubTotal = 90,
+            VatRate = 0,
+            VatAmount = 0,
+            TotalAmount = 90,
+            Lines = new List<SalesInvoiceLine>
+            {
+                new() { LineNumber = 1, Description = "صنف أ", Quantity = 3, UnitPrice = 20, LineTotal = 60, ItemId = itemA.Id },
+                new() { LineNumber = 2, Description = "صنف ب", Quantity = 2, UnitPrice = 15, LineTotal = 30, ItemId = itemB.Id },
+                new() { LineNumber = 3, Description = "خدمة توصيل", Quantity = 1, UnitPrice = 10, LineTotal = 10, ItemId = null }
+            }
+        };
+        var invoice2 = new SalesInvoice
+        {
+            InvoiceNumber = "SI-000002",
+            InvoiceDate = new DateTime(2026, 8, 20),
+            Customer = customer,
+            CustomerId = customer.Id,
+            SubTotal = 20,
+            VatRate = 0,
+            VatAmount = 0,
+            TotalAmount = 20,
+            Lines = new List<SalesInvoiceLine>
+            {
+                new() { LineNumber = 1, Description = "صنف أ", Quantity = 1, UnitPrice = 20, LineTotal = 20, ItemId = itemA.Id }
+            }
+        };
+        // Should be excluded: outside the requested date range.
+        var outOfRangeInvoice = new SalesInvoice
+        {
+            InvoiceNumber = "SI-000003",
+            InvoiceDate = new DateTime(2026, 1, 1),
+            Customer = customer,
+            CustomerId = customer.Id,
+            SubTotal = 2000,
+            VatRate = 0,
+            VatAmount = 0,
+            TotalAmount = 2000,
+            Lines = new List<SalesInvoiceLine>
+            {
+                new() { LineNumber = 1, Description = "صنف أ", Quantity = 100, UnitPrice = 20, LineTotal = 2000, ItemId = itemA.Id }
+            }
+        };
+
+        ctx.SalesInvoices.AddRange(invoice1, invoice2, outOfRangeInvoice);
+        await ctx.SaveChangesAsync();
+
+        var service = new FinancialReportService(ctx);
+        var report = await service.GetItemProfitabilityAsync(new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+
+        Assert.Equal(2, report.Items.Count);
+
+        // Sorted by gross profit descending: Item A (40) before Item B (20).
+        Assert.Equal("ITM-A", report.Items[0].ItemCode);
+        Assert.Equal(4, report.Items[0].QuantitySold);
+        Assert.Equal(80, report.Items[0].Revenue);
+        Assert.Equal(40, report.Items[0].Cost);
+        Assert.Equal(40, report.Items[0].GrossProfit);
+        Assert.Equal(50, report.Items[0].MarginPercent);
+
+        Assert.Equal("ITM-B", report.Items[1].ItemCode);
+        Assert.Equal(2, report.Items[1].QuantitySold);
+        Assert.Equal(30, report.Items[1].Revenue);
+        Assert.Equal(10, report.Items[1].Cost);
+        Assert.Equal(20, report.Items[1].GrossProfit);
     }
 }

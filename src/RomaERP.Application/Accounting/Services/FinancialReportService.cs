@@ -242,6 +242,45 @@ public class FinancialReportService : IFinancialReportService
         };
     }
 
+    public async Task<ItemProfitabilityReportDto> GetItemProfitabilityAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var lines = await _context.SalesInvoiceLines
+            .AsNoTracking()
+            .Include(l => l.Item)
+            .Include(l => l.SalesInvoice)
+            .Where(l => l.ItemId != null
+                        && l.SalesInvoice!.InvoiceDate >= fromDate
+                        && l.SalesInvoice.InvoiceDate <= toDate)
+            .ToListAsync(ct);
+
+        var items = lines
+            .GroupBy(l => l.ItemId!.Value)
+            .Select(g =>
+            {
+                var item = g.First().Item!;
+                var quantity = g.Sum(l => l.Quantity);
+                var revenue = g.Sum(l => l.LineTotal);
+                var cost = Math.Round(quantity * item.AverageCost, 2);
+                var grossProfit = revenue - cost;
+
+                return new ItemProfitabilityLineDto
+                {
+                    ItemId = item.Id,
+                    ItemCode = item.Code,
+                    ItemName = item.NameAr,
+                    QuantitySold = quantity,
+                    Revenue = revenue,
+                    Cost = cost,
+                    GrossProfit = grossProfit,
+                    MarginPercent = revenue != 0 ? Math.Round(grossProfit / revenue * 100, 2) : 0
+                };
+            })
+            .OrderByDescending(l => l.GrossProfit)
+            .ToList();
+
+        return new ItemProfitabilityReportDto { FromDate = fromDate, ToDate = toDate, Items = items };
+    }
+
     private static List<ReportLineDto> BuildLines(List<JournalEntryLine> lines, AccountType type, bool creditPositive)
     {
         return lines

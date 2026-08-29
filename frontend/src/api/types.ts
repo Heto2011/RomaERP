@@ -203,6 +203,23 @@ export interface CashFlowStatement {
   endingCash: number;
 }
 
+export interface ItemProfitabilityLine {
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  quantitySold: number;
+  revenue: number;
+  cost: number;
+  grossProfit: number;
+  marginPercent: number;
+}
+
+export interface ItemProfitabilityReport {
+  fromDate: string;
+  toDate: string;
+  items: ItemProfitabilityLine[];
+}
+
 export enum ChatRole {
   User = 1,
   Assistant = 2,

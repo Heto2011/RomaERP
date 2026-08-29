@@ -85,3 +85,26 @@ public class CashFlowStatementDto
     public decimal NetCashChange { get; set; }
     public decimal EndingCash { get; set; }
 }
+
+public class ItemProfitabilityLineDto
+{
+    public Guid ItemId { get; set; }
+    public string ItemCode { get; set; } = string.Empty;
+    public string ItemName { get; set; } = string.Empty;
+    public decimal QuantitySold { get; set; }
+    public decimal Revenue { get; set; }
+    public decimal Cost { get; set; }
+    public decimal GrossProfit { get; set; }
+    public decimal MarginPercent { get; set; }
+}
+
+/// <summary>Covers only sales lines linked to an inventory Item (ItemId set) — recipe-based restaurant menu
+/// items currently post as free-text revenue lines with no per-line item reference, so they aren't included
+/// yet. Cost uses the item's *current* AverageCost as an approximation, since per-line COGS isn't snapshotted
+/// at sale time (matches how COGS is already posted elsewhere in the system).</summary>
+public class ItemProfitabilityReportDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public List<ItemProfitabilityLineDto> Items { get; set; } = new();
+}

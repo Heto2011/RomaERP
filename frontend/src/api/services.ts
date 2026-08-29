@@ -6,6 +6,7 @@ import type {
   CostCenterAnalysis,
   VatSummary,
   CashFlowStatement,
+  ItemProfitabilityReport,
   BankStatementImportResult,
   BankStatementLine,
   ChatTurnResponse,
@@ -208,6 +209,8 @@ export const FinancialReportsApi = {
     apiClient.get<VatSummary>("/financialreports/vat-summary", { params: { fromDate, toDate } }),
   cashFlow: (fromDate: string, toDate: string) =>
     apiClient.get<CashFlowStatement>("/financialreports/cash-flow", { params: { fromDate, toDate } }),
+  itemProfitability: (fromDate: string, toDate: string) =>
+    apiClient.get<ItemProfitabilityReport>("/financialreports/item-profitability", { params: { fromDate, toDate } }),
 };
 
 export const FiscalPeriodsAdminApi = {
