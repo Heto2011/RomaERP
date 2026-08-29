@@ -497,6 +497,40 @@ const ar = {
     movementNumber: "رقم الحركة",
     receipt: "استلام",
     issue: "صرف",
+
+    inventoryReports: "تقارير المخزون",
+
+    stockValuationTitle: "تقييم المخزون",
+    stockValuationIntro: "قيمة كل صنف في المخزون الآن (الرصيد الحالي × متوسط التكلفة).",
+    value: "القيمة",
+    totalValue: "الإجمالي",
+
+    movementAnalysisTitle: "حركة المخزون",
+    movementAnalysisIntro:
+      "الأصناف بطيئة/سريعة الحركة، الراكدة، المعرضة للنفاد، وفائض المخزون — كلها من نفس البيانات: كمية الصرف الفعلية وتكلفتها خلال الفترة المحددة.",
+    quantityIssued: "الكمية المنصرفة",
+    cogsInPeriod: "تكلفة البضاعة المنصرفة",
+    daysOfStock: "أيام تغطية المخزون",
+    turnoverRate: "معدل الدوران",
+    filterAll: "الكل",
+    filterAtRisk: "معرضة للنفاد",
+    filterDeadStock: "راكدة",
+    filterExcessStock: "فائض مخزون",
+    filterFastMoving: "سريعة الحركة",
+    filterSlowMoving: "بطيئة الحركة",
+
+    purchasePriceVarianceTitle: "فرق سعر الشراء",
+    purchasePriceVarianceIntro:
+      "مقارنة آخر سعر استلام لكل صنف بالسعر اللي قبله. الأصناف اللي معندهاش أكتر من عملية استلام واحدة مش هتظهر — مفيش حاجة حقيقية تتقارن بيها.",
+    previousPrice: "السعر السابق",
+    latestPrice: "السعر الأخير",
+    changeAmount: "الفرق",
+    changePercent: "نسبة التغير",
+
+    recipeCostTitle: "تكلفة الوصفة",
+    recipeCostIntro: "التكلفة الحقيقية لكل صنف منيو، محسوبة من مكونات الوصفة الفعلية وأسعارها الحالية، مقابل سعر البيع.",
+    hasRecipe: "له وصفة؟",
+    sellingPrice: "سعر البيع",
   },
   restaurant: {
     menuTitle: "المنيو والوصفات",
@@ -1171,6 +1205,40 @@ const en: typeof ar = {
     movementNumber: "Movement #",
     receipt: "Receipt",
     issue: "Issue",
+
+    inventoryReports: "Inventory Reports",
+
+    stockValuationTitle: "Stock Valuation",
+    stockValuationIntro: "Each item's current inventory value (quantity on hand × average cost).",
+    value: "Value",
+    totalValue: "Total",
+
+    movementAnalysisTitle: "Inventory Movement",
+    movementAnalysisIntro:
+      "Slow/fast moving, dead stock, at-risk-of-stockout, and excess stock items — all from the same data: real issued quantity and cost over the selected period.",
+    quantityIssued: "Quantity Issued",
+    cogsInPeriod: "COGS Issued",
+    daysOfStock: "Days of Stock Coverage",
+    turnoverRate: "Turnover Rate",
+    filterAll: "All",
+    filterAtRisk: "At Risk of Stockout",
+    filterDeadStock: "Dead Stock",
+    filterExcessStock: "Excess Stock",
+    filterFastMoving: "Fast Moving",
+    filterSlowMoving: "Slow Moving",
+
+    purchasePriceVarianceTitle: "Purchase Price Variance",
+    purchasePriceVarianceIntro:
+      "Compares each item's latest receipt price against the one before it. Items with only one receipt ever won't appear — there's nothing real to compare against.",
+    previousPrice: "Previous Price",
+    latestPrice: "Latest Price",
+    changeAmount: "Change",
+    changePercent: "Change %",
+
+    recipeCostTitle: "Recipe Cost",
+    recipeCostIntro: "Each menu item's real cost, computed from its actual recipe ingredients at current prices, against its selling price.",
+    hasRecipe: "Has Recipe?",
+    sellingPrice: "Selling Price",
   },
   restaurant: {
     menuTitle: "Menu & Recipes",

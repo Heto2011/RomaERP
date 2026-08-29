@@ -118,6 +118,13 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: "/accounting/item-profitability#top-losers", label: t.accounting.topLosers },
   ];
 
+  const inventoryReportItems: NavSubGroupItem["subItems"] = [
+    { to: "/inventory/reports/stock-valuation", label: t.inventory.stockValuationTitle },
+    { to: "/inventory/reports/movement-analysis", label: t.inventory.movementAnalysisTitle },
+    { to: "/inventory/reports/purchase-price-variance", label: t.inventory.purchasePriceVarianceTitle },
+    { to: "/inventory/reports/recipe-cost", label: t.inventory.recipeCostTitle },
+  ];
+
   const links: { section: string; items: NavItem[] }[] = [
     {
       section: t.nav.general,
@@ -193,6 +200,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/inventory/items", label: t.nav.items, icon: <IconBox /> },
         { to: "/inventory/warehouses", label: t.nav.warehouses, icon: <IconArchive /> },
         { to: "/inventory/movements", label: t.nav.stockMovements, icon: <IconSwap /> },
+        { subGroup: t.inventory.inventoryReports, icon: <IconBarChart />, subItems: inventoryReportItems },
       ],
     },
     {

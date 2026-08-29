@@ -280,6 +280,77 @@ export interface UpdateManualProfitEntry {
   cost: number;
 }
 
+export interface StockValuationLine {
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  categoryName: string;
+  quantityOnHand: number;
+  averageCost: number;
+  value: number;
+}
+
+export interface StockValuationReport {
+  asOfDate: string;
+  items: StockValuationLine[];
+  totalValue: number;
+}
+
+export interface InventoryMovementLine {
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  quantityOnHand: number;
+  reorderLevel: number;
+  stockValue: number;
+  quantityIssuedInPeriod: number;
+  cogsInPeriod: number;
+  daysOfStockRemaining: number | null;
+  turnoverRate: number;
+  isAtRiskOfStockout: boolean;
+  isDeadStock: boolean;
+  isExcessStock: boolean;
+}
+
+export interface InventoryMovementReport {
+  fromDate: string;
+  toDate: string;
+  items: InventoryMovementLine[];
+}
+
+export interface PurchasePriceVarianceLine {
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  previousReceiptDate: string;
+  previousUnitCost: number;
+  latestReceiptDate: string;
+  latestUnitCost: number;
+  changeAmount: number;
+  changePercent: number;
+}
+
+export interface PurchasePriceVarianceReport {
+  fromDate: string;
+  toDate: string;
+  items: PurchasePriceVarianceLine[];
+}
+
+export interface RecipeCostLine {
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  hasRecipe: boolean;
+  recipeCost: number;
+  menuPrice: number;
+  grossProfit: number;
+  marginPercent: number;
+}
+
+export interface RecipeCostReport {
+  items: RecipeCostLine[];
+}
+
 export enum ChatRole {
   User = 1,
   Assistant = 2,

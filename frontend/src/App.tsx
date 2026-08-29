@@ -40,6 +40,10 @@ import Payroll from "./pages/hr/Payroll";
 import Items from "./pages/inventory/Items";
 import Warehouses from "./pages/inventory/Warehouses";
 import StockMovements from "./pages/inventory/StockMovements";
+import StockValuationPage from "./pages/inventory/StockValuation";
+import InventoryMovementPage from "./pages/inventory/InventoryMovement";
+import PurchasePriceVariancePage from "./pages/inventory/PurchasePriceVariance";
+import RecipeCostPage from "./pages/inventory/RecipeCost";
 import AiAssistant from "./pages/assistant/AiAssistant";
 import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
 import BankReconciliation from "./pages/assistant/BankReconciliation";
@@ -101,6 +105,10 @@ export default function App() {
       <Route path="/inventory/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
       <Route path="/inventory/warehouses" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />
       <Route path="/inventory/movements" element={<ProtectedRoute><StockMovements /></ProtectedRoute>} />
+      <Route path="/inventory/reports/stock-valuation" element={<ProtectedRoute><StockValuationPage /></ProtectedRoute>} />
+      <Route path="/inventory/reports/movement-analysis" element={<ProtectedRoute><InventoryMovementPage /></ProtectedRoute>} />
+      <Route path="/inventory/reports/purchase-price-variance" element={<ProtectedRoute><PurchasePriceVariancePage /></ProtectedRoute>} />
+      <Route path="/inventory/reports/recipe-cost" element={<ProtectedRoute><RecipeCostPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

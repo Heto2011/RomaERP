@@ -13,6 +13,10 @@ import type {
   ManualProfitEntry,
   CreateManualProfitEntry,
   UpdateManualProfitEntry,
+  StockValuationReport,
+  InventoryMovementReport,
+  PurchasePriceVarianceReport,
+  RecipeCostReport,
   BankStatementImportResult,
   BankStatementLine,
   ChatTurnResponse,
@@ -233,6 +237,15 @@ export const ManualProfitEntriesApi = {
   create: (dto: CreateManualProfitEntry) => apiClient.post<ManualProfitEntry>("/manualprofitentries", dto),
   update: (id: string, dto: UpdateManualProfitEntry) => apiClient.put<ManualProfitEntry>(`/manualprofitentries/${id}`, dto),
   remove: (id: string) => apiClient.delete(`/manualprofitentries/${id}`),
+};
+
+export const InventoryReportsApi = {
+  stockValuation: () => apiClient.get<StockValuationReport>("/inventoryreports/stock-valuation"),
+  movementAnalysis: (fromDate: string, toDate: string) =>
+    apiClient.get<InventoryMovementReport>("/inventoryreports/movement-analysis", { params: { fromDate, toDate } }),
+  purchasePriceVariance: (fromDate: string, toDate: string) =>
+    apiClient.get<PurchasePriceVarianceReport>("/inventoryreports/purchase-price-variance", { params: { fromDate, toDate } }),
+  recipeCost: () => apiClient.get<RecipeCostReport>("/inventoryreports/recipe-cost"),
 };
 
 export const FiscalPeriodsAdminApi = {
