@@ -13,6 +13,7 @@ import {
 } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { IconGrid, IconBox, IconTruck } from "../../components/icons";
 
 export default function RestaurantPOS() {
   const { t } = useLanguage();
@@ -24,6 +25,7 @@ export default function RestaurantPOS() {
   const [error, setError] = useState<string | null>(null);
 
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const [showNewOrder, setShowNewOrder] = useState(false);
   const [orderType, setOrderType] = useState<RestaurantOrderType>(RestaurantOrderType.DineIn);
@@ -168,6 +170,12 @@ export default function RestaurantPOS() {
     [RestaurantOrderType.Delivery]: t.restaurant.delivery,
   };
 
+  const orderTypeIcon: Record<RestaurantOrderType, React.ReactNode> = {
+    [RestaurantOrderType.DineIn]: <IconGrid />,
+    [RestaurantOrderType.Takeaway]: <IconBox />,
+    [RestaurantOrderType.Delivery]: <IconTruck />,
+  };
+
   const menuByCategory = useMemo(() => {
     const groups = new Map<string, MenuItem[]>();
     for (const item of menu) {
@@ -178,192 +186,197 @@ export default function RestaurantPOS() {
     return Array.from(groups.entries());
   }, [menu]);
 
+  useEffect(() => {
+    if (menuByCategory.length > 0 && !menuByCategory.some(([cat]) => cat === activeCategory)) {
+      setActiveCategory(menuByCategory[0][0]);
+    }
+  }, [menuByCategory, activeCategory]);
+
+  const activeItems = menuByCategory.find(([cat]) => cat === activeCategory)?.[1] ?? [];
+
   return (
     <div>
       <div className="page-header">
         <h1>{t.restaurant.posTitle}</h1>
-        <button className="btn" onClick={() => setShowNewOrder((v) => !v)}>
-          {showNewOrder ? t.common.cancel : t.restaurant.newOrder}
+        <button className="btn" onClick={() => setShowNewOrder(true)}>
+          {t.restaurant.newOrder}
         </button>
       </div>
 
       {error && <div className="alert-error">{error}</div>}
 
-      {showNewOrder && (
-        <div className="card">
-          <form onSubmit={handleCreateOrder}>
-            <div className="form-grid">
-              <div className="form-field">
-                <label>{t.restaurant.orderType}</label>
-                <select value={orderType} onChange={(e) => setOrderType(Number(e.target.value) as RestaurantOrderType)}>
-                  <option value={RestaurantOrderType.DineIn}>{t.restaurant.dineIn}</option>
-                  <option value={RestaurantOrderType.Takeaway}>{t.restaurant.takeaway}</option>
-                  <option value={RestaurantOrderType.Delivery}>{t.restaurant.delivery}</option>
-                </select>
-              </div>
-              <div className="form-field">
-                <label>{t.sales.warehouse}</label>
-                <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} required>
-                  <option value="" disabled>-</option>
-                  {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>{w.code} - {w.nameAr}</option>
-                  ))}
-                </select>
-              </div>
-              {orderType === RestaurantOrderType.DineIn && (
-                <div className="form-field">
-                  <label>{t.restaurant.table}</label>
-                  <select value={tableId} onChange={(e) => setTableId(e.target.value)} required>
-                    <option value="" disabled>-</option>
-                    {availableTables.map((tb) => (
-                      <option key={tb.id} value={tb.id}>{tb.number}{tb.sectionName ? ` - ${tb.sectionName}` : ""}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
-              {orderType !== RestaurantOrderType.DineIn && (
-                <>
-                  <div className="form-field">
-                    <label>{t.restaurant.customerName}</label>
-                    <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
-                  </div>
-                  <div className="form-field">
-                    <label>{t.restaurant.customerPhone}</label>
-                    <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
-                  </div>
-                </>
-              )}
-              {orderType === RestaurantOrderType.Delivery && (
-                <div className="form-field">
-                  <label>{t.restaurant.deliveryAddress}</label>
-                  <input value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} />
-                </div>
-              )}
-            </div>
-            <button className="btn" type="submit" style={{ marginTop: 14 }}>{t.common.save}</button>
-          </form>
-        </div>
-      )}
-
-      <div style={{ display: "flex", gap: 16, alignItems: "flex-start" }}>
-        <div className="card" style={{ width: 280, flexShrink: 0 }}>
-          <h3>{t.restaurant.openOrders}</h3>
-          {orders.length === 0 && <div className="text-muted">{t.common.noData}</div>}
+      <div className="pos-layout">
+        <div className="pos-orders-rail">
+          <div className="pos-orders-rail-title">{t.restaurant.openOrders}</div>
+          {orders.length === 0 && <div className="text-muted" style={{ padding: "0 4px" }}>{t.common.noData}</div>}
           {orders.map((o) => (
-            <div
+            <button
               key={o.id}
+              type="button"
+              className={"pos-order-chip" + (selectedOrderId === o.id ? " active" : "")}
               onClick={() => setSelectedOrderId(o.id)}
-              style={{
-                padding: "8px 10px",
-                borderRadius: 8,
-                cursor: "pointer",
-                marginBottom: 6,
-                background: selectedOrderId === o.id ? "#e6f2f6" : "#f5f6f7",
-              }}
             >
-              <div style={{ fontWeight: 600 }}>
-                {o.orderType === RestaurantOrderType.DineIn ? `🍽️ ${t.restaurant.table} ${o.tableNumber}` : `${orderTypeLabel[o.orderType]}${o.customerName ? " - " + o.customerName : ""}`}
-              </div>
-              <div className="text-muted">{o.orderNumber} · {o.totalAmount.toLocaleString()}</div>
-            </div>
+              <span className="pos-order-chip-icon">{orderTypeIcon[o.orderType]}</span>
+              <span className="pos-order-chip-body">
+                <span className="pos-order-chip-title">
+                  {o.orderType === RestaurantOrderType.DineIn
+                    ? `${t.restaurant.table} ${o.tableNumber}`
+                    : `${orderTypeLabel[o.orderType]}${o.customerName ? " - " + o.customerName : ""}`}
+                </span>
+                <span className="pos-order-chip-sub">{o.orderNumber} · {o.totalAmount.toLocaleString()}</span>
+              </span>
+            </button>
           ))}
         </div>
 
-        <div className="card" style={{ flex: 1 }}>
-          {!selectedOrder && <div className="text-muted">{t.restaurant.selectOrderHint}</div>}
+        <div className="pos-menu-area">
+          {!selectedOrder && <div className="text-muted" style={{ padding: 24 }}>{t.restaurant.selectOrderHint}</div>}
+          {selectedOrder && selectedOrder.status === RestaurantOrderStatus.Open && (
+            <>
+              <div className="pos-category-tabs">
+                {menuByCategory.map(([category]) => (
+                  <button
+                    key={category}
+                    type="button"
+                    className={"pos-category-tab" + (activeCategory === category ? " active" : "")}
+                    onClick={() => setActiveCategory(category)}
+                  >
+                    {category}
+                  </button>
+                ))}
+              </div>
+              <div className="pos-menu-grid">
+                {activeItems.map((item) => (
+                  <button key={item.id} type="button" className="pos-menu-item" onClick={() => handleAddItem(item.id)}>
+                    <span className="pos-menu-item-name">{item.nameAr}</span>
+                    <span className="pos-menu-item-price">{item.menuPrice.toLocaleString()}</span>
+                  </button>
+                ))}
+                {menu.length === 0 && <div className="text-muted">{t.restaurant.noMenuItemsHint}</div>}
+              </div>
+            </>
+          )}
+          {selectedOrder && selectedOrder.status !== RestaurantOrderStatus.Open && (
+            <div className="text-muted" style={{ padding: 24 }}>{selectedOrder.orderNumber}</div>
+          )}
+        </div>
 
+        <div className="pos-cart-panel">
+          {!selectedOrder && <div className="text-muted" style={{ padding: 16 }}>{t.restaurant.selectOrderHint}</div>}
           {selectedOrder && (
             <>
-              <div className="page-header">
-                <h3>
-                  {selectedOrder.orderType === RestaurantOrderType.DineIn
-                    ? `🍽️ ${t.restaurant.table} ${selectedOrder.tableNumber}`
-                    : `${orderTypeLabel[selectedOrder.orderType]}${selectedOrder.customerName ? " - " + selectedOrder.customerName : ""}`}
-                  {" "}({selectedOrder.orderNumber})
-                </h3>
-                {selectedOrder.status === RestaurantOrderStatus.Open && (
-                  <div style={{ display: "flex", gap: 8 }}>
-                    <button className="btn btn-secondary btn-sm" onClick={handleCancelOrder}>{t.restaurant.cancelOrder}</button>
-                    <button className="btn btn-sm" onClick={openBillDialog} disabled={selectedOrder.lines.length === 0}>
-                      {t.restaurant.billOrder}
-                    </button>
+              <div className="pos-cart-header">
+                <div>
+                  <div style={{ fontWeight: 700 }}>
+                    {selectedOrder.orderType === RestaurantOrderType.DineIn
+                      ? `${t.restaurant.table} ${selectedOrder.tableNumber}`
+                      : `${orderTypeLabel[selectedOrder.orderType]}${selectedOrder.customerName ? " - " + selectedOrder.customerName : ""}`}
                   </div>
+                  <div className="text-muted">{selectedOrder.orderNumber}</div>
+                </div>
+                {selectedOrder.status === RestaurantOrderStatus.Open && (
+                  <button className="btn btn-secondary btn-sm" onClick={handleCancelOrder} title={t.restaurant.cancelOrder}>
+                    ✕
+                  </button>
                 )}
               </div>
 
-              <table>
-                <thead>
-                  <tr>
-                    <th>{t.common.description}</th>
-                    <th>{t.common.quantity}</th>
-                    <th>{t.common.unitPrice}</th>
-                    <th>{t.common.total}</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {selectedOrder.lines.length === 0 && (
-                    <tr><td colSpan={5} className="text-muted" style={{ textAlign: "center", padding: 14 }}>{t.restaurant.emptyCart}</td></tr>
-                  )}
-                  {selectedOrder.lines.map((line) => (
-                    <tr key={line.id}>
-                      <td>{line.itemName}</td>
-                      <td>
-                        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleLineQuantity(line.id, line.quantity - 1)}>-</button>
-                          {line.quantity}
-                          <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleLineQuantity(line.id, line.quantity + 1)}>+</button>
-                        </div>
-                      </td>
-                      <td>{line.unitPrice.toLocaleString()}</td>
-                      <td>{line.lineTotal.toLocaleString()}</td>
-                      <td>
-                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleRemoveLine(line.id)}>{t.common.delete}</button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <div className="pos-cart-lines">
+                {selectedOrder.lines.length === 0 && <div className="text-muted" style={{ padding: "12px 0" }}>{t.restaurant.emptyCart}</div>}
+                {selectedOrder.lines.map((line) => (
+                  <div key={line.id} className="pos-cart-line">
+                    <div className="pos-cart-line-info">
+                      <div className="pos-cart-line-name">{line.itemName}</div>
+                      <div className="text-muted">{line.unitPrice.toLocaleString()}</div>
+                    </div>
+                    <div className="pos-cart-line-qty">
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleLineQuantity(line.id, line.quantity - 1)}>-</button>
+                      <span>{line.quantity}</span>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleLineQuantity(line.id, line.quantity + 1)}>+</button>
+                    </div>
+                    <div className="pos-cart-line-total">{line.lineTotal.toLocaleString()}</div>
+                    <button type="button" className="pos-cart-line-remove" onClick={() => handleRemoveLine(line.id)} title={t.common.delete}>✕</button>
+                  </div>
+                ))}
+              </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 10 }}>
-                <table style={{ width: 260 }}>
-                  <tbody>
-                    <tr><td>{t.common.subtotal}</td><td style={{ textAlign: "end" }}>{selectedOrder.subTotal.toLocaleString()}</td></tr>
-                    <tr><td>{t.common.vat} ({(selectedOrder.vatRate * 100).toFixed(0)}%)</td><td style={{ textAlign: "end" }}>{selectedOrder.vatAmount.toLocaleString()}</td></tr>
-                    <tr><td><strong>{t.common.total}</strong></td><td style={{ textAlign: "end" }}><strong>{selectedOrder.totalAmount.toLocaleString()}</strong></td></tr>
-                  </tbody>
-                </table>
+              <div className="pos-cart-totals">
+                <div><span>{t.common.subtotal}</span><span>{selectedOrder.subTotal.toLocaleString()}</span></div>
+                <div><span>{t.common.vat} ({(selectedOrder.vatRate * 100).toFixed(0)}%)</span><span>{selectedOrder.vatAmount.toLocaleString()}</span></div>
+                <div className="pos-cart-total-grand"><span>{t.common.total}</span><span>{selectedOrder.totalAmount.toLocaleString()}</span></div>
               </div>
 
               {selectedOrder.status === RestaurantOrderStatus.Open && (
-                <div style={{ marginTop: 20 }}>
-                  <h4>{t.restaurant.menu}</h4>
-                  {menuByCategory.map(([category, categoryItems]) => (
-                    <div key={category} style={{ marginBottom: 12 }}>
-                      <div className="text-muted" style={{ marginBottom: 6 }}>{category}</div>
-                      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 8 }}>
-                        {categoryItems.map((item) => (
-                          <button
-                            key={item.id}
-                            type="button"
-                            className="btn btn-secondary"
-                            style={{ padding: "10px 8px", textAlign: "center" }}
-                            onClick={() => handleAddItem(item.id)}
-                          >
-                            <div>{item.nameAr}</div>
-                            <div className="text-muted">{item.menuPrice.toLocaleString()}</div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                  {menu.length === 0 && <div className="text-muted">{t.restaurant.noMenuItemsHint}</div>}
-                </div>
+                <button className="btn pos-bill-btn" onClick={openBillDialog} disabled={selectedOrder.lines.length === 0}>
+                  {t.restaurant.billOrder}
+                </button>
               )}
             </>
           )}
         </div>
       </div>
+
+      {showNewOrder && (
+        <div className="modal-overlay" onClick={() => setShowNewOrder(false)}>
+          <div className="card" style={{ maxWidth: 460, margin: "8% auto" }} onClick={(e) => e.stopPropagation()}>
+            <h3>{t.restaurant.newOrder}</h3>
+            <form onSubmit={handleCreateOrder}>
+              <div className="form-grid">
+                <div className="form-field">
+                  <label>{t.restaurant.orderType}</label>
+                  <select value={orderType} onChange={(e) => setOrderType(Number(e.target.value) as RestaurantOrderType)}>
+                    <option value={RestaurantOrderType.DineIn}>{t.restaurant.dineIn}</option>
+                    <option value={RestaurantOrderType.Takeaway}>{t.restaurant.takeaway}</option>
+                    <option value={RestaurantOrderType.Delivery}>{t.restaurant.delivery}</option>
+                  </select>
+                </div>
+                <div className="form-field">
+                  <label>{t.sales.warehouse}</label>
+                  <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} required>
+                    <option value="" disabled>-</option>
+                    {warehouses.map((w) => (
+                      <option key={w.id} value={w.id}>{w.code} - {w.nameAr}</option>
+                    ))}
+                  </select>
+                </div>
+                {orderType === RestaurantOrderType.DineIn && (
+                  <div className="form-field">
+                    <label>{t.restaurant.table}</label>
+                    <select value={tableId} onChange={(e) => setTableId(e.target.value)} required>
+                      <option value="" disabled>-</option>
+                      {availableTables.map((tb) => (
+                        <option key={tb.id} value={tb.id}>{tb.number}{tb.sectionName ? ` - ${tb.sectionName}` : ""}</option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+                {orderType !== RestaurantOrderType.DineIn && (
+                  <>
+                    <div className="form-field">
+                      <label>{t.restaurant.customerName}</label>
+                      <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} />
+                    </div>
+                    <div className="form-field">
+                      <label>{t.restaurant.customerPhone}</label>
+                      <input value={customerPhone} onChange={(e) => setCustomerPhone(e.target.value)} />
+                    </div>
+                  </>
+                )}
+                {orderType === RestaurantOrderType.Delivery && (
+                  <div className="form-field">
+                    <label>{t.restaurant.deliveryAddress}</label>
+                    <input value={deliveryAddress} onChange={(e) => setDeliveryAddress(e.target.value)} />
+                  </div>
+                )}
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+                <button className="btn" type="submit">{t.common.save}</button>
+                <button className="btn btn-secondary" type="button" onClick={() => setShowNewOrder(false)}>{t.common.cancel}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {showBillDialog && selectedOrder && (
         <div className="modal-overlay" onClick={() => setShowBillDialog(false)}>
