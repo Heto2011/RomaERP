@@ -1,5 +1,5 @@
-import { useState, type ReactNode } from "react";
-import { NavLink } from "react-router-dom";
+import { useEffect, useState, type ReactNode } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import {
@@ -28,19 +28,37 @@ import {
   IconEdit,
   IconShield,
   IconMenuToggle,
+  IconChevron,
 } from "./icons";
 
 const SIDEBAR_COLLAPSED_KEY = "romaerp:sidebarCollapsed";
+const SIDEBAR_OPEN_SECTIONS_KEY = "romaerp:sidebarOpenSections";
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const { t, lang, setLang } = useLanguage();
+  const location = useLocation();
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
+  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(SIDEBAR_OPEN_SECTIONS_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  });
 
   function toggleCollapsed() {
     setCollapsed((prev) => {
       const next = !prev;
       localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
+      return next;
+    });
+  }
+
+  function toggleSection(section: string) {
+    setOpenSections((prev) => {
+      const next = { ...prev, [section]: !prev[section] };
+      localStorage.setItem(SIDEBAR_OPEN_SECTIONS_KEY, JSON.stringify(next));
       return next;
     });
   }
@@ -131,6 +149,20 @@ export default function Layout({ children }: { children: ReactNode }) {
       : []),
   ];
 
+  useEffect(() => {
+    const active = links.find((group) =>
+      group.items.some((item) => (item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to)))
+    );
+    if (active && !openSections[active.section]) {
+      setOpenSections((prev) => {
+        const next = { ...prev, [active.section]: true };
+        localStorage.setItem(SIDEBAR_OPEN_SECTIONS_KEY, JSON.stringify(next));
+        return next;
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
   return (
     <div className="app-shell">
       <aside className={"sidebar" + (collapsed ? " collapsed" : "")}>
@@ -148,23 +180,32 @@ export default function Layout({ children }: { children: ReactNode }) {
           </div>
         )}
         <div className="sidebar-scroll">
-          {links.map((group) => (
-            <div key={group.section}>
-              {!collapsed && <div className="sidebar-section">{group.section}</div>}
-              {group.items.map((item) => (
-                <NavLink
-                  key={item.to}
-                  to={item.to}
-                  end={item.to === "/"}
-                  className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}
-                  title={collapsed ? item.label : undefined}
-                >
-                  <span className="sidebar-icon">{item.icon}</span>
-                  {!collapsed && <span className="link-text">{item.label}</span>}
-                </NavLink>
-              ))}
-            </div>
-          ))}
+          {links.map((group) => {
+            const isOpen = collapsed || !!openSections[group.section];
+            return (
+              <div key={group.section}>
+                {!collapsed && (
+                  <button className="sidebar-section-toggle" onClick={() => toggleSection(group.section)}>
+                    <span>{group.section}</span>
+                    <IconChevron open={isOpen} />
+                  </button>
+                )}
+                {isOpen &&
+                  group.items.map((item) => (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.to === "/"}
+                      className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}
+                      title={collapsed ? item.label : undefined}
+                    >
+                      <span className="sidebar-icon">{item.icon}</span>
+                      {!collapsed && <span className="link-text">{item.label}</span>}
+                    </NavLink>
+                  ))}
+              </div>
+            );
+          })}
         </div>
         <div className="sidebar-footer">
           {!collapsed && <div style={{ fontSize: 13, marginBottom: 8 }}>{user?.fullName}</div>}

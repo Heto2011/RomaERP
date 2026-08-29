@@ -248,6 +248,19 @@ export function IconShield() {
   );
 }
 
+export function IconChevron({ open }: { open: boolean }) {
+  return (
+    <svg
+      {...common}
+      width="14"
+      height="14"
+      style={{ transform: open ? "rotate(90deg)" : "rotate(0deg)", transition: "transform 0.15s ease" }}
+    >
+      <polyline points="7,4 13,10 7,16" />
+    </svg>
+  );
+}
+
 export function IconMenuToggle({ collapsed }: { collapsed: boolean }) {
   return (
     <svg {...common} width="20" height="20">
