@@ -90,6 +90,7 @@ const ar = {
     moneyFlow: "فين الفلوس؟",
     itemProfitability: "ربحية الأصناف",
     customerProfitability: "ربحية العملاء",
+    salesChannelProfitability: "الربح حسب قناة البيع",
     marginAnalysis: "تحليل الهوامش",
     breakEven: "كام لازم أبيع؟",
     bottleneck: "نقطة الاختناق",
@@ -329,6 +330,10 @@ const ar = {
     customerProfitabilityTitle: "ربحية العملاء",
     customerProfitabilityIntro:
       "أكتر العملاء تحقيقاً للربح وأكتر العملاء بهامش ربح منخفض، محسوبة من الفواتير المرتبطة بأصناف من المخزون. (فواتير المطعم بالوصفة لسه مش مشمولة، هنضيفها في تحديث قادم.)",
+
+    salesChannelProfitabilityTitle: "الربح حسب قناة البيع",
+    salesChannelProfitabilityIntro:
+      "الربح الحقيقي لكل قناة بيع في المطعم (صالة / تيك أواي / دليفري)، محسوب من تكلفة الوصفة الفعلية لكل صنف. (بيغطي أوردرات المطعم بس؛ فواتير المبيعات العادية لسه مفيهاش مفهوم قناة بيع.)",
 
     marginAnalysisTitle: "تحليل الهوامش",
     marginAnalysisIntro: "هامش الربح الإجمالي والصافي وهامش المساهمة، والربح الحقيقي بعد خصم كل التكاليف، لفترة محددة.",
@@ -747,6 +752,7 @@ const en: typeof ar = {
     moneyFlow: "Where's the Money?",
     itemProfitability: "Item Profitability",
     customerProfitability: "Customer Profitability",
+    salesChannelProfitability: "Profit by Sales Channel",
     marginAnalysis: "Margin Analysis",
     breakEven: "How Much to Sell?",
     bottleneck: "Bottleneck Analysis",
@@ -986,6 +992,10 @@ const en: typeof ar = {
     customerProfitabilityTitle: "Customer Profitability",
     customerProfitabilityIntro:
       "Your most and least profitable customers, computed from invoices linked to inventory items. (Recipe-based restaurant invoices aren't covered yet — coming in a future update.)",
+
+    salesChannelProfitabilityTitle: "Profit by Sales Channel",
+    salesChannelProfitabilityIntro:
+      "Real profit per restaurant sales channel (Dine-in / Takeaway / Delivery), computed from each item's actual recipe cost. (Covers restaurant orders only; regular sales invoices have no channel concept yet.)",
 
     marginAnalysisTitle: "Margin Analysis",
     marginAnalysisIntro: "Gross margin, net margin, contribution margin, and the real profit left after every cost, for a chosen period.",

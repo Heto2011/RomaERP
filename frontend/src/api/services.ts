@@ -8,6 +8,7 @@ import type {
   CashFlowStatement,
   ItemProfitabilityReport,
   CustomerProfitabilityReport,
+  SalesChannelProfitabilityReport,
   BankStatementImportResult,
   BankStatementLine,
   ChatTurnResponse,
@@ -218,6 +219,8 @@ export const FinancialReportsApi = {
     apiClient.get<ItemProfitabilityReport>("/financialreports/item-profitability", { params: { fromDate, toDate } }),
   customerProfitability: (fromDate: string, toDate: string) =>
     apiClient.get<CustomerProfitabilityReport>("/financialreports/customer-profitability", { params: { fromDate, toDate } }),
+  salesChannelProfitability: (fromDate: string, toDate: string) =>
+    apiClient.get<SalesChannelProfitabilityReport>("/financialreports/sales-channel-profitability", { params: { fromDate, toDate } }),
 };
 
 export const FiscalPeriodsAdminApi = {

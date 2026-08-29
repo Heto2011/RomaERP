@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Accounting.Services;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Inventory;
+using RomaERP.Domain.Restaurant;
 using RomaERP.Domain.Sales;
 using RomaERP.Infrastructure.Persistence;
 using Xunit;
@@ -487,5 +488,100 @@ public class FinancialReportServiceTests
         Assert.Equal(20, report.Customers[1].Revenue);
         Assert.Equal(10, report.Customers[1].Cost);
         Assert.Equal(10, report.Customers[1].GrossProfit);
+    }
+
+    [Fact]
+    public async Task GetSalesChannelProfitability_ComputesRecipeCostAndGroupsByChannelExcludingCancelledAndOutOfRange()
+    {
+        var ctx = CreateContext();
+
+        var category = new ItemCategory { NameAr = "عام", NameEn = "General" };
+        var rawMaterial = new Item { Code = "RAW-1", NameAr = "خبز", NameEn = "Bread", UnitOfMeasure = "قطعة", ItemCategory = category, AverageCost = 2 };
+        // Has a recipe: 2 units of the raw material per unit sold -> unit cost = 2 * 2 = 4.
+        var burger = new Item { Code = "MENU-1", NameAr = "برجر", NameEn = "Burger", UnitOfMeasure = "قطعة", ItemCategory = category, AverageCost = 100 };
+        // No recipe lines -> falls back to its own AverageCost as unit cost.
+        var water = new Item { Code = "MENU-2", NameAr = "مياه", NameEn = "Water", UnitOfMeasure = "قطعة", ItemCategory = category, AverageCost = 3 };
+        var warehouse = new Warehouse { Code = "WH-MAIN", NameAr = "المخزن الرئيسي", NameEn = "Main Warehouse" };
+        var table = new RestaurantTable { Number = "T1", Capacity = 4 };
+
+        ctx.ItemCategories.Add(category);
+        ctx.Items.AddRange(rawMaterial, burger, water);
+        ctx.Warehouses.Add(warehouse);
+        ctx.RestaurantTables.Add(table);
+        ctx.MenuRecipeLines.Add(new MenuRecipeLine { MenuItemId = burger.Id, RawMaterialItemId = rawMaterial.Id, QuantityPerUnit = 2 });
+        await ctx.SaveChangesAsync();
+
+        var dineInOrder = new RestaurantOrder
+        {
+            OrderNumber = "RO-000001",
+            OrderType = RestaurantOrderType.DineIn,
+            OrderDate = new DateTime(2026, 8, 5),
+            TableId = table.Id,
+            WarehouseId = warehouse.Id,
+            Status = RestaurantOrderStatus.Billed,
+            Lines = new List<RestaurantOrderLine>
+            {
+                new() { LineNumber = 1, ItemId = burger.Id, Quantity = 2, UnitPrice = 20, LineTotal = 40 }
+            }
+        };
+        var takeawayOrder = new RestaurantOrder
+        {
+            OrderNumber = "RO-000002",
+            OrderType = RestaurantOrderType.Takeaway,
+            OrderDate = new DateTime(2026, 8, 20),
+            WarehouseId = warehouse.Id,
+            Status = RestaurantOrderStatus.Billed,
+            Lines = new List<RestaurantOrderLine>
+            {
+                new() { LineNumber = 1, ItemId = water.Id, Quantity = 3, UnitPrice = 10, LineTotal = 30 }
+            }
+        };
+        // Should be excluded: never billed.
+        var cancelledOrder = new RestaurantOrder
+        {
+            OrderNumber = "RO-000003",
+            OrderType = RestaurantOrderType.DineIn,
+            OrderDate = new DateTime(2026, 8, 10),
+            TableId = table.Id,
+            WarehouseId = warehouse.Id,
+            Status = RestaurantOrderStatus.Cancelled,
+            Lines = new List<RestaurantOrderLine>
+            {
+                new() { LineNumber = 1, ItemId = burger.Id, Quantity = 5, UnitPrice = 20, LineTotal = 100 }
+            }
+        };
+        // Should be excluded: outside the requested date range.
+        var outOfRangeOrder = new RestaurantOrder
+        {
+            OrderNumber = "RO-000004",
+            OrderType = RestaurantOrderType.Delivery,
+            OrderDate = new DateTime(2026, 1, 1),
+            WarehouseId = warehouse.Id,
+            Status = RestaurantOrderStatus.Billed,
+            Lines = new List<RestaurantOrderLine>
+            {
+                new() { LineNumber = 1, ItemId = water.Id, Quantity = 10, UnitPrice = 10, LineTotal = 100 }
+            }
+        };
+
+        ctx.RestaurantOrders.AddRange(dineInOrder, takeawayOrder, cancelledOrder, outOfRangeOrder);
+        await ctx.SaveChangesAsync();
+
+        var service = new FinancialReportService(ctx);
+        var report = await service.GetSalesChannelProfitabilityAsync(new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+
+        Assert.Equal(2, report.Channels.Count);
+
+        // Sorted by gross profit descending: DineIn (40 - 8 = 32) before Takeaway (30 - 9 = 21).
+        Assert.Equal((int)RestaurantOrderType.DineIn, report.Channels[0].Channel);
+        Assert.Equal(40, report.Channels[0].Revenue);
+        Assert.Equal(8, report.Channels[0].Cost);
+        Assert.Equal(32, report.Channels[0].GrossProfit);
+        Assert.Equal(80, report.Channels[0].MarginPercent);
+
+        Assert.Equal((int)RestaurantOrderType.Takeaway, report.Channels[1].Channel);
+        Assert.Equal(30, report.Channels[1].Revenue);
+        Assert.Equal(9, report.Channels[1].Cost);
+        Assert.Equal(21, report.Channels[1].GrossProfit);
     }
 }

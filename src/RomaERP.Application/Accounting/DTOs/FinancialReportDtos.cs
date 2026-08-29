@@ -128,3 +128,24 @@ public class CustomerProfitabilityReportDto
     public DateTime ToDate { get; set; }
     public List<CustomerProfitabilityLineDto> Customers { get; set; } = new();
 }
+
+public class SalesChannelProfitabilityLineDto
+{
+    public int Channel { get; set; }
+    public decimal Revenue { get; set; }
+    public decimal Cost { get; set; }
+    public decimal GrossProfit { get; set; }
+    public decimal MarginPercent { get; set; }
+}
+
+/// <summary>Covers only billed Restaurant orders (DineIn/Takeaway/Delivery) — regular (non-restaurant) sales
+/// invoices carry no channel concept in the current schema. Cost is real, not a placeholder: it's built from
+/// each menu item's recipe (MenuRecipeLine — raw-material quantities) priced at the raw material's current
+/// AverageCost, falling back to the menu item's own AverageCost when it has no recipe lines (sold as its own
+/// raw material, e.g. a bottled drink).</summary>
+public class SalesChannelProfitabilityReportDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public List<SalesChannelProfitabilityLineDto> Channels { get; set; } = new();
+}

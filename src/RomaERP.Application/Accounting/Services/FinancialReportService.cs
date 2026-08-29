@@ -3,6 +3,7 @@ using RomaERP.Application.Accounting;
 using RomaERP.Application.Accounting.DTOs;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Accounting;
+using RomaERP.Domain.Restaurant;
 
 namespace RomaERP.Application.Accounting.Services;
 
@@ -316,6 +317,61 @@ public class FinancialReportService : IFinancialReportService
             .ToList();
 
         return new CustomerProfitabilityReportDto { FromDate = fromDate, ToDate = toDate, Customers = customers };
+    }
+
+    public async Task<SalesChannelProfitabilityReportDto> GetSalesChannelProfitabilityAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var orderLines = await _context.RestaurantOrderLines
+            .AsNoTracking()
+            .Include(l => l.RestaurantOrder)
+            .Where(l => l.RestaurantOrder!.Status == RestaurantOrderStatus.Billed
+                        && l.RestaurantOrder.OrderDate >= fromDate
+                        && l.RestaurantOrder.OrderDate <= toDate)
+            .ToListAsync(ct);
+
+        var menuItemIds = orderLines.Select(l => l.ItemId).Distinct().ToList();
+
+        var recipeLines = await _context.MenuRecipeLines
+            .AsNoTracking()
+            .Include(r => r.RawMaterialItem)
+            .Where(r => menuItemIds.Contains(r.MenuItemId))
+            .ToListAsync(ct);
+        var recipeCostByMenuItem = recipeLines
+            .GroupBy(r => r.MenuItemId)
+            .ToDictionary(g => g.Key, g => g.Sum(r => r.QuantityPerUnit * r.RawMaterialItem!.AverageCost));
+
+        var itemsById = (await _context.Items
+                .AsNoTracking()
+                .Where(i => menuItemIds.Contains(i.Id))
+                .ToListAsync(ct))
+            .ToDictionary(i => i.Id);
+
+        decimal UnitCost(Guid menuItemId) =>
+            recipeCostByMenuItem.TryGetValue(menuItemId, out var recipeCost)
+                ? recipeCost
+                : itemsById.TryGetValue(menuItemId, out var item) ? item.AverageCost : 0;
+
+        var channels = orderLines
+            .GroupBy(l => l.RestaurantOrder!.OrderType)
+            .Select(g =>
+            {
+                var revenue = g.Sum(l => l.LineTotal);
+                var cost = g.Sum(l => Math.Round(l.Quantity * UnitCost(l.ItemId), 2));
+                var grossProfit = revenue - cost;
+
+                return new SalesChannelProfitabilityLineDto
+                {
+                    Channel = (int)g.Key,
+                    Revenue = revenue,
+                    Cost = cost,
+                    GrossProfit = grossProfit,
+                    MarginPercent = revenue != 0 ? Math.Round(grossProfit / revenue * 100, 2) : 0
+                };
+            })
+            .OrderByDescending(l => l.GrossProfit)
+            .ToList();
+
+        return new SalesChannelProfitabilityReportDto { FromDate = fromDate, ToDate = toDate, Channels = channels };
     }
 
     private static List<ReportLineDto> BuildLines(List<JournalEntryLine> lines, AccountType type, bool creditPositive)

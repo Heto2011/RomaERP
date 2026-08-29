@@ -235,6 +235,20 @@ export interface CustomerProfitabilityReport {
   customers: CustomerProfitabilityLine[];
 }
 
+export interface SalesChannelProfitabilityLine {
+  channel: RestaurantOrderType;
+  revenue: number;
+  cost: number;
+  grossProfit: number;
+  marginPercent: number;
+}
+
+export interface SalesChannelProfitabilityReport {
+  fromDate: string;
+  toDate: string;
+  channels: SalesChannelProfitabilityLine[];
+}
+
 export enum ChatRole {
   User = 1,
   Assistant = 2,
