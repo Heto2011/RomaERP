@@ -152,6 +152,10 @@ export const PayrollApi = {
   create: (data: unknown) => apiClient.post<PayrollRun>("/payroll", data),
   approve: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/approve`),
   post: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/post`),
+  revertToDraft: (id: string) => apiClient.post<PayrollRun>(`/payroll/${id}/revert-to-draft`),
+  remove: (id: string) => apiClient.delete(`/payroll/${id}`),
+  updateLine: (id: string, employeeId: string, data: { totalAllowances: number; totalDeductions: number }) =>
+    apiClient.put<PayrollRun>(`/payroll/${id}/lines/${employeeId}`, data),
 };
 
 export const AiAssistantApi = {

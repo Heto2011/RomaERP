@@ -57,6 +57,12 @@ public class CreatePayrollRunDto
     public string? Description { get; set; }
 }
 
+public class UpdatePayrollLineDto
+{
+    public decimal TotalAllowances { get; set; }
+    public decimal TotalDeductions { get; set; }
+}
+
 public class MyPayslipDto
 {
     public DateTime RunDate { get; set; }

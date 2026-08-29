@@ -20,6 +20,7 @@ export default function Payroll() {
   const [fiscalPeriodId, setFiscalPeriodId] = useState("");
   const [runDate, setRunDate] = useState(new Date().toISOString().slice(0, 10));
   const [description, setDescription] = useState("");
+  const [lineEdits, setLineEdits] = useState<Record<string, { totalAllowances: number; totalDeductions: number }>>({});
 
   async function load() {
     const [runsRes, periodsRes] = await Promise.all([PayrollApi.getAll(), LookupsApi.fiscalPeriods()]);
@@ -58,6 +59,43 @@ export default function Payroll() {
     setError(null);
     try {
       await PayrollApi.post(id);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleRevertToDraft(id: string) {
+    setError(null);
+    try {
+      await PayrollApi.revertToDraft(id);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleDelete(id: string) {
+    if (!window.confirm(t.hr.confirmDeletePayrollRun)) return;
+    setError(null);
+    try {
+      await PayrollApi.remove(id);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  function lineKey(runId: string, employeeId: string) {
+    return `${runId}:${employeeId}`;
+  }
+
+  async function handleSaveLine(runId: string, employeeId: string) {
+    const edit = lineEdits[lineKey(runId, employeeId)];
+    if (!edit) return;
+    setError(null);
+    try {
+      await PayrollApi.updateLine(runId, employeeId, edit);
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -132,19 +170,29 @@ export default function Payroll() {
                   <td>
                     <span className={`badge ${statusLabel[run.status].cls}`}>{statusLabel[run.status].text}</span>
                   </td>
-                  <td style={{ display: "flex", gap: 6 }}>
+                  <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                     <button className="btn btn-secondary btn-sm" onClick={() => setExpanded(expanded === run.id ? null : run.id)}>
                       {t.hr.details}
                     </button>
                     {run.status === PayrollRunStatus.Draft && (
-                      <button className="btn btn-sm" onClick={() => handleApprove(run.id)}>
-                        {t.hr.approve}
-                      </button>
+                      <>
+                        <button className="btn btn-sm" onClick={() => handleApprove(run.id)}>
+                          {t.hr.approve}
+                        </button>
+                        <button className="btn btn-danger btn-sm" onClick={() => handleDelete(run.id)}>
+                          {t.common.cancel}
+                        </button>
+                      </>
                     )}
                     {run.status === PayrollRunStatus.Approved && (
-                      <button className="btn btn-sm" onClick={() => handlePost(run.id)}>
-                        {t.accounting.post}
-                      </button>
+                      <>
+                        <button className="btn btn-sm" onClick={() => handlePost(run.id)}>
+                          {t.accounting.post}
+                        </button>
+                        <button className="btn btn-secondary btn-sm" onClick={() => handleRevertToDraft(run.id)}>
+                          {t.hr.revertToDraft}
+                        </button>
+                      </>
                     )}
                   </td>
                 </tr>
@@ -159,18 +207,79 @@ export default function Payroll() {
                             <th>{t.hr.allowances}</th>
                             <th>{t.hr.deductions}</th>
                             <th>{t.hr.netSalary}</th>
+                            {run.status === PayrollRunStatus.Draft && <th></th>}
                           </tr>
                         </thead>
                         <tbody>
-                          {run.lines.map((line) => (
-                            <tr key={line.employeeId}>
-                              <td>{line.employeeName}</td>
-                              <td>{line.basicSalary.toLocaleString()}</td>
-                              <td>{line.totalAllowances.toLocaleString()}</td>
-                              <td>{line.totalDeductions.toLocaleString()}</td>
-                              <td>{line.netSalary.toLocaleString()}</td>
-                            </tr>
-                          ))}
+                          {run.lines.map((line) => {
+                            const key = lineKey(run.id, line.employeeId);
+                            const edit = lineEdits[key];
+                            const isEditing = edit !== undefined;
+                            return (
+                              <tr key={line.employeeId}>
+                                <td>{line.employeeName}</td>
+                                <td>{line.basicSalary.toLocaleString()}</td>
+                                <td>
+                                  {run.status === PayrollRunStatus.Draft && isEditing ? (
+                                    <input
+                                      type="number"
+                                      value={edit.totalAllowances}
+                                      style={{ width: 100 }}
+                                      onChange={(e) =>
+                                        setLineEdits((prev) => ({ ...prev, [key]: { ...prev[key], totalAllowances: Number(e.target.value) } }))
+                                      }
+                                    />
+                                  ) : (
+                                    line.totalAllowances.toLocaleString()
+                                  )}
+                                </td>
+                                <td>
+                                  {run.status === PayrollRunStatus.Draft && isEditing ? (
+                                    <input
+                                      type="number"
+                                      value={edit.totalDeductions}
+                                      style={{ width: 100 }}
+                                      onChange={(e) =>
+                                        setLineEdits((prev) => ({ ...prev, [key]: { ...prev[key], totalDeductions: Number(e.target.value) } }))
+                                      }
+                                    />
+                                  ) : (
+                                    line.totalDeductions.toLocaleString()
+                                  )}
+                                </td>
+                                <td>{line.netSalary.toLocaleString()}</td>
+                                {run.status === PayrollRunStatus.Draft && (
+                                  <td style={{ display: "flex", gap: 4 }}>
+                                    {isEditing ? (
+                                      <>
+                                        <button className="btn btn-sm" onClick={() => handleSaveLine(run.id, line.employeeId)}>
+                                          {t.common.save}
+                                        </button>
+                                        <button
+                                          className="btn btn-secondary btn-sm"
+                                          onClick={() => setLineEdits((prev) => { const next = { ...prev }; delete next[key]; return next; })}
+                                        >
+                                          {t.common.cancel}
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <button
+                                        className="btn btn-secondary btn-sm"
+                                        onClick={() =>
+                                          setLineEdits((prev) => ({
+                                            ...prev,
+                                            [key]: { totalAllowances: line.totalAllowances, totalDeductions: line.totalDeductions },
+                                          }))
+                                        }
+                                      >
+                                        {t.common.edit}
+                                      </button>
+                                    )}
+                                  </td>
+                                )}
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     </td>

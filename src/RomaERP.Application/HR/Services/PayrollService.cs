@@ -107,6 +107,50 @@ public class PayrollService : IPayrollService
         return await GetByIdAsync(id, ct);
     }
 
+    public async Task<PayrollRunDto> RevertToDraftAsync(Guid id, CancellationToken ct = default)
+    {
+        var run = await _context.PayrollRuns.FirstOrDefaultAsync(r => r.Id == id, ct)
+            ?? throw new NotFoundException(nameof(PayrollRun), id);
+
+        if (run.Status != PayrollRunStatus.Approved)
+            throw new ValidationAppException("لا يمكن التراجع عن الاعتماد إلا لدورة رواتب معتمدة ولم تُرحّل بعد.");
+
+        run.Status = PayrollRunStatus.Draft;
+        await _context.SaveChangesAsync(ct);
+        return await GetByIdAsync(id, ct);
+    }
+
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        var run = await _context.PayrollRuns.FirstOrDefaultAsync(r => r.Id == id, ct)
+            ?? throw new NotFoundException(nameof(PayrollRun), id);
+
+        if (run.Status != PayrollRunStatus.Draft)
+            throw new ValidationAppException("لا يمكن إلغاء دورة رواتب إلا في حالة المسودة.");
+
+        run.IsDeleted = true;
+        await _context.SaveChangesAsync(ct);
+    }
+
+    public async Task<PayrollRunDto> UpdateLineAsync(Guid runId, Guid employeeId, UpdatePayrollLineDto dto, CancellationToken ct = default)
+    {
+        var run = await _context.PayrollRuns.FirstOrDefaultAsync(r => r.Id == runId, ct)
+            ?? throw new NotFoundException(nameof(PayrollRun), runId);
+
+        if (run.Status != PayrollRunStatus.Draft)
+            throw new ValidationAppException("لا يمكن تعديل بنود دورة رواتب إلا في حالة المسودة.");
+
+        var line = await _context.PayrollRunLines.FirstOrDefaultAsync(l => l.PayrollRunId == runId && l.EmployeeId == employeeId, ct)
+            ?? throw new NotFoundException(nameof(PayrollRunLine), employeeId);
+
+        line.TotalAllowances = dto.TotalAllowances;
+        line.TotalDeductions = dto.TotalDeductions;
+        line.NetSalary = line.BasicSalary + dto.TotalAllowances - dto.TotalDeductions;
+
+        await _context.SaveChangesAsync(ct);
+        return await GetByIdAsync(runId, ct);
+    }
+
     public async Task<PayrollRunDto> PostAsync(Guid id, CancellationToken ct = default)
     {
         var run = await _context.PayrollRuns

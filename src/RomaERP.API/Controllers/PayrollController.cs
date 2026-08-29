@@ -62,4 +62,22 @@ public class PayrollController : ControllerBase
     [Authorize(Roles = "Admin,Accountant")]
     public async Task<ActionResult<PayrollRunDto>> Post(Guid id, CancellationToken ct)
         => Ok(await _payrollService.PostAsync(id, ct));
+
+    [HttpPost("{id:guid}/revert-to-draft")]
+    [Authorize(Roles = "Admin,HR")]
+    public async Task<ActionResult<PayrollRunDto>> RevertToDraft(Guid id, CancellationToken ct)
+        => Ok(await _payrollService.RevertToDraftAsync(id, ct));
+
+    [HttpDelete("{id:guid}")]
+    [Authorize(Roles = "Admin,HR")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        await _payrollService.DeleteAsync(id, ct);
+        return NoContent();
+    }
+
+    [HttpPut("{id:guid}/lines/{employeeId:guid}")]
+    [Authorize(Roles = "Admin,HR")]
+    public async Task<ActionResult<PayrollRunDto>> UpdateLine(Guid id, Guid employeeId, UpdatePayrollLineDto dto, CancellationToken ct)
+        => Ok(await _payrollService.UpdateLineAsync(id, employeeId, dto, ct));
 }
