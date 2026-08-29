@@ -3,6 +3,7 @@ import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
+import GlobalSearch from "./GlobalSearch";
 import {
   IconGrid,
   IconUser,
@@ -223,7 +224,12 @@ export default function Layout({ children }: { children: ReactNode }) {
           </button>
         </div>
       </aside>
-      <main className="main-content">{children}</main>
+      <div className="main-column">
+        <header className="topbar">
+          <GlobalSearch />
+        </header>
+        <main className="main-content">{children}</main>
+      </div>
     </div>
   );
 }
