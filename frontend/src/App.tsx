@@ -44,6 +44,9 @@ import StockValuationPage from "./pages/inventory/StockValuation";
 import InventoryMovementPage from "./pages/inventory/InventoryMovement";
 import PurchasePriceVariancePage from "./pages/inventory/PurchasePriceVariance";
 import RecipeCostPage from "./pages/inventory/RecipeCost";
+import PhysicalStockCountsPage from "./pages/inventory/PhysicalStockCounts";
+import WasteEntriesPage from "./pages/inventory/WasteEntries";
+import HiddenProfitPage from "./pages/accounting/HiddenProfit";
 import AiAssistant from "./pages/assistant/AiAssistant";
 import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
 import BankReconciliation from "./pages/assistant/BankReconciliation";
@@ -109,6 +112,9 @@ export default function App() {
       <Route path="/inventory/reports/movement-analysis" element={<ProtectedRoute><InventoryMovementPage /></ProtectedRoute>} />
       <Route path="/inventory/reports/purchase-price-variance" element={<ProtectedRoute><PurchasePriceVariancePage /></ProtectedRoute>} />
       <Route path="/inventory/reports/recipe-cost" element={<ProtectedRoute><RecipeCostPage /></ProtectedRoute>} />
+      <Route path="/inventory/physical-stock-counts" element={<ProtectedRoute><PhysicalStockCountsPage /></ProtectedRoute>} />
+      <Route path="/inventory/waste-entries" element={<ProtectedRoute><WasteEntriesPage /></ProtectedRoute>} />
+      <Route path="/accounting/hidden-profit" element={<ProtectedRoute><HiddenProfitPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

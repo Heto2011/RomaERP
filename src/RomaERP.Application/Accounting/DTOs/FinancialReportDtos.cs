@@ -149,3 +149,23 @@ public class SalesChannelProfitabilityReportDto
     public DateTime ToDate { get; set; }
     public List<SalesChannelProfitabilityLineDto> Channels { get; set; } = new();
 }
+
+public class HiddenProfitLineDto
+{
+    public string ReasonCode { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+}
+
+/// <summary>Sums up the real, currently-computable "leaks" between what the books say and what's actually
+/// happening: physical stock count variance (PhysicalStockCount entries), waste write-offs (WasteEntry), and
+/// items sold below their real cost (negative-margin lines from Item Profitability). Other leak sources from
+/// the original concept (purchase price creep, cash/bank differences, discounts, commissions) aren't wired in
+/// yet — they need data RomaERP doesn't capture today (a cash-count feature, bank/delivery reconciliation).
+/// TotalImpact is negative when the net effect is a loss, which is the common case.</summary>
+public class HiddenProfitReportDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public List<HiddenProfitLineDto> Lines { get; set; } = new();
+    public decimal TotalImpact { get; set; }
+}

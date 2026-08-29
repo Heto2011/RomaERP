@@ -55,4 +55,9 @@ public class FinancialReportsController : ControllerBase
     public async Task<ActionResult<SalesChannelProfitabilityReportDto>> GetSalesChannelProfitability(
         [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
         => Ok(await _financialReportService.GetSalesChannelProfitabilityAsync(fromDate, toDate, ct));
+
+    [HttpGet("hidden-profit")]
+    public async Task<ActionResult<HiddenProfitReportDto>> GetHiddenProfit(
+        [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
+        => Ok(await _financialReportService.GetHiddenProfitAsync(fromDate, toDate, ct));
 }

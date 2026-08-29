@@ -4,6 +4,7 @@ using RomaERP.Application.Accounting.DTOs;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Restaurant;
+using RomaERP.Domain.Inventory;
 
 namespace RomaERP.Application.Accounting.Services;
 
@@ -372,6 +373,37 @@ public class FinancialReportService : IFinancialReportService
             .ToList();
 
         return new SalesChannelProfitabilityReportDto { FromDate = fromDate, ToDate = toDate, Channels = channels };
+    }
+
+    public async Task<HiddenProfitReportDto> GetHiddenProfitAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var stockVarianceValue = await _context.PhysicalStockCounts
+            .AsNoTracking()
+            .Where(c => c.CountDate >= fromDate && c.CountDate <= toDate)
+            .SumAsync(c => (c.CountedQuantity - c.SystemQuantity) * c.UnitCost, ct);
+
+        var wasteCost = await _context.WasteEntries
+            .AsNoTracking()
+            .Where(w => w.WasteDate >= fromDate && w.WasteDate <= toDate)
+            .SumAsync(w => w.TotalCost, ct);
+
+        var itemProfitability = await GetItemProfitabilityAsync(fromDate, toDate, ct);
+        var belowCostLoss = itemProfitability.Items.Where(i => i.GrossProfit < 0).Sum(i => i.GrossProfit);
+
+        var lines = new List<HiddenProfitLineDto>
+        {
+            new() { ReasonCode = "stock-variance", Amount = Math.Round(stockVarianceValue, 2) },
+            new() { ReasonCode = "waste", Amount = Math.Round(-wasteCost, 2) },
+            new() { ReasonCode = "below-cost", Amount = Math.Round(belowCostLoss, 2) }
+        };
+
+        return new HiddenProfitReportDto
+        {
+            FromDate = fromDate,
+            ToDate = toDate,
+            Lines = lines,
+            TotalImpact = lines.Sum(l => l.Amount)
+        };
     }
 
     private static List<ReportLineDto> BuildLines(List<JournalEntryLine> lines, AccountType type, bool creditPositive)

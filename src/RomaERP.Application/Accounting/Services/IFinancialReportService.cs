@@ -12,4 +12,5 @@ public interface IFinancialReportService
     Task<ItemProfitabilityReportDto> GetItemProfitabilityAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
     Task<CustomerProfitabilityReportDto> GetCustomerProfitabilityAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
     Task<SalesChannelProfitabilityReportDto> GetSalesChannelProfitabilityAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
+    Task<HiddenProfitReportDto> GetHiddenProfitAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
 }

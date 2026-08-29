@@ -35,6 +35,8 @@ public interface IApplicationDbContext
     DbSet<Warehouse> Warehouses { get; }
     DbSet<Item> Items { get; }
     DbSet<StockMovement> StockMovements { get; }
+    DbSet<PhysicalStockCount> PhysicalStockCounts { get; }
+    DbSet<WasteEntry> WasteEntries { get; }
 
     DbSet<RestaurantTable> RestaurantTables { get; }
     DbSet<RestaurantOrder> RestaurantOrders { get; }

@@ -347,6 +347,14 @@ const ar = {
     manualEntryNote: "أرقام مُدخلة يدويًا — مش محسوبة تلقائيًا من الفواتير. الربح والهامش بيتحسبوا تلقائيًا من الإيراد والتكلفة اللي تكتبها.",
     confirmDeleteManualEntry: "متأكد من حذف هذا السطر؟",
 
+    hiddenProfitTitle: "الربح المخفي",
+    hiddenProfitIntro:
+      "مجموع الفروق الحقيقية بين اللي المفروض يحصل واللي بيحصل فعلاً: فرق الجرد، الهالك، والأصناف اللي بتتباع تحت التكلفة. مصادر تانية (زيادة أسعار الشراء، فروقات كاش/بنك) لسه مش متاحة لحد ما نضيف البيانات بتاعتها.",
+    reasonStockVariance: "فرق الجرد",
+    reasonWaste: "هالك",
+    reasonBelowCost: "أصناف تحت التكلفة",
+    totalHiddenProfit: "إجمالي الربح المخفي",
+
     marginAnalysisTitle: "تحليل الهوامش",
     marginAnalysisIntro: "هامش الربح الإجمالي والصافي وهامش المساهمة، والربح الحقيقي بعد خصم كل التكاليف، لفترة محددة.",
     grossMarginRatio: "هامش الربح الإجمالي (Gross Margin)",
@@ -531,6 +539,30 @@ const ar = {
     recipeCostIntro: "التكلفة الحقيقية لكل صنف منيو، محسوبة من مكونات الوصفة الفعلية وأسعارها الحالية، مقابل سعر البيع.",
     hasRecipe: "له وصفة؟",
     sellingPrice: "سعر البيع",
+
+    physicalStockCountsTitle: "الجرد الفعلي",
+    physicalStockCountsIntro:
+      "سجّل نتيجة الجرد الفعلي لأي صنف عشان تقارنه بالرصيد في النظام. التسجيل ده بيحسب الفرق بس، مش بيعدّل رصيد المخزون تلقائيًا.",
+    newCount: "+ جرد جديد",
+    countDate: "تاريخ الجرد",
+    systemQuantity: "الرصيد بالنظام",
+    countedQuantity: "الكمية المعدودة",
+    variance: "الفرق",
+    varianceValue: "قيمة الفرق",
+    confirmDeleteCount: "متأكد من حذف عملية الجرد دي؟",
+    notesOptional: "ملاحظات (اختياري)",
+
+    wasteEntriesTitle: "الهالك والتالف",
+    wasteEntriesIntro: "تسجيل الهالك بيعمل حركة صرف مخزون حقيقية بتترحل في الحسابات زي أي صرف عادي.",
+    newWasteEntry: "+ تسجيل هالك",
+    wasteDate: "تاريخ الهالك",
+    wasteReason: "السبب",
+    wasteReasonWaste: "هالك عام",
+    wasteReasonExpired: "منتهي الصلاحية",
+    wasteReasonDamaged: "تالف",
+    wasteReasonProductionWaste: "هالك تصنيع",
+    wasteReasonOverPortion: "زيادة تقديم",
+    wasteReasonUnknown: "غير معروف",
   },
   restaurant: {
     menuTitle: "المنيو والوصفات",
@@ -1055,6 +1087,14 @@ const en: typeof ar = {
     manualEntryNote: "Manually entered figures — not computed automatically from invoices. Profit and margin are computed automatically from the revenue and cost you enter.",
     confirmDeleteManualEntry: "Delete this entry?",
 
+    hiddenProfitTitle: "Hidden Profit",
+    hiddenProfitIntro:
+      "The sum of real gaps between what should happen and what actually does: stock count variance, waste, and items sold below cost. Other sources (purchase price creep, cash/bank differences) aren't available yet until their underlying data exists.",
+    reasonStockVariance: "Stock Count Variance",
+    reasonWaste: "Waste",
+    reasonBelowCost: "Items Sold Below Cost",
+    totalHiddenProfit: "Total Hidden Profit",
+
     marginAnalysisTitle: "Margin Analysis",
     marginAnalysisIntro: "Gross margin, net margin, contribution margin, and the real profit left after every cost, for a chosen period.",
     grossMarginRatio: "Gross Margin",
@@ -1239,6 +1279,30 @@ const en: typeof ar = {
     recipeCostIntro: "Each menu item's real cost, computed from its actual recipe ingredients at current prices, against its selling price.",
     hasRecipe: "Has Recipe?",
     sellingPrice: "Selling Price",
+
+    physicalStockCountsTitle: "Physical Stock Count",
+    physicalStockCountsIntro:
+      "Log a physical count for any item to compare against the system's balance. This only records the variance — it does not automatically adjust the stock balance.",
+    newCount: "+ New Count",
+    countDate: "Count Date",
+    systemQuantity: "System Quantity",
+    countedQuantity: "Counted Quantity",
+    variance: "Variance",
+    varianceValue: "Variance Value",
+    confirmDeleteCount: "Delete this count entry?",
+    notesOptional: "Notes (optional)",
+
+    wasteEntriesTitle: "Waste & Damage",
+    wasteEntriesIntro: "Recording waste creates a real stock issue that posts to the books just like any other issue.",
+    newWasteEntry: "+ Record Waste",
+    wasteDate: "Waste Date",
+    wasteReason: "Reason",
+    wasteReasonWaste: "General Waste",
+    wasteReasonExpired: "Expired",
+    wasteReasonDamaged: "Damaged",
+    wasteReasonProductionWaste: "Production Waste",
+    wasteReasonOverPortion: "Over Portion",
+    wasteReasonUnknown: "Unknown",
   },
   restaurant: {
     menuTitle: "Menu & Recipes",

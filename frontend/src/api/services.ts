@@ -17,6 +17,11 @@ import type {
   InventoryMovementReport,
   PurchasePriceVarianceReport,
   RecipeCostReport,
+  PhysicalStockCountEntry,
+  CreatePhysicalStockCount,
+  WasteEntryRecord,
+  CreateWasteEntry,
+  HiddenProfitReport,
   BankStatementImportResult,
   BankStatementLine,
   ChatTurnResponse,
@@ -229,6 +234,8 @@ export const FinancialReportsApi = {
     apiClient.get<CustomerProfitabilityReport>("/financialreports/customer-profitability", { params: { fromDate, toDate } }),
   salesChannelProfitability: (fromDate: string, toDate: string) =>
     apiClient.get<SalesChannelProfitabilityReport>("/financialreports/sales-channel-profitability", { params: { fromDate, toDate } }),
+  hiddenProfit: (fromDate: string, toDate: string) =>
+    apiClient.get<HiddenProfitReport>("/financialreports/hidden-profit", { params: { fromDate, toDate } }),
 };
 
 export const ManualProfitEntriesApi = {
@@ -246,6 +253,17 @@ export const InventoryReportsApi = {
   purchasePriceVariance: (fromDate: string, toDate: string) =>
     apiClient.get<PurchasePriceVarianceReport>("/inventoryreports/purchase-price-variance", { params: { fromDate, toDate } }),
   recipeCost: () => apiClient.get<RecipeCostReport>("/inventoryreports/recipe-cost"),
+};
+
+export const PhysicalStockCountsApi = {
+  getAll: () => apiClient.get<PhysicalStockCountEntry[]>("/physicalstockcounts"),
+  create: (dto: CreatePhysicalStockCount) => apiClient.post<PhysicalStockCountEntry>("/physicalstockcounts", dto),
+  remove: (id: string) => apiClient.delete(`/physicalstockcounts/${id}`),
+};
+
+export const WasteEntriesApi = {
+  getAll: () => apiClient.get<WasteEntryRecord[]>("/wasteentries"),
+  create: (dto: CreateWasteEntry) => apiClient.post<WasteEntryRecord>("/wasteentries", dto),
 };
 
 export const FiscalPeriodsAdminApi = {

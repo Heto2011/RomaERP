@@ -105,7 +105,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const profitabilityReportItems: NavSubGroupItem["subItems"] = [
     { to: "/accounting/money-flow", label: t.nav.moneyFlow },
-    { to: "", label: t.nav.hiddenProfitSoon, comingSoon: true },
+    { to: "/accounting/hidden-profit", label: t.accounting.hiddenProfitTitle },
     { to: "/accounting/margin-analysis#real-profit", label: t.accounting.realProfitTitle },
     { to: "/accounting/item-profitability", label: t.nav.itemProfitability },
     { to: "/accounting/customer-profitability", label: t.nav.customerProfitability },
@@ -200,6 +200,8 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/inventory/items", label: t.nav.items, icon: <IconBox /> },
         { to: "/inventory/warehouses", label: t.nav.warehouses, icon: <IconArchive /> },
         { to: "/inventory/movements", label: t.nav.stockMovements, icon: <IconSwap /> },
+        { to: "/inventory/physical-stock-counts", label: t.inventory.physicalStockCountsTitle, icon: <IconCheck /> },
+        { to: "/inventory/waste-entries", label: t.inventory.wasteEntriesTitle, icon: <IconTrendDown /> },
         { subGroup: t.inventory.inventoryReports, icon: <IconBarChart />, subItems: inventoryReportItems },
       ],
     },

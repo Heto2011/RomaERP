@@ -351,6 +351,71 @@ export interface RecipeCostReport {
   items: RecipeCostLine[];
 }
 
+export interface PhysicalStockCountEntry {
+  id: string;
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  countDate: string;
+  systemQuantity: number;
+  countedQuantity: number;
+  variance: number;
+  unitCost: number;
+  varianceValue: number;
+  notes: string | null;
+}
+
+export interface CreatePhysicalStockCount {
+  itemId: string;
+  countDate: string;
+  countedQuantity: number;
+  notes: string | null;
+}
+
+export enum WasteReason {
+  Waste = 1,
+  Expired = 2,
+  Damaged = 3,
+  ProductionWaste = 4,
+  OverPortion = 5,
+  Unknown = 6,
+}
+
+export interface WasteEntryRecord {
+  id: string;
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  wasteDate: string;
+  quantity: number;
+  unitCost: number;
+  totalCost: number;
+  reason: WasteReason;
+  notes: string | null;
+}
+
+export interface CreateWasteEntry {
+  itemId: string;
+  warehouseId: string;
+  fiscalPeriodId: string;
+  wasteDate: string;
+  quantity: number;
+  reason: WasteReason;
+  notes: string | null;
+}
+
+export interface HiddenProfitLine {
+  reasonCode: string;
+  amount: number;
+}
+
+export interface HiddenProfitReport {
+  fromDate: string;
+  toDate: string;
+  lines: HiddenProfitLine[];
+  totalImpact: number;
+}
+
 export enum ChatRole {
   User = 1,
   Assistant = 2,

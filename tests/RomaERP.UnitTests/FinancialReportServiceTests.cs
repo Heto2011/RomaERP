@@ -584,4 +584,67 @@ public class FinancialReportServiceTests
         Assert.Equal(9, report.Channels[1].Cost);
         Assert.Equal(21, report.Channels[1].GrossProfit);
     }
+
+    [Fact]
+    public async Task GetHiddenProfit_SumsStockVarianceWasteAndBelowCostSalesWithinRange()
+    {
+        var ctx = CreateContext();
+
+        var category = new ItemCategory { NameAr = "عام", NameEn = "General" };
+        var item = new Item { Code = "ITM-A", NameAr = "صنف أ", NameEn = "Item A", UnitOfMeasure = "قطعة", ItemCategory = category, AverageCost = 10 };
+        var customer = new Customer { Code = "C-001", NameAr = "عميل تجريبي", NameEn = "Test Customer" };
+        ctx.ItemCategories.Add(category);
+        ctx.Items.Add(item);
+        ctx.Customers.Add(customer);
+        await ctx.SaveChangesAsync();
+
+        // Stock count: counted 8 units short -> -8 * 10 = -80.
+        ctx.PhysicalStockCounts.Add(new PhysicalStockCount
+        {
+            ItemId = item.Id,
+            CountDate = new DateTime(2026, 8, 10),
+            SystemQuantity = 100,
+            CountedQuantity = 92,
+            UnitCost = 10
+        });
+
+        // Waste: 3 units at cost 10 -> -30.
+        ctx.WasteEntries.Add(new WasteEntry
+        {
+            ItemId = item.Id,
+            WasteDate = new DateTime(2026, 8, 12),
+            Quantity = 3,
+            UnitCost = 10,
+            TotalCost = 30,
+            Reason = WasteReason.Waste,
+            StockMovementId = Guid.NewGuid()
+        });
+
+        // Sold below cost: 10 units at cost 10 (=100) for only 50 -> -50 gross profit.
+        var invoice = new SalesInvoice
+        {
+            InvoiceNumber = "SI-000001",
+            InvoiceDate = new DateTime(2026, 8, 14),
+            Customer = customer,
+            CustomerId = customer.Id,
+            SubTotal = 50,
+            VatRate = 0,
+            VatAmount = 0,
+            TotalAmount = 50,
+            Lines = new List<SalesInvoiceLine>
+            {
+                new() { LineNumber = 1, Description = "صنف أ", Quantity = 10, UnitPrice = 5, LineTotal = 50, ItemId = item.Id }
+            }
+        };
+        ctx.SalesInvoices.Add(invoice);
+        await ctx.SaveChangesAsync();
+
+        var service = new FinancialReportService(ctx);
+        var report = await service.GetHiddenProfitAsync(new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+
+        Assert.Equal(-80, report.Lines.Single(l => l.ReasonCode == "stock-variance").Amount);
+        Assert.Equal(-30, report.Lines.Single(l => l.ReasonCode == "waste").Amount);
+        Assert.Equal(-50, report.Lines.Single(l => l.ReasonCode == "below-cost").Amount);
+        Assert.Equal(-160, report.TotalImpact);
+    }
 }

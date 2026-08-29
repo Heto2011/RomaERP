@@ -86,3 +86,44 @@ public class StockMovementConfiguration : IEntityTypeConfiguration<StockMovement
         builder.HasQueryFilter(m => !m.IsDeleted);
     }
 }
+
+public class PhysicalStockCountConfiguration : IEntityTypeConfiguration<PhysicalStockCount>
+{
+    public void Configure(EntityTypeBuilder<PhysicalStockCount> builder)
+    {
+        builder.Property(c => c.SystemQuantity).HasPrecision(18, 4);
+        builder.Property(c => c.CountedQuantity).HasPrecision(18, 4);
+        builder.Property(c => c.UnitCost).HasPrecision(18, 4);
+        builder.Property(c => c.Notes).HasMaxLength(500);
+
+        builder.HasOne(c => c.Item)
+            .WithMany()
+            .HasForeignKey(c => c.ItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(c => !c.IsDeleted);
+    }
+}
+
+public class WasteEntryConfiguration : IEntityTypeConfiguration<WasteEntry>
+{
+    public void Configure(EntityTypeBuilder<WasteEntry> builder)
+    {
+        builder.Property(w => w.Quantity).HasPrecision(18, 4);
+        builder.Property(w => w.UnitCost).HasPrecision(18, 4);
+        builder.Property(w => w.TotalCost).HasPrecision(18, 2);
+        builder.Property(w => w.Notes).HasMaxLength(500);
+
+        builder.HasOne(w => w.Item)
+            .WithMany()
+            .HasForeignKey(w => w.ItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(w => w.StockMovement)
+            .WithMany()
+            .HasForeignKey(w => w.StockMovementId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(w => !w.IsDeleted);
+    }
+}
