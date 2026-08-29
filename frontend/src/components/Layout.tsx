@@ -37,6 +37,20 @@ import {
 
 const SIDEBAR_COLLAPSED_KEY = "romaerp:sidebarCollapsed";
 const SIDEBAR_OPEN_SECTIONS_KEY = "romaerp:sidebarOpenSections";
+const SIDEBAR_OPEN_SUBGROUPS_KEY = "romaerp:sidebarOpenSubgroups";
+
+interface NavLeafItem {
+  to: string;
+  label: string;
+  icon: ReactNode;
+  comingSoon?: boolean;
+}
+interface NavSubGroupItem {
+  subGroup: string;
+  icon: ReactNode;
+  subItems: { to: string; label: string; comingSoon?: boolean }[];
+}
+type NavItem = NavLeafItem | NavSubGroupItem;
 
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
@@ -47,6 +61,13 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
     try {
       return JSON.parse(localStorage.getItem(SIDEBAR_OPEN_SECTIONS_KEY) || "{}");
+    } catch {
+      return {};
+    }
+  });
+  const [openSubGroups, setOpenSubGroups] = useState<Record<string, boolean>>(() => {
+    try {
+      return JSON.parse(localStorage.getItem(SIDEBAR_OPEN_SUBGROUPS_KEY) || "{}");
     } catch {
       return {};
     }
@@ -68,7 +89,36 @@ export default function Layout({ children }: { children: ReactNode }) {
     });
   }
 
-  const links = [
+  function toggleSubGroup(subGroup: string) {
+    setOpenSubGroups((prev) => {
+      const next = { ...prev, [subGroup]: !prev[subGroup] };
+      localStorage.setItem(SIDEBAR_OPEN_SUBGROUPS_KEY, JSON.stringify(next));
+      return next;
+    });
+  }
+
+  function matchesPath(to: string) {
+    if (!to) return false;
+    const path = to.split("#")[0];
+    return path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
+  }
+
+  const profitabilityReportItems: NavSubGroupItem["subItems"] = [
+    { to: "/accounting/money-flow", label: t.nav.moneyFlow },
+    { to: "", label: t.nav.hiddenProfitSoon, comingSoon: true },
+    { to: "/accounting/margin-analysis#real-profit", label: t.accounting.realProfitTitle },
+    { to: "/accounting/item-profitability", label: t.nav.itemProfitability },
+    { to: "/accounting/customer-profitability", label: t.nav.customerProfitability },
+    { to: "/accounting/branch-profitability", label: t.nav.branchProfitability },
+    { to: "/accounting/sales-channel-profitability", label: t.nav.salesChannelProfitability },
+    { to: "/accounting/margin-analysis#gross-margin", label: t.accounting.grossMarginRatio },
+    { to: "/accounting/margin-analysis#net-margin", label: t.accounting.netMarginRatio },
+    { to: "/accounting/margin-analysis#contribution-margin", label: t.accounting.contributionMarginRatio },
+    { to: "/accounting/item-profitability#top-winners", label: t.accounting.topWinners },
+    { to: "/accounting/item-profitability#top-losers", label: t.accounting.topLosers },
+  ];
+
+  const links: { section: string; items: NavItem[] }[] = [
     {
       section: t.nav.general,
       items: [
@@ -104,14 +154,9 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/accounting/cash-flow", label: t.nav.cashFlow, icon: <IconSwap /> },
         { to: "/accounting/vat-summary", label: t.nav.vatSummary, icon: <IconEdit /> },
         { to: "/accounting/cost-center-analysis", label: t.nav.costCenterAnalysis, icon: <IconBarChart /> },
-        { to: "/accounting/money-flow", label: t.nav.moneyFlow, icon: <IconDollar /> },
-        { to: "/accounting/item-profitability", label: t.nav.itemProfitability, icon: <IconTrendDown /> },
-        { to: "/accounting/customer-profitability", label: t.nav.customerProfitability, icon: <IconUsers /> },
-        { to: "/accounting/sales-channel-profitability", label: t.nav.salesChannelProfitability, icon: <IconGrid /> },
-        { to: "/accounting/margin-analysis", label: t.nav.marginAnalysis, icon: <IconBarChart /> },
+        { subGroup: t.nav.profitabilityReports, icon: <IconTrendDown />, subItems: profitabilityReportItems },
         { to: "/accounting/break-even", label: t.nav.breakEven, icon: <IconDollar /> },
         { to: "/accounting/bottleneck", label: t.nav.bottleneck, icon: <IconClock /> },
-        { to: "", label: t.nav.hiddenProfitSoon, icon: <IconTrendDown />, comingSoon: true },
         { to: "", label: t.nav.healthScoreSoon, icon: <IconShield />, comingSoon: true },
         { to: "", label: t.nav.whatIfSoon, icon: <IconRefresh />, comingSoon: true },
       ],
@@ -172,16 +217,35 @@ export default function Layout({ children }: { children: ReactNode }) {
   ];
 
   useEffect(() => {
-    const active = links.find((group) =>
-      group.items.some((item) => {
-        if (!item.to) return false;
-        return item.to === "/" ? location.pathname === "/" : location.pathname.startsWith(item.to);
-      })
-    );
-    if (active && !openSections[active.section]) {
+    let activeSection: string | null = null;
+    let activeSubGroup: string | null = null;
+    outer: for (const group of links) {
+      for (const item of group.items) {
+        if ("subGroup" in item) {
+          if (item.subItems.some((sub) => matchesPath(sub.to))) {
+            activeSection = group.section;
+            activeSubGroup = item.subGroup;
+            break outer;
+          }
+        } else if (matchesPath(item.to)) {
+          activeSection = group.section;
+          break outer;
+        }
+      }
+    }
+    if (activeSection && !openSections[activeSection]) {
+      const section = activeSection;
       setOpenSections((prev) => {
-        const next = { ...prev, [active.section]: true };
+        const next = { ...prev, [section]: true };
         localStorage.setItem(SIDEBAR_OPEN_SECTIONS_KEY, JSON.stringify(next));
+        return next;
+      });
+    }
+    if (activeSubGroup && !openSubGroups[activeSubGroup]) {
+      const subGroup = activeSubGroup;
+      setOpenSubGroups((prev) => {
+        const next = { ...prev, [subGroup]: true };
+        localStorage.setItem(SIDEBAR_OPEN_SUBGROUPS_KEY, JSON.stringify(next));
         return next;
       });
     }
@@ -221,8 +285,39 @@ export default function Layout({ children }: { children: ReactNode }) {
                   </button>
                 )}
                 {isOpen &&
-                  group.items.map((item) =>
-                    item.comingSoon ? (
+                  group.items.map((item) => {
+                    if ("subGroup" in item) {
+                      if (collapsed) return null;
+                      const subOpen = !!openSubGroups[item.subGroup];
+                      return (
+                        <div key={item.subGroup}>
+                          <button className="sidebar-subgroup-toggle" onClick={() => toggleSubGroup(item.subGroup)}>
+                            <span className="sidebar-icon">{item.icon}</span>
+                            <span className="link-text">{item.subGroup}</span>
+                            <IconChevron open={subOpen} />
+                          </button>
+                          {subOpen &&
+                            item.subItems.map((sub) =>
+                              sub.comingSoon ? (
+                                <span key={sub.label} className="sidebar-link sidebar-link-soon sidebar-sublink">
+                                  <span className="link-text">
+                                    {sub.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
+                                  </span>
+                                </span>
+                              ) : (
+                                <NavLink
+                                  key={sub.to}
+                                  to={sub.to}
+                                  className={({ isActive }) => "sidebar-link sidebar-sublink" + (isActive ? " active" : "")}
+                                >
+                                  <span className="link-text">{sub.label}</span>
+                                </NavLink>
+                              )
+                            )}
+                        </div>
+                      );
+                    }
+                    return item.comingSoon ? (
                       <span key={item.label} className="sidebar-link sidebar-link-soon" title={collapsed ? item.label : undefined}>
                         <span className="sidebar-icon">{item.icon}</span>
                         {!collapsed && (
@@ -242,8 +337,8 @@ export default function Layout({ children }: { children: ReactNode }) {
                         <span className="sidebar-icon">{item.icon}</span>
                         {!collapsed && <span className="link-text">{item.label}</span>}
                       </NavLink>
-                    )
-                  )}
+                    );
+                  })}
               </div>
             );
           })}

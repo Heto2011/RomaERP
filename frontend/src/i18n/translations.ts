@@ -88,8 +88,10 @@ const ar = {
     vatSummary: "ملخص الضريبة",
     costCenterAnalysis: "تحليل مراكز التكلفة",
     moneyFlow: "فين الفلوس؟",
-    itemProfitability: "ربحية الأصناف",
-    customerProfitability: "ربحية العملاء",
+    profitabilityReports: "تقارير الربحية",
+    itemProfitability: "الربح حسب المنتج",
+    customerProfitability: "الربح حسب العميل",
+    branchProfitability: "الربح حسب الفرع",
     salesChannelProfitability: "الربح حسب قناة البيع",
     marginAnalysis: "تحليل الهوامش",
     breakEven: "كام لازم أبيع؟",
@@ -334,6 +336,16 @@ const ar = {
     salesChannelProfitabilityTitle: "الربح حسب قناة البيع",
     salesChannelProfitabilityIntro:
       "الربح الحقيقي لكل قناة بيع في المطعم (صالة / تيك أواي / دليفري)، محسوب من تكلفة الوصفة الفعلية لكل صنف. (بيغطي أوردرات المطعم بس؛ فواتير المبيعات العادية لسه مفيهاش مفهوم قناة بيع.)",
+    otherChannelsManual: "قنوات إضافية (أونلاين، جملة، إلخ) — بيانات مدخلة يدويًا",
+    channelName: "اسم القناة",
+
+    branchProfitabilityTitle: "الربح حسب الفرع",
+    branchProfitabilityIntro:
+      "النظام لسه معندوش مفهوم \"فرع\" مربوط بالفواتير، فالتقرير ده بياناته بتتكتب يدويًا: اكتب اسم الفرع والإيراد والتكلفة لكل شهر، والنظام بيحسب الربح والهامش تلقائيًا من الأرقام اللي تكتبها.",
+    branchName: "اسم الفرع",
+    periodMonth: "الشهر",
+    manualEntryNote: "أرقام مُدخلة يدويًا — مش محسوبة تلقائيًا من الفواتير. الربح والهامش بيتحسبوا تلقائيًا من الإيراد والتكلفة اللي تكتبها.",
+    confirmDeleteManualEntry: "متأكد من حذف هذا السطر؟",
 
     marginAnalysisTitle: "تحليل الهوامش",
     marginAnalysisIntro: "هامش الربح الإجمالي والصافي وهامش المساهمة، والربح الحقيقي بعد خصم كل التكاليف، لفترة محددة.",
@@ -750,8 +762,10 @@ const en: typeof ar = {
     vatSummary: "VAT Summary",
     costCenterAnalysis: "Cost Center Analysis",
     moneyFlow: "Where's the Money?",
-    itemProfitability: "Item Profitability",
-    customerProfitability: "Customer Profitability",
+    profitabilityReports: "Profitability Reports",
+    itemProfitability: "Profit by Product",
+    customerProfitability: "Profit by Customer",
+    branchProfitability: "Profit by Branch",
     salesChannelProfitability: "Profit by Sales Channel",
     marginAnalysis: "Margin Analysis",
     breakEven: "How Much to Sell?",
@@ -996,6 +1010,16 @@ const en: typeof ar = {
     salesChannelProfitabilityTitle: "Profit by Sales Channel",
     salesChannelProfitabilityIntro:
       "Real profit per restaurant sales channel (Dine-in / Takeaway / Delivery), computed from each item's actual recipe cost. (Covers restaurant orders only; regular sales invoices have no channel concept yet.)",
+    otherChannelsManual: "Other Channels (Online, Wholesale, etc.) — Manually Entered",
+    channelName: "Channel Name",
+
+    branchProfitabilityTitle: "Profit by Branch",
+    branchProfitabilityIntro:
+      "The system has no Branch concept linked to invoices yet, so this report is manually entered: type each branch's name, revenue, and cost per month, and the system computes profit and margin automatically from what you enter.",
+    branchName: "Branch Name",
+    periodMonth: "Month",
+    manualEntryNote: "Manually entered figures — not computed automatically from invoices. Profit and margin are computed automatically from the revenue and cost you enter.",
+    confirmDeleteManualEntry: "Delete this entry?",
 
     marginAnalysisTitle: "Margin Analysis",
     marginAnalysisIntro: "Gross margin, net margin, contribution margin, and the real profit left after every cost, for a chosen period.",

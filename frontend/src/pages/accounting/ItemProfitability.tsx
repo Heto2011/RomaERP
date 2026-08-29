@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { FinancialReportsApi } from "../../api/services";
 import type { ItemProfitabilityReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -11,6 +12,7 @@ function firstDayOfMonth() {
 
 export default function ItemProfitabilityPage() {
   const { t } = useLanguage();
+  const location = useLocation();
   const [fromDate, setFromDate] = useState(firstDayOfMonth());
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState<ItemProfitabilityReport | null>(null);
@@ -25,6 +27,17 @@ export default function ItemProfitabilityPage() {
       setError(getErrorMessage(err));
     }
   }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!report || !location.hash) return;
+    const el = document.getElementById(location.hash.slice(1));
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [report, location.hash]);
 
   const topWinners = report ? [...report.items].sort((a, b) => b.grossProfit - a.grossProfit).slice(0, 10) : [];
   const topLosers = report ? [...report.items].sort((a, b) => a.grossProfit - b.grossProfit).slice(0, 10) : [];
@@ -87,11 +100,11 @@ export default function ItemProfitabilityPage() {
 
       {report && report.items.length > 0 && (
         <>
-          <div className="card">
+          <div className="card" id="top-winners">
             <h3 style={{ marginTop: 0 }}>🟢 {t.accounting.topWinners}</h3>
             {renderTable(topWinners)}
           </div>
-          <div className="card">
+          <div className="card" id="top-losers">
             <h3 style={{ marginTop: 0 }}>🔴 {t.accounting.topLosers}</h3>
             {renderTable(topLosers)}
           </div>

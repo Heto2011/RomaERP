@@ -9,6 +9,10 @@ import type {
   ItemProfitabilityReport,
   CustomerProfitabilityReport,
   SalesChannelProfitabilityReport,
+  ManualProfitDimension,
+  ManualProfitEntry,
+  CreateManualProfitEntry,
+  UpdateManualProfitEntry,
   BankStatementImportResult,
   BankStatementLine,
   ChatTurnResponse,
@@ -221,6 +225,14 @@ export const FinancialReportsApi = {
     apiClient.get<CustomerProfitabilityReport>("/financialreports/customer-profitability", { params: { fromDate, toDate } }),
   salesChannelProfitability: (fromDate: string, toDate: string) =>
     apiClient.get<SalesChannelProfitabilityReport>("/financialreports/sales-channel-profitability", { params: { fromDate, toDate } }),
+};
+
+export const ManualProfitEntriesApi = {
+  getAll: (dimension: ManualProfitDimension) =>
+    apiClient.get<ManualProfitEntry[]>("/manualprofitentries", { params: { dimension } }),
+  create: (dto: CreateManualProfitEntry) => apiClient.post<ManualProfitEntry>("/manualprofitentries", dto),
+  update: (id: string, dto: UpdateManualProfitEntry) => apiClient.put<ManualProfitEntry>(`/manualprofitentries/${id}`, dto),
+  remove: (id: string) => apiClient.delete(`/manualprofitentries/${id}`),
 };
 
 export const FiscalPeriodsAdminApi = {

@@ -14,6 +14,7 @@ public interface IApplicationDbContext
 {
     DbSet<Account> Accounts { get; }
     DbSet<CostCenter> CostCenters { get; }
+    DbSet<ManualProfitEntry> ManualProfitEntries { get; }
     DbSet<FiscalYear> FiscalYears { get; }
     DbSet<FiscalPeriod> FiscalPeriods { get; }
     DbSet<JournalEntry> JournalEntries { get; }

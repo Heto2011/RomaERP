@@ -21,6 +21,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
 
     public DbSet<Account> Accounts => Set<Account>();
     public DbSet<CostCenter> CostCenters => Set<CostCenter>();
+    public DbSet<ManualProfitEntry> ManualProfitEntries => Set<ManualProfitEntry>();
     public DbSet<FiscalYear> FiscalYears => Set<FiscalYear>();
     public DbSet<FiscalPeriod> FiscalPeriods => Set<FiscalPeriod>();
     public DbSet<JournalEntry> JournalEntries => Set<JournalEntry>();

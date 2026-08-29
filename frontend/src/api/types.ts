@@ -249,6 +249,37 @@ export interface SalesChannelProfitabilityReport {
   channels: SalesChannelProfitabilityLine[];
 }
 
+export enum ManualProfitDimension {
+  Branch = 1,
+  Channel = 2,
+}
+
+export interface ManualProfitEntry {
+  id: string;
+  dimension: ManualProfitDimension;
+  name: string;
+  periodMonth: string;
+  revenue: number;
+  cost: number;
+  grossProfit: number;
+  marginPercent: number;
+}
+
+export interface CreateManualProfitEntry {
+  dimension: ManualProfitDimension;
+  name: string;
+  periodMonth: string;
+  revenue: number;
+  cost: number;
+}
+
+export interface UpdateManualProfitEntry {
+  name: string;
+  periodMonth: string;
+  revenue: number;
+  cost: number;
+}
+
 export enum ChatRole {
   User = 1,
   Assistant = 2,

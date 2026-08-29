@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { FinancialReportsApi } from "../../api/services";
-import { RestaurantOrderType, type SalesChannelProfitabilityReport } from "../../api/types";
+import { ManualProfitDimension, RestaurantOrderType, type SalesChannelProfitabilityReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import ManualProfitGrid from "../../components/ManualProfitGrid";
 
 function firstDayOfMonth() {
   const d = new Date();
@@ -83,6 +84,9 @@ export default function SalesChannelProfitabilityPage() {
           </table>
         </div>
       )}
+
+      <h3>{t.accounting.otherChannelsManual}</h3>
+      <ManualProfitGrid dimension={ManualProfitDimension.Channel} nameLabel={t.accounting.channelName} />
     </div>
   );
 }

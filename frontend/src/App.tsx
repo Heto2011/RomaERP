@@ -18,6 +18,7 @@ import VatSummaryPage from "./pages/accounting/VatSummary";
 import MoneyFlowPage from "./pages/accounting/MoneyFlow";
 import ItemProfitabilityPage from "./pages/accounting/ItemProfitability";
 import CustomerProfitabilityPage from "./pages/accounting/CustomerProfitability";
+import BranchProfitabilityPage from "./pages/accounting/BranchProfitability";
 import SalesChannelProfitabilityPage from "./pages/accounting/SalesChannelProfitability";
 import MarginAnalysisPage from "./pages/accounting/MarginAnalysis";
 import BreakEvenPage from "./pages/accounting/BreakEven";
@@ -75,6 +76,7 @@ export default function App() {
       <Route path="/accounting/money-flow" element={<ProtectedRoute><MoneyFlowPage /></ProtectedRoute>} />
       <Route path="/accounting/item-profitability" element={<ProtectedRoute><ItemProfitabilityPage /></ProtectedRoute>} />
       <Route path="/accounting/customer-profitability" element={<ProtectedRoute><CustomerProfitabilityPage /></ProtectedRoute>} />
+      <Route path="/accounting/branch-profitability" element={<ProtectedRoute><BranchProfitabilityPage /></ProtectedRoute>} />
       <Route path="/accounting/sales-channel-profitability" element={<ProtectedRoute><SalesChannelProfitabilityPage /></ProtectedRoute>} />
       <Route path="/accounting/margin-analysis" element={<ProtectedRoute><MarginAnalysisPage /></ProtectedRoute>} />
       <Route path="/accounting/break-even" element={<ProtectedRoute><BreakEvenPage /></ProtectedRoute>} />

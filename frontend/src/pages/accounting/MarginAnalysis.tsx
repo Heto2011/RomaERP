@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { FinancialReportsApi } from "../../api/services";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
@@ -23,6 +24,7 @@ interface Result {
 
 export default function MarginAnalysisPage() {
   const { t } = useLanguage();
+  const location = useLocation();
   const [fromDate, setFromDate] = useState(firstDayOfMonth());
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
   const [result, setResult] = useState<Result | null>(null);
@@ -46,6 +48,17 @@ export default function MarginAnalysisPage() {
       setError(getErrorMessage(err));
     }
   }
+
+  useEffect(() => {
+    load();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!result || !location.hash) return;
+    const el = document.getElementById(location.hash.slice(1));
+    el?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [result, location.hash]);
 
   return (
     <div>
@@ -75,14 +88,14 @@ export default function MarginAnalysisPage() {
           <div className="card">
             <table style={{ maxWidth: 480 }}>
               <tbody>
-                <tr><td>{t.accounting.grossMarginRatio}</td><td style={{ textAlign: "end" }}>{(result.grossMarginRatio * 100).toFixed(1)}%</td></tr>
-                <tr><td>{t.accounting.netMarginRatio}</td><td style={{ textAlign: "end" }}>{(result.netMarginRatio * 100).toFixed(1)}%</td></tr>
-                <tr><td>{t.accounting.contributionMarginRatio}</td><td style={{ textAlign: "end" }}>{(result.contributionMarginRatio * 100).toFixed(1)}%</td></tr>
+                <tr id="gross-margin"><td>{t.accounting.grossMarginRatio}</td><td style={{ textAlign: "end" }}>{(result.grossMarginRatio * 100).toFixed(1)}%</td></tr>
+                <tr id="net-margin"><td>{t.accounting.netMarginRatio}</td><td style={{ textAlign: "end" }}>{(result.netMarginRatio * 100).toFixed(1)}%</td></tr>
+                <tr id="contribution-margin"><td>{t.accounting.contributionMarginRatio}</td><td style={{ textAlign: "end" }}>{(result.contributionMarginRatio * 100).toFixed(1)}%</td></tr>
               </tbody>
             </table>
           </div>
 
-          <div className="card">
+          <div className="card" id="real-profit">
             <h3 style={{ marginTop: 0 }}>💰 {t.accounting.realProfitTitle}</h3>
             <div className="text-muted" style={{ marginBottom: 8 }}>{t.accounting.profitWaterfall}</div>
             <table style={{ maxWidth: 480 }}>

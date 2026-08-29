@@ -172,3 +172,14 @@ public class DepreciationRunLineConfiguration : IEntityTypeConfiguration<Depreci
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public class ManualProfitEntryConfiguration : IEntityTypeConfiguration<ManualProfitEntry>
+{
+    public void Configure(EntityTypeBuilder<ManualProfitEntry> builder)
+    {
+        builder.Property(e => e.Name).HasMaxLength(200).IsRequired();
+        builder.Property(e => e.Revenue).HasPrecision(18, 2);
+        builder.Property(e => e.Cost).HasPrecision(18, 2);
+        builder.HasQueryFilter(e => !e.IsDeleted);
+    }
+}

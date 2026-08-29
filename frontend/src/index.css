@@ -130,6 +130,34 @@ button {
   color: #fff;
 }
 
+.sidebar-subgroup-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 10px 20px;
+  text-align: start;
+}
+
+.sidebar-subgroup-toggle .link-text {
+  flex: 1;
+}
+
+.sidebar-subgroup-toggle:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sidebar-sublink {
+  padding-inline-start: 44px;
+  font-size: 13px;
+}
+
 .sidebar-link {
   display: flex;
   align-items: center;
