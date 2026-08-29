@@ -48,6 +48,8 @@ const ar = {
   language: "English",
   collapseSidebar: "طي القائمة",
   expandSidebar: "توسيع القائمة",
+  darkMode: "الوضع الليلي",
+  lightMode: "الوضع النهاري",
   nav: {
     general: "عام",
     dashboard: "لوحة التحكم",
@@ -564,6 +566,8 @@ const en: typeof ar = {
   language: "العربية",
   collapseSidebar: "Collapse menu",
   expandSidebar: "Expand menu",
+  darkMode: "Dark mode",
+  lightMode: "Light mode",
   dashboard: {
     title: "Dashboard",
     accountsCount: "Accounts",

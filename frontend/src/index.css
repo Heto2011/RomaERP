@@ -10,6 +10,20 @@
   --color-success: #2f9e5b;
   --radius: 8px;
   font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #14181d;
+  --color-surface: #1d232b;
+  --color-border: #2c3540;
+  --color-primary: #3aa0c4;
+  --color-primary-dark: #0d1114;
+  --color-text: #e5e9ee;
+  --color-muted: #8b96a3;
+  --color-danger: #e5695f;
+  --color-success: #45b579;
+  color-scheme: dark;
 }
 
 * {
@@ -207,11 +221,11 @@ td {
 th {
   color: var(--color-muted);
   font-weight: 600;
-  background: #fafbfc;
+  background: var(--color-bg);
 }
 
 tr:hover td {
-  background: #fafbfc;
+  background: var(--color-bg);
 }
 
 .btn {
@@ -230,13 +244,13 @@ tr:hover td {
 }
 
 .btn-secondary {
-  background: #fff;
+  background: var(--color-surface);
   color: var(--color-text);
   border: 1px solid var(--color-border);
 }
 
 .btn-secondary:hover {
-  background: #f2f3f5;
+  background: var(--color-bg);
 }
 
 .btn-danger {
@@ -325,7 +339,7 @@ tr:hover td {
 }
 
 .login-card {
-  background: #fff;
+  background: var(--color-surface);
   padding: 40px;
   border-radius: 12px;
   width: 360px;

@@ -248,6 +248,30 @@ export function IconShield() {
   );
 }
 
+export function IconSun() {
+  return (
+    <svg {...common}>
+      <circle cx="10" cy="10" r="3.5" />
+      <line x1="10" y1="2" x2="10" y2="4" />
+      <line x1="10" y1="16" x2="10" y2="18" />
+      <line x1="2" y1="10" x2="4" y2="10" />
+      <line x1="16" y1="10" x2="18" y2="10" />
+      <line x1="4.5" y1="4.5" x2="5.9" y2="5.9" />
+      <line x1="14.1" y1="14.1" x2="15.5" y2="15.5" />
+      <line x1="4.5" y1="15.5" x2="5.9" y2="14.1" />
+      <line x1="14.1" y1="5.9" x2="15.5" y2="4.5" />
+    </svg>
+  );
+}
+
+export function IconMoon() {
+  return (
+    <svg {...common}>
+      <path d="M16.5 12.3A6.8 6.8 0 017.7 3.5 7.2 7.2 0 1016.5 12.3z" />
+    </svg>
+  );
+}
+
 export function IconChevron({ open }: { open: boolean }) {
   return (
     <svg

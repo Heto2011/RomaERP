@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import {
   IconGrid,
@@ -29,6 +30,8 @@ import {
   IconShield,
   IconMenuToggle,
   IconChevron,
+  IconSun,
+  IconMoon,
 } from "./icons";
 
 const SIDEBAR_COLLAPSED_KEY = "romaerp:sidebarCollapsed";
@@ -37,6 +40,7 @@ const SIDEBAR_OPEN_SECTIONS_KEY = "romaerp:sidebarOpenSections";
 export default function Layout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const { t, lang, setLang } = useLanguage();
+  const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
@@ -168,9 +172,14 @@ export default function Layout({ children }: { children: ReactNode }) {
       <aside className={"sidebar" + (collapsed ? " collapsed" : "")}>
         <div className="sidebar-brand">
           {!collapsed && <span className="brand-text">{t.appName}</span>}
-          <button className="sidebar-toggle" onClick={toggleCollapsed} title={collapsed ? t.expandSidebar : t.collapseSidebar}>
-            <IconMenuToggle collapsed={collapsed} />
-          </button>
+          <div style={{ display: "flex", gap: 4 }}>
+            <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>
+              {theme === "dark" ? <IconSun /> : <IconMoon />}
+            </button>
+            <button className="sidebar-toggle" onClick={toggleCollapsed} title={collapsed ? t.expandSidebar : t.collapseSidebar}>
+              <IconMenuToggle collapsed={collapsed} />
+            </button>
+          </div>
         </div>
         {!collapsed && (
           <div style={{ padding: "0 20px 12px" }}>
