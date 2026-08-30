@@ -7,6 +7,7 @@ import type {
   VatSummary,
   CashFlowStatement,
   CashFlowIntelligence,
+  LaborReport,
   ItemProfitabilityReport,
   CustomerProfitabilityReport,
   SalesChannelProfitabilityReport,
@@ -263,6 +264,8 @@ export const FinancialReportsApi = {
     apiClient.get<ForecastReport>("/financialreports/forecast", { params: { asOfDate, historyMonths, forecastMonths } }),
   cashFlowIntelligence: (asOfDate: string) =>
     apiClient.get<CashFlowIntelligence>("/financialreports/cash-flow-intelligence", { params: { asOfDate } }),
+  laborReport: (fromDate: string, toDate: string) =>
+    apiClient.get<LaborReport>("/financialreports/labor-report", { params: { fromDate, toDate } }),
 };
 
 export const ManualProfitEntriesApi = {

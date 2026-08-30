@@ -15,4 +15,5 @@ public interface IFinancialReportService
     Task<HiddenProfitReportDto> GetHiddenProfitAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
     Task<ForecastReportDto> GetForecastAsync(DateTime asOfDate, int historyMonths, int forecastMonths, CancellationToken ct = default);
     Task<CashFlowIntelligenceDto> GetCashFlowIntelligenceAsync(DateTime asOfDate, CancellationToken ct = default);
+    Task<LaborReportDto> GetLaborReportAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default);
 }

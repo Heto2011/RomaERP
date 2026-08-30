@@ -529,6 +529,15 @@ const ar = {
     allowances: "البدلات",
     deductions: "الاستقطاعات",
     netSalary: "الصافي",
+
+    laborReportTitle: "تقرير العمالة",
+    laborReportIntro:
+      "تكلفة العمالة كنسبة من المبيعات (من دورات الرواتب المرحّلة فعليًا)، ومبيعات كل موظف من طلبات المطعم المفوترة — يغطي مبيعات المطعم فقط، لأن فواتير البيع العادية مفيهاش ربط بموظف حاليًا.",
+    totalPayroll: "إجمالي الرواتب",
+    laborCostPercent: "تكلفة العمالة كنسبة من المبيعات",
+    salesByEmployee: "مبيعات كل موظف",
+    salesByEmployeeNote: "بيتحسب من الجرسون اللي أخد الطلب، أو الكاشير اللي حصّله لو مفيش جرسون مسجل.",
+    ordersHandled: "عدد الطلبات",
   },
   inventory: {
     itemsTitle: "الأصناف",
@@ -1392,6 +1401,15 @@ const en: typeof ar = {
     allowances: "Allowances",
     deductions: "Deductions",
     netSalary: "Net Salary",
+
+    laborReportTitle: "Labor Report",
+    laborReportIntro:
+      "Labor cost as a percentage of sales (from actually-posted payroll runs), plus each employee's sales from billed restaurant orders — covers restaurant-channel sales only, since regular sales invoices carry no employee link yet.",
+    totalPayroll: "Total Payroll",
+    laborCostPercent: "Labor Cost as % of Sales",
+    salesByEmployee: "Sales by Employee",
+    salesByEmployeeNote: "Attributed to the waiter who took the order, or the cashier who billed it if no waiter was recorded.",
+    ordersHandled: "Orders Handled",
   },
   inventory: {
     itemsTitle: "Items",

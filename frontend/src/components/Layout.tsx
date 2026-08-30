@@ -222,6 +222,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/hr/positions", label: t.nav.positions, icon: <IconBriefcase /> },
         { to: "/hr/employees", label: t.nav.employees, icon: <IconUsers /> },
         { to: "/hr/payroll", label: t.nav.payroll, icon: <IconDollar /> },
+        { to: "/hr/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
       ],
     },
     {

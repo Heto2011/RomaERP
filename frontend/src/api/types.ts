@@ -220,6 +220,22 @@ export interface CashFlowIntelligence {
   firstWeekBelowZero: string | null;
 }
 
+export interface EmployeeSalesLine {
+  employeeId: string;
+  employeeName: string;
+  salesTotal: number;
+  orderCount: number;
+}
+
+export interface LaborReport {
+  fromDate: string;
+  toDate: string;
+  totalPayroll: number;
+  totalSalesRevenue: number;
+  laborCostPercent: number | null;
+  salesByEmployee: EmployeeSalesLine[];
+}
+
 export interface ItemProfitabilityLine {
   itemId: string;
   itemCode: string;

@@ -3,6 +3,7 @@ using RomaERP.Application.Accounting;
 using RomaERP.Application.Accounting.DTOs;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Accounting;
+using RomaERP.Domain.HR;
 using RomaERP.Domain.Restaurant;
 using RomaERP.Domain.Inventory;
 
@@ -579,6 +580,54 @@ public class FinancialReportService : IFinancialReportService
             ToDate = toDate,
             Lines = lines,
             TotalImpact = lines.Sum(l => l.Amount)
+        };
+    }
+
+    public async Task<LaborReportDto> GetLaborReportAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var totalPayroll = await _context.PayrollRunLines
+            .AsNoTracking()
+            .Include(l => l.PayrollRun)
+            .Where(l => l.PayrollRun!.Status == PayrollRunStatus.Posted
+                        && l.PayrollRun.RunDate >= fromDate
+                        && l.PayrollRun.RunDate <= toDate)
+            .SumAsync(l => l.NetSalary, ct);
+
+        var income = await GetIncomeStatementAsync(fromDate, toDate, ct);
+        var totalSalesRevenue = income.TotalRevenue;
+
+        var billedOrders = await _context.RestaurantOrders
+            .AsNoTracking()
+            .Include(o => o.WaiterEmployee)
+            .Include(o => o.CashierShift!).ThenInclude(s => s.Employee)
+            .Include(o => o.SalesInvoice)
+            .Where(o => o.Status == RestaurantOrderStatus.Billed
+                        && o.OrderDate >= fromDate
+                        && o.OrderDate <= toDate)
+            .ToListAsync(ct);
+
+        var salesByEmployee = billedOrders
+            .Select(o => new { Employee = o.WaiterEmployee ?? o.CashierShift?.Employee, Amount = o.SalesInvoice?.SubTotal ?? 0 })
+            .Where(x => x.Employee != null)
+            .GroupBy(x => x.Employee!.Id)
+            .Select(g => new EmployeeSalesLineDto
+            {
+                EmployeeId = g.Key,
+                EmployeeName = g.First().Employee!.FullNameAr,
+                SalesTotal = g.Sum(x => x.Amount),
+                OrderCount = g.Count()
+            })
+            .OrderByDescending(l => l.SalesTotal)
+            .ToList();
+
+        return new LaborReportDto
+        {
+            FromDate = fromDate,
+            ToDate = toDate,
+            TotalPayroll = totalPayroll,
+            TotalSalesRevenue = totalSalesRevenue,
+            LaborCostPercent = totalSalesRevenue != 0 ? Math.Round(totalPayroll / totalSalesRevenue * 100, 2) : null,
+            SalesByEmployee = salesByEmployee
         };
     }
 

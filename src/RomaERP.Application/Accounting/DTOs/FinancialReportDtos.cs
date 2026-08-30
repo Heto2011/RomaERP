@@ -227,3 +227,26 @@ public class HiddenProfitReportDto
     public List<HiddenProfitLineDto> Lines { get; set; } = new();
     public decimal TotalImpact { get; set; }
 }
+
+public class EmployeeSalesLineDto
+{
+    public Guid EmployeeId { get; set; }
+    public string EmployeeName { get; set; } = string.Empty;
+    public decimal SalesTotal { get; set; }
+    public int OrderCount { get; set; }
+}
+
+/// <summary>TotalPayroll sums NetSalary from Posted (GL-committed) PayrollRunLine rows whose run date falls in
+/// the period — Draft/Approved-but-unposted runs aren't real payroll expense yet. SalesByEmployee attributes
+/// each billed RestaurantOrder to its WaiterEmployee, falling back to the cashier who billed it (via
+/// CashierShift) when no waiter was recorded; it only covers restaurant-channel sales, since regular
+/// (non-restaurant) SalesInvoices carry no employee reference in RomaERP's current data model.</summary>
+public class LaborReportDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public decimal TotalPayroll { get; set; }
+    public decimal TotalSalesRevenue { get; set; }
+    public decimal? LaborCostPercent { get; set; }
+    public List<EmployeeSalesLineDto> SalesByEmployee { get; set; } = new();
+}
