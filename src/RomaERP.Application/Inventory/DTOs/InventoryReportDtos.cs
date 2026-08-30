@@ -1,3 +1,5 @@
+using RomaERP.Domain.Inventory;
+
 namespace RomaERP.Application.Inventory.DTOs;
 
 public class StockValuationLineDto
@@ -67,8 +69,7 @@ public class PurchasePriceVarianceLineDto
 }
 
 /// <summary>Compares each item's most recent stock-receipt cost (within the period) against its prior receipt
-/// cost. RomaERP's PurchaseInvoiceLine has no ItemId (purchase invoices aren't linked to inventory items), so
-/// this uses StockMovement Receipt rows — the only place a per-item cost history actually exists. Items with
+/// cost, using StockMovement Receipt rows — the actual cost applied to stock at each receipt. Items with
 /// fewer than two receipts ever are excluded — there's nothing real to compare.</summary>
 public class PurchasePriceVarianceReportDto
 {
@@ -96,4 +97,45 @@ public class RecipeCostLineDto
 public class RecipeCostReportDto
 {
     public List<RecipeCostLineDto> Items { get; set; } = new();
+}
+
+public class WasteByItemLineDto
+{
+    public Guid ItemId { get; set; }
+    public string ItemCode { get; set; } = string.Empty;
+    public string ItemName { get; set; } = string.Empty;
+    public decimal TotalQuantity { get; set; }
+    public decimal TotalCost { get; set; }
+    public int EntryCount { get; set; }
+}
+
+public class WasteByReasonLineDto
+{
+    public WasteReason Reason { get; set; }
+    public decimal TotalCost { get; set; }
+    public decimal PercentOfTotal { get; set; }
+}
+
+public class WasteTrendPointDto
+{
+    public DateTime WeekStart { get; set; }
+    public decimal TotalCost { get; set; }
+}
+
+/// <summary>Aggregates real WasteEntry records (each one a genuine GL-posted stock issue, not an estimate) into
+/// a trend, a per-item breakdown, and a reason breakdown for the period. WasteCostPercentOfCogs compares total
+/// waste cost against total COGS issued in the same period (from real StockMovement Issue rows) — the closest
+/// thing to a "waste as % of usage" figure RomaERP's data actually supports; it is not a percentage of sales
+/// revenue, since waste spans channels (POS, direct sales, manual issues) that aren't all revenue-bearing.</summary>
+public class WasteAnalysisReportDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public decimal TotalWasteCost { get; set; }
+    public decimal TotalWasteQuantity { get; set; }
+    public decimal CogsInPeriod { get; set; }
+    public decimal? WasteCostPercentOfCogs { get; set; }
+    public List<WasteByItemLineDto> TopWastedItems { get; set; } = new();
+    public List<WasteByReasonLineDto> ByReason { get; set; } = new();
+    public List<WasteTrendPointDto> WeeklyTrend { get; set; } = new();
 }

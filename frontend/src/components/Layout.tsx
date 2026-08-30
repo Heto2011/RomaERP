@@ -141,6 +141,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: "/inventory/physical-stock-counts", label: t.inventory.navStockCountVariance },
     { to: "/inventory/waste-entries", label: t.inventory.navWaste },
     { to: "/inventory/waste-entries", label: t.inventory.navDamaged },
+    { to: "/inventory/reports/waste-analysis", label: t.inventory.wasteAnalysisTitle },
     { to: "", label: t.inventory.navAbnormalConsumption, comingSoon: true },
     { to: "/inventory/reports/movement-analysis#atrisk", label: t.inventory.navAtRiskItems },
     { to: "/inventory/reports/movement-analysis#excess", label: t.inventory.navExcessStock },

@@ -17,6 +17,7 @@ import type {
   InventoryMovementReport,
   PurchasePriceVarianceReport,
   RecipeCostReport,
+  WasteAnalysisReport,
   PhysicalStockCountEntry,
   CreatePhysicalStockCount,
   WasteEntryRecord,
@@ -275,6 +276,8 @@ export const InventoryReportsApi = {
   purchasePriceVariance: (fromDate: string, toDate: string) =>
     apiClient.get<PurchasePriceVarianceReport>("/inventoryreports/purchase-price-variance", { params: { fromDate, toDate } }),
   recipeCost: () => apiClient.get<RecipeCostReport>("/inventoryreports/recipe-cost"),
+  wasteAnalysis: (fromDate: string, toDate: string) =>
+    apiClient.get<WasteAnalysisReport>("/inventoryreports/waste-analysis", { params: { fromDate, toDate } }),
 };
 
 export const PhysicalStockCountsApi = {

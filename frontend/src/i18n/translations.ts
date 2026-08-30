@@ -585,6 +585,15 @@ const ar = {
     wasteReasonOverPortion: "زيادة تقديم",
     wasteReasonUnknown: "غير معروف",
 
+    wasteAnalysisTitle: "تحليل الهالك",
+    wasteAnalysisIntro: "تحليل تجميعي لكل عمليات الهالك والتالف المسجلة فعليًا في الفترة — الأصناف الأكتر هالكًا، السبب، والاتجاه الأسبوعي.",
+    totalWasteCost: "إجمالي تكلفة الهالك",
+    totalWasteQuantity: "إجمالي الكمية المهلكة",
+    wasteCostPercentOfCogs: "الهالك كنسبة من تكلفة البضاعة المصروفة",
+    weeklyWasteTrend: "الاتجاه الأسبوعي للهالك",
+    topWastedItems: "أكتر الأصناف هالكًا",
+    wasteByReason: "الهالك حسب السبب",
+
     deliveryReconciliationTitle: "مطابقة منصات التوصيل",
     deliveryReconciliationIntro:
       "ارفع كشف التسوية اللي بتصدّره من منصة التوصيل (طلبات، كريم، هنقرستيشن، إلخ) بنفس فكرة المطابقة البنكية — مفيش ربط API مباشر مع أي منصة، النظام بس بيقارن اللي وصلك بالمبيعات الحقيقية المسجلة لقناة الدليفري.",
@@ -1392,6 +1401,15 @@ const en: typeof ar = {
     wasteReasonProductionWaste: "Production Waste",
     wasteReasonOverPortion: "Over Portion",
     wasteReasonUnknown: "Unknown",
+
+    wasteAnalysisTitle: "Waste Analysis",
+    wasteAnalysisIntro: "An aggregate view over every real waste/damage entry recorded in the period — top wasted items, breakdown by reason, and the weekly trend.",
+    totalWasteCost: "Total Waste Cost",
+    totalWasteQuantity: "Total Quantity Wasted",
+    wasteCostPercentOfCogs: "Waste as % of COGS Issued",
+    weeklyWasteTrend: "Weekly Waste Trend",
+    topWastedItems: "Top Wasted Items",
+    wasteByReason: "Waste by Reason",
 
     deliveryReconciliationTitle: "Delivery Platform Reconciliation",
     deliveryReconciliationIntro:

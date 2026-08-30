@@ -351,6 +351,38 @@ export interface RecipeCostReport {
   items: RecipeCostLine[];
 }
 
+export interface WasteByItemLine {
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  totalQuantity: number;
+  totalCost: number;
+  entryCount: number;
+}
+
+export interface WasteByReasonLine {
+  reason: WasteReason;
+  totalCost: number;
+  percentOfTotal: number;
+}
+
+export interface WasteTrendPoint {
+  weekStart: string;
+  totalCost: number;
+}
+
+export interface WasteAnalysisReport {
+  fromDate: string;
+  toDate: string;
+  totalWasteCost: number;
+  totalWasteQuantity: number;
+  cogsInPeriod: number;
+  wasteCostPercentOfCogs: number | null;
+  topWastedItems: WasteByItemLine[];
+  byReason: WasteByReasonLine[];
+  weeklyTrend: WasteTrendPoint[];
+}
+
 export interface PhysicalStockCountEntry {
   id: string;
   itemId: string;

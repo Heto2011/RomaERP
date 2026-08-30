@@ -178,4 +178,65 @@ public class InventoryReportService : IInventoryReportService
 
         return new RecipeCostReportDto { Items = lines };
     }
+
+    public async Task<WasteAnalysisReportDto> GetWasteAnalysisAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var entries = await _context.WasteEntries
+            .AsNoTracking()
+            .Include(w => w.Item)
+            .Where(w => !w.IsDeleted && w.WasteDate >= fromDate && w.WasteDate <= toDate)
+            .ToListAsync(ct);
+
+        var totalWasteCost = entries.Sum(w => w.TotalCost);
+        var totalWasteQuantity = entries.Sum(w => w.Quantity);
+
+        var cogsInPeriod = await _context.StockMovements
+            .AsNoTracking()
+            .Where(m => m.MovementType == StockMovementType.Issue && m.MovementDate >= fromDate && m.MovementDate <= toDate)
+            .SumAsync(m => m.TotalCost, ct);
+
+        var topWastedItems = entries
+            .GroupBy(w => w.ItemId)
+            .Select(g => new WasteByItemLineDto
+            {
+                ItemId = g.Key,
+                ItemCode = g.First().Item!.Code,
+                ItemName = g.First().Item!.NameAr,
+                TotalQuantity = g.Sum(w => w.Quantity),
+                TotalCost = g.Sum(w => w.TotalCost),
+                EntryCount = g.Count()
+            })
+            .OrderByDescending(l => l.TotalCost)
+            .ToList();
+
+        var byReason = entries
+            .GroupBy(w => w.Reason)
+            .Select(g => new WasteByReasonLineDto
+            {
+                Reason = g.Key,
+                TotalCost = g.Sum(w => w.TotalCost),
+                PercentOfTotal = totalWasteCost != 0 ? Math.Round(g.Sum(w => w.TotalCost) / totalWasteCost * 100, 2) : 0
+            })
+            .OrderByDescending(l => l.TotalCost)
+            .ToList();
+
+        var weeklyTrend = entries
+            .GroupBy(w => w.WasteDate.Date.AddDays(-(int)w.WasteDate.DayOfWeek))
+            .Select(g => new WasteTrendPointDto { WeekStart = g.Key, TotalCost = g.Sum(w => w.TotalCost) })
+            .OrderBy(p => p.WeekStart)
+            .ToList();
+
+        return new WasteAnalysisReportDto
+        {
+            FromDate = fromDate,
+            ToDate = toDate,
+            TotalWasteCost = totalWasteCost,
+            TotalWasteQuantity = totalWasteQuantity,
+            CogsInPeriod = cogsInPeriod,
+            WasteCostPercentOfCogs = cogsInPeriod != 0 ? Math.Round(totalWasteCost / cogsInPeriod * 100, 2) : null,
+            TopWastedItems = topWastedItems,
+            ByReason = byReason,
+            WeeklyTrend = weeklyTrend
+        };
+    }
 }

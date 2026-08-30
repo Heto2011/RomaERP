@@ -34,4 +34,9 @@ public class InventoryReportsController : ControllerBase
     [HttpGet("recipe-cost")]
     public async Task<ActionResult<RecipeCostReportDto>> GetRecipeCost(CancellationToken ct)
         => Ok(await _service.GetRecipeCostAsync(ct));
+
+    [HttpGet("waste-analysis")]
+    public async Task<ActionResult<WasteAnalysisReportDto>> GetWasteAnalysis(
+        [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
+        => Ok(await _service.GetWasteAnalysisAsync(fromDate, toDate, ct));
 }

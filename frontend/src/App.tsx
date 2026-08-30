@@ -46,6 +46,7 @@ import PurchasePriceVariancePage from "./pages/inventory/PurchasePriceVariance";
 import RecipeCostPage from "./pages/inventory/RecipeCost";
 import PhysicalStockCountsPage from "./pages/inventory/PhysicalStockCounts";
 import WasteEntriesPage from "./pages/inventory/WasteEntries";
+import WasteAnalysisPage from "./pages/inventory/WasteAnalysis";
 import HiddenProfitPage from "./pages/accounting/HiddenProfit";
 import ForecastPage from "./pages/accounting/Forecast";
 import AiAssistant from "./pages/assistant/AiAssistant";
@@ -115,6 +116,7 @@ export default function App() {
       <Route path="/inventory/reports/movement-analysis" element={<ProtectedRoute><InventoryMovementPage /></ProtectedRoute>} />
       <Route path="/inventory/reports/purchase-price-variance" element={<ProtectedRoute><PurchasePriceVariancePage /></ProtectedRoute>} />
       <Route path="/inventory/reports/recipe-cost" element={<ProtectedRoute><RecipeCostPage /></ProtectedRoute>} />
+      <Route path="/inventory/reports/waste-analysis" element={<ProtectedRoute><WasteAnalysisPage /></ProtectedRoute>} />
       <Route path="/inventory/physical-stock-counts" element={<ProtectedRoute><PhysicalStockCountsPage /></ProtectedRoute>} />
       <Route path="/inventory/waste-entries" element={<ProtectedRoute><WasteEntriesPage /></ProtectedRoute>} />
       <Route path="/accounting/hidden-profit" element={<ProtectedRoute><HiddenProfitPage /></ProtectedRoute>} />
