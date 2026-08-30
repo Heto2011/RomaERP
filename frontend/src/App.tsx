@@ -52,6 +52,7 @@ import WasteAnalysisPage from "./pages/inventory/WasteAnalysis";
 import HiddenProfitPage from "./pages/accounting/HiddenProfit";
 import ExecutiveBriefPage from "./pages/accounting/ExecutiveBrief";
 import ComparisonToolPage from "./pages/accounting/ComparisonTool";
+import SmartPricingPage from "./pages/accounting/SmartPricing";
 import ForecastPage from "./pages/accounting/Forecast";
 import AiAssistant from "./pages/assistant/AiAssistant";
 import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
@@ -128,6 +129,7 @@ export default function App() {
       <Route path="/accounting/hidden-profit" element={<ProtectedRoute><HiddenProfitPage /></ProtectedRoute>} />
       <Route path="/accounting/executive-brief" element={<ProtectedRoute><ExecutiveBriefPage /></ProtectedRoute>} />
       <Route path="/accounting/comparisons" element={<ProtectedRoute><ComparisonToolPage /></ProtectedRoute>} />
+      <Route path="/accounting/smart-pricing" element={<ProtectedRoute><SmartPricingPage /></ProtectedRoute>} />
       <Route path="/accounting/forecast" element={<ProtectedRoute><ForecastPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

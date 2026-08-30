@@ -344,6 +344,12 @@ const ar = {
     change: "التغير",
     laborCostLabel: "تكلفة العمالة",
 
+    smartPricingTitle: "الأسعار والتسعير الذكي",
+    smartPricingIntro: "السعر الحالي والتكلفة والهامش لكل صنف، مع اقتراح سعر بناءً على هامش ربح مستهدف تحدده.",
+    targetMarginPercent: "هامش الربح المستهدف",
+    suggestedPrice: "السعر المقترح",
+    priceGap: "الفرق عن السعر الحالي",
+
     moneyFlowTitle: "فين الفلوس؟",
     moneyFlowIntro: "توزيع كل جنيه/ريال من المبيعات على المصروفات وصافي الربح، كنسبة مئوية.",
     ofRevenue: "من المبيعات",
@@ -1200,6 +1206,12 @@ const en: typeof ar = {
     periodB: "Period B",
     change: "Change",
     laborCostLabel: "Labor Cost",
+
+    smartPricingTitle: "Pricing & Smart Pricing",
+    smartPricingIntro: "Current price, cost, and margin for every item, with a suggested price based on a target margin you set.",
+    targetMarginPercent: "Target Margin %",
+    suggestedPrice: "Suggested Price",
+    priceGap: "Gap vs Current Price",
 
     moneyFlowTitle: "Where Does the Money Go?",
     moneyFlowIntro: "How every unit of sales revenue splits across expenses and net profit, as a percentage.",

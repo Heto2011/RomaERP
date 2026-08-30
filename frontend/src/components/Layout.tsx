@@ -181,6 +181,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       items: [
         { to: "/accounting/executive-brief", label: t.accounting.executiveBriefTitle, icon: <IconBarChart /> },
         { to: "/accounting/comparisons", label: t.accounting.comparisonToolTitle, icon: <IconSwap /> },
+        { to: "/accounting/smart-pricing", label: t.accounting.smartPricingTitle, icon: <IconDollar /> },
         { to: "/accounting/trial-balance", label: t.nav.trialBalance, icon: <IconBarChart /> },
         { to: "/accounting/income-statement", label: t.nav.incomeStatement, icon: <IconBarChart /> },
         { to: "/accounting/balance-sheet", label: t.nav.balanceSheet, icon: <IconFile /> },
