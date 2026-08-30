@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { InventoryReportsApi } from "../../api/services";
 import type { InventoryMovementLine, InventoryMovementReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -11,13 +12,22 @@ function firstDayOfMonth() {
 
 type Filter = "all" | "atRisk" | "dead" | "excess" | "fast" | "slow";
 
+const hashToFilter: Record<string, Filter> = {
+  "#fast": "fast",
+  "#slow": "slow",
+  "#dead": "dead",
+  "#atrisk": "atRisk",
+  "#excess": "excess",
+};
+
 export default function InventoryMovementPage() {
   const { t } = useLanguage();
+  const location = useLocation();
   const [fromDate, setFromDate] = useState(firstDayOfMonth());
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState<InventoryMovementReport | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>(hashToFilter[location.hash] ?? "all");
 
   async function load() {
     setError(null);

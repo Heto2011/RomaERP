@@ -118,11 +118,32 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: "/accounting/item-profitability#top-losers", label: t.accounting.topLosers },
   ];
 
+  const costReportItems: NavSubGroupItem["subItems"] = [
+    { to: "", label: t.inventory.navActualVsStandardCost, comingSoon: true },
+    { to: "/inventory/reports/purchase-price-variance", label: t.inventory.purchasePriceVarianceTitle },
+    { to: "", label: t.inventory.navQuantityVariance, comingSoon: true },
+    { to: "", label: t.inventory.navMaterialCostVariance, comingSoon: true },
+    { to: "", label: t.inventory.navLaborCostVariance, comingSoon: true },
+    { to: "", label: t.inventory.navOverheadVariance, comingSoon: true },
+    { to: "/inventory/reports/stock-valuation", label: t.inventory.navCostPerUnit },
+    { to: "/inventory/reports/recipe-cost", label: t.inventory.navRealProductCost },
+    { to: "/inventory/reports/recipe-cost", label: t.inventory.navRecipeCostSlash },
+    { to: "", label: t.inventory.navRecipeVsActualUsage, comingSoon: true },
+  ];
+
   const inventoryReportItems: NavSubGroupItem["subItems"] = [
     { to: "/inventory/reports/stock-valuation", label: t.inventory.stockValuationTitle },
-    { to: "/inventory/reports/movement-analysis", label: t.inventory.movementAnalysisTitle },
-    { to: "/inventory/reports/purchase-price-variance", label: t.inventory.purchasePriceVarianceTitle },
-    { to: "/inventory/reports/recipe-cost", label: t.inventory.recipeCostTitle },
+    { to: "/inventory/reports/movement-analysis#slow", label: t.inventory.navSlowMovingItems },
+    { to: "/inventory/reports/movement-analysis#dead", label: t.inventory.navDeadStock },
+    { to: "/inventory/reports/movement-analysis#fast", label: t.inventory.navFastMovingItems },
+    { to: "/inventory/reports/movement-analysis", label: t.inventory.navInventoryDays },
+    { to: "/inventory/reports/movement-analysis", label: t.inventory.navInventoryTurnover },
+    { to: "/inventory/physical-stock-counts", label: t.inventory.navStockCountVariance },
+    { to: "/inventory/waste-entries", label: t.inventory.navWaste },
+    { to: "/inventory/waste-entries", label: t.inventory.navDamaged },
+    { to: "", label: t.inventory.navAbnormalConsumption, comingSoon: true },
+    { to: "/inventory/reports/movement-analysis#atrisk", label: t.inventory.navAtRiskItems },
+    { to: "/inventory/reports/movement-analysis#excess", label: t.inventory.navExcessStock },
   ];
 
   const links: { section: string; items: NavItem[] }[] = [
@@ -162,6 +183,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/accounting/vat-summary", label: t.nav.vatSummary, icon: <IconEdit /> },
         { to: "/accounting/cost-center-analysis", label: t.nav.costCenterAnalysis, icon: <IconBarChart /> },
         { subGroup: t.nav.profitabilityReports, icon: <IconTrendDown />, subItems: profitabilityReportItems },
+        { subGroup: t.inventory.costReportsGroup, icon: <IconTrendDown />, subItems: costReportItems },
         { to: "/accounting/break-even", label: t.nav.breakEven, icon: <IconDollar /> },
         { to: "/accounting/bottleneck", label: t.nav.bottleneck, icon: <IconClock /> },
         { to: "/accounting/forecast", label: t.accounting.forecastTitle, icon: <IconTrendDown /> },
@@ -318,7 +340,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                                 </span>
                               ) : (
                                 <NavLink
-                                  key={sub.to}
+                                  key={sub.label}
                                   to={sub.to}
                                   className={({ isActive }) => "sidebar-link sidebar-sublink" + (isActive ? " active" : "")}
                                 >
