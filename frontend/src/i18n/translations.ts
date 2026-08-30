@@ -337,6 +337,13 @@ const ar = {
     projectedNetChange: "صافي الحركة المتوقع",
     projectedEndingBalance: "الرصيد المتوقع",
 
+    comparisonToolTitle: "المقارنات",
+    comparisonToolIntro: "قارن بين أي فترتين زمنيتين على نفس المقاييس — إيرادات، تكلفة، هوامش، صافي الربح — باستخدام بيانات قائمة الدخل الحقيقية.",
+    periodA: "الفترة الأولى",
+    periodB: "الفترة الثانية",
+    change: "التغير",
+    laborCostLabel: "تكلفة العمالة",
+
     moneyFlowTitle: "فين الفلوس؟",
     moneyFlowIntro: "توزيع كل جنيه/ريال من المبيعات على المصروفات وصافي الربح، كنسبة مئوية.",
     ofRevenue: "من المبيعات",
@@ -1186,6 +1193,13 @@ const en: typeof ar = {
     week: "Week",
     projectedNetChange: "Projected Net Change",
     projectedEndingBalance: "Projected Ending Balance",
+
+    comparisonToolTitle: "Comparisons",
+    comparisonToolIntro: "Compare any two periods on the same metrics — revenue, cost, margins, net income — using real Income Statement data.",
+    periodA: "Period A",
+    periodB: "Period B",
+    change: "Change",
+    laborCostLabel: "Labor Cost",
 
     moneyFlowTitle: "Where Does the Money Go?",
     moneyFlowIntro: "How every unit of sales revenue splits across expenses and net profit, as a percentage.",
