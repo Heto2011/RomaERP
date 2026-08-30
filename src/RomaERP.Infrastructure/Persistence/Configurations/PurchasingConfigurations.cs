@@ -76,6 +76,11 @@ public class PurchaseInvoiceLineConfiguration : IEntityTypeConfiguration<Purchas
             .WithMany()
             .HasForeignKey(l => l.AccountId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(l => l.Item)
+            .WithMany()
+            .HasForeignKey(l => l.ItemId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }
 

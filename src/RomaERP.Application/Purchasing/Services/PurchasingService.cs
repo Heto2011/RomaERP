@@ -5,6 +5,7 @@ using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.Purchasing.DTOs;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
+using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Purchasing;
 using RomaERP.Domain.Tenancy;
 
@@ -58,6 +59,7 @@ public class PurchasingService : IPurchasingService
             .AsNoTracking()
             .Include(i => i.Vendor)
             .Include(i => i.Lines).ThenInclude(l => l.Account)
+            .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Payments)
             .OrderByDescending(i => i.InvoiceDate)
             .ThenByDescending(i => i.InvoiceNumber)
@@ -103,6 +105,15 @@ public class PurchasingService : IPurchasingService
                 throw new ValidationAppException($"لا يمكن الترحيل على حساب إجمالي ({account.Code}).");
         }
 
+        var itemIds = dto.Lines.Where(l => l.ItemId.HasValue).Select(l => l.ItemId!.Value).Distinct().ToList();
+        if (itemIds.Count > 0)
+        {
+            var existingItemIds = await _context.Items.Where(i => itemIds.Contains(i.Id) && !i.IsDeleted).Select(i => i.Id).ToListAsync(ct);
+            var missingItemId = itemIds.FirstOrDefault(id => !existingItemIds.Contains(id));
+            if (missingItemId != default)
+                throw new NotFoundException(nameof(Item), missingItemId);
+        }
+
         var vatRate = await GetVatRateAsync(ct);
 
         var lines = dto.Lines.Select((l, idx) => new PurchaseInvoiceLine
@@ -110,6 +121,7 @@ public class PurchasingService : IPurchasingService
             LineNumber = idx + 1,
             Description = l.Description,
             AccountId = l.AccountId,
+            ItemId = l.ItemId,
             Quantity = l.Quantity,
             UnitPrice = l.UnitPrice,
             LineTotal = Math.Round(l.Quantity * l.UnitPrice, 2)
@@ -324,6 +336,7 @@ public class PurchasingService : IPurchasingService
             .AsNoTracking()
             .Include(i => i.Vendor)
             .Include(i => i.Lines).ThenInclude(l => l.Account)
+            .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Payments)
             .FirstOrDefaultAsync(i => i.Id == id, ct)
             ?? throw new NotFoundException(nameof(PurchaseInvoice), id);
@@ -363,6 +376,9 @@ public class PurchasingService : IPurchasingService
             AccountId = l.AccountId,
             AccountCode = l.Account?.Code ?? string.Empty,
             AccountName = l.Account?.NameAr ?? string.Empty,
+            ItemId = l.ItemId,
+            ItemCode = l.Item?.Code,
+            ItemName = l.Item?.NameAr,
             Quantity = l.Quantity,
             UnitPrice = l.UnitPrice,
             LineTotal = l.LineTotal

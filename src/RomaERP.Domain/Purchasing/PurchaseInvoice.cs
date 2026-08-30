@@ -1,5 +1,6 @@
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
+using RomaERP.Domain.Inventory;
 
 namespace RomaERP.Domain.Purchasing;
 
@@ -42,6 +43,10 @@ public class PurchaseInvoiceLine : BaseEntity
     /// <summary>Which expense/asset account this line is coded to (e.g. rent, admin expenses, inventory).</summary>
     public Guid AccountId { get; set; }
     public Account? Account { get; set; }
+
+    /// <summary>The purchased inventory Item, when this line represents a stocked item. Null for non-item lines (rent, fees, etc.).</summary>
+    public Guid? ItemId { get; set; }
+    public Item? Item { get; set; }
 
     public decimal Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }

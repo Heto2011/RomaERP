@@ -237,6 +237,8 @@ const ar = {
     createInvoiceTitle: "فاتورة مشتريات جديدة",
     recordPaymentTitle: "تسجيل سداد دفعة",
     agingTitle: "أعمار ديون الموردين",
+    linkedItem: "الصنف المرتبط",
+    noLinkedItem: "بدون صنف",
   },
   accounting: {
     newAccount: "+ حساب جديد",
@@ -1043,6 +1045,8 @@ const en: typeof ar = {
     createInvoiceTitle: "New Purchase Invoice",
     recordPaymentTitle: "Record Payment",
     agingTitle: "Vendor AP Aging",
+    linkedItem: "Linked Item",
+    noLinkedItem: "No item",
   },
   accounting: {
     newAccount: "+ New Account",

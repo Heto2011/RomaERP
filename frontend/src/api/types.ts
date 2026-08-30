@@ -941,6 +941,7 @@ export interface CreateVendorInput {
 export interface PurchaseInvoiceLineInput {
   description: string;
   accountId: string;
+  itemId?: string | null;
   quantity: number;
   unitPrice: number;
 }
@@ -950,6 +951,9 @@ export interface PurchaseInvoiceLine {
   accountId: string;
   accountCode: string;
   accountName: string;
+  itemId: string | null;
+  itemCode: string | null;
+  itemName: string | null;
   quantity: number;
   unitPrice: number;
   lineTotal: number;

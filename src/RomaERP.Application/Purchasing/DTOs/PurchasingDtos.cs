@@ -29,6 +29,8 @@ public class PurchaseInvoiceLineInputDto
 {
     public string Description { get; set; } = string.Empty;
     public Guid AccountId { get; set; }
+    /// <summary>Optional link to the purchased inventory Item, when this line represents a stocked item.</summary>
+    public Guid? ItemId { get; set; }
     public decimal Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }
 }
@@ -49,6 +51,9 @@ public class PurchaseInvoiceLineDto
     public Guid AccountId { get; set; }
     public string AccountCode { get; set; } = string.Empty;
     public string AccountName { get; set; } = string.Empty;
+    public Guid? ItemId { get; set; }
+    public string? ItemCode { get; set; }
+    public string? ItemName { get; set; }
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
