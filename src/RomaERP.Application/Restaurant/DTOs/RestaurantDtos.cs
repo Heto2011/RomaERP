@@ -121,4 +121,7 @@ public class BillOrderDto
 {
     public PaymentTerm PaymentTerm { get; set; }
     public Guid FiscalPeriodId { get; set; }
+    /// <summary>The cashier's currently open CashierShift, if any — links this sale to that shift's
+    /// cash-drawer reconciliation. Optional so billing still works with no shift open.</summary>
+    public Guid? CashierShiftId { get; set; }
 }

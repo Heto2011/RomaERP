@@ -25,6 +25,9 @@ import type {
   ForecastReport,
   DeliverySettlementImportResult,
   DeliveryReconciliationReport,
+  CashierShift,
+  OpenCashierShiftInput,
+  CloseCashierShiftInput,
   BankStatementImportResult,
   BankStatementLine,
   ChatTurnResponse,
@@ -376,6 +379,12 @@ export const RestaurantApi = {
   removeLine: (orderId: string, lineId: string) => apiClient.delete<RestaurantOrder>(`/restaurant/orders/${orderId}/lines/${lineId}`),
   cancelOrder: (orderId: string) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/cancel`),
   billOrder: (orderId: string, data: BillOrderInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/bill`, data),
+};
+
+export const CashierShiftsApi = {
+  getActive: (employeeId: string) => apiClient.get<CashierShift | null>("/cashiershifts/active", { params: { employeeId } }),
+  open: (data: OpenCashierShiftInput) => apiClient.post<CashierShift>("/cashiershifts/open", data),
+  close: (shiftId: string, data: CloseCashierShiftInput) => apiClient.post<CashierShift>(`/cashiershifts/${shiftId}/close`, data),
 };
 
 export const UsersApi = {

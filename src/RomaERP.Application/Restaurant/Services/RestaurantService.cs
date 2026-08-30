@@ -332,6 +332,14 @@ public class RestaurantService : IRestaurantService
         if (period.IsClosed)
             throw new ValidationAppException("لا يمكن تحصيل طلب لفترة محاسبية مقفلة.");
 
+        if (dto.CashierShiftId is { } shiftId)
+        {
+            var shift = await _context.CashierShifts.FirstOrDefaultAsync(s => s.Id == shiftId, ct)
+                ?? throw new NotFoundException(nameof(CashierShift), shiftId);
+            if (shift.Status != CashierShiftStatus.Open)
+                throw new ValidationAppException("شيفت الكاشير ده مقفول، لازم تفتح شيفت جديد.");
+        }
+
         // Aggregate recipe-based ingredient consumption across the whole order and validate stock BEFORE
         // creating the invoice, so a shortage fails cleanly with nothing committed.
         var consumption = new Dictionary<Guid, (Item Item, decimal Quantity)>();
@@ -431,6 +439,7 @@ public class RestaurantService : IRestaurantService
 
         order.Status = RestaurantOrderStatus.Billed;
         order.SalesInvoiceId = invoice.Id;
+        order.CashierShiftId = dto.CashierShiftId;
         if (order.TableId is { } tableId)
         {
             var table = await _context.RestaurantTables.FirstAsync(t => t.Id == tableId, ct);

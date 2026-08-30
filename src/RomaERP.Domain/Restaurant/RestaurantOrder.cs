@@ -50,6 +50,11 @@ public class RestaurantOrder : AuditableEntity
     public Guid? SalesInvoiceId { get; set; }
     public SalesInvoice? SalesInvoice { get; set; }
 
+    /// <summary>Set when the order is billed while a cashier shift is open — links the sale to that shift's
+    /// cash-drawer reconciliation. Null for orders billed with no shift open (or before this feature existed).</summary>
+    public Guid? CashierShiftId { get; set; }
+    public CashierShift? CashierShift { get; set; }
+
     public ICollection<RestaurantOrderLine> Lines { get; set; } = new List<RestaurantOrderLine>();
 }
 

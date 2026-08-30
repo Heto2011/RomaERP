@@ -44,6 +44,7 @@ public interface IApplicationDbContext
     DbSet<MenuRecipeLine> MenuRecipeLines { get; }
     DbSet<DeliverySettlementImport> DeliverySettlementImports { get; }
     DbSet<DeliverySettlementLine> DeliverySettlementLines { get; }
+    DbSet<CashierShift> CashierShifts { get; }
 
     DbSet<ExpenseCapture> ExpenseCaptures { get; }
     DbSet<ExpenseCaptureMessage> ExpenseCaptureMessages { get; }

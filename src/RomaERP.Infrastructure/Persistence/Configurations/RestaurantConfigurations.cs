@@ -47,6 +47,11 @@ public class RestaurantOrderConfiguration : IEntityTypeConfiguration<RestaurantO
             .HasForeignKey(o => o.SalesInvoiceId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(o => o.CashierShift)
+            .WithMany()
+            .HasForeignKey(o => o.CashierShiftId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(o => o.Lines)
             .WithOne(l => l.RestaurantOrder)
             .HasForeignKey(l => l.RestaurantOrderId)
@@ -89,6 +94,24 @@ public class MenuRecipeLineConfiguration : IEntityTypeConfiguration<MenuRecipeLi
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(l => new { l.MenuItemId, l.RawMaterialItemId }).IsUnique();
+    }
+}
+
+public class CashierShiftConfiguration : IEntityTypeConfiguration<CashierShift>
+{
+    public void Configure(EntityTypeBuilder<CashierShift> builder)
+    {
+        builder.Property(s => s.OpeningFloat).HasPrecision(18, 2);
+        builder.Property(s => s.ClosingCountedCash).HasPrecision(18, 2);
+        builder.Property(s => s.ExpectedCash).HasPrecision(18, 2);
+        builder.Property(s => s.CashVariance).HasPrecision(18, 2);
+
+        builder.HasOne(s => s.Employee)
+            .WithMany()
+            .HasForeignKey(s => s.EmployeeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(s => !s.IsDeleted);
     }
 }
 

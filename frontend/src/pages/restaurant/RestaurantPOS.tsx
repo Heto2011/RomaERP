@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { LookupsApi, RestaurantApi, SalesApi, WarehousesApi } from "../../api/services";
+import { CashierShiftsApi, EmployeesApi, LookupsApi, RestaurantApi, SalesApi, WarehousesApi } from "../../api/services";
 import {
   PaymentTerm,
   RestaurantOrderType,
@@ -10,6 +10,7 @@ import {
   type MenuItem,
   type Warehouse,
   type FiscalPeriod,
+  type CashierShift,
 } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
@@ -23,6 +24,15 @@ export default function RestaurantPOS() {
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
   const [error, setError] = useState<string | null>(null);
+
+  const [employeeId, setEmployeeId] = useState<string | null>(null);
+  const [employeeError, setEmployeeError] = useState<string | null>(null);
+  const [shiftLoading, setShiftLoading] = useState(true);
+  const [activeShift, setActiveShift] = useState<CashierShift | null>(null);
+  const [openingFloat, setOpeningFloat] = useState(0);
+  const [showCloseShift, setShowCloseShift] = useState(false);
+  const [closingCountedCash, setClosingCountedCash] = useState(0);
+  const [closedShiftSummary, setClosedShiftSummary] = useState<CashierShift | null>(null);
 
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -60,6 +70,47 @@ export default function RestaurantPOS() {
   useEffect(() => {
     load();
   }, []);
+
+  useEffect(() => {
+    EmployeesApi.getMyProfile()
+      .then((res) => {
+        setEmployeeId(res.data.id);
+        return CashierShiftsApi.getActive(res.data.id);
+      })
+      .then((res) => res && setActiveShift(res.data))
+      .catch(() => setEmployeeError(t.restaurant.noEmployeeLinkedError))
+      .finally(() => setShiftLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  async function handleOpenShift(e: React.FormEvent) {
+    e.preventDefault();
+    if (!employeeId) return;
+    setError(null);
+    try {
+      const res = await CashierShiftsApi.open({ employeeId, openingFloat });
+      setActiveShift(res.data);
+      setClosedShiftSummary(null);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleCloseShift(e: React.FormEvent) {
+    e.preventDefault();
+    if (!activeShift) return;
+    setError(null);
+    try {
+      const res = await CashierShiftsApi.close(activeShift.id, { closingCountedCash });
+      setClosedShiftSummary(res.data);
+      setActiveShift(null);
+      setShowCloseShift(false);
+      setSelectedOrderId(null);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
 
   async function handleCreateOrder(e: React.FormEvent) {
     e.preventDefault();
@@ -146,7 +197,11 @@ export default function RestaurantPOS() {
     if (!selectedOrder) return;
     setError(null);
     try {
-      const res = await RestaurantApi.billOrder(selectedOrder.id, { paymentTerm: billPaymentTerm, fiscalPeriodId: billFiscalPeriodId });
+      const res = await RestaurantApi.billOrder(selectedOrder.id, {
+        paymentTerm: billPaymentTerm,
+        fiscalPeriodId: billFiscalPeriodId,
+        cashierShiftId: activeShift?.id ?? null,
+      });
       setShowBillDialog(false);
       if (res.data.salesInvoiceId) {
         const pdfRes = await SalesApi.downloadInvoicePdf(res.data.salesInvoiceId);
@@ -194,13 +249,72 @@ export default function RestaurantPOS() {
 
   const activeItems = menuByCategory.find(([cat]) => cat === activeCategory)?.[1] ?? [];
 
+  if (shiftLoading) {
+    return (
+      <div>
+        <div className="page-header"><h1>{t.restaurant.posTitle}</h1></div>
+        <div className="text-muted">{t.common.loading}</div>
+      </div>
+    );
+  }
+
+  if (employeeError) {
+    return (
+      <div>
+        <div className="page-header"><h1>{t.restaurant.posTitle}</h1></div>
+        <div className="alert-error">{employeeError}</div>
+      </div>
+    );
+  }
+
+  if (!activeShift) {
+    return (
+      <div>
+        <div className="page-header"><h1>{t.restaurant.openShiftTitle}</h1></div>
+        {error && <div className="alert-error">{error}</div>}
+        {closedShiftSummary && (
+          <div className="card">
+            <h3 style={{ marginTop: 0 }}>{t.restaurant.closeShiftTitle}</h3>
+            <table style={{ maxWidth: 420 }}>
+              <tbody>
+                <tr><td>{t.restaurant.expectedCashLabel}</td><td style={{ textAlign: "end" }}>{closedShiftSummary.expectedCash?.toLocaleString()}</td></tr>
+                <tr><td>{t.restaurant.closingCountedCash}</td><td style={{ textAlign: "end" }}>{closedShiftSummary.closingCountedCash?.toLocaleString()}</td></tr>
+                <tr>
+                  <td><strong>{t.restaurant.cashVarianceLabel}</strong></td>
+                  <td style={{ textAlign: "end" }} className={(closedShiftSummary.cashVariance ?? 0) >= 0 ? "text-success" : "text-danger"}>
+                    <strong>{closedShiftSummary.cashVariance?.toLocaleString()}</strong>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+        <div className="card" style={{ maxWidth: 420 }}>
+          <p className="text-muted" style={{ marginTop: 0 }}>{t.restaurant.openShiftIntro}</p>
+          <form onSubmit={handleOpenShift}>
+            <div className="form-field">
+              <label>{t.restaurant.openingFloat}</label>
+              <input type="number" min={0} step="0.01" value={openingFloat} onChange={(e) => setOpeningFloat(Number(e.target.value))} required />
+            </div>
+            <button className="btn" type="submit" style={{ marginTop: 14 }}>{t.restaurant.openShiftButton}</button>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div>
       <div className="page-header">
         <h1>{t.restaurant.posTitle}</h1>
-        <button className="btn" onClick={() => setShowNewOrder(true)}>
-          {t.restaurant.newOrder}
-        </button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button className="btn btn-secondary" onClick={() => { setClosingCountedCash(0); setShowCloseShift(true); }}>
+            {t.restaurant.closeShift}
+          </button>
+          <button className="btn" onClick={() => setShowNewOrder(true)}>
+            {t.restaurant.newOrder}
+          </button>
+        </div>
       </div>
 
       {error && <div className="alert-error">{error}</div>}
@@ -402,6 +516,25 @@ export default function RestaurantPOS() {
               <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
                 <button className="btn" type="submit">{t.restaurant.confirmBill}</button>
                 <button className="btn btn-secondary" type="button" onClick={() => setShowBillDialog(false)}>{t.common.cancel}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showCloseShift && (
+        <div className="modal-overlay" onClick={() => setShowCloseShift(false)}>
+          <div className="card" style={{ maxWidth: 420, margin: "10% auto" }} onClick={(e) => e.stopPropagation()}>
+            <h3>{t.restaurant.closeShiftTitle}</h3>
+            <p className="text-muted">{t.restaurant.closeShiftIntro}</p>
+            <form onSubmit={handleCloseShift}>
+              <div className="form-field">
+                <label>{t.restaurant.closingCountedCash}</label>
+                <input type="number" min={0} step="0.01" value={closingCountedCash} onChange={(e) => setClosingCountedCash(Number(e.target.value))} required />
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+                <button className="btn" type="submit">{t.restaurant.closeShift}</button>
+                <button className="btn btn-secondary" type="button" onClick={() => setShowCloseShift(false)}>{t.common.cancel}</button>
               </div>
             </form>
           </div>

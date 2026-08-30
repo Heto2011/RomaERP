@@ -1227,4 +1227,27 @@ export interface RestaurantOrder {
 export interface BillOrderInput {
   paymentTerm: PaymentTerm;
   fiscalPeriodId: string;
+  cashierShiftId?: string | null;
+}
+
+export interface CashierShift {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  openedAtUtc: string;
+  openingFloat: number;
+  closedAtUtc: string | null;
+  closingCountedCash: number | null;
+  expectedCash: number | null;
+  cashVariance: number | null;
+  status: number;
+}
+
+export interface OpenCashierShiftInput {
+  employeeId: string;
+  openingFloat: number;
+}
+
+export interface CloseCashierShiftInput {
+  closingCountedCash: number;
 }
