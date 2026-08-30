@@ -203,6 +203,23 @@ export interface CashFlowStatement {
   endingCash: number;
 }
 
+export interface CashFlowProjectedWeek {
+  weekStart: string;
+  projectedNetChange: number;
+  projectedEndingBalance: number;
+  isBelowZero: boolean;
+}
+
+export interface CashFlowIntelligence {
+  asOfDate: string;
+  currentCashBalance: number;
+  historicalWeeksUsed: number;
+  isLowConfidence: boolean;
+  averageWeeklyNetChange: number;
+  projectedWeeks: CashFlowProjectedWeek[];
+  firstWeekBelowZero: string | null;
+}
+
 export interface ItemProfitabilityLine {
   itemId: string;
   itemCode: string;

@@ -482,6 +482,75 @@ public class FinancialReportService : IFinancialReportService
         return result;
     }
 
+    private const int CashFlowHistoryWeeks = 8;
+    private const int CashFlowProjectionWeeks = 13;
+
+    public async Task<CashFlowIntelligenceDto> GetCashFlowIntelligenceAsync(DateTime asOfDate, CancellationToken ct = default)
+    {
+        var cashCodes = new[] { AccountingConstants.CashOnHandAccountCode, AccountingConstants.BankAccountCode };
+
+        var cashLines = await _context.JournalEntryLines
+            .AsNoTracking()
+            .Include(l => l.Account)
+            .Include(l => l.JournalEntry)
+            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+                        && !l.JournalEntry.IsDeleted
+                        && l.JournalEntry.EntryDate <= asOfDate
+                        && cashCodes.Contains(l.Account!.Code))
+            .Select(l => new { l.JournalEntry!.EntryDate, Net = l.Debit - l.Credit })
+            .ToListAsync(ct);
+
+        var currentCashBalance = cashLines.Sum(l => l.Net);
+
+        DateTime WeekStart(DateTime d) => d.Date.AddDays(-(int)d.Date.DayOfWeek);
+        var currentWeekStart = WeekStart(asOfDate);
+
+        var historicalWeeks = new List<decimal>();
+        for (var w = 1; w <= CashFlowHistoryWeeks; w++)
+        {
+            var weekStart = currentWeekStart.AddDays(-7 * w);
+            var weekEnd = weekStart.AddDays(6);
+            var weekNet = cashLines.Where(l => l.EntryDate.Date >= weekStart && l.EntryDate.Date <= weekEnd).Sum(l => l.Net);
+            historicalWeeks.Add(weekNet);
+        }
+        historicalWeeks.Reverse();
+
+        var weeksWithActivity = cashLines.Select(l => WeekStart(l.EntryDate)).Distinct().Count();
+        var isLowConfidence = weeksWithActivity < 4;
+        var averageWeeklyNetChange = historicalWeeks.Count > 0 ? historicalWeeks.Average() : 0;
+
+        var projectedWeeks = new List<CashFlowProjectedWeekDto>();
+        var runningBalance = currentCashBalance;
+        DateTime? firstNegativeWeek = null;
+        for (var w = 1; w <= CashFlowProjectionWeeks; w++)
+        {
+            var weekStart = currentWeekStart.AddDays(7 * w);
+            runningBalance += averageWeeklyNetChange;
+            var isBelowZero = runningBalance < 0;
+            if (isBelowZero && firstNegativeWeek is null)
+                firstNegativeWeek = weekStart;
+
+            projectedWeeks.Add(new CashFlowProjectedWeekDto
+            {
+                WeekStart = weekStart,
+                ProjectedNetChange = Math.Round(averageWeeklyNetChange, 2),
+                ProjectedEndingBalance = Math.Round(runningBalance, 2),
+                IsBelowZero = isBelowZero
+            });
+        }
+
+        return new CashFlowIntelligenceDto
+        {
+            AsOfDate = asOfDate,
+            CurrentCashBalance = Math.Round(currentCashBalance, 2),
+            HistoricalWeeksUsed = weeksWithActivity,
+            IsLowConfidence = isLowConfidence,
+            AverageWeeklyNetChange = Math.Round(averageWeeklyNetChange, 2),
+            ProjectedWeeks = projectedWeeks,
+            FirstWeekBelowZero = firstNegativeWeek
+        };
+    }
+
     public async Task<HiddenProfitReportDto> GetHiddenProfitAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
     {
         var stockVarianceValue = await _context.PhysicalStockCounts

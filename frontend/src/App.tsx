@@ -14,6 +14,7 @@ import IncomeStatementPage from "./pages/accounting/IncomeStatement";
 import BalanceSheetPage from "./pages/accounting/BalanceSheet";
 import CostCenterAnalysisPage from "./pages/accounting/CostCenterAnalysis";
 import CashFlowPage from "./pages/accounting/CashFlow";
+import CashFlowIntelligencePage from "./pages/accounting/CashFlowIntelligence";
 import VatSummaryPage from "./pages/accounting/VatSummary";
 import MoneyFlowPage from "./pages/accounting/MoneyFlow";
 import ItemProfitabilityPage from "./pages/accounting/ItemProfitability";
@@ -82,6 +83,7 @@ export default function App() {
       <Route path="/accounting/balance-sheet" element={<ProtectedRoute><BalanceSheetPage /></ProtectedRoute>} />
       <Route path="/accounting/cost-center-analysis" element={<ProtectedRoute><CostCenterAnalysisPage /></ProtectedRoute>} />
       <Route path="/accounting/cash-flow" element={<ProtectedRoute><CashFlowPage /></ProtectedRoute>} />
+      <Route path="/accounting/cash-flow-intelligence" element={<ProtectedRoute><CashFlowIntelligencePage /></ProtectedRoute>} />
       <Route path="/accounting/vat-summary" element={<ProtectedRoute><VatSummaryPage /></ProtectedRoute>} />
       <Route path="/accounting/money-flow" element={<ProtectedRoute><MoneyFlowPage /></ProtectedRoute>} />
       <Route path="/accounting/item-profitability" element={<ProtectedRoute><ItemProfitabilityPage /></ProtectedRoute>} />

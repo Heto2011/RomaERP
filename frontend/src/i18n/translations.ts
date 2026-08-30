@@ -324,6 +324,19 @@ const ar = {
     netCashChange: "صافي التغير في النقدية",
     endingCash: "الرصيد النقدي في نهاية الفترة",
 
+    cashFlowIntelligenceTitle: "توقع السيولة (13 أسبوع)",
+    cashFlowIntelligenceIntro:
+      "توقع أسبوعي للرصيد النقدي بناءً على متوسط صافي الحركة النقدية الفعلية في الأسابيع الماضية — مش ميزانية أو خطة، ده اللي هيحصل لو استمر النمط الحالي زي ما هو.",
+    cashFlowLowConfidence: "بيانات تاريخية قليلة (أقل من 4 أسابيع نشاط نقدي) — التوقع ده مبني على بيانات محدودة.",
+    cashFlowNegativeAlert: "تحذير: الرصيد المتوقع هيبقى سالب ابتداءً من أسبوع",
+    currentCashBalance: "الرصيد النقدي الحالي",
+    averageWeeklyNetChange: "متوسط صافي الحركة الأسبوعية",
+    historicalWeeksUsed: "عدد الأسابيع المستخدمة في الحساب",
+    cashFlowProjectionTitle: "التوقع الأسبوعي",
+    week: "الأسبوع",
+    projectedNetChange: "صافي الحركة المتوقع",
+    projectedEndingBalance: "الرصيد المتوقع",
+
     moneyFlowTitle: "فين الفلوس؟",
     moneyFlowIntro: "توزيع كل جنيه/ريال من المبيعات على المصروفات وصافي الربح، كنسبة مئوية.",
     ofRevenue: "من المبيعات",
@@ -1140,6 +1153,19 @@ const en: typeof ar = {
     totalCashOut: "Total Cash Out",
     netCashChange: "Net Change in Cash",
     endingCash: "Ending Cash Balance",
+
+    cashFlowIntelligenceTitle: "Cash Flow Forecast (13 Weeks)",
+    cashFlowIntelligenceIntro:
+      "A weekly cash balance projection built from the average real net cash movement over recent weeks — not a budget or a plan, just what happens if the current pattern continues unchanged.",
+    cashFlowLowConfidence: "Limited historical data (fewer than 4 weeks of cash activity) — this projection is based on a small sample.",
+    cashFlowNegativeAlert: "Warning: the projected balance turns negative starting the week of",
+    currentCashBalance: "Current Cash Balance",
+    averageWeeklyNetChange: "Average Weekly Net Change",
+    historicalWeeksUsed: "Historical Weeks Used",
+    cashFlowProjectionTitle: "Weekly Projection",
+    week: "Week",
+    projectedNetChange: "Projected Net Change",
+    projectedEndingBalance: "Projected Ending Balance",
 
     moneyFlowTitle: "Where Does the Money Go?",
     moneyFlowIntro: "How every unit of sales revenue splits across expenses and net profit, as a percentage.",

@@ -65,4 +65,9 @@ public class FinancialReportsController : ControllerBase
     public async Task<ActionResult<ForecastReportDto>> GetForecast(
         [FromQuery] DateTime asOfDate, [FromQuery] int historyMonths, [FromQuery] int forecastMonths, CancellationToken ct)
         => Ok(await _financialReportService.GetForecastAsync(asOfDate, historyMonths, forecastMonths, ct));
+
+    [HttpGet("cash-flow-intelligence")]
+    public async Task<ActionResult<CashFlowIntelligenceDto>> GetCashFlowIntelligence(
+        [FromQuery] DateTime asOfDate, CancellationToken ct)
+        => Ok(await _financialReportService.GetCashFlowIntelligenceAsync(asOfDate, ct));
 }

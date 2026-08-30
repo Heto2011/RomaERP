@@ -181,6 +181,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/accounting/income-statement", label: t.nav.incomeStatement, icon: <IconBarChart /> },
         { to: "/accounting/balance-sheet", label: t.nav.balanceSheet, icon: <IconFile /> },
         { to: "/accounting/cash-flow", label: t.nav.cashFlow, icon: <IconSwap /> },
+        { to: "/accounting/cash-flow-intelligence", label: t.accounting.cashFlowIntelligenceTitle, icon: <IconSwap /> },
         { to: "/accounting/vat-summary", label: t.nav.vatSummary, icon: <IconEdit /> },
         { to: "/accounting/cost-center-analysis", label: t.nav.costCenterAnalysis, icon: <IconBarChart /> },
         { subGroup: t.nav.profitabilityReports, icon: <IconTrendDown />, subItems: profitabilityReportItems },

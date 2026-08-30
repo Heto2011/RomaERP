@@ -6,6 +6,7 @@ import type {
   CostCenterAnalysis,
   VatSummary,
   CashFlowStatement,
+  CashFlowIntelligence,
   ItemProfitabilityReport,
   CustomerProfitabilityReport,
   SalesChannelProfitabilityReport,
@@ -259,6 +260,8 @@ export const FinancialReportsApi = {
     apiClient.get<HiddenProfitReport>("/financialreports/hidden-profit", { params: { fromDate, toDate } }),
   forecast: (asOfDate: string, historyMonths: number, forecastMonths: number) =>
     apiClient.get<ForecastReport>("/financialreports/forecast", { params: { asOfDate, historyMonths, forecastMonths } }),
+  cashFlowIntelligence: (asOfDate: string) =>
+    apiClient.get<CashFlowIntelligence>("/financialreports/cash-flow-intelligence", { params: { asOfDate } }),
 };
 
 export const ManualProfitEntriesApi = {

@@ -86,6 +86,30 @@ public class CashFlowStatementDto
     public decimal EndingCash { get; set; }
 }
 
+public class CashFlowProjectedWeekDto
+{
+    public DateTime WeekStart { get; set; }
+    public decimal ProjectedNetChange { get; set; }
+    public decimal ProjectedEndingBalance { get; set; }
+    public bool IsBelowZero { get; set; }
+}
+
+/// <summary>A rolling 13-week cash projection built from the average weekly net cash movement (cash+bank
+/// journal lines) over the trailing history window — the same "flat projection from recent reality" approach
+/// as the low-confidence branch of the monthly Forecast, just at weekly grain. Not a budget or a plan: it is
+/// what happens if recent cash-in/cash-out behavior continues unchanged. IsLowConfidence is true when fewer
+/// than 4 historical weeks of cash activity exist.</summary>
+public class CashFlowIntelligenceDto
+{
+    public DateTime AsOfDate { get; set; }
+    public decimal CurrentCashBalance { get; set; }
+    public int HistoricalWeeksUsed { get; set; }
+    public bool IsLowConfidence { get; set; }
+    public decimal AverageWeeklyNetChange { get; set; }
+    public List<CashFlowProjectedWeekDto> ProjectedWeeks { get; set; } = new();
+    public DateTime? FirstWeekBelowZero { get; set; }
+}
+
 public class ItemProfitabilityLineDto
 {
     public Guid ItemId { get; set; }
