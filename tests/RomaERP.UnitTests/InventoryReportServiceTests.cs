@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using RomaERP.Application.Accounting;
+using RomaERP.Application.Inventory.DTOs;
 using RomaERP.Application.Inventory.Services;
+using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Restaurant;
 using RomaERP.Infrastructure.Persistence;
@@ -149,5 +152,85 @@ public class InventoryReportServiceTests
         Assert.False(waterLine.HasRecipe);
         Assert.Equal(3, waterLine.RecipeCost); // falls back to its own AverageCost
         Assert.Equal(7, waterLine.GrossProfit); // 10 - 3
+    }
+
+    [Fact]
+    public async Task GetWasteAnalysis_AggregatesByItemAndReasonAndComputesPercentOfCogs()
+    {
+        var ctx = CreateContext();
+        var today = new DateTime(2026, 8, 15);
+
+        var inventoryAccount = new Account { Code = AccountingConstants.InventoryAccountCode, NameAr = "المخزون", NameEn = "Inventory", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+        var cogsAccount = new Account { Code = AccountingConstants.CostOfGoodsSoldAccountCode, NameAr = "تكلفة البضاعة المباعة", NameEn = "COGS", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        ctx.Accounts.AddRange(inventoryAccount, cogsAccount);
+
+        var year = new FiscalYear { Name = "2026", StartDate = today.AddMonths(-6), EndDate = today.AddMonths(6) };
+        var period = new FiscalPeriod { FiscalYear = year, FiscalYearId = year.Id, Name = "Current", PeriodNumber = 1, StartDate = today.AddDays(-15), EndDate = today.AddDays(15) };
+        ctx.FiscalYears.Add(year);
+        ctx.FiscalPeriods.Add(period);
+
+        var category = new ItemCategory { NameAr = "عام", NameEn = "General" };
+        var item = new Item { Code = "ITM-A", NameAr = "صنف أ", NameEn = "Item A", UnitOfMeasure = "قطعة", ItemCategory = category, QuantityOnHand = 100, AverageCost = 8 };
+        var warehouse = new Warehouse { Code = "WH-MAIN", NameAr = "المخزن الرئيسي", NameEn = "Main Warehouse" };
+        ctx.ItemCategories.Add(category);
+        ctx.Items.Add(item);
+        ctx.Warehouses.Add(warehouse);
+        await ctx.SaveChangesAsync();
+
+        var wasteService = new WasteEntryService(ctx, new InventoryService(ctx));
+        await wasteService.CreateAsync(new CreateWasteEntryDto
+        {
+            ItemId = item.Id,
+            WarehouseId = warehouse.Id,
+            FiscalPeriodId = period.Id,
+            WasteDate = new DateTime(2026, 8, 10),
+            Quantity = 5,
+            Reason = (int)WasteReason.Waste
+        }); // cost = 5 * 8 = 40
+        await wasteService.CreateAsync(new CreateWasteEntryDto
+        {
+            ItemId = item.Id,
+            WarehouseId = warehouse.Id,
+            FiscalPeriodId = period.Id,
+            WasteDate = new DateTime(2026, 8, 12),
+            Quantity = 2,
+            Reason = (int)WasteReason.Expired
+        }); // cost = 2 * 8 = 16
+
+        // A separate, non-waste stock issue in the same period, so COGS isn't only the waste itself.
+        ctx.StockMovements.Add(new StockMovement
+        {
+            MovementNumber = "SM-999999",
+            MovementDate = new DateTime(2026, 8, 11),
+            MovementType = StockMovementType.Issue,
+            ItemId = item.Id,
+            WarehouseId = warehouse.Id,
+            Quantity = 5.5m,
+            UnitCost = 8,
+            TotalCost = 44
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new InventoryReportService(ctx);
+        var report = await service.GetWasteAnalysisAsync(new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+
+        Assert.Equal(56, report.TotalWasteCost); // 40 + 16
+        Assert.Equal(7, report.TotalWasteQuantity); // 5 + 2
+        Assert.Equal(100, report.CogsInPeriod); // 40 + 16 + 44
+        Assert.Equal(56, report.WasteCostPercentOfCogs); // 56 / 100 * 100
+
+        var itemLine = Assert.Single(report.TopWastedItems);
+        Assert.Equal("ITM-A", itemLine.ItemCode);
+        Assert.Equal(56, itemLine.TotalCost);
+        Assert.Equal(2, itemLine.EntryCount);
+
+        Assert.Equal(2, report.ByReason.Count);
+        var wasteReasonLine = report.ByReason.Single(l => l.Reason == WasteReason.Waste);
+        Assert.Equal(40, wasteReasonLine.TotalCost);
+        var expiredReasonLine = report.ByReason.Single(l => l.Reason == WasteReason.Expired);
+        Assert.Equal(16, expiredReasonLine.TotalCost);
+
+        Assert.NotEmpty(report.WeeklyTrend);
+        Assert.Equal(56, report.WeeklyTrend.Sum(p => p.TotalCost));
     }
 }

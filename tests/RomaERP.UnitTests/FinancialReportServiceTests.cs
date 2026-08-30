@@ -731,4 +731,174 @@ public class FinancialReportServiceTests
         Assert.True(report.ForecastMonths[0].WorstRevenue <= report.ForecastMonths[0].ExpectedRevenue);
         Assert.True(report.ForecastMonths[0].BestRevenue >= report.ForecastMonths[0].ExpectedRevenue);
     }
+
+    private static DateTime WeekStart(DateTime d) => d.Date.AddDays(-(int)d.Date.DayOfWeek);
+
+    [Fact]
+    public async Task GetCashFlowIntelligence_WithNoHistoricalActivity_ReturnsLowConfidenceFlatProjection()
+    {
+        var ctx = CreateContext();
+        var service = new FinancialReportService(ctx);
+
+        var report = await service.GetCashFlowIntelligenceAsync(new DateTime(2026, 8, 26));
+
+        Assert.Equal(0, report.CurrentCashBalance);
+        Assert.Equal(0, report.HistoricalWeeksUsed);
+        Assert.True(report.IsLowConfidence);
+        Assert.Equal(0, report.AverageWeeklyNetChange);
+        Assert.Equal(13, report.ProjectedWeeks.Count);
+        Assert.All(report.ProjectedWeeks, w => Assert.Equal(0, w.ProjectedEndingBalance));
+        Assert.Null(report.FirstWeekBelowZero);
+    }
+
+    [Fact]
+    public async Task GetCashFlowIntelligence_WithEightWeeksOfOutflow_ProjectsNegativeBalanceFromWeekOne()
+    {
+        var ctx = CreateContext();
+        var cash = new Account { Code = "1111", NameAr = "الصندوق", NameEn = "Cash", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+        var expense = new Account { Code = "5300", NameAr = "مصروفات", NameEn = "Expense", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        ctx.Accounts.AddRange(cash, expense);
+
+        var asOfDate = new DateTime(2026, 8, 26);
+        var currentWeekStart = WeekStart(asOfDate);
+
+        for (var w = 1; w <= 8; w++)
+        {
+            var entryDate = currentWeekStart.AddDays(-7 * w);
+            ctx.JournalEntries.Add(new JournalEntry
+            {
+                EntryNumber = $"JV-{w:000000}",
+                EntryDate = entryDate,
+                Status = JournalEntryStatus.Posted,
+                Lines =
+                {
+                    new JournalEntryLine { LineNumber = 1, AccountId = expense.Id, Debit = 50, Credit = 0 },
+                    new JournalEntryLine { LineNumber = 2, AccountId = cash.Id, Debit = 0, Credit = 50 }
+                }
+            });
+        }
+        await ctx.SaveChangesAsync();
+
+        var service = new FinancialReportService(ctx);
+        var report = await service.GetCashFlowIntelligenceAsync(asOfDate);
+
+        Assert.Equal(-400, report.CurrentCashBalance); // 8 weeks * -50
+        Assert.Equal(8, report.HistoricalWeeksUsed);
+        Assert.False(report.IsLowConfidence);
+        Assert.Equal(-50, report.AverageWeeklyNetChange);
+        Assert.Equal(13, report.ProjectedWeeks.Count);
+        Assert.Equal(-450, report.ProjectedWeeks[0].ProjectedEndingBalance); // -400 - 50
+        Assert.True(report.ProjectedWeeks[0].IsBelowZero);
+        Assert.Equal(currentWeekStart.AddDays(7), report.FirstWeekBelowZero);
+    }
+
+    [Fact]
+    public async Task GetLaborReport_ComputesLaborCostPercentAndAttributesSalesToWaiterThenCashier()
+    {
+        var ctx = CreateContext();
+        var revenue = new Account { Code = "4100", NameAr = "إيرادات", NameEn = "Revenue", AccountType = AccountType.Revenue, Nature = AccountNature.Credit };
+        var cash = new Account { Code = "1111", NameAr = "الصندوق", NameEn = "Cash", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+        ctx.Accounts.AddRange(revenue, cash);
+
+        var year = new FiscalYear { Name = "2026", StartDate = new DateTime(2026, 1, 1), EndDate = new DateTime(2026, 12, 31) };
+        var period = new FiscalPeriod { FiscalYear = year, FiscalYearId = year.Id, Name = "August", PeriodNumber = 8, StartDate = new DateTime(2026, 8, 1), EndDate = new DateTime(2026, 8, 31) };
+        ctx.FiscalYears.Add(year);
+        ctx.FiscalPeriods.Add(period);
+
+        var department = new RomaERP.Domain.HR.Department { Code = "OPS", NameAr = "التشغيل", NameEn = "Operations" };
+        var position = new RomaERP.Domain.HR.Position { Code = "WTR", TitleAr = "جرسون", TitleEn = "Waiter", Department = department };
+        var waiter = new RomaERP.Domain.HR.Employee
+        {
+            EmployeeCode = "EMP-1", FullNameAr = "أحمد", FullNameEn = "Ahmed", Department = department, Position = position,
+            HireDate = new DateTime(2025, 1, 1), BasicSalary = 3000
+        };
+        var cashierEmp = new RomaERP.Domain.HR.Employee
+        {
+            EmployeeCode = "EMP-2", FullNameAr = "سارة", FullNameEn = "Sara", Department = department, Position = position,
+            HireDate = new DateTime(2025, 1, 1), BasicSalary = 3000
+        };
+        ctx.Departments.Add(department);
+        ctx.Positions.Add(position);
+        ctx.Employees.AddRange(waiter, cashierEmp);
+
+        var postedRun = new RomaERP.Domain.HR.PayrollRun
+        {
+            FiscalPeriodId = period.Id,
+            RunDate = new DateTime(2026, 8, 25),
+            Status = RomaERP.Domain.HR.PayrollRunStatus.Posted,
+            Lines =
+            {
+                new RomaERP.Domain.HR.PayrollRunLine { EmployeeId = waiter.Id, BasicSalary = 3000, NetSalary = 3000 },
+                new RomaERP.Domain.HR.PayrollRunLine { EmployeeId = cashierEmp.Id, BasicSalary = 3000, NetSalary = 3000 }
+            }
+        };
+        // Should be excluded: not yet posted to the GL.
+        var draftRun = new RomaERP.Domain.HR.PayrollRun
+        {
+            FiscalPeriodId = period.Id,
+            RunDate = new DateTime(2026, 8, 26),
+            Status = RomaERP.Domain.HR.PayrollRunStatus.Draft,
+            Lines = { new RomaERP.Domain.HR.PayrollRunLine { EmployeeId = waiter.Id, BasicSalary = 999, NetSalary = 999 } }
+        };
+        ctx.PayrollRuns.AddRange(postedRun, draftRun);
+
+        var salesInvoice1 = new SalesInvoice
+        {
+            InvoiceNumber = "INV-000001", InvoiceDate = new DateTime(2026, 8, 10), SubTotal = 1000, TotalAmount = 1000,
+            FiscalPeriodId = period.Id, JournalEntry = new JournalEntry
+            {
+                EntryNumber = "JV-100", EntryDate = new DateTime(2026, 8, 10), Status = JournalEntryStatus.Posted,
+                Lines = { new JournalEntryLine { LineNumber = 1, AccountId = cash.Id, Debit = 1000, Credit = 0 }, new JournalEntryLine { LineNumber = 2, AccountId = revenue.Id, Debit = 0, Credit = 1000 } }
+            }
+        };
+        var salesInvoice2 = new SalesInvoice
+        {
+            InvoiceNumber = "INV-000002", InvoiceDate = new DateTime(2026, 8, 12), SubTotal = 500, TotalAmount = 500,
+            FiscalPeriodId = period.Id, JournalEntry = new JournalEntry
+            {
+                EntryNumber = "JV-101", EntryDate = new DateTime(2026, 8, 12), Status = JournalEntryStatus.Posted,
+                Lines = { new JournalEntryLine { LineNumber = 1, AccountId = cash.Id, Debit = 500, Credit = 0 }, new JournalEntryLine { LineNumber = 2, AccountId = revenue.Id, Debit = 0, Credit = 500 } }
+            }
+        };
+        ctx.SalesInvoices.AddRange(salesInvoice1, salesInvoice2);
+
+        var warehouse = new Warehouse { Code = "WH-MAIN", NameAr = "المخزن الرئيسي", NameEn = "Main Warehouse" };
+        ctx.Warehouses.Add(warehouse);
+
+        var cashierShift = new RomaERP.Domain.Restaurant.CashierShift
+        {
+            EmployeeId = cashierEmp.Id, OpenedAtUtc = new DateTime(2026, 8, 12), OpeningFloat = 0
+        };
+        ctx.CashierShifts.Add(cashierShift);
+
+        // Order 1: has a waiter recorded -> attributed to the waiter directly.
+        var orderWithWaiter = new RestaurantOrder
+        {
+            OrderNumber = "ORD-1", OrderType = RestaurantOrderType.DineIn, OrderDate = new DateTime(2026, 8, 10),
+            WaiterEmployeeId = waiter.Id, WarehouseId = warehouse.Id, Status = RestaurantOrderStatus.Billed, SalesInvoice = salesInvoice1
+        };
+        // Order 2: no waiter recorded, billed under a cashier shift -> attributed to the cashier.
+        var orderWithCashierOnly = new RestaurantOrder
+        {
+            OrderNumber = "ORD-2", OrderType = RestaurantOrderType.Takeaway, OrderDate = new DateTime(2026, 8, 12),
+            WaiterEmployeeId = null, CashierShift = cashierShift, WarehouseId = warehouse.Id, Status = RestaurantOrderStatus.Billed, SalesInvoice = salesInvoice2
+        };
+        ctx.RestaurantOrders.AddRange(orderWithWaiter, orderWithCashierOnly);
+        await ctx.SaveChangesAsync();
+
+        var service = new FinancialReportService(ctx);
+        var report = await service.GetLaborReportAsync(new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+
+        Assert.Equal(6000, report.TotalPayroll); // only the Posted run counts, draft is excluded
+        Assert.Equal(1500, report.TotalSalesRevenue); // 1000 + 500
+        Assert.Equal(400, report.LaborCostPercent); // 6000 / 1500 * 100
+
+        var waiterLine = report.SalesByEmployee.Single(l => l.EmployeeId == waiter.Id);
+        Assert.Equal(1000, waiterLine.SalesTotal);
+        Assert.Equal(1, waiterLine.OrderCount);
+
+        var cashierLine = report.SalesByEmployee.Single(l => l.EmployeeId == cashierEmp.Id);
+        Assert.Equal(500, cashierLine.SalesTotal);
+        Assert.Equal(1, cashierLine.OrderCount);
+    }
 }

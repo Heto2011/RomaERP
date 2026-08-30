@@ -60,8 +60,7 @@ public class WasteEntryService : IWasteEntryService
         _context.WasteEntries.Add(entry);
         await _context.SaveChangesAsync(ct);
 
-        var item = await _context.Items.AsNoTracking().FirstAsync(i => i.Id == dto.ItemId, ct);
-        entry.Item = item;
+        entry.Item = await _context.Items.FirstAsync(i => i.Id == dto.ItemId, ct);
         return Map(entry);
     }
 
