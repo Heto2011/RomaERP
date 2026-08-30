@@ -192,6 +192,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { subGroup: t.nav.profitabilityReports, icon: <IconTrendDown />, subItems: profitabilityReportItems },
         { subGroup: t.inventory.costReportsGroup, icon: <IconTrendDown />, subItems: costReportItems },
         { to: "/accounting/break-even", label: t.nav.breakEven, icon: <IconDollar /> },
+        { to: "/accounting/what-if", label: t.accounting.whatIfTitle, icon: <IconDollar /> },
         { to: "/accounting/bottleneck", label: t.nav.bottleneck, icon: <IconClock /> },
         { to: "/accounting/forecast", label: t.accounting.forecastTitle, icon: <IconTrendDown /> },
         { to: "", label: t.nav.healthScoreSoon, icon: <IconShield />, comingSoon: true },

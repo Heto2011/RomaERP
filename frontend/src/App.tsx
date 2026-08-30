@@ -24,6 +24,7 @@ import BranchProfitabilityPage from "./pages/accounting/BranchProfitability";
 import SalesChannelProfitabilityPage from "./pages/accounting/SalesChannelProfitability";
 import MarginAnalysisPage from "./pages/accounting/MarginAnalysis";
 import BreakEvenPage from "./pages/accounting/BreakEven";
+import WhatIfCalculatorPage from "./pages/accounting/WhatIfCalculator";
 import BottleneckPage from "./pages/accounting/Bottleneck";
 import FiscalPeriods from "./pages/accounting/FiscalPeriods";
 import FixedAssets from "./pages/accounting/FixedAssets";
@@ -98,6 +99,7 @@ export default function App() {
       <Route path="/accounting/sales-channel-profitability" element={<ProtectedRoute><SalesChannelProfitabilityPage /></ProtectedRoute>} />
       <Route path="/accounting/margin-analysis" element={<ProtectedRoute><MarginAnalysisPage /></ProtectedRoute>} />
       <Route path="/accounting/break-even" element={<ProtectedRoute><BreakEvenPage /></ProtectedRoute>} />
+      <Route path="/accounting/what-if" element={<ProtectedRoute><WhatIfCalculatorPage /></ProtectedRoute>} />
       <Route path="/accounting/bottleneck" element={<ProtectedRoute><BottleneckPage /></ProtectedRoute>} />
       <Route path="/accounting/fiscal-periods" element={<ProtectedRoute><FiscalPeriods /></ProtectedRoute>} />
       <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssets /></ProtectedRoute>} />
