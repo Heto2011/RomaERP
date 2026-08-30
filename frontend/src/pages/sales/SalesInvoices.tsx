@@ -3,11 +3,12 @@ import { ItemsApi, LookupsApi, SalesApi, WarehousesApi } from "../../api/service
 import { EInvoiceStatus, PaymentTerm, type Customer, type FiscalPeriod, type Item, type SalesInvoice, type SalesInvoiceLineInput, type Warehouse } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 const emptyLine = (): SalesInvoiceLineInput => ({ description: "", quantity: 1, unitPrice: 0, itemId: null });
 
 export default function SalesInvoices() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [invoices, setInvoices] = useState<SalesInvoice[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
@@ -70,7 +71,7 @@ export default function SalesInvoices() {
       return;
     }
     const item = items.find((i) => i.id === itemId);
-    setLines((prev) => prev.map((l, i) => (i === idx ? { ...l, itemId, description: item ? item.nameAr : l.description } : l)));
+    setLines((prev) => prev.map((l, i) => (i === idx ? { ...l, itemId, description: item ? bilingualName(item.nameAr, item.nameEn, lang) : l.description } : l)));
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -197,7 +198,7 @@ export default function SalesInvoices() {
                 <select value={customerId} onChange={(e) => setCustomerId(e.target.value)} required>
                   <option value="" disabled>-</option>
                   {customers.map((c) => (
-                    <option key={c.id} value={c.id}>{c.code} - {c.nameAr}</option>
+                    <option key={c.id} value={c.id}>{c.code} - {bilingualName(c.nameAr, c.nameEn, lang)}</option>
                   ))}
                 </select>
               </div>
@@ -228,7 +229,7 @@ export default function SalesInvoices() {
                 <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} required={hasItemLines}>
                   <option value="">-</option>
                   {warehouses.map((w) => (
-                    <option key={w.id} value={w.id}>{w.code} - {w.nameAr}</option>
+                    <option key={w.id} value={w.id}>{w.code} - {bilingualName(w.nameAr, w.nameEn, lang)}</option>
                   ))}
                 </select>
               </div>
@@ -265,7 +266,7 @@ export default function SalesInvoices() {
                         <select value={line.itemId ?? ""} onChange={(e) => selectLineItem(idx, e.target.value)} style={{ width: 160 }}>
                           <option value="">{t.sales.serviceLine}</option>
                           {items.map((i) => (
-                            <option key={i.id} value={i.id}>{i.code} - {i.nameAr} ({i.quantityOnHand})</option>
+                            <option key={i.id} value={i.id}>{i.code} - {bilingualName(i.nameAr, i.nameEn, lang)} ({i.quantityOnHand})</option>
                           ))}
                         </select>
                       </td>

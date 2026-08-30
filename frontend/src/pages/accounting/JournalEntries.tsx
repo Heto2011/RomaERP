@@ -3,6 +3,7 @@ import { AccountsApi, JournalEntriesApi, LookupsApi } from "../../api/services";
 import { JournalEntryStatus, type Account, type FiscalPeriod, type JournalEntry } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 interface LineForm {
   accountId: string;
@@ -16,7 +17,7 @@ function emptyLine(): LineForm {
 }
 
 export default function JournalEntries() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const statusLabel: Record<JournalEntryStatus, { text: string; cls: string }> = {
     [JournalEntryStatus.Draft]: { text: t.accounting.draft, cls: "badge-draft" },
     [JournalEntryStatus.Posted]: { text: t.accounting.posted, cls: "badge-posted" },
@@ -161,7 +162,7 @@ export default function JournalEntries() {
                         <option value="">{t.accounting.selectAccount}</option>
                         {accounts.map((a) => (
                           <option key={a.id} value={a.id}>
-                            {a.code} - {a.nameAr}
+                            {a.code} - {bilingualName(a.nameAr, a.nameEn, lang)}
                           </option>
                         ))}
                       </select>

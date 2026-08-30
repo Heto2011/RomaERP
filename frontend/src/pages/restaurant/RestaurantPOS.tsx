@@ -14,10 +14,11 @@ import {
 } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 import { IconGrid, IconBox, IconTruck } from "../../components/icons";
 
 export default function RestaurantPOS() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
   const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [menu, setMenu] = useState<MenuItem[]>([]);
@@ -362,7 +363,7 @@ export default function RestaurantPOS() {
               <div className="pos-menu-grid">
                 {activeItems.map((item) => (
                   <button key={item.id} type="button" className="pos-menu-item" onClick={() => handleAddItem(item.id)}>
-                    <span className="pos-menu-item-name">{item.nameAr}</span>
+                    <span className="pos-menu-item-name">{bilingualName(item.nameAr, item.nameEn, lang)}</span>
                     <span className="pos-menu-item-price">{item.menuPrice.toLocaleString()}</span>
                   </button>
                 ))}
@@ -449,7 +450,7 @@ export default function RestaurantPOS() {
                   <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)} required>
                     <option value="" disabled>-</option>
                     {warehouses.map((w) => (
-                      <option key={w.id} value={w.id}>{w.code} - {w.nameAr}</option>
+                      <option key={w.id} value={w.id}>{w.code} - {bilingualName(w.nameAr, w.nameEn, lang)}</option>
                     ))}
                   </select>
                 </div>

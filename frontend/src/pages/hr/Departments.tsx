@@ -3,9 +3,10 @@ import { DepartmentsApi } from "../../api/services";
 import type { Department } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 export default function Departments() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -82,7 +83,7 @@ export default function Departments() {
                   <option value="">{t.common.none}</option>
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>
-                      {d.code} - {d.nameAr}
+                      {d.code} - {bilingualName(d.nameAr, d.nameEn, lang)}
                     </option>
                   ))}
                 </select>

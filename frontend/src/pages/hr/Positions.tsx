@@ -3,9 +3,10 @@ import { DepartmentsApi, PositionsApi } from "../../api/services";
 import type { Department, Position } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 export default function Positions() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [positions, setPositions] = useState<Position[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -26,7 +27,8 @@ export default function Positions() {
   }, []);
 
   function departmentName(id: string) {
-    return departments.find((d) => d.id === id)?.nameAr ?? "";
+    const dept = departments.find((d) => d.id === id);
+    return dept ? bilingualName(dept.nameAr, dept.nameEn, lang) : "";
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -88,7 +90,7 @@ export default function Positions() {
                   <option value="">{t.hr.selectDepartment}</option>
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>
-                      {d.code} - {d.nameAr}
+                      {d.code} - {bilingualName(d.nameAr, d.nameEn, lang)}
                     </option>
                   ))}
                 </select>
@@ -115,7 +117,7 @@ export default function Positions() {
             {positions.map((p) => (
               <tr key={p.id}>
                 <td>{p.code}</td>
-                <td>{p.titleAr}</td>
+                <td>{bilingualName(p.titleAr, p.titleEn, lang)}</td>
                 <td>{departmentName(p.departmentId)}</td>
                 <td>
                   <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(p.id)}>

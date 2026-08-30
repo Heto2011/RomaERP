@@ -3,9 +3,10 @@ import { AccountsApi, AiAssistantApi, BankReconciliationApi } from "../../api/se
 import type { Account, BankStatementLine, ExpenseCapture } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 export default function BankReconciliation() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [unmatchedLines, setUnmatchedLines] = useState<BankStatementLine[]>([]);
   const [pendingCaptures, setPendingCaptures] = useState<ExpenseCapture[]>([]);
   const [bankAccounts, setBankAccounts] = useState<Account[]>([]);
@@ -24,7 +25,7 @@ export default function BankReconciliation() {
     ]);
     setUnmatchedLines(linesRes.data);
     setPendingCaptures(capturesRes.data);
-    setBankAccounts(accountsRes.data.filter((a) => a.code === "1112" || a.nameAr.includes("بنك")));
+    setBankAccounts(accountsRes.data.filter((a) => a.code === "1112" || a.nameAr.includes("بنك") || a.nameEn.toLowerCase().includes("bank")));
   }
 
   useEffect(() => {
@@ -92,7 +93,7 @@ export default function BankReconciliation() {
               <option value="">{t.assistant.selectBankAccount}</option>
               {bankAccounts.map((a) => (
                 <option key={a.id} value={a.id}>
-                  {a.code} - {a.nameAr}
+                  {a.code} - {bilingualName(a.nameAr, a.nameEn, lang)}
                 </option>
               ))}
             </select>

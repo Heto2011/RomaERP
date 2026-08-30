@@ -3,11 +3,12 @@ import { AccountsApi, ItemsApi, LookupsApi, PurchasingApi } from "../../api/serv
 import { PaymentTerm, type Account, type FiscalPeriod, type Item, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 const emptyLine = (defaultAccountId: string): PurchaseInvoiceLineInput => ({ description: "", accountId: defaultAccountId, itemId: null, quantity: 1, unitPrice: 0 });
 
 export default function PurchaseInvoices() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [invoices, setInvoices] = useState<PurchaseInvoice[]>([]);
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
@@ -156,7 +157,7 @@ export default function PurchaseInvoices() {
                 <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} required>
                   <option value="" disabled>-</option>
                   {vendors.map((v) => (
-                    <option key={v.id} value={v.id}>{v.code} - {v.nameAr}</option>
+                    <option key={v.id} value={v.id}>{v.code} - {bilingualName(v.nameAr, v.nameEn, lang)}</option>
                   ))}
                 </select>
               </div>
@@ -203,7 +204,7 @@ export default function PurchaseInvoices() {
                       <td>
                         <select value={line.accountId} onChange={(e) => updateLine(idx, { accountId: e.target.value })} required>
                           {expenseAccounts.map((a) => (
-                            <option key={a.id} value={a.id}>{a.code} - {a.nameAr}</option>
+                            <option key={a.id} value={a.id}>{a.code} - {bilingualName(a.nameAr, a.nameEn, lang)}</option>
                           ))}
                         </select>
                       </td>
@@ -211,7 +212,7 @@ export default function PurchaseInvoices() {
                         <select value={line.itemId ?? ""} onChange={(e) => updateLine(idx, { itemId: e.target.value || null })}>
                           <option value="">{t.purchasing.noLinkedItem}</option>
                           {items.map((it) => (
-                            <option key={it.id} value={it.id}>{it.code} - {it.nameAr}</option>
+                            <option key={it.id} value={it.id}>{it.code} - {bilingualName(it.nameAr, it.nameEn, lang)}</option>
                           ))}
                         </select>
                       </td>

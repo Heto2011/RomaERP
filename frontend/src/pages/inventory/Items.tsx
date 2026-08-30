@@ -3,9 +3,10 @@ import { ItemCategoriesApi, ItemsApi } from "../../api/services";
 import type { Item, ItemCategory } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 export default function Items() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -34,7 +35,8 @@ export default function Items() {
   }, []);
 
   function categoryName(id: string) {
-    return categories.find((c) => c.id === id)?.nameAr ?? "";
+    const cat = categories.find((c) => c.id === id);
+    return cat ? bilingualName(cat.nameAr, cat.nameEn, lang) : "";
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -153,7 +155,7 @@ export default function Items() {
                   <option value="">{t.inventory.selectCategory}</option>
                   {categories.map((c) => (
                     <option key={c.id} value={c.id}>
-                      {c.code} - {c.nameAr}
+                      {c.code} - {bilingualName(c.nameAr, c.nameEn, lang)}
                     </option>
                   ))}
                 </select>
@@ -188,7 +190,7 @@ export default function Items() {
             {items.map((item) => (
               <tr key={item.id}>
                 <td>{item.code}</td>
-                <td>{item.nameAr}</td>
+                <td>{bilingualName(item.nameAr, item.nameEn, lang)}</td>
                 <td>{item.itemCategoryName || categoryName(item.itemCategoryId)}</td>
                 <td>{item.unitOfMeasure}</td>
                 <td className={item.quantityOnHand <= item.reorderLevel ? "text-danger" : undefined}>

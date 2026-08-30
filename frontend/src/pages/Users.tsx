@@ -3,9 +3,10 @@ import { EmployeesApi, UsersApi } from "../api/services";
 import { AppRoles, type AppUser, type Employee } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
+import { bilingualName } from "../i18n/bilingual";
 
 export default function Users() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [users, setUsers] = useState<AppUser[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -180,7 +181,7 @@ export default function Users() {
                       .filter((emp) => !emp.applicationUserId || emp.id === u.employeeId)
                       .map((emp) => (
                         <option key={emp.id} value={emp.id}>
-                          {emp.employeeCode} - {emp.fullNameAr}
+                          {emp.employeeCode} - {bilingualName(emp.fullNameAr, emp.fullNameEn, lang)}
                         </option>
                       ))}
                   </select>

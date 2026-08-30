@@ -3,9 +3,10 @@ import { InventoryApi, ItemsApi, LookupsApi, WarehousesApi } from "../../api/ser
 import { StockMovementType, type CostCenterLookup, type FiscalPeriod, type Item, type StockMovement, type Warehouse } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 export default function StockMovements() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const typeLabel: Record<StockMovementType, { text: string; cls: string }> = {
     [StockMovementType.Receipt]: { text: t.inventory.receipt, cls: "badge-posted" },
     [StockMovementType.Issue]: { text: t.inventory.issue, cls: "badge-draft" },
@@ -132,7 +133,7 @@ export default function StockMovements() {
                   <option value="">{t.inventory.selectItem}</option>
                   {items.map((i) => (
                     <option key={i.id} value={i.id}>
-                      {i.code} - {i.nameAr}
+                      {i.code} - {bilingualName(i.nameAr, i.nameEn, lang)}
                     </option>
                   ))}
                 </select>
@@ -143,7 +144,7 @@ export default function StockMovements() {
                   <option value="">{t.inventory.selectWarehouse}</option>
                   {warehouses.map((w) => (
                     <option key={w.id} value={w.id}>
-                      {w.code} - {w.nameAr}
+                      {w.code} - {bilingualName(w.nameAr, w.nameEn, lang)}
                     </option>
                   ))}
                 </select>

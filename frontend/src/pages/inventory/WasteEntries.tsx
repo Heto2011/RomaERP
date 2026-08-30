@@ -3,9 +3,10 @@ import { WasteEntriesApi, ItemsApi, WarehousesApi, LookupsApi } from "../../api/
 import { WasteReason, type FiscalPeriod, type Item, type Warehouse, type WasteEntryRecord } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 export default function WasteEntriesPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const reasonLabel: Record<WasteReason, string> = {
     [WasteReason.Waste]: t.inventory.wasteReasonWaste,
     [WasteReason.Expired]: t.inventory.wasteReasonExpired,
@@ -110,7 +111,7 @@ export default function WasteEntriesPage() {
                   <option value="">{t.inventory.selectItem}</option>
                   {items.map((i) => (
                     <option key={i.id} value={i.id}>
-                      {i.code} - {i.nameAr}
+                      {i.code} - {bilingualName(i.nameAr, i.nameEn, lang)}
                     </option>
                   ))}
                 </select>
@@ -121,7 +122,7 @@ export default function WasteEntriesPage() {
                   <option value="">{t.inventory.selectWarehouse}</option>
                   {warehouses.map((w) => (
                     <option key={w.id} value={w.id}>
-                      {w.code} - {w.nameAr}
+                      {w.code} - {bilingualName(w.nameAr, w.nameEn, lang)}
                     </option>
                   ))}
                 </select>

@@ -3,9 +3,10 @@ import axios from "axios";
 import { EmployeesApi, PayrollApi } from "../api/services";
 import { PayrollRunStatus, type Employee, type MyPayslip } from "../api/types";
 import { useLanguage } from "../i18n/LanguageContext";
+import { bilingualName } from "../i18n/bilingual";
 
 export default function MyProfile() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [profile, setProfile] = useState<Employee | null>(null);
   const [payslips, setPayslips] = useState<MyPayslip[]>([]);
   const [notLinked, setNotLinked] = useState(false);
@@ -56,7 +57,7 @@ export default function MyProfile() {
               </div>
               <div className="form-field">
                 <label>{t.common.nameAr}</label>
-                <div>{profile.fullNameAr}</div>
+                <div>{bilingualName(profile.fullNameAr, profile.fullNameEn, lang)}</div>
               </div>
               <div className="form-field">
                 <label>{t.hr.department}</label>

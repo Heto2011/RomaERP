@@ -3,20 +3,21 @@ import { AccountsApi } from "../../api/services";
 import { AccountNature, AccountType, type Account } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
-import type { dictionaries } from "../../i18n/translations";
+import type { dictionaries, Lang } from "../../i18n/translations";
+import { bilingualName } from "../../i18n/bilingual";
 
-function TreeNode({ account, t }: { account: Account; t: (typeof dictionaries)["ar"] }) {
+function TreeNode({ account, t, lang }: { account: Account; t: (typeof dictionaries)["ar"]; lang: Lang }) {
   return (
     <div className="tree-item">
       <div>
-        <strong>{account.code}</strong> — {account.nameAr}
+        <strong>{account.code}</strong> — {bilingualName(account.nameAr, account.nameEn, lang)}
         {account.isControlAccount && <span className="text-muted"> ({t.accounting.controlAccountBadge})</span>}
         {!account.isActive && <span className="badge badge-reversed" style={{ marginRight: 8 }}>{t.accounting.inactiveBadge}</span>}
       </div>
       {account.children.length > 0 && (
         <div className="tree-children">
           {account.children.map((child) => (
-            <TreeNode key={child.id} account={child} t={t} />
+            <TreeNode key={child.id} account={child} t={t} lang={lang} />
           ))}
         </div>
       )}
@@ -25,7 +26,7 @@ function TreeNode({ account, t }: { account: Account; t: (typeof dictionaries)["
 }
 
 export default function ChartOfAccounts() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const typeLabels: Record<AccountType, string> = {
     [AccountType.Asset]: t.accounting.types.asset,
     [AccountType.Liability]: t.accounting.types.liability,
@@ -130,7 +131,7 @@ export default function ChartOfAccounts() {
                   <option value="">{t.common.none}</option>
                   {flat.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.code} - {a.nameAr}
+                      {a.code} - {bilingualName(a.nameAr, a.nameEn, lang)}
                     </option>
                   ))}
                 </select>
@@ -155,7 +156,7 @@ export default function ChartOfAccounts() {
 
       <div className="card">
         {tree.map((a) => (
-          <TreeNode key={a.id} account={a} t={t} />
+          <TreeNode key={a.id} account={a} t={t} lang={lang} />
         ))}
       </div>
     </div>

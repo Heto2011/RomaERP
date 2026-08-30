@@ -3,9 +3,10 @@ import { PhysicalStockCountsApi, ItemsApi } from "../../api/services";
 import type { Item, PhysicalStockCountEntry } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 export default function PhysicalStockCountsPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [counts, setCounts] = useState<PhysicalStockCountEntry[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -85,7 +86,7 @@ export default function PhysicalStockCountsPage() {
                   <option value="">{t.inventory.selectItem}</option>
                   {items.map((i) => (
                     <option key={i.id} value={i.id}>
-                      {i.code} - {i.nameAr}
+                      {i.code} - {bilingualName(i.nameAr, i.nameEn, lang)}
                     </option>
                   ))}
                 </select>

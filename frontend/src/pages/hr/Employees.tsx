@@ -3,9 +3,10 @@ import { DepartmentsApi, EmployeesApi, PositionsApi } from "../../api/services";
 import { Gender, MaritalStatus, type Department, type Employee, type Position } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 export default function Employees() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -143,7 +144,7 @@ export default function Employees() {
                   <option value="">{t.hr.selectDepartment}</option>
                   {departments.map((d) => (
                     <option key={d.id} value={d.id}>
-                      {d.code} - {d.nameAr}
+                      {d.code} - {bilingualName(d.nameAr, d.nameEn, lang)}
                     </option>
                   ))}
                 </select>
@@ -154,7 +155,7 @@ export default function Employees() {
                   <option value="">{t.hr.selectPosition}</option>
                   {filteredPositions.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.titleAr}
+                      {bilingualName(p.titleAr, p.titleEn, lang)}
                     </option>
                   ))}
                 </select>
@@ -195,7 +196,7 @@ export default function Employees() {
             {employees.map((emp) => (
               <tr key={emp.id}>
                 <td>{emp.employeeCode}</td>
-                <td>{emp.fullNameAr}</td>
+                <td>{bilingualName(emp.fullNameAr, emp.fullNameEn, lang)}</td>
                 <td>{emp.departmentName}</td>
                 <td>{emp.positionName}</td>
                 <td>{emp.basicSalary.toLocaleString()}</td>

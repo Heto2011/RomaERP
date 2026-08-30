@@ -3,9 +3,10 @@ import { AccountsApi, FixedAssetsApi } from "../../api/services";
 import { DepreciationMethod, FixedAssetStatus, type Account, type FixedAsset } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 export default function FixedAssets() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [assets, setAssets] = useState<FixedAsset[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -109,7 +110,7 @@ export default function FixedAssets() {
                   <option value="">{t.fixedAssets.selectAccount}</option>
                   {accounts.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.code} - {a.nameAr}
+                      {a.code} - {bilingualName(a.nameAr, a.nameEn, lang)}
                     </option>
                   ))}
                 </select>
@@ -120,7 +121,7 @@ export default function FixedAssets() {
                   <option value="">{t.fixedAssets.selectAccount}</option>
                   {accounts.map((a) => (
                     <option key={a.id} value={a.id}>
-                      {a.code} - {a.nameAr}
+                      {a.code} - {bilingualName(a.nameAr, a.nameEn, lang)}
                     </option>
                   ))}
                 </select>
@@ -187,7 +188,7 @@ export default function FixedAssets() {
             {assets.map((a) => (
               <tr key={a.id}>
                 <td>{a.code}</td>
-                <td>{a.nameAr}</td>
+                <td>{bilingualName(a.nameAr, a.nameEn, lang)}</td>
                 <td>{a.assetAccountCode} - {a.assetAccountName}</td>
                 <td>{a.acquisitionCost.toLocaleString()}</td>
                 <td>{methodLabel[a.depreciationMethod]}</td>

@@ -3,6 +3,7 @@ import { AccountsApi, FiscalPeriodsAdminApi, OpeningBalanceApi } from "../../api
 import type { Account, FiscalYearDetail, JournalEntry } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 interface RowState {
   debit: string;
@@ -10,7 +11,7 @@ interface RowState {
 }
 
 export default function OpeningBalances() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const typeLabels: Record<number, string> = {
     1: t.accounting.types.asset,
     2: t.accounting.types.liability,
@@ -197,7 +198,7 @@ export default function OpeningBalances() {
                     {typeAccounts.map((a) => (
                       <tr key={a.id}>
                         <td>{a.code}</td>
-                        <td>{a.nameAr}</td>
+                        <td>{bilingualName(a.nameAr, a.nameEn, lang)}</td>
                         <td>
                           <input
                             type="number"

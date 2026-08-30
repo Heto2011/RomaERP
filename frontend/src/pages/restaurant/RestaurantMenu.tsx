@@ -3,6 +3,7 @@ import { ItemsApi, RestaurantApi } from "../../api/services";
 import type { Item, RecipeLine } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { bilingualName } from "../../i18n/bilingual";
 
 interface RecipeLineDraft {
   rawMaterialItemId: string;
@@ -10,7 +11,7 @@ interface RecipeLineDraft {
 }
 
 export default function RestaurantMenu() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [items, setItems] = useState<Item[]>([]);
   const [error, setError] = useState<string | null>(null);
 
@@ -64,7 +65,7 @@ export default function RestaurantMenu() {
 
   function itemLabel(id: string) {
     const item = items.find((i) => i.id === id);
-    return item ? `${item.code} - ${item.nameAr}` : id;
+    return item ? `${item.code} - ${bilingualName(item.nameAr, item.nameEn, lang)}` : id;
   }
 
   async function handleSave() {
@@ -111,7 +112,7 @@ export default function RestaurantMenu() {
             {items.map((item) => (
               <tr key={item.id}>
                 <td>{item.code}</td>
-                <td>{item.nameAr}</td>
+                <td>{bilingualName(item.nameAr, item.nameEn, lang)}</td>
                 <td>{item.itemCategoryName}</td>
                 <td>{item.isMenuItem ? "✅" : "—"}</td>
                 <td>{item.isMenuItem ? item.menuPrice.toLocaleString() : "—"}</td>
@@ -130,7 +131,7 @@ export default function RestaurantMenu() {
       {editingItem && (
         <div className="modal-overlay" onClick={closeEditor}>
           <div className="card" style={{ maxWidth: 560, margin: "5% auto" }} onClick={(e) => e.stopPropagation()}>
-            <h3>{editingItem.code} - {editingItem.nameAr}</h3>
+            <h3>{editingItem.code} - {bilingualName(editingItem.nameAr, editingItem.nameEn, lang)}</h3>
 
             <div className="form-field" style={{ marginTop: 10 }}>
               <label>
@@ -174,7 +175,7 @@ export default function RestaurantMenu() {
                         <select value={newRawMaterialId} onChange={(e) => setNewRawMaterialId(e.target.value)}>
                           <option value="">-</option>
                           {items.filter((i) => i.id !== editingItem.id).map((i) => (
-                            <option key={i.id} value={i.id}>{i.code} - {i.nameAr}</option>
+                            <option key={i.id} value={i.id}>{i.code} - {bilingualName(i.nameAr, i.nameEn, lang)}</option>
                           ))}
                         </select>
                       </td>
