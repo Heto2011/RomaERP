@@ -22,6 +22,8 @@ import type {
   WasteEntryRecord,
   CreateWasteEntry,
   HiddenProfitReport,
+  DeliverySettlementImportResult,
+  DeliveryReconciliationReport,
   BankStatementImportResult,
   BankStatementLine,
   ChatTurnResponse,
@@ -209,6 +211,20 @@ export const BankReconciliationApi = {
   autoMatch: () => apiClient.post<number>("/bankreconciliation/auto-match"),
   matchManual: (expenseCaptureId: string, bankStatementLineId: string) =>
     apiClient.post<ExpenseCapture>("/bankreconciliation/match", { expenseCaptureId, bankStatementLineId }),
+};
+
+export const DeliveryReconciliationApi = {
+  import: (file: File, platformName: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("platformName", platformName);
+    return apiClient.post<DeliverySettlementImportResult>("/deliveryreconciliation/import", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  getImports: () => apiClient.get<DeliverySettlementImportResult[]>("/deliveryreconciliation/imports"),
+  getReconciliation: (fromDate: string, toDate: string) =>
+    apiClient.get<DeliveryReconciliationReport>("/deliveryreconciliation/reconciliation", { params: { fromDate, toDate } }),
 };
 
 export const OpeningBalanceApi = {

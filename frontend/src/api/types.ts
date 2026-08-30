@@ -494,6 +494,24 @@ export interface BankStatementImportResult {
   matchedCount: number;
 }
 
+export interface DeliverySettlementImportResult {
+  id: string;
+  fileName: string;
+  platformName: string;
+  periodFrom: string;
+  periodTo: string;
+  totalAmount: number;
+  lineCount: number;
+}
+
+export interface DeliveryReconciliationReport {
+  fromDate: string;
+  toDate: string;
+  expectedRevenue: number;
+  receivedAmount: number;
+  variance: number;
+}
+
 export interface FiscalYearDetail {
   id: string;
   name: string;

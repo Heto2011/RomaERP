@@ -52,6 +52,7 @@ import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
 import BankReconciliation from "./pages/assistant/BankReconciliation";
 import RestaurantTables from "./pages/restaurant/RestaurantTables";
 import RestaurantMenu from "./pages/restaurant/RestaurantMenu";
+import DeliveryReconciliationPage from "./pages/restaurant/DeliveryReconciliation";
 import RestaurantPOS from "./pages/restaurant/RestaurantPOS";
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
@@ -104,6 +105,7 @@ export default function App() {
       <Route path="/hr/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
       <Route path="/restaurant/tables" element={<ProtectedRoute><RestaurantTables /></ProtectedRoute>} />
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />
+      <Route path="/restaurant/delivery-reconciliation" element={<ProtectedRoute><DeliveryReconciliationPage /></ProtectedRoute>} />
       <Route path="/restaurant/pos" element={<ProtectedRoute><RestaurantPOS /></ProtectedRoute>} />
       <Route path="/inventory/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
       <Route path="/inventory/warehouses" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />

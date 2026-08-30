@@ -91,3 +91,29 @@ public class MenuRecipeLineConfiguration : IEntityTypeConfiguration<MenuRecipeLi
         builder.HasIndex(l => new { l.MenuItemId, l.RawMaterialItemId }).IsUnique();
     }
 }
+
+public class DeliverySettlementImportConfiguration : IEntityTypeConfiguration<DeliverySettlementImport>
+{
+    public void Configure(EntityTypeBuilder<DeliverySettlementImport> builder)
+    {
+        builder.Property(i => i.FileName).HasMaxLength(255).IsRequired();
+        builder.Property(i => i.PlatformName).HasMaxLength(100).IsRequired();
+        builder.Property(i => i.ImportedByUserId).HasMaxLength(450).IsRequired();
+
+        builder.HasQueryFilter(i => !i.IsDeleted);
+    }
+}
+
+public class DeliverySettlementLineConfiguration : IEntityTypeConfiguration<DeliverySettlementLine>
+{
+    public void Configure(EntityTypeBuilder<DeliverySettlementLine> builder)
+    {
+        builder.Property(l => l.Description).HasMaxLength(500);
+        builder.Property(l => l.Amount).HasPrecision(18, 2);
+
+        builder.HasOne(l => l.DeliverySettlementImport)
+            .WithMany(i => i.Lines)
+            .HasForeignKey(l => l.DeliverySettlementImportId)
+            .OnDelete(DeleteBehavior.Cascade);
+    }
+}

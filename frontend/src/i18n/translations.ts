@@ -572,6 +572,17 @@ const ar = {
     wasteReasonProductionWaste: "هالك تصنيع",
     wasteReasonOverPortion: "زيادة تقديم",
     wasteReasonUnknown: "غير معروف",
+
+    deliveryReconciliationTitle: "مطابقة منصات التوصيل",
+    deliveryReconciliationIntro:
+      "ارفع كشف التسوية اللي بتصدّره من منصة التوصيل (طلبات، كريم، هنقرستيشن، إلخ) بنفس فكرة المطابقة البنكية — مفيش ربط API مباشر مع أي منصة، النظام بس بيقارن اللي وصلك بالمبيعات الحقيقية المسجلة لقناة الدليفري.",
+    uploadSettlement: "رفع كشف تسوية",
+    platformName: "اسم المنصة",
+    platformNamePlaceholder: "مثال: طلبات، كريم",
+    pastImports: "الكشوفات المرفوعة",
+    expectedRevenue: "المتوقع (حسب مبيعات النظام)",
+    receivedAmount: "المحصّل (حسب كشف المنصة)",
+    varianceLabel: "الفرق",
   },
   restaurant: {
     menuTitle: "المنيو والوصفات",
@@ -1321,6 +1332,17 @@ const en: typeof ar = {
     wasteReasonProductionWaste: "Production Waste",
     wasteReasonOverPortion: "Over Portion",
     wasteReasonUnknown: "Unknown",
+
+    deliveryReconciliationTitle: "Delivery Platform Reconciliation",
+    deliveryReconciliationIntro:
+      "Upload the settlement report you export from the delivery platform (Talabat, Careem, HungerStation, etc.) — same idea as bank reconciliation: no direct API to any platform, the system just compares what you received against the real recorded Delivery-channel sales.",
+    uploadSettlement: "Upload Settlement",
+    platformName: "Platform Name",
+    platformNamePlaceholder: "e.g. Talabat, Careem",
+    pastImports: "Uploaded Statements",
+    expectedRevenue: "Expected (per system sales)",
+    receivedAmount: "Received (per platform statement)",
+    varianceLabel: "Variance",
   },
   restaurant: {
     menuTitle: "Menu & Recipes",
