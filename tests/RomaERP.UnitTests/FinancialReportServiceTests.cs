@@ -647,4 +647,88 @@ public class FinancialReportServiceTests
         Assert.Equal(-50, report.Lines.Single(l => l.ReasonCode == "below-cost").Amount);
         Assert.Equal(-160, report.TotalImpact);
     }
+
+    private static JournalEntry PostedEntry(DateTime date, Guid revenueAccountId, Guid expenseAccountId, decimal revenue, decimal expense)
+    {
+        var entry = new JournalEntry
+        {
+            EntryNumber = $"JV-{Guid.NewGuid():N}",
+            EntryDate = date,
+            Status = JournalEntryStatus.Posted,
+            Lines = new List<JournalEntryLine>()
+        };
+        if (revenue != 0)
+            entry.Lines.Add(new JournalEntryLine { LineNumber = 1, AccountId = revenueAccountId, Debit = 0, Credit = revenue });
+        if (expense != 0)
+            entry.Lines.Add(new JournalEntryLine { LineNumber = 2, AccountId = expenseAccountId, Debit = expense, Credit = 0 });
+        return entry;
+    }
+
+    [Fact]
+    public async Task GetForecast_WithNoPostedActivity_ReturnsEmptyLowConfidenceReport()
+    {
+        var ctx = CreateContext();
+        var service = new FinancialReportService(ctx);
+
+        var report = await service.GetForecastAsync(new DateTime(2026, 8, 15), historyMonths: 6, forecastMonths: 3);
+
+        Assert.Equal(0, report.HistoricalMonthsUsed);
+        Assert.True(report.IsLowConfidence);
+        Assert.Empty(report.HistoricalMonths);
+        Assert.Empty(report.ForecastMonths);
+    }
+
+    [Fact]
+    public async Task GetForecast_WithOneMonthOfHistory_FlatlinesAtLastMonthWithFifteenPercentBand()
+    {
+        var ctx = CreateContext();
+        var revenue = new Account { Code = "4100", NameAr = "إيرادات", NameEn = "Revenue", AccountType = AccountType.Revenue, Nature = AccountNature.Credit };
+        var expense = new Account { Code = "5300", NameAr = "مصروفات", NameEn = "Expense", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        ctx.Accounts.AddRange(revenue, expense);
+        ctx.JournalEntries.Add(PostedEntry(new DateTime(2026, 8, 5), revenue.Id, expense.Id, 1000, 600));
+        await ctx.SaveChangesAsync();
+
+        var service = new FinancialReportService(ctx);
+        var report = await service.GetForecastAsync(new DateTime(2026, 8, 15), historyMonths: 6, forecastMonths: 2);
+
+        Assert.Equal(1, report.HistoricalMonthsUsed);
+        Assert.True(report.IsLowConfidence);
+        Assert.Equal(2, report.ForecastMonths.Count);
+        Assert.All(report.ForecastMonths, m =>
+        {
+            Assert.Equal(1000, m.ExpectedRevenue);
+            Assert.Equal(600, m.ExpectedExpense);
+            Assert.Equal(850, m.WorstRevenue); // 1000 - 15%
+            Assert.Equal(1150, m.BestRevenue); // 1000 + 15%
+        });
+    }
+
+    [Fact]
+    public async Task GetForecast_WithThreeGrowingMonths_ProjectsGrowthWithBandAroundExpected()
+    {
+        var ctx = CreateContext();
+        var revenue = new Account { Code = "4100", NameAr = "إيرادات", NameEn = "Revenue", AccountType = AccountType.Revenue, Nature = AccountNature.Credit };
+        var expense = new Account { Code = "5300", NameAr = "مصروفات", NameEn = "Expense", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        ctx.Accounts.AddRange(revenue, expense);
+        ctx.JournalEntries.AddRange(
+            PostedEntry(new DateTime(2026, 6, 5), revenue.Id, expense.Id, 100, 50),
+            PostedEntry(new DateTime(2026, 7, 5), revenue.Id, expense.Id, 200, 50),
+            PostedEntry(new DateTime(2026, 8, 5), revenue.Id, expense.Id, 300, 50)
+        );
+        await ctx.SaveChangesAsync();
+
+        var service = new FinancialReportService(ctx);
+        var report = await service.GetForecastAsync(new DateTime(2026, 8, 15), historyMonths: 6, forecastMonths: 2);
+
+        Assert.Equal(3, report.HistoricalMonthsUsed);
+        Assert.False(report.IsLowConfidence);
+        Assert.Equal(2, report.ForecastMonths.Count);
+        Assert.Equal("2026-09", report.ForecastMonths[0].MonthLabel);
+        Assert.Equal("2026-10", report.ForecastMonths[1].MonthLabel);
+        // Revenue was rising (100 -> 200 -> 300), so the projection should keep rising past the last actual month.
+        Assert.True(report.ForecastMonths[0].ExpectedRevenue > 300);
+        Assert.True(report.ForecastMonths[1].ExpectedRevenue > report.ForecastMonths[0].ExpectedRevenue);
+        Assert.True(report.ForecastMonths[0].WorstRevenue <= report.ForecastMonths[0].ExpectedRevenue);
+        Assert.True(report.ForecastMonths[0].BestRevenue >= report.ForecastMonths[0].ExpectedRevenue);
+    }
 }

@@ -409,6 +409,31 @@ export interface HiddenProfitLine {
   amount: number;
 }
 
+export interface HistoricalMonth {
+  monthLabel: string;
+  revenue: number;
+  expense: number;
+  netIncome: number;
+}
+
+export interface ForecastMonth {
+  monthLabel: string;
+  expectedRevenue: number;
+  worstRevenue: number;
+  bestRevenue: number;
+  expectedExpense: number;
+  expectedProfit: number;
+  worstProfit: number;
+  bestProfit: number;
+}
+
+export interface ForecastReport {
+  historicalMonthsUsed: number;
+  isLowConfidence: boolean;
+  historicalMonths: HistoricalMonth[];
+  forecastMonths: ForecastMonth[];
+}
+
 export interface HiddenProfitReport {
   fromDate: string;
   toDate: string;

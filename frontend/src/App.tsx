@@ -47,6 +47,7 @@ import RecipeCostPage from "./pages/inventory/RecipeCost";
 import PhysicalStockCountsPage from "./pages/inventory/PhysicalStockCounts";
 import WasteEntriesPage from "./pages/inventory/WasteEntries";
 import HiddenProfitPage from "./pages/accounting/HiddenProfit";
+import ForecastPage from "./pages/accounting/Forecast";
 import AiAssistant from "./pages/assistant/AiAssistant";
 import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
 import BankReconciliation from "./pages/assistant/BankReconciliation";
@@ -117,6 +118,7 @@ export default function App() {
       <Route path="/inventory/physical-stock-counts" element={<ProtectedRoute><PhysicalStockCountsPage /></ProtectedRoute>} />
       <Route path="/inventory/waste-entries" element={<ProtectedRoute><WasteEntriesPage /></ProtectedRoute>} />
       <Route path="/accounting/hidden-profit" element={<ProtectedRoute><HiddenProfitPage /></ProtectedRoute>} />
+      <Route path="/accounting/forecast" element={<ProtectedRoute><ForecastPage /></ProtectedRoute>} />
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

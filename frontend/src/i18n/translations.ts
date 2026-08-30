@@ -356,6 +356,16 @@ const ar = {
     manualEntryNote: "أرقام مُدخلة يدويًا — مش محسوبة تلقائيًا من الفواتير. الربح والهامش بيتحسبوا تلقائيًا من الإيراد والتكلفة اللي تكتبها.",
     confirmDeleteManualEntry: "متأكد من حذف هذا السطر؟",
 
+    forecastTitle: "توقعات المبيعات والأرباح",
+    forecastIntro:
+      "توقع مبني على اتجاه الشهور الفعلية المرحّلة في النظام — مش رقم مُلفّق. كل ما تراكم شهور بيانات حقيقية أكتر، التوقع بيبقى أدق.",
+    forecastLowConfidenceNote: "البيانات المتاحة أقل من 3 شهور، فده تقدير مبدئي جدًا (نفس آخر شهر ± 15%) لحد ما يتراكم تاريخ كافي.",
+    historicalMonths: "الشهور الفعلية المستخدمة",
+    worst: "أسوأ حالة",
+    expected: "المتوقع",
+    best: "أفضل حالة",
+    month: "الشهر",
+
     hiddenProfitTitle: "الربح المخفي",
     hiddenProfitIntro:
       "مجموع الفروق الحقيقية بين اللي المفروض يحصل واللي بيحصل فعلاً: فرق الجرد، الهالك، والأصناف اللي بتتباع تحت التكلفة. مصادر تانية (زيادة أسعار الشراء، فروقات كاش/بنك) لسه مش متاحة لحد ما نضيف البيانات بتاعتها.",
@@ -1115,6 +1125,16 @@ const en: typeof ar = {
     periodMonth: "Month",
     manualEntryNote: "Manually entered figures — not computed automatically from invoices. Profit and margin are computed automatically from the revenue and cost you enter.",
     confirmDeleteManualEntry: "Delete this entry?",
+
+    forecastTitle: "Sales & Profit Forecast",
+    forecastIntro:
+      "A projection built from the actual posted months in the system — not a fabricated number. It gets more accurate as more real months of history accumulate.",
+    forecastLowConfidenceNote: "Less than 3 months of history are available, so this is a rough starting estimate (flat at last month ±15%) until enough history builds up.",
+    historicalMonths: "Actual Months Used",
+    worst: "Worst Case",
+    expected: "Expected",
+    best: "Best Case",
+    month: "Month",
 
     hiddenProfitTitle: "Hidden Profit",
     hiddenProfitIntro:

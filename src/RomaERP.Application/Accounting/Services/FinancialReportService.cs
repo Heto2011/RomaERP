@@ -375,6 +375,113 @@ public class FinancialReportService : IFinancialReportService
         return new SalesChannelProfitabilityReportDto { FromDate = fromDate, ToDate = toDate, Channels = channels };
     }
 
+    public async Task<ForecastReportDto> GetForecastAsync(DateTime asOfDate, int historyMonths, int forecastMonths, CancellationToken ct = default)
+    {
+        var earliestEntryDate = await _context.JournalEntries
+            .AsNoTracking()
+            .Where(e => e.Status == JournalEntryStatus.Posted && !e.IsDeleted)
+            .OrderBy(e => e.EntryDate)
+            .Select(e => (DateTime?)e.EntryDate)
+            .FirstOrDefaultAsync(ct);
+
+        if (earliestEntryDate is null)
+            return new ForecastReportDto { HistoricalMonthsUsed = 0, IsLowConfidence = true };
+
+        var asOfMonthStart = new DateTime(asOfDate.Year, asOfDate.Month, 1);
+        var earliestMonthStart = new DateTime(earliestEntryDate.Value.Year, earliestEntryDate.Value.Month, 1);
+        var requestedStart = asOfMonthStart.AddMonths(-(historyMonths - 1));
+        var windowStart = requestedStart > earliestMonthStart ? requestedStart : earliestMonthStart;
+
+        var historicalMonths = new List<HistoricalMonthDto>();
+        for (var monthStart = windowStart; monthStart <= asOfMonthStart; monthStart = monthStart.AddMonths(1))
+        {
+            var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+            var income = await GetIncomeStatementAsync(monthStart, monthEnd, ct);
+            historicalMonths.Add(new HistoricalMonthDto
+            {
+                MonthLabel = monthStart.ToString("yyyy-MM"),
+                Revenue = income.TotalRevenue,
+                Expense = income.TotalExpense,
+                NetIncome = income.NetIncome
+            });
+        }
+
+        var isLowConfidence = historicalMonths.Count < 3;
+        var lastRevenue = historicalMonths[^1].Revenue;
+        var lastExpense = historicalMonths[^1].Expense;
+
+        decimal avgRevenueGrowth = 0, avgExpenseGrowth = 0, revenueStdDev = 0;
+        if (!isLowConfidence)
+        {
+            var revenueGrowths = new List<decimal>();
+            var expenseGrowths = new List<decimal>();
+            for (var i = 1; i < historicalMonths.Count; i++)
+            {
+                var prev = historicalMonths[i - 1];
+                var curr = historicalMonths[i];
+                revenueGrowths.Add(prev.Revenue != 0 ? (curr.Revenue - prev.Revenue) / prev.Revenue : 0);
+                expenseGrowths.Add(prev.Expense != 0 ? (curr.Expense - prev.Expense) / prev.Expense : 0);
+            }
+            avgRevenueGrowth = revenueGrowths.Average();
+            avgExpenseGrowth = expenseGrowths.Average();
+
+            var meanRevenue = historicalMonths.Average(m => m.Revenue);
+            var variance = historicalMonths.Sum(m => (m.Revenue - meanRevenue) * (m.Revenue - meanRevenue)) / historicalMonths.Count;
+            revenueStdDev = (decimal)Math.Sqrt((double)variance);
+        }
+
+        var forecast = new List<ForecastMonthDto>();
+        for (var j = 1; j <= forecastMonths; j++)
+        {
+            var monthLabel = asOfMonthStart.AddMonths(j).ToString("yyyy-MM");
+            decimal expectedRevenue, expectedExpense, band;
+
+            if (isLowConfidence)
+            {
+                expectedRevenue = lastRevenue;
+                expectedExpense = lastExpense;
+                band = Math.Abs(lastRevenue) * 0.15m;
+            }
+            else
+            {
+                expectedRevenue = lastRevenue * Pow(1 + avgRevenueGrowth, j);
+                expectedExpense = lastExpense * Pow(1 + avgExpenseGrowth, j);
+                band = revenueStdDev;
+            }
+
+            var worstRevenue = Math.Max(0, expectedRevenue - band);
+            var bestRevenue = expectedRevenue + band;
+
+            forecast.Add(new ForecastMonthDto
+            {
+                MonthLabel = monthLabel,
+                ExpectedRevenue = Math.Round(expectedRevenue, 2),
+                WorstRevenue = Math.Round(worstRevenue, 2),
+                BestRevenue = Math.Round(bestRevenue, 2),
+                ExpectedExpense = Math.Round(expectedExpense, 2),
+                ExpectedProfit = Math.Round(expectedRevenue - expectedExpense, 2),
+                WorstProfit = Math.Round(worstRevenue - expectedExpense, 2),
+                BestProfit = Math.Round(bestRevenue - expectedExpense, 2)
+            });
+        }
+
+        return new ForecastReportDto
+        {
+            HistoricalMonthsUsed = historicalMonths.Count,
+            IsLowConfidence = isLowConfidence,
+            HistoricalMonths = historicalMonths,
+            ForecastMonths = forecast
+        };
+    }
+
+    private static decimal Pow(decimal value, int exponent)
+    {
+        decimal result = 1;
+        for (var i = 0; i < exponent; i++)
+            result *= value;
+        return result;
+    }
+
     public async Task<HiddenProfitReportDto> GetHiddenProfitAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
     {
         var stockVarianceValue = await _context.PhysicalStockCounts

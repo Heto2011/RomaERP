@@ -22,6 +22,7 @@ import type {
   WasteEntryRecord,
   CreateWasteEntry,
   HiddenProfitReport,
+  ForecastReport,
   DeliverySettlementImportResult,
   DeliveryReconciliationReport,
   BankStatementImportResult,
@@ -252,6 +253,8 @@ export const FinancialReportsApi = {
     apiClient.get<SalesChannelProfitabilityReport>("/financialreports/sales-channel-profitability", { params: { fromDate, toDate } }),
   hiddenProfit: (fromDate: string, toDate: string) =>
     apiClient.get<HiddenProfitReport>("/financialreports/hidden-profit", { params: { fromDate, toDate } }),
+  forecast: (asOfDate: string, historyMonths: number, forecastMonths: number) =>
+    apiClient.get<ForecastReport>("/financialreports/forecast", { params: { asOfDate, historyMonths, forecastMonths } }),
 };
 
 export const ManualProfitEntriesApi = {

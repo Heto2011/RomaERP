@@ -150,6 +150,40 @@ public class SalesChannelProfitabilityReportDto
     public List<SalesChannelProfitabilityLineDto> Channels { get; set; } = new();
 }
 
+public class HistoricalMonthDto
+{
+    public string MonthLabel { get; set; } = string.Empty;
+    public decimal Revenue { get; set; }
+    public decimal Expense { get; set; }
+    public decimal NetIncome { get; set; }
+}
+
+public class ForecastMonthDto
+{
+    public string MonthLabel { get; set; } = string.Empty;
+    public decimal ExpectedRevenue { get; set; }
+    public decimal WorstRevenue { get; set; }
+    public decimal BestRevenue { get; set; }
+    public decimal ExpectedExpense { get; set; }
+    public decimal ExpectedProfit { get; set; }
+    public decimal WorstProfit { get; set; }
+    public decimal BestProfit { get; set; }
+}
+
+/// <summary>A trend projection built from real posted monthly Income Statements — never a fabricated number.
+/// With HistoricalMonthsUsed &lt; 3 there isn't enough history for a real trend or variance band, so the
+/// projection flatlines at the last known month and the worst/best band is a fixed ±15% placeholder — that
+/// low-confidence state is reported explicitly via IsLowConfidence rather than presented as a real forecast.
+/// From 3 months on, ExpectedRevenue/ExpectedExpense extrapolate the average month-over-month growth rate,
+/// and the worst/best band is ±1 standard deviation of the historical monthly revenue.</summary>
+public class ForecastReportDto
+{
+    public int HistoricalMonthsUsed { get; set; }
+    public bool IsLowConfidence { get; set; }
+    public List<HistoricalMonthDto> HistoricalMonths { get; set; } = new();
+    public List<ForecastMonthDto> ForecastMonths { get; set; } = new();
+}
+
 public class HiddenProfitLineDto
 {
     public string ReasonCode { get; set; } = string.Empty;
