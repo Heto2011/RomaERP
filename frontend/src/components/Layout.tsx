@@ -5,6 +5,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import GlobalSearch from "./GlobalSearch";
 import {
+  IconBell,
   IconGrid,
   IconUser,
   IconUsers,
@@ -152,6 +153,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       section: t.nav.general,
       items: [
         { to: "/", label: t.nav.dashboard, icon: <IconGrid /> },
+        { to: "/alerts", label: t.alerts.title, icon: <IconBell /> },
         { to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> },
       ],
     },

@@ -712,6 +712,14 @@ const ar = {
     notLinked: "حسابك مش مرتبط بسجل موظف حاليًا. تواصل مع مدير النظام لربط حسابك ببياناتك الوظيفية.",
     payslipsTitle: "سجل الرواتب",
   },
+  alerts: {
+    title: "التنبيهات",
+    intro: "كل تنبيه هنا مبني على رقم حقيقي من تقرير موجود بالفعل — المخزون، السيولة، الهالك، التسعير، والمستحقات.",
+    noAlerts: "مفيش تنبيهات دلوقتي.",
+    severityInfo: "معلومة",
+    severityWarning: "تحذير",
+    severityCritical: "حرج",
+  },
   eInvoicing: {
     title: "الفاتورة الإلكترونية",
     intro:
@@ -1553,6 +1561,14 @@ const en: typeof ar = {
     title: "My Profile",
     notLinked: "Your account is not linked to an employee record yet. Contact the system administrator to link your account.",
     payslipsTitle: "Payslip History",
+  },
+  alerts: {
+    title: "Alerts",
+    intro: "Every alert here traces back to a real number in an existing report — inventory, cash, waste, pricing, and receivables/payables.",
+    noAlerts: "No alerts right now.",
+    severityInfo: "Info",
+    severityWarning: "Warning",
+    severityCritical: "Critical",
   },
   eInvoicing: {
     title: "E-Invoicing",

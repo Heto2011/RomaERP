@@ -1304,3 +1304,21 @@ export interface OpenCashierShiftInput {
 export interface CloseCashierShiftInput {
   closingCountedCash: number;
 }
+
+export enum AlertSeverity {
+  Info = 1,
+  Warning = 2,
+  Critical = 3,
+}
+
+export interface Alert {
+  category: string;
+  severity: AlertSeverity;
+  title: string;
+  detail: string;
+}
+
+export interface AlertsReport {
+  generatedAt: string;
+  alerts: Alert[];
+}

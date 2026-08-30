@@ -19,6 +19,7 @@ import type {
   PurchasePriceVarianceReport,
   RecipeCostReport,
   WasteAnalysisReport,
+  AlertsReport,
   PhysicalStockCountEntry,
   CreatePhysicalStockCount,
   WasteEntryRecord,
@@ -400,4 +401,8 @@ export const UsersApi = {
   deactivate: (id: string) => apiClient.post<AppUser>(`/users/${id}/deactivate`),
   activate: (id: string) => apiClient.post<AppUser>(`/users/${id}/activate`),
   linkEmployee: (id: string, employeeId: string | null) => apiClient.put<AppUser>(`/users/${id}/employee-link`, { employeeId }),
+};
+
+export const AlertsApi = {
+  getAll: () => apiClient.get<AlertsReport>("/alerts"),
 };

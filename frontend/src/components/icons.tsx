@@ -9,6 +9,15 @@ const common = {
   strokeLinejoin: "round" as const,
 };
 
+export function IconBell() {
+  return (
+    <svg {...common}>
+      <path d="M10 2.5c-2.5 0-4 2-4 4.5v2.5c0 1-.5 2-1.5 3h11c-1-1-1.5-2-1.5-3V7c0-2.5-1.5-4.5-4-4.5Z" />
+      <path d="M8 15c0 1 .8 2 2 2s2-1 2-2" />
+    </svg>
+  );
+}
+
 export function IconGrid() {
   return (
     <svg {...common}>

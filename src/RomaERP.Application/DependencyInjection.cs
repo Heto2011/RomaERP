@@ -1,5 +1,6 @@
 using Microsoft.Extensions.DependencyInjection;
 using RomaERP.Application.Accounting.Services;
+using RomaERP.Application.Alerts.Services;
 using RomaERP.Application.Assistant.Services;
 using RomaERP.Application.EInvoicing.Services;
 using RomaERP.Application.EInvoicing.Services.Eta;
@@ -18,6 +19,7 @@ public static class DependencyInjection
     {
         services.AddScoped<IAccountService, AccountService>();
         services.AddScoped<IJournalEntryService, JournalEntryService>();
+        services.AddScoped<IAlertsService, AlertsService>();
         services.AddScoped<IFinancialReportService, FinancialReportService>();
         services.AddScoped<IManualProfitEntryService, ManualProfitEntryService>();
         services.AddScoped<IFiscalPeriodService, FiscalPeriodService>();
