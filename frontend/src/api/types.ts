@@ -1338,3 +1338,38 @@ export interface AlertsReport {
   generatedAt: string;
   alerts: Alert[];
 }
+
+export enum Country {
+  Egypt = 1,
+  SaudiArabia = 2,
+  UAE = 3,
+  Bahrain = 4,
+  Oman = 5,
+  Qatar = 6,
+  Kuwait = 7,
+}
+
+export interface ProvisionTenantRequest {
+  companyCode: string;
+  companyNameAr: string;
+  companyNameEn: string;
+  country: Country;
+  adminEmail: string;
+  adminPassword: string;
+  taxRegistrationNumber?: string | null;
+  isDemo?: boolean;
+  demoExpiryDays?: number | null;
+  seedDemoData?: boolean;
+}
+
+export interface Tenant {
+  id: string;
+  companyCode: string;
+  companyNameAr: string;
+  companyNameEn: string;
+  country: Country;
+  isActive: boolean;
+  isDemo: boolean;
+  expiresAtUtc: string | null;
+  createdAtUtc: string;
+}

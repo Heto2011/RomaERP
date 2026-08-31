@@ -48,7 +48,9 @@ public class TenantProvisioningService : ITenantProvisioningService
             CompanyNameEn = request.CompanyNameEn,
             Country = request.Country,
             DatabaseName = databaseName,
-            IsActive = true
+            IsActive = true,
+            IsDemo = request.IsDemo,
+            ExpiresAtUtc = request.IsDemo && request.DemoExpiryDays is { } days ? DateTime.UtcNow.AddDays(days) : null
         };
 
         _central.Tenants.Add(tenant);
@@ -75,6 +77,35 @@ public class TenantProvisioningService : ITenantProvisioningService
         await TenantBaselineSeeder.SeedInventoryAsync(db);
         await TenantBaselineSeeder.SeedCompanySettingsAsync(db, request.Country, request.CompanyNameAr, request.CompanyNameEn, request.TaxRegistrationNumber);
 
-        return new TenantDto(tenant.Id, tenant.CompanyCode, tenant.CompanyNameAr, tenant.CompanyNameEn, tenant.Country, tenant.IsActive, tenant.CreatedAtUtc);
+        if (request.SeedDemoData)
+            await TenantDemoDataSeeder.SeedAsync(scope.ServiceProvider, db, ct);
+
+        return new TenantDto(tenant.Id, tenant.CompanyCode, tenant.CompanyNameAr, tenant.CompanyNameEn, tenant.Country, tenant.IsActive, tenant.IsDemo, tenant.ExpiresAtUtc, tenant.CreatedAtUtc);
+    }
+
+    public async Task<List<TenantDto>> GetTenantsAsync(bool demoOnly, CancellationToken ct = default)
+    {
+        var query = _central.Tenants.AsNoTracking().AsQueryable();
+        if (demoOnly)
+            query = query.Where(t => t.IsDemo);
+
+        var tenants = await query.OrderByDescending(t => t.CreatedAtUtc).ToListAsync(ct);
+        return tenants
+            .Select(t => new TenantDto(t.Id, t.CompanyCode, t.CompanyNameAr, t.CompanyNameEn, t.Country, t.IsActive, t.IsDemo, t.ExpiresAtUtc, t.CreatedAtUtc))
+            .ToList();
+    }
+
+    public async Task<int> DeactivateExpiredDemoTenantsAsync(CancellationToken ct = default)
+    {
+        var now = DateTime.UtcNow;
+        var expired = await _central.Tenants
+            .Where(t => t.IsDemo && t.IsActive && t.ExpiresAtUtc != null && t.ExpiresAtUtc < now)
+            .ToListAsync(ct);
+
+        foreach (var tenant in expired)
+            tenant.IsActive = false;
+
+        await _central.SaveChangesAsync(ct);
+        return expired.Count;
     }
 }

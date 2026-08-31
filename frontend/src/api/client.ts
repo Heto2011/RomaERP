@@ -4,6 +4,12 @@ export const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_URL,
 });
 
+/// Plain instance with no auth/company-code/401-redirect interceptors — for the not-tenant-scoped
+/// /system endpoints, which authenticate with a per-call system key instead of a user session.
+export const systemApiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+});
+
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem("token");
   if (token) {

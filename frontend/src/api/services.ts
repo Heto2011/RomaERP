@@ -1,4 +1,4 @@
-import { apiClient } from "./client";
+import { apiClient, systemApiClient } from "./client";
 import type {
   Account,
   AppUser,
@@ -21,6 +21,8 @@ import type {
   RecipeCostReport,
   WasteAnalysisReport,
   AlertsReport,
+  ProvisionTenantRequest,
+  Tenant,
   PhysicalStockCountEntry,
   CreatePhysicalStockCount,
   WasteEntryRecord,
@@ -408,4 +410,14 @@ export const UsersApi = {
 
 export const AlertsApi = {
   getAll: () => apiClient.get<AlertsReport>("/alerts"),
+};
+
+/// Not tenant-scoped — authenticated by a system key passed per call, never stored.
+export const SystemApi = {
+  createTenant: (systemKey: string, data: ProvisionTenantRequest) =>
+    systemApiClient.post<Tenant>("/system/tenants", data, { headers: { "X-System-Key": systemKey } }),
+  getTenants: (systemKey: string, demoOnly: boolean) =>
+    systemApiClient.get<Tenant[]>("/system/tenants", { params: { demoOnly }, headers: { "X-System-Key": systemKey } }),
+  expireDemoTenants: (systemKey: string) =>
+    systemApiClient.post<{ deactivatedCount: number }>("/system/tenants/expire-demo", null, { headers: { "X-System-Key": systemKey } }),
 };

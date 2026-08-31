@@ -11,4 +11,9 @@ public class Tenant : AuditableEntity
     public Country Country { get; set; }
     public string DatabaseName { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+
+    /// <summary>Marks a tenant created for a sales demo rather than a real customer, so it can be tracked
+    /// and later deactivated separately from paying tenants.</summary>
+    public bool IsDemo { get; set; }
+    public DateTime? ExpiresAtUtc { get; set; }
 }
