@@ -200,6 +200,54 @@
   .trial-steps div { font-size: 13px; opacity: .85; }
   .trial-steps strong { display: block; font-size: 15px; margin-bottom: 4px; }
 
+  /* Product preview (real screenshot of the app) */
+  .preview-frame {
+    max-width: 900px; margin: 0 auto;
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(28,38,32,.06), 0 30px 60px -24px rgba(28,38,32,.35);
+    border: 1px solid var(--border);
+  }
+  .preview-chrome {
+    background: #e9e5da; padding: 10px 14px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .preview-chrome span {
+    width: 11px; height: 11px; border-radius: 50%; background: #c9c2b2;
+  }
+  .preview-app {
+    background: #14181d; color: #e5e9ee;
+    font-family: "Tajawal", sans-serif;
+    display: flex; direction: rtl;
+    min-height: 420px;
+  }
+  .preview-sidebar {
+    width: 200px; flex-shrink: 0;
+    background: #14181d; border-inline-start: 1px solid #2c3540;
+    padding: 16px 0; display: flex; flex-direction: column; gap: 2px;
+  }
+  .preview-sidebar .brand {
+    color: #fff; font-weight: 900; font-size: 15px;
+    padding: 0 18px 16px; margin: 0;
+  }
+  .preview-sidebar a {
+    padding: 9px 18px; font-size: 13.5px; color: #8b96a3;
+  }
+  .preview-sidebar a.active {
+    background: #3aa0c4; color: #fff; font-weight: 700;
+  }
+  .preview-main { flex: 1; padding: 22px 26px; min-width: 0; }
+  .preview-main h2 { font-size: 19px; font-weight: 900; margin: 0 0 18px; color: #fff; }
+  .preview-tree { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+  .preview-tree .row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .preview-tree .code { color: #6b98a8; font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+  .preview-tree .l0 { font-weight: 700; color: #fff; }
+  .preview-tree .l1 { padding-inline-start: 20px; color: #c7cdd4; }
+  .preview-tree .l2 { padding-inline-start: 40px; color: #8b96a3; }
+  .preview-caption {
+    text-align: center; color: var(--ink-soft); font-size: 13.5px;
+    max-width: 520px; margin: 18px auto 0;
+  }
+
   footer { text-align: center; padding: 40px 0 60px; color: var(--ink-soft); font-size: 13px; }
 
   @media (max-width: 860px) {
@@ -225,6 +273,47 @@
     </div>
   </div>
 </header>
+
+<section id="preview">
+  <div class="wrap">
+    <div class="preview-frame">
+      <div class="preview-chrome"><span></span><span></span><span></span></div>
+      <div class="preview-app">
+        <div class="preview-sidebar">
+          <p class="brand">RomaERP</p>
+          <a>عام</a>
+          <a>المساعد الذكي</a>
+          <a class="active">شجرة الحسابات</a>
+          <a>الأرصدة الافتتاحية</a>
+          <a>القيود اليومية</a>
+          <a>التقارير</a>
+          <a>المبيعات</a>
+          <a>المشتريات</a>
+        </div>
+        <div class="preview-main">
+          <h2>شجرة الحسابات</h2>
+          <div class="preview-tree">
+            <div class="row l0"><span>الأصول (إجمالي)</span><span class="code">1000</span></div>
+            <div class="row l1"><span>الأصول المتداولة (إجمالي)</span><span class="code">1100</span></div>
+            <div class="row l2"><span>النقدية وما في حكمها (إجمالي)</span><span class="code">1110</span></div>
+            <div class="row l2"><span>الصندوق</span><span class="code">1111</span></div>
+            <div class="row l2"><span>البنك</span><span class="code">1112</span></div>
+            <div class="row l1"><span>العملاء</span><span class="code">1120</span></div>
+            <div class="row l1"><span>المخزون</span><span class="code">1160</span></div>
+            <div class="row l0"><span>الخصوم (إجمالي)</span><span class="code">2000</span></div>
+            <div class="row l1"><span>الموردون</span><span class="code">2120</span></div>
+            <div class="row l0"><span>حقوق الملكية (إجمالي)</span><span class="code">3000</span></div>
+            <div class="row l0"><span>الإيرادات (إجمالي)</span><span class="code">4000</span></div>
+            <div class="row l1"><span>إيرادات المبيعات</span><span class="code">4100</span></div>
+            <div class="row l0"><span>المصروفات (إجمالي)</span><span class="code">5000</span></div>
+            <div class="row l1"><span>تكلفة البضاعة المباعة</span><span class="code">5500</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="preview-caption">شجرة حسابات محاسبية كاملة بمعايير احترافية — جاهزة من أول يوم، مش محتاج تبنيها بنفسك.</p>
+  </div>
+</section>
 
 <section id="tiers">
   <div class="wrap">
