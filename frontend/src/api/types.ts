@@ -1373,3 +1373,9 @@ export interface Tenant {
   expiresAtUtc: string | null;
   createdAtUtc: string;
 }
+
+export interface Usage {
+  activeUsers: number;
+  activeBranches: number;
+  generatedAtUtc: string;
+}

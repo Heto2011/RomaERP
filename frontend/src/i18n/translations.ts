@@ -3,6 +3,12 @@ export type Lang = "ar" | "en";
 const ar = {
   appName: "RomaERP",
   logout: "تسجيل الخروج",
+  usage: {
+    title: "استخدامك",
+    activeUsers: "المستخدمون النشطون",
+    activeBranches: "الفروع النشطة",
+    updatedAt: "آخر تحديث",
+  },
   dashboard: {
     title: "لوحة التحكم",
     accountsCount: "عدد الحسابات",
@@ -886,6 +892,12 @@ const ar = {
 const en: typeof ar = {
   appName: "RomaERP",
   logout: "Logout",
+  usage: {
+    title: "Your Usage",
+    activeUsers: "Active Users",
+    activeBranches: "Active Branches",
+    updatedAt: "Last updated",
+  },
   language: "العربية",
   collapseSidebar: "Collapse menu",
   expandSidebar: "Expand menu",

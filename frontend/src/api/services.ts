@@ -23,6 +23,7 @@ import type {
   AlertsReport,
   ProvisionTenantRequest,
   Tenant,
+  Usage,
   PhysicalStockCountEntry,
   CreatePhysicalStockCount,
   WasteEntryRecord,
@@ -410,6 +411,10 @@ export const UsersApi = {
 
 export const AlertsApi = {
   getAll: () => apiClient.get<AlertsReport>("/alerts"),
+};
+
+export const UsageApi = {
+  get: () => apiClient.get<Usage>("/usage"),
 };
 
 /// Not tenant-scoped — authenticated by a system key passed per call, never stored.

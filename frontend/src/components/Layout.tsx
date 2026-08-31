@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import GlobalSearch from "./GlobalSearch";
+import UsageIndicator from "./UsageIndicator";
 import {
   IconBell,
   IconGrid,
@@ -396,6 +397,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       <div className="main-column">
         <header className="topbar">
           <GlobalSearch />
+          <UsageIndicator />
         </header>
         <main className="main-content">{children}</main>
       </div>
