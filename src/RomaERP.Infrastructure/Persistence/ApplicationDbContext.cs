@@ -1,8 +1,11 @@
+using System.Text.Json;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Assistant;
+using RomaERP.Domain.Audit;
+using RomaERP.Domain.Common;
 using RomaERP.Domain.HR;
 using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Purchasing;
@@ -15,8 +18,16 @@ namespace RomaERP.Infrastructure.Persistence;
 
 public class ApplicationDbContext : IdentityDbContext<ApplicationUser, ApplicationRole, Guid>, IApplicationDbContext
 {
-    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : base(options)
+    private static readonly HashSet<string> AuditExcludedProperties = new()
     {
+        "PasswordHash", "SecurityStamp", "ConcurrencyStamp", "NormalizedEmail", "NormalizedUserName",
+    };
+
+    private readonly ICurrentUserService? _currentUser;
+
+    public ApplicationDbContext(DbContextOptions<ApplicationDbContext> options, ICurrentUserService? currentUser = null) : base(options)
+    {
+        _currentUser = currentUser;
     }
 
     public DbSet<Account> Accounts => Set<Account>();
@@ -73,9 +84,83 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<PurchaseInvoiceLine> PurchaseInvoiceLines => Set<PurchaseInvoiceLine>();
     public DbSet<PurchasePayment> PurchasePayments => Set<PurchasePayment>();
 
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
         builder.ApplyConfigurationsFromAssembly(typeof(ApplicationDbContext).Assembly);
+    }
+
+    public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
+    {
+        var auditEntries = BuildAuditEntries();
+        if (auditEntries.Count > 0) AuditLogs.AddRange(auditEntries);
+        return await base.SaveChangesAsync(cancellationToken);
+    }
+
+    public override int SaveChanges()
+    {
+        var auditEntries = BuildAuditEntries();
+        if (auditEntries.Count > 0) AuditLogs.AddRange(auditEntries);
+        return base.SaveChanges();
+    }
+
+    /// <summary>Turns pending changes into AuditLog rows before they're saved — soft-deletes (IsDeleted flipping
+    /// to true) are recorded as Deleted rather than Updated, since this app never physically removes rows.</summary>
+    private List<AuditLog> BuildAuditEntries()
+    {
+        var entries = new List<AuditLog>();
+        var now = DateTime.UtcNow;
+
+        foreach (var entry in ChangeTracker.Entries())
+        {
+            if (entry.Entity is AuditLog) continue;
+            if (entry.Entity is not (BaseEntity or ApplicationUser)) continue;
+            if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted)) continue;
+
+            var idProperty = entry.Properties.FirstOrDefault(p => p.Metadata.Name == "Id");
+            var entityId = idProperty?.CurrentValue?.ToString() ?? string.Empty;
+
+            AuditAction action;
+            Dictionary<string, object?> changes = new();
+
+            if (entry.State == EntityState.Added)
+            {
+                action = AuditAction.Created;
+                foreach (var prop in entry.Properties.Where(p => !AuditExcludedProperties.Contains(p.Metadata.Name)))
+                    changes[prop.Metadata.Name] = prop.CurrentValue;
+            }
+            else if (entry.State == EntityState.Deleted)
+            {
+                action = AuditAction.Deleted;
+                foreach (var prop in entry.Properties.Where(p => !AuditExcludedProperties.Contains(p.Metadata.Name)))
+                    changes[prop.Metadata.Name] = prop.OriginalValue;
+            }
+            else
+            {
+                var softDeleted = entry.Properties.Any(p =>
+                    p.Metadata.Name == "IsDeleted" && p.IsModified && Equals(p.CurrentValue, true));
+                action = softDeleted ? AuditAction.Deleted : AuditAction.Updated;
+
+                foreach (var prop in entry.Properties.Where(p => p.IsModified && !AuditExcludedProperties.Contains(p.Metadata.Name)))
+                    changes[prop.Metadata.Name] = new { old = prop.OriginalValue, @new = prop.CurrentValue };
+
+                if (changes.Count == 0) continue;
+            }
+
+            entries.Add(new AuditLog
+            {
+                EntityName = entry.Entity.GetType().Name,
+                EntityId = entityId,
+                Action = action,
+                UserId = _currentUser?.UserId,
+                UserName = _currentUser?.UserName,
+                OccurredAtUtc = now,
+                Changes = JsonSerializer.Serialize(changes),
+            });
+        }
+
+        return entries;
     }
 }

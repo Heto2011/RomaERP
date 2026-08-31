@@ -24,6 +24,7 @@ import type {
   ProvisionTenantRequest,
   Tenant,
   Usage,
+  AuditLogEntry,
   PhysicalStockCountEntry,
   CreatePhysicalStockCount,
   WasteEntryRecord,
@@ -415,6 +416,12 @@ export const AlertsApi = {
 
 export const UsageApi = {
   get: () => apiClient.get<Usage>("/usage"),
+};
+
+export const AuditLogApi = {
+  getAll: (params: { entityName?: string; fromUtc?: string; toUtc?: string; take?: number }) =>
+    apiClient.get<AuditLogEntry[]>("/audit-log", { params }),
+  getEntityNames: () => apiClient.get<string[]>("/audit-log/entity-names"),
 };
 
 /// Not tenant-scoped — authenticated by a system key passed per call, never stored.

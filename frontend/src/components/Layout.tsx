@@ -254,6 +254,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             items: [
               { to: "/users", label: t.nav.users, icon: <IconShield /> },
               { to: "/einvoicing", label: t.nav.eInvoicing, icon: <IconFile /> },
+              { to: "/audit-log", label: t.nav.auditLog, icon: <IconList /> },
             ],
           },
         ]

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Assistant;
+using RomaERP.Domain.Audit;
 using RomaERP.Domain.HR;
 using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Purchasing;
@@ -65,6 +66,8 @@ public interface IApplicationDbContext
     DbSet<PurchaseInvoice> PurchaseInvoices { get; }
     DbSet<PurchaseInvoiceLine> PurchaseInvoiceLines { get; }
     DbSet<PurchasePayment> PurchasePayments { get; }
+
+    DbSet<AuditLog> AuditLogs { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

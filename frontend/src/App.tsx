@@ -7,6 +7,7 @@ import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import MyProfile from "./pages/MyProfile";
 import AlertsPage from "./pages/Alerts";
+import AuditLogPage from "./pages/AuditLog";
 import EInvoicing from "./pages/EInvoicing";
 import ChartOfAccounts from "./pages/accounting/ChartOfAccounts";
 import OpeningBalances from "./pages/accounting/OpeningBalances";
@@ -80,6 +81,7 @@ export default function App() {
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/my-profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
       <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
+      <Route path="/audit-log" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
       <Route path="/einvoicing" element={<ProtectedRoute><EInvoicing /></ProtectedRoute>} />
       <Route path="/assistant/chat" element={<ProtectedRoute><AiAssistant /></ProtectedRoute>} />
       <Route path="/assistant/approvals" element={<ProtectedRoute><ExpenseApprovals /></ProtectedRoute>} />

@@ -1379,3 +1379,14 @@ export interface Usage {
   activeBranches: number;
   generatedAtUtc: string;
 }
+
+export interface AuditLogEntry {
+  id: string;
+  entityName: string;
+  entityId: string;
+  action: "Created" | "Updated" | "Deleted";
+  userId: string | null;
+  userName: string | null;
+  occurredAtUtc: string;
+  changes: string;
+}
