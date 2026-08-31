@@ -1380,6 +1380,24 @@ export interface Usage {
   generatedAtUtc: string;
 }
 
+export interface TrialSignupRequest {
+  companyNameAr: string;
+  companyNameEn: string;
+  country: Country;
+  adminFullName: string;
+  adminEmail: string;
+  adminPassword: string;
+}
+
+export interface TrialSignupResponse {
+  token: string;
+  companyCode: string;
+  email: string;
+  fullName: string;
+  roles: string[];
+  expiresAtUtc: string | null;
+}
+
 export interface AuditLogEntry {
   id: string;
   entityName: string;

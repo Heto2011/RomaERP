@@ -9,7 +9,7 @@ namespace RomaERP.API.Middleware;
 /// login itself needs the tenant resolved before it can look up users.</summary>
 public class TenantResolutionMiddleware
 {
-    private static readonly string[] ExemptPrefixes = { "/api/system", "/swagger" };
+    private static readonly string[] ExemptPrefixes = { "/api/system", "/api/trial", "/swagger" };
 
     private readonly RequestDelegate _next;
 

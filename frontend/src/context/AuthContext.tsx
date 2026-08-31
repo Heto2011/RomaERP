@@ -10,6 +10,7 @@ interface AuthUser {
 interface AuthContextValue {
   user: AuthUser | null;
   login: (companyCode: string, email: string, password: string) => Promise<void>;
+  loginWithToken: (companyCode: string, token: string, email: string, fullName: string, roles: string[]) => void;
   logout: () => void;
 }
 
@@ -30,13 +31,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(authUser);
   }
 
+  /// Used when the backend already hands back a ready-to-use token (e.g. right after self-service
+  /// trial signup), so the caller doesn't have to immediately turn around and call login() again.
+  function loginWithToken(companyCode: string, token: string, email: string, fullName: string, roles: string[]) {
+    localStorage.setItem("companyCode", companyCode);
+    localStorage.setItem("token", token);
+    const authUser = { email, fullName, roles };
+    localStorage.setItem("user", JSON.stringify(authUser));
+    setUser(authUser);
+  }
+
   function logout() {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     setUser(null);
   }
 
-  return <AuthContext.Provider value={{ user, login, logout }}>{children}</AuthContext.Provider>;
+  return <AuthContext.Provider value={{ user, login, loginWithToken, logout }}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {

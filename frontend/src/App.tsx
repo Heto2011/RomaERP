@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
+import StartTrial from "./pages/StartTrial";
 import DemoTenantsPage from "./pages/system/DemoTenants";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
@@ -76,6 +77,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/start-trial" element={<StartTrial />} />
       <Route path="/system/demo-tenants" element={<DemoTenantsPage />} />
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />

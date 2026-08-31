@@ -25,6 +25,8 @@ import type {
   Tenant,
   Usage,
   AuditLogEntry,
+  TrialSignupRequest,
+  TrialSignupResponse,
   PhysicalStockCountEntry,
   CreatePhysicalStockCount,
   WasteEntryRecord,
@@ -416,6 +418,11 @@ export const AlertsApi = {
 
 export const UsageApi = {
   get: () => apiClient.get<Usage>("/usage"),
+};
+
+/// Not tenant-scoped and unauthenticated — public self-service trial signup.
+export const TrialApi = {
+  signUp: (data: TrialSignupRequest) => systemApiClient.post<TrialSignupResponse>("/trial/signup", data),
 };
 
 export const AuditLogApi = {
