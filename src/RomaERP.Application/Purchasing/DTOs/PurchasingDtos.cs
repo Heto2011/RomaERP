@@ -45,6 +45,30 @@ public class CreatePurchaseInvoiceDto
     public List<PurchaseInvoiceLineInputDto> Lines { get; set; } = new();
 }
 
+/// <summary>One item received into stock as part of a purchase delivery — unit cost is VAT-exclusive,
+/// same as every other purchase line, so it reflects the item's real cost.</summary>
+public class ReceiveInventoryPurchaseLineInputDto
+{
+    public Guid ItemId { get; set; }
+    public decimal Quantity { get; set; } = 1;
+    public decimal UnitCost { get; set; }
+}
+
+/// <summary>Records a supplier delivery of stocked items in one step: updates each item's quantity and
+/// weighted-average cost, and posts a single purchase invoice + journal entry for the total (VAT added
+/// automatically) — used by the item-based "Purchase Receiving" screen rather than the generic,
+/// account-coded Purchase Invoices screen.</summary>
+public class ReceiveInventoryPurchaseDto
+{
+    public Guid VendorId { get; set; }
+    public DateTime InvoiceDate { get; set; }
+    public Guid FiscalPeriodId { get; set; }
+    public Guid WarehouseId { get; set; }
+    public PaymentTerm PaymentTerm { get; set; }
+    public string? Notes { get; set; }
+    public List<ReceiveInventoryPurchaseLineInputDto> Lines { get; set; } = new();
+}
+
 public class PurchaseInvoiceLineDto
 {
     public string Description { get; set; } = string.Empty;

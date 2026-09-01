@@ -767,6 +767,11 @@ const ar = {
     navExcessStock: "Excess Stock",
   },
   restaurant: {
+    purchaseReceivingTitle: "استلام مشتريات",
+    purchaseReceivingIntro: "تسجيل توريدة من مورد بالصنف — بيحدّث كمية المخزون ومتوسط التكلفة تلقائيًا، وبيظهر كفاتورة مشتريات عادية في المحاسبة مع إضافة الضريبة تلقائيًا.",
+    unitCostExVat: "تكلفة الوحدة (بدون ضريبة)",
+    saveReceipt: "حفظ الاستلام",
+    receiptSaved: "تم حفظ الاستلام",
     menuTitle: "المنيو والوصفات",
     onMenu: "على المنيو",
     menuPrice: "سعر المنيو",
@@ -1731,6 +1736,11 @@ const en: typeof ar = {
     navExcessStock: "Excess Stock",
   },
   restaurant: {
+    purchaseReceivingTitle: "Purchase Receiving",
+    purchaseReceivingIntro: "Record a delivery from a vendor, by item — updates stock quantity and average cost automatically, and shows up as a normal purchase invoice in accounting with VAT added automatically.",
+    unitCostExVat: "Unit Cost (excl. VAT)",
+    saveReceipt: "Save Receipt",
+    receiptSaved: "Receipt saved",
     menuTitle: "Menu & Recipes",
     onMenu: "On Menu",
     menuPrice: "Menu Price",

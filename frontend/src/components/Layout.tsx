@@ -245,6 +245,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/restaurant/pos", label: t.nav.restaurantPos, icon: <IconCart /> },
         { to: "/restaurant/tables", label: t.nav.restaurantTables, icon: <IconGrid /> },
         { to: "/restaurant/menu", label: t.nav.restaurantMenu, icon: <IconBook /> },
+        { to: "/restaurant/purchase-receiving", label: t.restaurant.purchaseReceivingTitle, icon: <IconTruck /> },
         { to: "/restaurant/delivery-reconciliation", label: t.inventory.deliveryReconciliationTitle, icon: <IconSwap /> },
       ],
     },

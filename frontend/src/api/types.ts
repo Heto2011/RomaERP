@@ -1059,6 +1059,22 @@ export interface RecordPurchasePaymentInput {
   reference?: string | null;
 }
 
+export interface ReceiveInventoryPurchaseLineInput {
+  itemId: string;
+  quantity: number;
+  unitCost: number;
+}
+
+export interface ReceiveInventoryPurchaseInput {
+  vendorId: string;
+  invoiceDate: string;
+  fiscalPeriodId: string;
+  warehouseId: string;
+  paymentTerm: PaymentTerm;
+  notes?: string | null;
+  lines: ReceiveInventoryPurchaseLineInput[];
+}
+
 export interface PurchaseInvoice {
   id: string;
   invoiceNumber: string;

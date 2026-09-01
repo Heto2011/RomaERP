@@ -10,6 +10,7 @@ public interface IPurchasingService
     Task<List<PurchaseInvoiceDto>> GetInvoicesAsync(CancellationToken ct = default);
     Task<PurchaseInvoiceDto> GetInvoiceAsync(Guid id, CancellationToken ct = default);
     Task<PurchaseInvoiceDto> CreateInvoiceAsync(CreatePurchaseInvoiceDto dto, CancellationToken ct = default);
+    Task<PurchaseInvoiceDto> ReceiveInventoryPurchaseAsync(ReceiveInventoryPurchaseDto dto, CancellationToken ct = default);
     Task<PurchaseInvoiceDto> RecordPaymentAsync(Guid invoiceId, RecordPurchasePaymentDto dto, CancellationToken ct = default);
     Task<byte[]> GetInvoicePdfAsync(Guid id, CancellationToken ct = default);
 

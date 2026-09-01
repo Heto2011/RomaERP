@@ -37,6 +37,12 @@ public class PurchasingController : ControllerBase
     public async Task<ActionResult<PurchaseInvoiceDto>> CreateInvoice(CreatePurchaseInvoiceDto dto, CancellationToken ct)
         => Ok(await _purchasingService.CreateInvoiceAsync(dto, ct));
 
+    /// <summary>Item-based purchase receiving — used by the Restaurant "Purchase Receiving" screen.
+    /// Updates stock quantity/cost per line and still posts one normal purchase invoice for the total.</summary>
+    [HttpPost("invoices/receive-inventory")]
+    public async Task<ActionResult<PurchaseInvoiceDto>> ReceiveInventoryPurchase(ReceiveInventoryPurchaseDto dto, CancellationToken ct)
+        => Ok(await _purchasingService.ReceiveInventoryPurchaseAsync(dto, ct));
+
     [HttpPost("invoices/{id:guid}/payments")]
     public async Task<ActionResult<PurchaseInvoiceDto>> RecordPayment(Guid id, RecordPurchasePaymentDto dto, CancellationToken ct)
         => Ok(await _purchasingService.RecordPaymentAsync(id, dto, ct));

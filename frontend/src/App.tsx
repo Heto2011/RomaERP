@@ -66,6 +66,7 @@ import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
 import BankReconciliation from "./pages/assistant/BankReconciliation";
 import RestaurantTables from "./pages/restaurant/RestaurantTables";
 import RestaurantMenu from "./pages/restaurant/RestaurantMenu";
+import PurchaseReceivingPage from "./pages/restaurant/PurchaseReceiving";
 import DeliveryReconciliationPage from "./pages/restaurant/DeliveryReconciliation";
 import RestaurantPOS from "./pages/restaurant/RestaurantPOS";
 
@@ -128,6 +129,7 @@ export default function App() {
       <Route path="/hr/labor-report" element={<ProtectedRoute><LaborReportPage /></ProtectedRoute>} />
       <Route path="/restaurant/tables" element={<ProtectedRoute><RestaurantTables /></ProtectedRoute>} />
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />
+      <Route path="/restaurant/purchase-receiving" element={<ProtectedRoute><PurchaseReceivingPage /></ProtectedRoute>} />
       <Route path="/restaurant/delivery-reconciliation" element={<ProtectedRoute><DeliveryReconciliationPage /></ProtectedRoute>} />
       <Route path="/restaurant/pos" element={<ProtectedRoute layout={false} loginPath="/pos-login"><RestaurantPOS /></ProtectedRoute>} />
       <Route path="/inventory/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />

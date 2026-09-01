@@ -3,6 +3,7 @@ using RomaERP.Application.Purchasing.DTOs;
 using RomaERP.Application.Purchasing.Services;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
+using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Purchasing;
 using RomaERP.Domain.Tenancy;
 using RomaERP.Infrastructure.Persistence;
@@ -204,5 +205,56 @@ public class PurchasingServiceTests
         var aging = await service.GetApAgingAsync();
 
         Assert.Empty(aging);
+    }
+
+    [Fact]
+    public async Task ReceiveInventoryPurchase_UpdatesItemCostAndPostsInvoiceWithVat()
+    {
+        var (ctx, _, _, ap, _, inputVat, vendor, period) = await SeedAsync();
+        var inventoryAccount = new Account { Code = "1160", NameAr = "المخزون", NameEn = "Inventory", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+        var category = new ItemCategory { Code = "CAT-1", NameAr = "فئة", NameEn = "Category" };
+        var warehouse = new Warehouse { Code = "WH-1", NameAr = "المخزن الرئيسي", NameEn = "Main Warehouse" };
+        var item = new Item { Code = "ITM-1", NameAr = "دقيق", NameEn = "Flour", UnitOfMeasure = "kg", ItemCategoryId = category.Id, ItemCategory = category, QuantityOnHand = 10, AverageCost = 5 };
+        ctx.Accounts.Add(inventoryAccount);
+        ctx.ItemCategories.Add(category);
+        ctx.Warehouses.Add(warehouse);
+        ctx.Items.Add(item);
+        await ctx.SaveChangesAsync();
+
+        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer());
+
+        var invoice = await service.ReceiveInventoryPurchaseAsync(new ReceiveInventoryPurchaseDto
+        {
+            VendorId = vendor.Id,
+            InvoiceDate = DateTime.UtcNow.Date,
+            FiscalPeriodId = period.Id,
+            WarehouseId = warehouse.Id,
+            PaymentTerm = PaymentTerm.Credit,
+            Lines = { new ReceiveInventoryPurchaseLineInputDto { ItemId = item.Id, Quantity = 10, UnitCost = 8 } }
+        });
+
+        // Weighted average: (10*5 + 10*8) / 20 = 6.5
+        var updatedItem = await ctx.Items.FirstAsync(i => i.Id == item.Id);
+        Assert.Equal(20, updatedItem.QuantityOnHand);
+        Assert.Equal(6.5m, updatedItem.AverageCost);
+
+        Assert.Equal(80, invoice.SubTotal);
+        Assert.Equal(11.2m, invoice.VatAmount); // 80 * 0.14
+        Assert.Equal(91.2m, invoice.TotalAmount);
+        Assert.Equal(0, invoice.PaidAmount);
+
+        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == invoice.JournalEntryId);
+        Assert.Contains(entry.Lines, l => l.AccountId == inventoryAccount.Id && l.Debit == 80);
+        Assert.Contains(entry.Lines, l => l.AccountId == inputVat.Id && l.Debit == 11.2m);
+        Assert.Contains(entry.Lines, l => l.AccountId == ap.Id && l.Credit == 91.2m);
+
+        var updatedVendor = await ctx.Vendors.FirstAsync(v => v.Id == vendor.Id);
+        Assert.Equal(91.2m, updatedVendor.ApBalance);
+
+        var movement = await ctx.StockMovements.FirstAsync(m => m.ItemId == item.Id);
+        Assert.Equal(StockMovementType.Receipt, movement.MovementType);
+        Assert.Equal(10, movement.Quantity);
+        Assert.Equal(8, movement.UnitCost);
+        Assert.Equal(entry.Id, movement.JournalEntryId);
     }
 }
