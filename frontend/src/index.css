@@ -596,12 +596,22 @@ tr:hover td {
   overflow-y: auto;
 }
 
-/* Restaurant POS */
+/* Restaurant POS — deliberately rendered outside the app's sidebar/topbar Layout, full-screen,
+   since a cashier needs every pixel and a fast, distraction-free screen. */
+.pos-page {
+  height: 100vh;
+  padding: 16px 24px;
+  background: var(--color-bg);
+  color: var(--color-text);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
 .pos-layout {
   display: flex;
   gap: 16px;
   align-items: stretch;
-  height: calc(100vh - 160px);
+  height: calc(100vh - 100px);
   min-height: 480px;
 }
 

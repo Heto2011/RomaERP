@@ -3,6 +3,7 @@ import { FinancialReportsApi, SalesApi } from "../../api/services";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import InfoTooltip from "../../components/InfoTooltip";
+import EmptyReportState from "../../components/EmptyReportState";
 
 const COGS_ACCOUNT_CODE = "5500";
 
@@ -29,15 +30,29 @@ export default function BreakEvenPage() {
   const [targetProfit, setTargetProfit] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [emptyReason, setEmptyReason] = useState<"revenue" | "expense" | null>(null);
 
   async function load() {
     setError(null);
+    setEmptyReason(null);
     try {
       const [incomeRes, invoicesRes] = await Promise.all([
         FinancialReportsApi.incomeStatement(fromDate, toDate),
         SalesApi.getInvoices(),
       ]);
       const income = incomeRes.data;
+
+      if (income.totalRevenue === 0) {
+        setEmptyReason("revenue");
+        setResult(null);
+        return;
+      }
+      if (income.totalExpense === 0) {
+        setEmptyReason("expense");
+        setResult(null);
+        return;
+      }
+
       const cogs = income.expenseLines.find((l) => l.accountCode === COGS_ACCOUNT_CODE)?.amount ?? 0;
       const fixedCosts = income.totalExpense - cogs;
       const contributionMarginRatio = income.totalRevenue > 0 ? (income.totalRevenue - cogs) / income.totalRevenue : 0;
@@ -86,6 +101,22 @@ export default function BreakEvenPage() {
       </div>
 
       {error && <div className="alert-error">{error}</div>}
+
+      {emptyReason === "revenue" && (
+        <EmptyReportState
+          message={t.accounting.emptyNeedsRevenue}
+          actions={[{ label: t.nav.salesInvoices, to: "/sales/invoices" }]}
+        />
+      )}
+      {emptyReason === "expense" && (
+        <EmptyReportState
+          message={t.accounting.emptyNeedsExpense}
+          actions={[
+            { label: t.hr.payrollRunsTitle, to: "/hr/payroll" },
+            { label: t.accounting.journalEntriesTitle, to: "/accounting/journal-entries" },
+          ]}
+        />
+      )}
 
       {result && (
         <div className="card">

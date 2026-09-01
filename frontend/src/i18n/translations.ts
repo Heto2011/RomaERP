@@ -281,6 +281,8 @@ const ar = {
     noLinkedItem: "بدون صنف",
   },
   accounting: {
+    emptyNeedsRevenue: "التقرير محتاج مبيعات مسجلة في الفترة دي عشان يحسب حاجة. سجّل أول فاتورة مبيعات.",
+    emptyNeedsExpense: "التقرير محتاج مصروفات مسجلة في الفترة دي (زي الرواتب أو أي قيد يومية) عشان يحسب حاجة.",
     newAccount: "+ حساب جديد",
     accountCode: "كود الحساب",
     accountType: "نوع الحساب",
@@ -749,6 +751,7 @@ const ar = {
     markReserved: "حجز",
 
     posTitle: "نقطة البيع",
+    exitPos: "خروج من نقطة البيع",
     newOrder: "+ طلب جديد",
     orderType: "نوع الطلب",
     dineIn: "صالة",
@@ -1204,6 +1207,8 @@ const en: typeof ar = {
     noLinkedItem: "No item",
   },
   accounting: {
+    emptyNeedsRevenue: "This report needs sales recorded in this period to calculate anything. Record your first sales invoice.",
+    emptyNeedsExpense: "This report needs expenses recorded in this period (like payroll or any journal entry) to calculate anything.",
     newAccount: "+ New Account",
     accountCode: "Account Code",
     accountType: "Account Type",
@@ -1672,6 +1677,7 @@ const en: typeof ar = {
     markReserved: "Reserve",
 
     posTitle: "Point of Sale",
+    exitPos: "Exit POS",
     newOrder: "+ New Order",
     orderType: "Order Type",
     dineIn: "Dine-in",

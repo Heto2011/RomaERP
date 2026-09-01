@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { CashierShiftsApi, EmployeesApi, LookupsApi, RestaurantApi, SalesApi, WarehousesApi } from "../../api/services";
 import {
   PaymentTerm,
@@ -19,6 +20,7 @@ import { IconGrid, IconBox, IconTruck } from "../../components/icons";
 
 export default function RestaurantPOS() {
   const { t, lang } = useLanguage();
+  const navigate = useNavigate();
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
   const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [menu, setMenu] = useState<MenuItem[]>([]);
@@ -250,10 +252,16 @@ export default function RestaurantPOS() {
 
   const activeItems = menuByCategory.find(([cat]) => cat === activeCategory)?.[1] ?? [];
 
+  const exitButton = (
+    <button type="button" className="btn btn-secondary" onClick={() => navigate("/")}>
+      {t.restaurant.exitPos}
+    </button>
+  );
+
   if (shiftLoading) {
     return (
-      <div>
-        <div className="page-header"><h1>{t.restaurant.posTitle}</h1></div>
+      <div className="pos-page">
+        <div className="page-header"><h1>{t.restaurant.posTitle}</h1>{exitButton}</div>
         <div className="text-muted">{t.common.loading}</div>
       </div>
     );
@@ -261,8 +269,8 @@ export default function RestaurantPOS() {
 
   if (employeeError) {
     return (
-      <div>
-        <div className="page-header"><h1>{t.restaurant.posTitle}</h1></div>
+      <div className="pos-page">
+        <div className="page-header"><h1>{t.restaurant.posTitle}</h1>{exitButton}</div>
         <div className="alert-error">{employeeError}</div>
       </div>
     );
@@ -270,8 +278,8 @@ export default function RestaurantPOS() {
 
   if (!activeShift) {
     return (
-      <div>
-        <div className="page-header"><h1>{t.restaurant.openShiftTitle}</h1></div>
+      <div className="pos-page">
+        <div className="page-header"><h1>{t.restaurant.openShiftTitle}</h1>{exitButton}</div>
         {error && <div className="alert-error">{error}</div>}
         {closedShiftSummary && (
           <div className="card">
@@ -305,10 +313,11 @@ export default function RestaurantPOS() {
   }
 
   return (
-    <div>
+    <div className="pos-page">
       <div className="page-header">
         <h1>{t.restaurant.posTitle}</h1>
         <div style={{ display: "flex", gap: 10 }}>
+          {exitButton}
           <button className="btn btn-secondary" onClick={() => { setClosingCountedCash(0); setShowCloseShift(true); }}>
             {t.restaurant.closeShift}
           </button>

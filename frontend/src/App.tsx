@@ -67,10 +67,10 @@ import RestaurantMenu from "./pages/restaurant/RestaurantMenu";
 import DeliveryReconciliationPage from "./pages/restaurant/DeliveryReconciliation";
 import RestaurantPOS from "./pages/restaurant/RestaurantPOS";
 
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
+function ProtectedRoute({ children, layout = true }: { children: React.ReactNode; layout?: boolean }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace />;
-  return <Layout>{children}</Layout>;
+  return layout ? <Layout>{children}</Layout> : <>{children}</>;
 }
 
 export default function App() {
@@ -125,7 +125,7 @@ export default function App() {
       <Route path="/restaurant/tables" element={<ProtectedRoute><RestaurantTables /></ProtectedRoute>} />
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />
       <Route path="/restaurant/delivery-reconciliation" element={<ProtectedRoute><DeliveryReconciliationPage /></ProtectedRoute>} />
-      <Route path="/restaurant/pos" element={<ProtectedRoute><RestaurantPOS /></ProtectedRoute>} />
+      <Route path="/restaurant/pos" element={<ProtectedRoute layout={false}><RestaurantPOS /></ProtectedRoute>} />
       <Route path="/inventory/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
       <Route path="/inventory/warehouses" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />
       <Route path="/inventory/movements" element={<ProtectedRoute><StockMovements /></ProtectedRoute>} />
