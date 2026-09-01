@@ -3,6 +3,7 @@ import { InventoryReportsApi } from "../../api/services";
 import { WasteReason, type WasteAnalysisReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 function firstDayOfMonth() {
   const d = new Date();
@@ -45,7 +46,7 @@ export default function WasteAnalysisPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.inventory.wasteAnalysisTitle}</h1>
+        <h1>{t.inventory.wasteAnalysisTitle}<InfoTooltip text={t.inventory.wasteAnalysisIntro} /></h1>
       </div>
       <p className="text-muted">{t.inventory.wasteAnalysisIntro}</p>
 

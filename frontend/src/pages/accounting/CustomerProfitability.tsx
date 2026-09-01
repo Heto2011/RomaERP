@@ -3,6 +3,7 @@ import { FinancialReportsApi } from "../../api/services";
 import type { CustomerProfitabilityReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 function firstDayOfMonth() {
   const d = new Date();
@@ -59,7 +60,7 @@ export default function CustomerProfitabilityPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.customerProfitabilityTitle}</h1>
+        <h1>{t.accounting.customerProfitabilityTitle}<InfoTooltip text={t.accounting.customerProfitabilityIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.customerProfitabilityIntro}</p>
 

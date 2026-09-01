@@ -3,6 +3,7 @@ import { FinancialReportsApi } from "../../api/services";
 import type { ForecastReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 export default function ForecastPage() {
   const { t } = useLanguage();
@@ -19,7 +20,7 @@ export default function ForecastPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.forecastTitle}</h1>
+        <h1>{t.accounting.forecastTitle}<InfoTooltip text={t.accounting.forecastIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.forecastIntro}</p>
 

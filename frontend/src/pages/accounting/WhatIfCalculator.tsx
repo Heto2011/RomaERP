@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FinancialReportsApi } from "../../api/services";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 const COGS_ACCOUNT_CODE = "5500";
 
@@ -75,7 +76,7 @@ export default function WhatIfCalculatorPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.whatIfTitle}</h1>
+        <h1>{t.accounting.whatIfTitle}<InfoTooltip text={t.accounting.whatIfIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.whatIfIntro}</p>
 

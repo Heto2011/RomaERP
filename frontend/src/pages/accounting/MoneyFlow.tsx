@@ -3,6 +3,7 @@ import { FinancialReportsApi } from "../../api/services";
 import type { IncomeStatement } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 function firstDayOfMonth() {
   const d = new Date();
@@ -33,7 +34,7 @@ export default function MoneyFlowPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.moneyFlowTitle}</h1>
+        <h1>{t.accounting.moneyFlowTitle}<InfoTooltip text={t.accounting.moneyFlowIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.moneyFlowIntro}</p>
 

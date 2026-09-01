@@ -3,6 +3,7 @@ import { useLocation } from "react-router-dom";
 import { FinancialReportsApi } from "../../api/services";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 const COGS_ACCOUNT_CODE = "5500";
 
@@ -63,7 +64,7 @@ export default function MarginAnalysisPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.marginAnalysisTitle}</h1>
+        <h1>{t.accounting.marginAnalysisTitle}<InfoTooltip text={t.accounting.marginAnalysisIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.marginAnalysisIntro}</p>
 

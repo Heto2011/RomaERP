@@ -3,6 +3,7 @@ import { FinancialReportsApi } from "../../api/services";
 import type { CashFlowIntelligence } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 export default function CashFlowIntelligencePage() {
   const { t } = useLanguage();
@@ -30,7 +31,7 @@ export default function CashFlowIntelligencePage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.cashFlowIntelligenceTitle}</h1>
+        <h1>{t.accounting.cashFlowIntelligenceTitle}<InfoTooltip text={t.accounting.cashFlowIntelligenceIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.cashFlowIntelligenceIntro}</p>
 

@@ -3,6 +3,7 @@ import { InventoryReportsApi } from "../../api/services";
 import type { RecipeCostReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 export default function RecipeCostPage() {
   const { t } = useLanguage();
@@ -18,7 +19,7 @@ export default function RecipeCostPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.inventory.recipeCostTitle}</h1>
+        <h1>{t.inventory.recipeCostTitle}<InfoTooltip text={t.inventory.recipeCostIntro} /></h1>
       </div>
       <p className="text-muted">{t.inventory.recipeCostIntro}</p>
 

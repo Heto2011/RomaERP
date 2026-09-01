@@ -3,6 +3,7 @@ import { FinancialReportsApi } from "../../api/services";
 import type { CashFlowIntelligence, HiddenProfitReport, IncomeStatement, ItemProfitabilityReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 const COGS_ACCOUNT_CODE = "5500";
 const SALARIES_ACCOUNT_CODE = "5100";
@@ -87,7 +88,7 @@ export default function ExecutiveBriefPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.executiveBriefTitle}</h1>
+        <h1>{t.accounting.executiveBriefTitle}<InfoTooltip text={t.accounting.executiveBriefIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.executiveBriefIntro}</p>
 

@@ -3,6 +3,7 @@ import { InventoryReportsApi } from "../../api/services";
 import type { RecipeCostReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 export default function SmartPricingPage() {
   const { t } = useLanguage();
@@ -24,7 +25,7 @@ export default function SmartPricingPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.smartPricingTitle}</h1>
+        <h1>{t.accounting.smartPricingTitle}<InfoTooltip text={t.accounting.smartPricingIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.smartPricingIntro}</p>
 

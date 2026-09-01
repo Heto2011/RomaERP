@@ -3,6 +3,7 @@ import { FinancialReportsApi } from "../../api/services";
 import { ManualProfitDimension, RestaurantOrderType, type SalesChannelProfitabilityReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 import ManualProfitGrid from "../../components/ManualProfitGrid";
 
 function firstDayOfMonth() {
@@ -36,7 +37,7 @@ export default function SalesChannelProfitabilityPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.salesChannelProfitabilityTitle}</h1>
+        <h1>{t.accounting.salesChannelProfitabilityTitle}<InfoTooltip text={t.accounting.salesChannelProfitabilityIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.salesChannelProfitabilityIntro}</p>
 

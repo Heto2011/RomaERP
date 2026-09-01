@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FinancialReportsApi } from "../../api/services";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 function firstDayOfMonth() {
   const d = new Date();
@@ -96,7 +97,7 @@ export default function BottleneckPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.bottleneckTitle}</h1>
+        <h1>{t.accounting.bottleneckTitle}<InfoTooltip text={t.accounting.bottleneckIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.bottleneckIntro}</p>
 

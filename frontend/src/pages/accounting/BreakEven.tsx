@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FinancialReportsApi, SalesApi } from "../../api/services";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 const COGS_ACCOUNT_CODE = "5500";
 
@@ -62,7 +63,7 @@ export default function BreakEvenPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.breakEvenTitle}</h1>
+        <h1>{t.accounting.breakEvenTitle}<InfoTooltip text={t.accounting.breakEvenIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.breakEvenIntro}</p>
 

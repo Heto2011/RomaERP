@@ -3,6 +3,7 @@ import { InventoryReportsApi } from "../../api/services";
 import type { PurchasePriceVarianceReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 function firstDayOfMonth() {
   const d = new Date();
@@ -34,7 +35,7 @@ export default function PurchasePriceVariancePage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.inventory.purchasePriceVarianceTitle}</h1>
+        <h1>{t.inventory.purchasePriceVarianceTitle}<InfoTooltip text={t.inventory.purchasePriceVarianceIntro} /></h1>
       </div>
       <p className="text-muted">{t.inventory.purchasePriceVarianceIntro}</p>
 

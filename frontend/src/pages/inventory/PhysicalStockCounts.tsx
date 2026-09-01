@@ -3,6 +3,7 @@ import { PhysicalStockCountsApi, ItemsApi } from "../../api/services";
 import type { Item, PhysicalStockCountEntry } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 import { bilingualName } from "../../i18n/bilingual";
 
 export default function PhysicalStockCountsPage() {
@@ -63,7 +64,7 @@ export default function PhysicalStockCountsPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.inventory.physicalStockCountsTitle}</h1>
+        <h1>{t.inventory.physicalStockCountsTitle}<InfoTooltip text={t.inventory.physicalStockCountsIntro} /></h1>
         <button className="btn" onClick={() => setShowForm((v) => !v)}>
           {showForm ? t.common.cancel : t.inventory.newCount}
         </button>

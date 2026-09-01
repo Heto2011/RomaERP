@@ -3,6 +3,7 @@ import { WasteEntriesApi, ItemsApi, WarehousesApi, LookupsApi } from "../../api/
 import { WasteReason, type FiscalPeriod, type Item, type Warehouse, type WasteEntryRecord } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 import { bilingualName } from "../../i18n/bilingual";
 
 export default function WasteEntriesPage() {
@@ -77,7 +78,7 @@ export default function WasteEntriesPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.inventory.wasteEntriesTitle}</h1>
+        <h1>{t.inventory.wasteEntriesTitle}<InfoTooltip text={t.inventory.wasteEntriesIntro} /></h1>
         <button className="btn" onClick={() => setShowForm((v) => !v)}>
           {showForm ? t.common.cancel : t.inventory.newWasteEntry}
         </button>

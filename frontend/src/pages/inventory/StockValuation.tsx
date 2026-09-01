@@ -3,6 +3,7 @@ import { InventoryReportsApi } from "../../api/services";
 import type { StockValuationReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 export default function StockValuationPage() {
   const { t } = useLanguage();
@@ -18,7 +19,7 @@ export default function StockValuationPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.inventory.stockValuationTitle}</h1>
+        <h1>{t.inventory.stockValuationTitle}<InfoTooltip text={t.inventory.stockValuationIntro} /></h1>
       </div>
       <p className="text-muted">{t.inventory.stockValuationIntro}</p>
 

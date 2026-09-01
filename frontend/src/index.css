@@ -326,6 +326,53 @@ button {
   margin: 0;
 }
 
+.info-tooltip {
+  position: relative;
+  display: inline-flex;
+  margin-inline-start: 8px;
+  vertical-align: middle;
+}
+
+.info-tooltip-icon {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid var(--color-primary);
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+}
+
+.info-tooltip-icon:hover {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.info-tooltip-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  inset-inline-start: 0;
+  z-index: 20;
+  width: 300px;
+  max-width: 80vw;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  padding: 12px 14px;
+  font-size: 13.5px;
+  font-weight: normal;
+  line-height: 1.6;
+  color: var(--color-text);
+}
+
 .card {
   background: var(--color-surface);
   border: 1px solid var(--color-border);

@@ -3,6 +3,7 @@ import { FinancialReportsApi } from "../../api/services";
 import type { HiddenProfitReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import InfoTooltip from "../../components/InfoTooltip";
 
 function firstDayOfMonth() {
   const d = new Date();
@@ -35,7 +36,7 @@ export default function HiddenProfitPage() {
   return (
     <div>
       <div className="page-header">
-        <h1>{t.accounting.hiddenProfitTitle}</h1>
+        <h1>{t.accounting.hiddenProfitTitle}<InfoTooltip text={t.accounting.hiddenProfitIntro} /></h1>
       </div>
       <p className="text-muted">{t.accounting.hiddenProfitIntro}</p>
 
