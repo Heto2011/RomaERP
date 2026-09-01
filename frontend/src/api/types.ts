@@ -1111,6 +1111,7 @@ export interface AppUser {
   roles: string[];
   employeeId: string | null;
   employeeName: string | null;
+  hasPosPin: boolean;
 }
 
 export interface CreateUserInput {

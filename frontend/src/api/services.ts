@@ -104,6 +104,12 @@ export const AuthApi = {
       { email, password },
       { headers: { "X-Company-Code": companyCode } }
     ),
+  posPinLogin: (companyCode: string, pin: string) =>
+    apiClient.post<{ token: string; email: string; fullName: string; roles: string[] }>(
+      "/auth/pos-pin-login",
+      { pin },
+      { headers: { "X-Company-Code": companyCode } }
+    ),
 };
 
 export const AccountsApi = {
@@ -413,6 +419,7 @@ export const UsersApi = {
   deactivate: (id: string) => apiClient.post<AppUser>(`/users/${id}/deactivate`),
   activate: (id: string) => apiClient.post<AppUser>(`/users/${id}/activate`),
   linkEmployee: (id: string, employeeId: string | null) => apiClient.put<AppUser>(`/users/${id}/employee-link`, { employeeId }),
+  setPosPin: (id: string, pin: string | null) => apiClient.put<AppUser>(`/users/${id}/pos-pin`, { pin }),
 };
 
 export const AlertsApi = {

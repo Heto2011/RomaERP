@@ -20,6 +20,9 @@ export default function Users() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingRoles, setEditingRoles] = useState<string[]>([]);
 
+  const [pinEditingId, setPinEditingId] = useState<string | null>(null);
+  const [pinValue, setPinValue] = useState("");
+
   async function load() {
     const [usersRes, employeesRes] = await Promise.all([UsersApi.getAll(), EmployeesApi.getAll()]);
     setUsers(usersRes.data);
@@ -87,6 +90,28 @@ export default function Users() {
     }
   }
 
+  async function saveNewPin(id: string) {
+    setError(null);
+    try {
+      await UsersApi.setPosPin(id, pinValue);
+      setPinEditingId(null);
+      setPinValue("");
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function clearPin(id: string) {
+    setError(null);
+    try {
+      await UsersApi.setPosPin(id, null);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -141,6 +166,7 @@ export default function Users() {
               <th>{t.users.email}</th>
               <th>{t.users.roles}</th>
               <th>{t.users.linkedEmployee}</th>
+              <th>{t.users.posPin}</th>
               <th>{t.common.status}</th>
               <th>{t.common.actions}</th>
             </tr>
@@ -148,7 +174,7 @@ export default function Users() {
           <tbody>
             {users.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
+                <td colSpan={7} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
                   {t.common.noData}
                 </td>
               </tr>
@@ -185,6 +211,34 @@ export default function Users() {
                         </option>
                       ))}
                   </select>
+                </td>
+                <td>
+                  {pinEditingId === u.id ? (
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <input
+                        style={{ width: 90 }}
+                        value={pinValue}
+                        onChange={(e) => setPinValue(e.target.value)}
+                        placeholder={t.users.pinPlaceholder}
+                        maxLength={6}
+                        title={t.users.pinHint}
+                      />
+                      <button className="btn btn-sm" onClick={() => saveNewPin(u.id)}>{t.common.save}</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => { setPinEditingId(null); setPinValue(""); }}>{t.common.cancel}</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <span className={u.hasPosPin ? "text-success" : "text-muted"}>
+                        {u.hasPosPin ? t.users.posPinSet : t.users.posPinNotSet}
+                      </span>
+                      <button className="btn btn-secondary btn-sm" onClick={() => { setPinEditingId(u.id); setPinValue(""); }}>
+                        {u.hasPosPin ? t.users.changePin : t.users.setPin}
+                      </button>
+                      {u.hasPosPin && (
+                        <button className="btn btn-secondary btn-sm" onClick={() => clearPin(u.id)}>{t.users.clearPin}</button>
+                      )}
+                    </div>
+                  )}
                 </td>
                 <td>
                   <span className={u.isActive ? "text-success" : "text-danger"}>

@@ -19,15 +19,19 @@ public class UsersController : ControllerBase
 {
     private static readonly string[] ValidRoles = { "Admin", "Accountant", "HR", "Employee" };
 
+    private static readonly System.Text.RegularExpressions.Regex PinPattern = new("^[0-9]{4,6}$", System.Text.RegularExpressions.RegexOptions.Compiled);
+
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly ICurrentUserService _currentUser;
     private readonly IEmployeeService _employeeService;
+    private readonly IPasswordHasher<ApplicationUser> _passwordHasher;
 
-    public UsersController(UserManager<ApplicationUser> userManager, ICurrentUserService currentUser, IEmployeeService employeeService)
+    public UsersController(UserManager<ApplicationUser> userManager, ICurrentUserService currentUser, IEmployeeService employeeService, IPasswordHasher<ApplicationUser> passwordHasher)
     {
         _userManager = userManager;
         _currentUser = currentUser;
         _employeeService = employeeService;
+        _passwordHasher = passwordHasher;
     }
 
     [HttpGet]
@@ -42,7 +46,7 @@ public class UsersController : ControllerBase
         {
             var roles = await _userManager.GetRolesAsync(user);
             var linkedEmployee = employeeByUserId.GetValueOrDefault(user.Id);
-            result.Add(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr));
+            result.Add(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
         }
 
         return Ok(result);
@@ -61,7 +65,7 @@ public class UsersController : ControllerBase
 
         var roles = await _userManager.GetRolesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
     }
 
     [HttpPost]
@@ -95,7 +99,7 @@ public class UsersController : ControllerBase
 
         await _userManager.AddToRolesAsync(user, request.Roles);
 
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, null, null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, null, null, false));
     }
 
     [HttpPut("{id:guid}/roles")]
@@ -119,7 +123,7 @@ public class UsersController : ControllerBase
         await _userManager.AddToRolesAsync(user, request.Roles);
 
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, linkedEmployee?.Id, linkedEmployee?.FullNameAr));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
     }
 
     [HttpPost("{id:guid}/deactivate")]
@@ -136,7 +140,7 @@ public class UsersController : ControllerBase
 
         var roles = await _userManager.GetRolesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
     }
 
     [HttpPost("{id:guid}/activate")]
@@ -150,7 +154,38 @@ public class UsersController : ControllerBase
 
         var roles = await _userManager.GetRolesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+    }
+
+    [HttpPut("{id:guid}/pos-pin")]
+    public async Task<ActionResult<UserDto>> SetPosPin(Guid id, SetPosPinRequest request, CancellationToken ct)
+    {
+        var user = await _userManager.FindByIdAsync(id.ToString())
+            ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+
+        if (string.IsNullOrWhiteSpace(request.Pin))
+        {
+            user.PosPinHash = null;
+        }
+        else
+        {
+            if (!PinPattern.IsMatch(request.Pin))
+                return BadRequest(new { error = "الرقم السري لازم يكون أرقام بس، من 4 لـ 6 أرقام." });
+
+            var otherUsers = await _userManager.Users
+                .Where(u => u.Id != id && u.IsActive && u.PosPinHash != null)
+                .ToListAsync(ct);
+            if (otherUsers.Any(u => _passwordHasher.VerifyHashedPassword(u, u.PosPinHash!, request.Pin) == PasswordVerificationResult.Success))
+                return BadRequest(new { error = "الرقم السري ده مستخدم بالفعل من مستخدم تاني، اختار رقم مختلف." });
+
+            user.PosPinHash = _passwordHasher.HashPassword(user, request.Pin);
+        }
+
+        await _userManager.UpdateAsync(user);
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
     }
 
     private async Task<Application.HR.DTOs.EmployeeDto?> GetLinkedEmployeeAsync(Guid userId, CancellationToken ct)

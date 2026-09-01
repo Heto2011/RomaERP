@@ -3,6 +3,7 @@ import { useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import Login from "./pages/Login";
 import StartTrial from "./pages/StartTrial";
+import PosLogin from "./pages/restaurant/PosLogin";
 import DemoTenantsPage from "./pages/system/DemoTenants";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
@@ -68,9 +69,9 @@ import RestaurantMenu from "./pages/restaurant/RestaurantMenu";
 import DeliveryReconciliationPage from "./pages/restaurant/DeliveryReconciliation";
 import RestaurantPOS from "./pages/restaurant/RestaurantPOS";
 
-function ProtectedRoute({ children, layout = true }: { children: React.ReactNode; layout?: boolean }) {
+function ProtectedRoute({ children, layout = true, loginPath = "/login" }: { children: React.ReactNode; layout?: boolean; loginPath?: string }) {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to={loginPath} replace />;
   return layout ? <Layout>{children}</Layout> : <>{children}</>;
 }
 
@@ -79,6 +80,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/start-trial" element={<StartTrial />} />
+      <Route path="/pos-login" element={<PosLogin />} />
       <Route path="/system/demo-tenants" element={<DemoTenantsPage />} />
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
@@ -127,7 +129,7 @@ export default function App() {
       <Route path="/restaurant/tables" element={<ProtectedRoute><RestaurantTables /></ProtectedRoute>} />
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />
       <Route path="/restaurant/delivery-reconciliation" element={<ProtectedRoute><DeliveryReconciliationPage /></ProtectedRoute>} />
-      <Route path="/restaurant/pos" element={<ProtectedRoute layout={false}><RestaurantPOS /></ProtectedRoute>} />
+      <Route path="/restaurant/pos" element={<ProtectedRoute layout={false} loginPath="/pos-login"><RestaurantPOS /></ProtectedRoute>} />
       <Route path="/inventory/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
       <Route path="/inventory/warehouses" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />
       <Route path="/inventory/movements" element={<ProtectedRoute><StockMovements /></ProtectedRoute>} />
