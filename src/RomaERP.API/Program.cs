@@ -109,6 +109,15 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
+}
+
+// Applies pending EF migrations to the central database and every tenant's own database on every
+// startup, in every environment — so a schema change shipped in code is never left stranded on a
+// tenant's database after a deploy (unlike demo data seeding below, this must always run).
+await MigrateAllTenantsAsync(app.Services);
+
+if (app.Environment.IsDevelopment())
+{
     await SeedDemoTenantAsync(app.Services);
 }
 
@@ -131,6 +140,29 @@ app.UseRateLimiter();
 app.MapControllers();
 
 app.Run();
+
+// Runs in every environment on every startup: migrates the central database, then migrates every
+// existing tenant's own database in turn. A fresh scope per tenant is required since ITenantContext
+// can only be resolved once per scope (see TenantContext.Resolve).
+static async Task MigrateAllTenantsAsync(IServiceProvider services)
+{
+    using var centralScope = services.CreateScope();
+    var central = centralScope.ServiceProvider.GetRequiredService<CentralDbContext>();
+    await central.Database.MigrateAsync();
+
+    var tenants = await central.Tenants.AsNoTracking().Where(t => t.IsActive).ToListAsync();
+
+    foreach (var tenant in tenants)
+    {
+        using var tenantScope = services.CreateScope();
+        var registry = tenantScope.ServiceProvider.GetRequiredService<ITenantRegistry>();
+        var tenantContext = tenantScope.ServiceProvider.GetRequiredService<TenantContext>();
+        tenantContext.Resolve(tenant, registry.BuildConnectionString(tenant.DatabaseName));
+
+        var db = tenantScope.ServiceProvider.GetRequiredService<RomaERP.Infrastructure.Persistence.ApplicationDbContext>();
+        await db.Database.MigrateAsync();
+    }
+}
 
 // Creates/seeds the "demo" tenant on startup in Development so the existing dev database keeps working
 // unchanged after multi-tenancy was introduced. Manually borrows a scope and resolves its ITenantContext
