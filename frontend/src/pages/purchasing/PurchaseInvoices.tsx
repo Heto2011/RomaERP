@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { AccountsApi, ItemsApi, LookupsApi, PurchasingApi } from "../../api/services";
-import { PaymentTerm, type Account, type FiscalPeriod, type Item, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
+import { AccountsApi, LookupsApi, PurchasingApi } from "../../api/services";
+import { PaymentTerm, type Account, type FiscalPeriod, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
@@ -13,7 +13,6 @@ export default function PurchaseInvoices() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
-  const [items, setItems] = useState<Item[]>([]);
   const [vatRate, setVatRate] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
@@ -37,20 +36,18 @@ export default function PurchaseInvoices() {
   const grandTotal = netTotal + vatTotal;
 
   async function load() {
-    const [invRes, vendRes, periodRes, accRes, settingsRes, itemsRes] = await Promise.all([
+    const [invRes, vendRes, periodRes, accRes, settingsRes] = await Promise.all([
       PurchasingApi.getInvoices(),
       PurchasingApi.getVendors(),
       LookupsApi.fiscalPeriods(),
       AccountsApi.getAll(),
       LookupsApi.companySettings(),
-      ItemsApi.getAll(),
     ]);
     setInvoices(invRes.data);
     setVendors(vendRes.data);
     setPeriods(periodRes.data);
     setAccounts(accRes.data);
     setVatRate(settingsRes.data.vatRate);
-    setItems(itemsRes.data);
   }
 
   useEffect(() => {
@@ -190,7 +187,6 @@ export default function PurchaseInvoices() {
                   <tr>
                     <th>{t.common.description}</th>
                     <th>{t.common.account}</th>
-                    <th>{t.purchasing.linkedItem}</th>
                     <th>{t.common.quantity}</th>
                     <th>{t.common.unitPrice}</th>
                     <th>{t.common.vat}</th>
@@ -205,14 +201,6 @@ export default function PurchaseInvoices() {
                         <select value={line.accountId} onChange={(e) => updateLine(idx, { accountId: e.target.value })} required>
                           {expenseAccounts.map((a) => (
                             <option key={a.id} value={a.id}>{a.code} - {bilingualName(a.nameAr, a.nameEn, lang)}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td>
-                        <select value={line.itemId ?? ""} onChange={(e) => updateLine(idx, { itemId: e.target.value || null })}>
-                          <option value="">{t.purchasing.noLinkedItem}</option>
-                          {items.map((it) => (
-                            <option key={it.id} value={it.id}>{it.code} - {bilingualName(it.nameAr, it.nameEn, lang)}</option>
                           ))}
                         </select>
                       </td>

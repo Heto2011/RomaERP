@@ -37,10 +37,12 @@ public class PurchasingController : ControllerBase
     public async Task<ActionResult<PurchaseInvoiceDto>> CreateInvoice(CreatePurchaseInvoiceDto dto, CancellationToken ct)
         => Ok(await _purchasingService.CreateInvoiceAsync(dto, ct));
 
-    /// <summary>Item-based purchase receiving — used by the Restaurant "Purchase Receiving" screen.
-    /// Updates stock quantity/cost per line and still posts one normal purchase invoice for the total.</summary>
+    /// <summary>Item-based purchase receiving — used by the Restaurant "Purchase Receiving" screen as an
+    /// internal-control record of what physically arrived. Updates stock quantity/cost per line only; it
+    /// does not post a journal entry or touch the vendor's AP balance (that stays the accounting Purchase
+    /// Invoices screen's job).</summary>
     [HttpPost("invoices/receive-inventory")]
-    public async Task<ActionResult<PurchaseInvoiceDto>> ReceiveInventoryPurchase(ReceiveInventoryPurchaseDto dto, CancellationToken ct)
+    public async Task<ActionResult<InventoryReceiptDto>> ReceiveInventoryPurchase(ReceiveInventoryPurchaseDto dto, CancellationToken ct)
         => Ok(await _purchasingService.ReceiveInventoryPurchaseAsync(dto, ct));
 
     [HttpPost("invoices/{id:guid}/payments")]

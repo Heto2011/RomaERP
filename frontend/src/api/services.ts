@@ -73,6 +73,7 @@ import type {
   PurchaseInvoice,
   RecordPurchasePaymentInput,
   ReceiveInventoryPurchaseInput,
+  InventoryReceipt,
   RecordSalesPaymentInput,
   SalaryComponent,
   EmployeeSalaryComponentAssignment,
@@ -385,7 +386,7 @@ export const PurchasingApi = {
   getAging: () => apiClient.get<VendorAging[]>("/purchasing/aging"),
   downloadInvoicePdf: (id: string) => apiClient.get(`/purchasing/invoices/${id}/pdf`, { responseType: "blob" }),
   receiveInventoryPurchase: (data: ReceiveInventoryPurchaseInput) =>
-    apiClient.post<PurchaseInvoice>("/purchasing/invoices/receive-inventory", data),
+    apiClient.post<InventoryReceipt>("/purchasing/invoices/receive-inventory", data),
 };
 
 export const RestaurantApi = {

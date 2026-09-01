@@ -202,14 +202,15 @@ public class PurchasingService : IPurchasingService
         return await GetInvoiceAsync(invoice.Id, ct);
     }
 
-    /// <summary>The item-based counterpart to CreateInvoiceAsync — every line updates the item's quantity
-    /// and weighted-average cost (like a stock receipt), and the whole delivery still posts as one normal
-    /// purchase invoice + journal entry (VAT-exclusive costs, VAT added automatically), so it shows up in
-    /// AP aging and purchasing reports exactly like an invoice entered on the regular screen.</summary>
-    public async Task<PurchaseInvoiceDto> ReceiveInventoryPurchaseAsync(ReceiveInventoryPurchaseDto dto, CancellationToken ct = default)
+    /// <summary>Records what physically arrived from a vendor, item by item, for the Restaurant "Purchase
+    /// Receiving" screen — an internal-control record separate from the vendor's actual invoice, which is
+    /// still entered by its total on the accounting Purchase Invoices screen. Deliberately does NOT post a
+    /// journal entry or touch the vendor's AP balance, so the same delivery is never counted as a liability
+    /// twice; it only updates item quantity and weighted-average cost.</summary>
+    public async Task<InventoryReceiptDto> ReceiveInventoryPurchaseAsync(ReceiveInventoryPurchaseDto dto, CancellationToken ct = default)
     {
         if (dto.Lines.Count == 0)
-            throw new ValidationAppException("لازم يكون في صنف واحد على الأقل في الفاتورة.");
+            throw new ValidationAppException("لازم يكون في صنف واحد على الأقل.");
 
         foreach (var line in dto.Lines)
         {
@@ -222,14 +223,8 @@ public class PurchasingService : IPurchasingService
         var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.Id == dto.VendorId && !v.IsDeleted, ct)
             ?? throw new NotFoundException(nameof(Vendor), dto.VendorId);
 
-        var period = await _context.FiscalPeriods.FirstOrDefaultAsync(p => p.Id == dto.FiscalPeriodId, ct)
-            ?? throw new NotFoundException(nameof(FiscalPeriod), dto.FiscalPeriodId);
-        if (period.IsClosed)
-            throw new ValidationAppException("لا يمكن تسجيل فاتورة لفترة محاسبية مقفلة.");
-
-        var warehouseExists = await _context.Warehouses.AnyAsync(w => w.Id == dto.WarehouseId && !w.IsDeleted, ct);
-        if (!warehouseExists)
-            throw new NotFoundException(nameof(Warehouse), dto.WarehouseId);
+        var warehouse = await _context.Warehouses.FirstOrDefaultAsync(w => w.Id == dto.WarehouseId && !w.IsDeleted, ct)
+            ?? throw new NotFoundException(nameof(Warehouse), dto.WarehouseId);
 
         var itemIds = dto.Lines.Select(l => l.ItemId).Distinct().ToList();
         var items = await _context.Items.Where(i => itemIds.Contains(i.Id) && !i.IsDeleted).ToListAsync(ct);
@@ -237,87 +232,9 @@ public class PurchasingService : IPurchasingService
         if (missingItemId != default)
             throw new NotFoundException(nameof(Item), missingItemId);
 
-        var inventoryAccount = await GetAccountAsync(AccountingConstants.InventoryAccountCode, "المخزون", ct);
-        var vatRate = await GetVatRateAsync(ct);
-
-        var lines = dto.Lines.Select((l, idx) =>
-        {
-            var item = items.First(i => i.Id == l.ItemId);
-            return new PurchaseInvoiceLine
-            {
-                LineNumber = idx + 1,
-                Description = item.NameAr,
-                AccountId = inventoryAccount.Id,
-                ItemId = item.Id,
-                Quantity = l.Quantity,
-                UnitPrice = l.UnitCost,
-                LineTotal = Math.Round(l.Quantity * l.UnitCost, 2)
-            };
-        }).ToList();
-
-        var subTotal = lines.Sum(l => l.LineTotal);
-        var vatAmount = Math.Round(subTotal * vatRate, 2);
-        var totalAmount = subTotal + vatAmount;
-
-        var journalLines = new List<JournalEntryLine>
-        {
-            new() { LineNumber = 1, AccountId = inventoryAccount.Id, Debit = subTotal, Credit = 0, Description = "استلام مخزون - فاتورة مشتريات" }
-        };
-        var lineNumber = 2;
-
-        Account? inputVatAccount = null;
-        if (vatAmount > 0)
-        {
-            inputVatAccount = await GetAccountAsync(AccountingConstants.InputVatAccountCode, "ضريبة القيمة المضافة (مدخلات)", ct);
-            journalLines.Add(new JournalEntryLine { LineNumber = lineNumber++, AccountId = inputVatAccount.Id, Debit = vatAmount, Credit = 0, Description = "ضريبة مدخلات" });
-        }
-
-        decimal paidAmount;
-        if (dto.PaymentTerm == PaymentTerm.Credit)
-        {
-            var apAccount = await GetAccountAsync(AccountingConstants.AccountsPayableAccountCode, "الموردون", ct);
-            journalLines.Add(new JournalEntryLine { LineNumber = lineNumber++, AccountId = apAccount.Id, Debit = 0, Credit = totalAmount, Description = $"فاتورة مشتريات آجلة - {vendor.NameAr}" });
-            vendor.ApBalance += totalAmount;
-            paidAmount = 0;
-        }
-        else
-        {
-            var settlementAccount = await GetSettlementAccountAsync(dto.PaymentTerm, ct);
-            journalLines.Add(new JournalEntryLine { LineNumber = lineNumber++, AccountId = settlementAccount.Id, Debit = 0, Credit = totalAmount, Description = $"فاتورة مشتريات - {vendor.NameAr}" });
-            paidAmount = totalAmount;
-        }
-
-        var entry = new JournalEntry
-        {
-            EntryNumber = await GenerateEntryNumberAsync(ct),
-            EntryDate = dto.InvoiceDate,
-            FiscalPeriodId = dto.FiscalPeriodId,
-            Description = $"استلام مشتريات - {vendor.NameAr}",
-            Reference = AccountingConstants.PurchaseInvoiceReference,
-            Status = JournalEntryStatus.Posted,
-            Lines = journalLines
-        };
-        _context.JournalEntries.Add(entry);
-
-        var invoice = new PurchaseInvoice
-        {
-            InvoiceNumber = await GenerateInvoiceNumberAsync(ct),
-            InvoiceDate = dto.InvoiceDate,
-            VendorId = vendor.Id,
-            FiscalPeriodId = dto.FiscalPeriodId,
-            SubTotal = subTotal,
-            VatRate = vatRate,
-            VatAmount = vatAmount,
-            TotalAmount = totalAmount,
-            PaymentTerm = dto.PaymentTerm,
-            PaidAmount = paidAmount,
-            Notes = dto.Notes,
-            JournalEntry = entry,
-            Lines = lines
-        };
-        _context.PurchaseInvoices.Add(invoice);
-
         var movementCount = await _context.StockMovements.CountAsync(ct);
+        var resultLines = new List<InventoryReceiptLineDto>();
+
         foreach (var (dtoLine, index) in dto.Lines.Select((l, i) => (l, i)))
         {
             var item = items.First(i => i.Id == dtoLine.ItemId);
@@ -331,22 +248,40 @@ public class PurchasingService : IPurchasingService
             _context.StockMovements.Add(new StockMovement
             {
                 MovementNumber = $"SM-{(movementCount + index + 1):D6}",
-                MovementDate = dto.InvoiceDate,
+                MovementDate = dto.ReceiptDate,
                 MovementType = StockMovementType.Receipt,
                 ItemId = item.Id,
                 WarehouseId = dto.WarehouseId,
                 Quantity = dtoLine.Quantity,
                 UnitCost = dtoLine.UnitCost,
                 TotalCost = totalCost,
-                Reference = invoice.InvoiceNumber,
-                Description = $"استلام مشتريات - {vendor.NameAr}",
-                JournalEntryId = entry.Id
+                Reference = null,
+                Description = $"استلام مشتريات (رقابة داخلية) - {vendor.NameAr}" + (string.IsNullOrWhiteSpace(dto.Notes) ? "" : $" — {dto.Notes}"),
+                JournalEntryId = null
+            });
+
+            resultLines.Add(new InventoryReceiptLineDto
+            {
+                ItemId = item.Id,
+                ItemCode = item.Code,
+                ItemName = item.NameAr,
+                Quantity = dtoLine.Quantity,
+                UnitCost = dtoLine.UnitCost,
+                NewQuantityOnHand = item.QuantityOnHand,
+                NewAverageCost = item.AverageCost
             });
         }
 
         await _context.SaveChangesAsync(ct);
 
-        return await GetInvoiceAsync(invoice.Id, ct);
+        return new InventoryReceiptDto
+        {
+            VendorName = vendor.NameAr,
+            WarehouseName = warehouse.NameAr,
+            ReceiptDate = dto.ReceiptDate,
+            TotalCost = resultLines.Sum(l => l.Quantity * l.UnitCost),
+            Lines = resultLines
+        };
     }
 
     public async Task<PurchaseInvoiceDto> RecordPaymentAsync(Guid invoiceId, RecordPurchasePaymentDto dto, CancellationToken ct = default)

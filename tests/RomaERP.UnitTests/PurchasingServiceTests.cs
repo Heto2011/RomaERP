@@ -208,28 +208,27 @@ public class PurchasingServiceTests
     }
 
     [Fact]
-    public async Task ReceiveInventoryPurchase_UpdatesItemCostAndPostsInvoiceWithVat()
+    public async Task ReceiveInventoryPurchase_UpdatesItemCostWithoutPostingToLedgerOrVendorBalance()
     {
-        var (ctx, _, _, ap, _, inputVat, vendor, period) = await SeedAsync();
-        var inventoryAccount = new Account { Code = "1160", NameAr = "المخزون", NameEn = "Inventory", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+        var (ctx, _, _, _, _, _, vendor, _) = await SeedAsync();
         var category = new ItemCategory { Code = "CAT-1", NameAr = "فئة", NameEn = "Category" };
         var warehouse = new Warehouse { Code = "WH-1", NameAr = "المخزن الرئيسي", NameEn = "Main Warehouse" };
         var item = new Item { Code = "ITM-1", NameAr = "دقيق", NameEn = "Flour", UnitOfMeasure = "kg", ItemCategoryId = category.Id, ItemCategory = category, QuantityOnHand = 10, AverageCost = 5 };
-        ctx.Accounts.Add(inventoryAccount);
         ctx.ItemCategories.Add(category);
         ctx.Warehouses.Add(warehouse);
         ctx.Items.Add(item);
         await ctx.SaveChangesAsync();
 
+        var journalEntriesBefore = await ctx.JournalEntries.CountAsync();
+        var invoicesBefore = await ctx.PurchaseInvoices.CountAsync();
+
         var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer());
 
-        var invoice = await service.ReceiveInventoryPurchaseAsync(new ReceiveInventoryPurchaseDto
+        var receipt = await service.ReceiveInventoryPurchaseAsync(new ReceiveInventoryPurchaseDto
         {
             VendorId = vendor.Id,
-            InvoiceDate = DateTime.UtcNow.Date,
-            FiscalPeriodId = period.Id,
+            ReceiptDate = DateTime.UtcNow.Date,
             WarehouseId = warehouse.Id,
-            PaymentTerm = PaymentTerm.Credit,
             Lines = { new ReceiveInventoryPurchaseLineInputDto { ItemId = item.Id, Quantity = 10, UnitCost = 8 } }
         });
 
@@ -238,23 +237,21 @@ public class PurchasingServiceTests
         Assert.Equal(20, updatedItem.QuantityOnHand);
         Assert.Equal(6.5m, updatedItem.AverageCost);
 
-        Assert.Equal(80, invoice.SubTotal);
-        Assert.Equal(11.2m, invoice.VatAmount); // 80 * 0.14
-        Assert.Equal(91.2m, invoice.TotalAmount);
-        Assert.Equal(0, invoice.PaidAmount);
+        Assert.Equal(80, receipt.TotalCost);
+        var receiptLine = Assert.Single(receipt.Lines);
+        Assert.Equal(20, receiptLine.NewQuantityOnHand);
+        Assert.Equal(6.5m, receiptLine.NewAverageCost);
 
-        var entry = await ctx.JournalEntries.Include(e => e.Lines).FirstAsync(e => e.Id == invoice.JournalEntryId);
-        Assert.Contains(entry.Lines, l => l.AccountId == inventoryAccount.Id && l.Debit == 80);
-        Assert.Contains(entry.Lines, l => l.AccountId == inputVat.Id && l.Debit == 11.2m);
-        Assert.Contains(entry.Lines, l => l.AccountId == ap.Id && l.Credit == 91.2m);
+        Assert.Equal(journalEntriesBefore, await ctx.JournalEntries.CountAsync());
+        Assert.Equal(invoicesBefore, await ctx.PurchaseInvoices.CountAsync());
 
         var updatedVendor = await ctx.Vendors.FirstAsync(v => v.Id == vendor.Id);
-        Assert.Equal(91.2m, updatedVendor.ApBalance);
+        Assert.Equal(0, updatedVendor.ApBalance);
 
         var movement = await ctx.StockMovements.FirstAsync(m => m.ItemId == item.Id);
         Assert.Equal(StockMovementType.Receipt, movement.MovementType);
         Assert.Equal(10, movement.Quantity);
         Assert.Equal(8, movement.UnitCost);
-        Assert.Equal(entry.Id, movement.JournalEntryId);
+        Assert.Null(movement.JournalEntryId);
     }
 }

@@ -45,8 +45,8 @@ public class CreatePurchaseInvoiceDto
     public List<PurchaseInvoiceLineInputDto> Lines { get; set; } = new();
 }
 
-/// <summary>One item received into stock as part of a purchase delivery — unit cost is VAT-exclusive,
-/// same as every other purchase line, so it reflects the item's real cost.</summary>
+/// <summary>One item physically received into stock — unit cost is VAT-exclusive, same as every other
+/// purchase line, so it reflects the item's real cost.</summary>
 public class ReceiveInventoryPurchaseLineInputDto
 {
     public Guid ItemId { get; set; }
@@ -54,19 +54,38 @@ public class ReceiveInventoryPurchaseLineInputDto
     public decimal UnitCost { get; set; }
 }
 
-/// <summary>Records a supplier delivery of stocked items in one step: updates each item's quantity and
-/// weighted-average cost, and posts a single purchase invoice + journal entry for the total (VAT added
-/// automatically) — used by the item-based "Purchase Receiving" screen rather than the generic,
-/// account-coded Purchase Invoices screen.</summary>
+/// <summary>Records what physically arrived from a vendor, item by item — an internal-control record
+/// used by the Restaurant "Purchase Receiving" screen, separate from the vendor's actual invoice (which
+/// still gets entered by its total on the accounting Purchase Invoices screen). Deliberately does NOT
+/// post to the ledger or touch the vendor's AP balance — that stays the accounting screen's job, so the
+/// same delivery is never counted as a liability twice. Only updates item quantity/cost.</summary>
 public class ReceiveInventoryPurchaseDto
 {
     public Guid VendorId { get; set; }
-    public DateTime InvoiceDate { get; set; }
-    public Guid FiscalPeriodId { get; set; }
+    public DateTime ReceiptDate { get; set; }
     public Guid WarehouseId { get; set; }
-    public PaymentTerm PaymentTerm { get; set; }
     public string? Notes { get; set; }
     public List<ReceiveInventoryPurchaseLineInputDto> Lines { get; set; } = new();
+}
+
+public class InventoryReceiptLineDto
+{
+    public Guid ItemId { get; set; }
+    public string ItemCode { get; set; } = string.Empty;
+    public string ItemName { get; set; } = string.Empty;
+    public decimal Quantity { get; set; }
+    public decimal UnitCost { get; set; }
+    public decimal NewQuantityOnHand { get; set; }
+    public decimal NewAverageCost { get; set; }
+}
+
+public class InventoryReceiptDto
+{
+    public string VendorName { get; set; } = string.Empty;
+    public string WarehouseName { get; set; } = string.Empty;
+    public DateTime ReceiptDate { get; set; }
+    public decimal TotalCost { get; set; }
+    public List<InventoryReceiptLineDto> Lines { get; set; } = new();
 }
 
 public class PurchaseInvoiceLineDto

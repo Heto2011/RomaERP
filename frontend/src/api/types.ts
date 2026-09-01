@@ -1067,12 +1067,28 @@ export interface ReceiveInventoryPurchaseLineInput {
 
 export interface ReceiveInventoryPurchaseInput {
   vendorId: string;
-  invoiceDate: string;
-  fiscalPeriodId: string;
+  receiptDate: string;
   warehouseId: string;
-  paymentTerm: PaymentTerm;
   notes?: string | null;
   lines: ReceiveInventoryPurchaseLineInput[];
+}
+
+export interface InventoryReceiptLine {
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  quantity: number;
+  unitCost: number;
+  newQuantityOnHand: number;
+  newAverageCost: number;
+}
+
+export interface InventoryReceipt {
+  vendorName: string;
+  warehouseName: string;
+  receiptDate: string;
+  totalCost: number;
+  lines: InventoryReceiptLine[];
 }
 
 export interface PurchaseInvoice {

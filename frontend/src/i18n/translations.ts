@@ -767,8 +767,8 @@ const ar = {
     navExcessStock: "Excess Stock",
   },
   restaurant: {
-    purchaseReceivingTitle: "استلام مشتريات",
-    purchaseReceivingIntro: "تسجيل توريدة من مورد بالصنف — بيحدّث كمية المخزون ومتوسط التكلفة تلقائيًا، وبيظهر كفاتورة مشتريات عادية في المحاسبة مع إضافة الضريبة تلقائيًا.",
+    purchaseReceivingTitle: "استلام مشتريات (رقابة داخلية)",
+    purchaseReceivingIntro: "تسجيل ما وصل فعليًا من المورد صنف بصنف — بيحدّث كمية المخزون ومتوسط التكلفة تلقائيًا فقط، ده سجل رقابة داخلية ومش بديل عن فاتورة المشتريات في المحاسبة، فلازم يتسجل فاتورة المورد بإجماليها في شاشة فواتير المشتريات بشكل منفصل.",
     unitCostExVat: "تكلفة الوحدة (بدون ضريبة)",
     saveReceipt: "حفظ الاستلام",
     receiptSaved: "تم حفظ الاستلام",
@@ -1736,8 +1736,8 @@ const en: typeof ar = {
     navExcessStock: "Excess Stock",
   },
   restaurant: {
-    purchaseReceivingTitle: "Purchase Receiving",
-    purchaseReceivingIntro: "Record a delivery from a vendor, by item — updates stock quantity and average cost automatically, and shows up as a normal purchase invoice in accounting with VAT added automatically.",
+    purchaseReceivingTitle: "Purchase Receiving (Internal Control)",
+    purchaseReceivingIntro: "Record what actually arrived from a vendor, item by item — updates stock quantity and average cost only. This is an internal-control record, not a substitute for the accounting invoice — the vendor's invoice still needs to be entered by its total on the Purchase Invoices screen separately.",
     unitCostExVat: "Unit Cost (excl. VAT)",
     saveReceipt: "Save Receipt",
     receiptSaved: "Receipt saved",

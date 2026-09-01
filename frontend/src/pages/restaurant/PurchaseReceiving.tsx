@@ -1,10 +1,8 @@
 import { useEffect, useState } from "react";
-import { ItemsApi, LookupsApi, PurchasingApi, WarehousesApi } from "../../api/services";
+import { ItemsApi, PurchasingApi, WarehousesApi } from "../../api/services";
 import {
-  PaymentTerm,
-  type FiscalPeriod,
+  type InventoryReceipt,
   type Item,
-  type PurchaseInvoice,
   type ReceiveInventoryPurchaseLineInput,
   type Vendor,
   type Warehouse,
@@ -18,39 +16,29 @@ const emptyLine = (): ReceiveInventoryPurchaseLineInput => ({ itemId: "", quanti
 export default function PurchaseReceivingPage() {
   const { t, lang } = useLanguage();
   const [vendors, setVendors] = useState<Vendor[]>([]);
-  const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [items, setItems] = useState<Item[]>([]);
-  const [vatRate, setVatRate] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [lastReceipt, setLastReceipt] = useState<PurchaseInvoice | null>(null);
+  const [lastReceipt, setLastReceipt] = useState<InventoryReceipt | null>(null);
 
   const [vendorId, setVendorId] = useState("");
-  const [fiscalPeriodId, setFiscalPeriodId] = useState("");
   const [warehouseId, setWarehouseId] = useState("");
-  const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [paymentTerm, setPaymentTerm] = useState<PaymentTerm>(PaymentTerm.Credit);
+  const [receiptDate, setReceiptDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<ReceiveInventoryPurchaseLineInput[]>([emptyLine()]);
 
   const netTotal = lines.reduce((sum, l) => sum + l.quantity * l.unitCost, 0);
-  const vatTotal = netTotal * vatRate;
-  const grandTotal = netTotal + vatTotal;
 
   async function load() {
-    const [vendRes, periodRes, whRes, itemsRes, settingsRes] = await Promise.all([
+    const [vendRes, whRes, itemsRes] = await Promise.all([
       PurchasingApi.getVendors(),
-      LookupsApi.fiscalPeriods(),
       WarehousesApi.getAll(),
       ItemsApi.getAll(),
-      LookupsApi.companySettings(),
     ]);
     setVendors(vendRes.data);
-    setPeriods(periodRes.data);
     setWarehouses(whRes.data);
     setItems(itemsRes.data);
-    setVatRate(settingsRes.data.vatRate);
   }
 
   useEffect(() => {
@@ -60,13 +48,6 @@ export default function PurchaseReceivingPage() {
   useEffect(() => {
     if (!warehouseId && warehouses.length > 0) setWarehouseId(warehouses[0].id);
   }, [warehouses, warehouseId]);
-
-  useEffect(() => {
-    if (!fiscalPeriodId && periods.length > 0) {
-      const open = periods.find((p) => !p.isClosed);
-      if (open) setFiscalPeriodId(open.id);
-    }
-  }, [periods, fiscalPeriodId]);
 
   function updateLine(idx: number, patch: Partial<ReceiveInventoryPurchaseLineInput>) {
     setLines((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
@@ -87,10 +68,8 @@ export default function PurchaseReceivingPage() {
     try {
       const res = await PurchasingApi.receiveInventoryPurchase({
         vendorId,
-        invoiceDate,
-        fiscalPeriodId,
+        receiptDate,
         warehouseId,
-        paymentTerm,
         notes: notes || null,
         lines: lines.filter((l) => l.itemId),
       });
@@ -115,10 +94,29 @@ export default function PurchaseReceivingPage() {
 
       {lastReceipt && (
         <div className="card" style={{ marginBottom: 16, borderInlineStart: "4px solid var(--color-success)" }}>
-          <strong>{t.restaurant.receiptSaved} — {lastReceipt.invoiceNumber}</strong>
-          <div className="text-muted" style={{ marginTop: 6 }}>
-            {t.common.total}: {lastReceipt.totalAmount.toLocaleString()} ({t.common.vat}: {lastReceipt.vatAmount.toLocaleString()})
-          </div>
+          <strong>{t.restaurant.receiptSaved} — {lastReceipt.vendorName}</strong>
+          <table style={{ marginTop: 10 }}>
+            <thead>
+              <tr>
+                <th>{t.inventory.itemsTitle}</th>
+                <th>{t.common.quantity}</th>
+                <th>{t.restaurant.unitCostExVat}</th>
+                <th>{t.inventory.quantityOnHand}</th>
+                <th>{t.inventory.averageCost}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {lastReceipt.lines.map((l) => (
+                <tr key={l.itemId}>
+                  <td>{l.itemCode} - {l.itemName}</td>
+                  <td>{l.quantity.toLocaleString()}</td>
+                  <td>{l.unitCost.toLocaleString()}</td>
+                  <td>{l.newQuantityOnHand.toLocaleString()}</td>
+                  <td>{l.newAverageCost.toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
       )}
 
@@ -136,16 +134,7 @@ export default function PurchaseReceivingPage() {
             </div>
             <div className="form-field">
               <label>{t.common.date}</label>
-              <input type="date" value={invoiceDate} onChange={(e) => setInvoiceDate(e.target.value)} required />
-            </div>
-            <div className="form-field">
-              <label>{t.common.fiscalPeriod}</label>
-              <select value={fiscalPeriodId} onChange={(e) => setFiscalPeriodId(e.target.value)} required>
-                <option value="" disabled>-</option>
-                {periods.map((p) => (
-                  <option key={p.id} value={p.id} disabled={p.isClosed}>{p.name}</option>
-                ))}
-              </select>
+              <input type="date" value={receiptDate} onChange={(e) => setReceiptDate(e.target.value)} required />
             </div>
             <div className="form-field">
               <label>{t.sales.warehouse}</label>
@@ -154,14 +143,6 @@ export default function PurchaseReceivingPage() {
                 {warehouses.map((w) => (
                   <option key={w.id} value={w.id}>{w.code} - {bilingualName(w.nameAr, w.nameEn, lang)}</option>
                 ))}
-              </select>
-            </div>
-            <div className="form-field">
-              <label>{t.sales.paymentTerm}</label>
-              <select value={paymentTerm} onChange={(e) => setPaymentTerm(Number(e.target.value))}>
-                <option value={PaymentTerm.Credit}>{t.paymentTerm.credit}</option>
-                <option value={PaymentTerm.Cash}>{t.paymentTerm.cash}</option>
-                <option value={PaymentTerm.Card}>{t.paymentTerm.card}</option>
               </select>
             </div>
             <div className="form-field">
@@ -212,9 +193,7 @@ export default function PurchaseReceivingPage() {
           </button>
 
           <div className="card" style={{ marginTop: 16, maxWidth: 320, marginInlineStart: "auto" }}>
-            <div style={{ display: "flex", justifyContent: "space-between" }}><span>{t.common.subtotal}</span><span>{netTotal.toLocaleString()}</span></div>
-            <div style={{ display: "flex", justifyContent: "space-between" }}><span>{t.common.vat} ({(vatRate * 100).toFixed(0)}%)</span><span>{vatTotal.toLocaleString()}</span></div>
-            <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, marginTop: 6 }}><span>{t.common.total}</span><span>{grandTotal.toLocaleString()}</span></div>
+            <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700 }}><span>{t.common.total}</span><span>{netTotal.toLocaleString()}</span></div>
           </div>
 
           <button className="btn" type="submit" disabled={loading} style={{ marginTop: 16 }}>
