@@ -27,6 +27,10 @@ public class SalaryComponentsController : ControllerBase
     public async Task<ActionResult<SalaryComponentDto>> Create(CreateSalaryComponentDto dto, CancellationToken ct)
         => Ok(await _salaryComponentService.CreateAsync(dto, ct));
 
+    [HttpGet("employees/{employeeId:guid}")]
+    public async Task<ActionResult<List<EmployeeSalaryComponentDto>>> GetForEmployee(Guid employeeId, CancellationToken ct)
+        => Ok(await _salaryComponentService.GetForEmployeeAsync(employeeId, ct));
+
     [HttpPost("employees/{employeeId:guid}/assign")]
     [Authorize(Roles = "Admin,HR")]
     public async Task<IActionResult> AssignToEmployee(Guid employeeId, AssignSalaryComponentRequest request, CancellationToken ct)

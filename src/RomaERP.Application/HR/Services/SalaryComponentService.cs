@@ -56,6 +56,24 @@ public class SalaryComponentService : ISalaryComponentService
         return Map(component);
     }
 
+    public async Task<List<EmployeeSalaryComponentDto>> GetForEmployeeAsync(Guid employeeId, CancellationToken ct = default)
+    {
+        return await _context.EmployeeSalaryComponents
+            .AsNoTracking()
+            .Where(x => x.EmployeeId == employeeId)
+            .Select(x => new EmployeeSalaryComponentDto
+            {
+                SalaryComponentId = x.SalaryComponentId,
+                Code = x.SalaryComponent!.Code,
+                NameAr = x.SalaryComponent.NameAr,
+                NameEn = x.SalaryComponent.NameEn,
+                ComponentType = x.SalaryComponent.ComponentType,
+                CalculationType = x.SalaryComponent.CalculationType,
+                Value = x.Value
+            })
+            .ToListAsync(ct);
+    }
+
     public async Task AssignToEmployeeAsync(Guid employeeId, Guid salaryComponentId, decimal value, CancellationToken ct = default)
     {
         var employeeExists = await _context.Employees.AnyAsync(e => e.Id == employeeId && !e.IsDeleted, ct);

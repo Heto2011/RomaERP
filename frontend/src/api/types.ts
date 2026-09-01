@@ -724,6 +724,16 @@ export interface SalaryComponent {
   isActive: boolean;
 }
 
+export interface EmployeeSalaryComponentAssignment {
+  salaryComponentId: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  componentType: SalaryComponentType;
+  calculationType: CalculationType;
+  value: number;
+}
+
 export enum PayrollRunStatus {
   Draft = 1,
   Approved = 2,

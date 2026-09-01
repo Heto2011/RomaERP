@@ -74,6 +74,7 @@ import type {
   RecordPurchasePaymentInput,
   RecordSalesPaymentInput,
   SalaryComponent,
+  EmployeeSalaryComponentAssignment,
   SalesInvoice,
   SalesNote,
   StockMovement,
@@ -170,6 +171,8 @@ export const EmployeesApi = {
 export const SalaryComponentsApi = {
   getAll: () => apiClient.get<SalaryComponent[]>("/salarycomponents"),
   create: (data: Partial<SalaryComponent>) => apiClient.post<SalaryComponent>("/salarycomponents", data),
+  getForEmployee: (employeeId: string) =>
+    apiClient.get<EmployeeSalaryComponentAssignment[]>(`/salarycomponents/employees/${employeeId}`),
   assign: (employeeId: string, salaryComponentId: string, value: number) =>
     apiClient.post(`/salarycomponents/employees/${employeeId}/assign`, { salaryComponentId, value }),
   remove: (employeeId: string, salaryComponentId: string) =>

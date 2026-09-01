@@ -1,6 +1,16 @@
 import { useEffect, useState } from "react";
-import { DepartmentsApi, EmployeesApi, PositionsApi } from "../../api/services";
-import { Gender, MaritalStatus, type Department, type Employee, type Position } from "../../api/types";
+import { DepartmentsApi, EmployeesApi, PositionsApi, SalaryComponentsApi } from "../../api/services";
+import {
+  CalculationType,
+  Gender,
+  MaritalStatus,
+  SalaryComponentType,
+  type Department,
+  type Employee,
+  type EmployeeSalaryComponentAssignment,
+  type Position,
+  type SalaryComponent,
+} from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
@@ -25,15 +35,24 @@ export default function Employees() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
 
+  const [allComponents, setAllComponents] = useState<SalaryComponent[]>([]);
+  const [componentsEmployee, setComponentsEmployee] = useState<Employee | null>(null);
+  const [assignedComponents, setAssignedComponents] = useState<EmployeeSalaryComponentAssignment[]>([]);
+  const [newComponentId, setNewComponentId] = useState("");
+  const [newComponentValue, setNewComponentValue] = useState("");
+  const [componentsError, setComponentsError] = useState<string | null>(null);
+
   async function load() {
-    const [empRes, depRes, posRes] = await Promise.all([
+    const [empRes, depRes, posRes, compRes] = await Promise.all([
       EmployeesApi.getAll(),
       DepartmentsApi.getAll(),
       PositionsApi.getAll(),
+      SalaryComponentsApi.getAll(),
     ]);
     setEmployees(empRes.data);
     setDepartments(depRes.data);
     setPositions(posRes.data);
+    setAllComponents(compRes.data);
   }
 
   useEffect(() => {
@@ -81,6 +100,42 @@ export default function Employees() {
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
+    }
+  }
+
+  async function openComponentsModal(emp: Employee) {
+    setComponentsEmployee(emp);
+    setComponentsError(null);
+    setNewComponentId("");
+    setNewComponentValue("");
+    const res = await SalaryComponentsApi.getForEmployee(emp.id);
+    setAssignedComponents(res.data);
+  }
+
+  async function handleAssignComponent(e: React.FormEvent) {
+    e.preventDefault();
+    if (!componentsEmployee || !newComponentId) return;
+    setComponentsError(null);
+    try {
+      await SalaryComponentsApi.assign(componentsEmployee.id, newComponentId, Number(newComponentValue) || 0);
+      const res = await SalaryComponentsApi.getForEmployee(componentsEmployee.id);
+      setAssignedComponents(res.data);
+      setNewComponentId("");
+      setNewComponentValue("");
+    } catch (err) {
+      setComponentsError(getErrorMessage(err));
+    }
+  }
+
+  async function handleRemoveComponent(salaryComponentId: string) {
+    if (!componentsEmployee) return;
+    setComponentsError(null);
+    try {
+      await SalaryComponentsApi.remove(componentsEmployee.id, salaryComponentId);
+      const res = await SalaryComponentsApi.getForEmployee(componentsEmployee.id);
+      setAssignedComponents(res.data);
+    } catch (err) {
+      setComponentsError(getErrorMessage(err));
     }
   }
 
@@ -200,7 +255,10 @@ export default function Employees() {
                 <td>{emp.departmentName}</td>
                 <td>{emp.positionName}</td>
                 <td>{emp.basicSalary.toLocaleString()}</td>
-                <td>
+                <td style={{ display: "flex", gap: 8 }}>
+                  <button className="btn btn-secondary btn-sm" onClick={() => openComponentsModal(emp)}>
+                    {t.hr.salaryComponentsButton}
+                  </button>
                   <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(emp.id)}>
                     {t.common.delete}
                   </button>
@@ -210,6 +268,66 @@ export default function Employees() {
           </tbody>
         </table>
       </div>
+
+      {componentsEmployee && (
+        <div className="modal-overlay" onClick={() => setComponentsEmployee(null)}>
+          <div className="card" style={{ maxWidth: 520, margin: "6% auto" }} onClick={(e) => e.stopPropagation()}>
+            <h3>{t.hr.assignToEmployee.replace("{name}", bilingualName(componentsEmployee.fullNameAr, componentsEmployee.fullNameEn, lang))}</h3>
+
+            {componentsError && <div className="alert-error">{componentsError}</div>}
+
+            {allComponents.length === 0 && <p className="text-muted">{t.hr.noComponentsYet}</p>}
+
+            {allComponents.length > 0 && (
+              <form onSubmit={handleAssignComponent} className="form-grid" style={{ marginBottom: 16 }}>
+                <div className="form-field">
+                  <label>{t.hr.salaryComponentsTitle}</label>
+                  <select value={newComponentId} onChange={(e) => setNewComponentId(e.target.value)} required>
+                    <option value="" disabled>-</option>
+                    {allComponents.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {bilingualName(c.nameAr, c.nameEn, lang)} ({c.componentType === SalaryComponentType.Allowance ? t.hr.allowanceType : t.hr.deductionType})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-field">
+                  <label>{t.hr.valueLabel}</label>
+                  <input type="number" step="0.01" value={newComponentValue} onChange={(e) => setNewComponentValue(e.target.value)} required />
+                </div>
+                <button className="btn" type="submit" style={{ alignSelf: "flex-end" }}>{t.hr.assign}</button>
+              </form>
+            )}
+
+            <div className="text-muted" style={{ marginBottom: 8 }}>{t.hr.currentlyAssigned}</div>
+            {assignedComponents.length === 0 && <p className="text-muted">{t.hr.noComponentsAssigned}</p>}
+            {assignedComponents.length > 0 && (
+              <table>
+                <tbody>
+                  {assignedComponents.map((ac) => (
+                    <tr key={ac.salaryComponentId}>
+                      <td>{bilingualName(ac.nameAr, ac.nameEn, lang)}</td>
+                      <td>{ac.componentType === SalaryComponentType.Allowance ? t.hr.allowanceType : t.hr.deductionType}</td>
+                      <td style={{ textAlign: "end" }}>
+                        {ac.value.toLocaleString()}{ac.calculationType === CalculationType.PercentageOfBasic ? "%" : ""}
+                      </td>
+                      <td>
+                        <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleRemoveComponent(ac.salaryComponentId)}>
+                          {t.common.delete}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            <button className="btn btn-secondary" type="button" style={{ marginTop: 14 }} onClick={() => setComponentsEmployee(null)}>
+              {t.common.cancel}
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -16,6 +16,17 @@ public class SalaryComponentDto
     public bool IsActive { get; set; }
 }
 
+public class EmployeeSalaryComponentDto
+{
+    public Guid SalaryComponentId { get; set; }
+    public string Code { get; set; } = string.Empty;
+    public string NameAr { get; set; } = string.Empty;
+    public string NameEn { get; set; } = string.Empty;
+    public SalaryComponentType ComponentType { get; set; }
+    public CalculationType CalculationType { get; set; }
+    public decimal Value { get; set; }
+}
+
 public class CreateSalaryComponentDto
 {
     public string Code { get; set; } = string.Empty;
