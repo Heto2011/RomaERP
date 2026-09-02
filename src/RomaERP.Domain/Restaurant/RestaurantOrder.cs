@@ -47,6 +47,11 @@ public class RestaurantOrder : AuditableEntity
     public RestaurantOrderStatus Status { get; set; } = RestaurantOrderStatus.Open;
     public string? Notes { get; set; }
 
+    /// <summary>A manual, cashier-entered discount off the whole order's total (in addition to any
+    /// per-line discounts) — distributed proportionally across lines when billed, since SalesInvoice
+    /// lines can't carry a negative amount.</summary>
+    public decimal DiscountAmount { get; set; }
+
     public Guid? SalesInvoiceId { get; set; }
     public SalesInvoice? SalesInvoice { get; set; }
 
@@ -74,6 +79,10 @@ public class RestaurantOrderLine : BaseEntity
     /// don't retroactively change an order already being built.</summary>
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+
+    /// <summary>A manual, cashier-entered discount off this line's total — clamped so it never exceeds
+    /// LineTotal.</summary>
+    public decimal DiscountAmount { get; set; }
 
     public string? Notes { get; set; }
 }

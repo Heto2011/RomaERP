@@ -97,6 +97,8 @@ import type {
   CreateRestaurantOrderInput,
   AddOrderLineInput,
   BillOrderInput,
+  SetLineDiscountInput,
+  SetOrderDiscountInput,
 } from "./types";
 
 export const AuthApi = {
@@ -406,6 +408,10 @@ export const RestaurantApi = {
   updateLineQuantity: (orderId: string, lineId: string, quantity: number) =>
     apiClient.put<RestaurantOrder>(`/restaurant/orders/${orderId}/lines/${lineId}`, { quantity }),
   removeLine: (orderId: string, lineId: string) => apiClient.delete<RestaurantOrder>(`/restaurant/orders/${orderId}/lines/${lineId}`),
+  setLineDiscount: (orderId: string, lineId: string, data: SetLineDiscountInput) =>
+    apiClient.put<RestaurantOrder>(`/restaurant/orders/${orderId}/lines/${lineId}/discount`, data),
+  setOrderDiscount: (orderId: string, data: SetOrderDiscountInput) =>
+    apiClient.put<RestaurantOrder>(`/restaurant/orders/${orderId}/discount`, data),
   cancelOrder: (orderId: string) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/cancel`),
   billOrder: (orderId: string, data: BillOrderInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/bill`, data),
 };

@@ -1309,6 +1309,7 @@ export interface RestaurantOrderLine {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  discountAmount: number;
   notes: string | null;
 }
 
@@ -1329,11 +1330,22 @@ export interface RestaurantOrder {
   notes: string | null;
   salesInvoiceId: string | null;
   salesInvoiceNumber: string | null;
+  discountAmount: number;
+  totalDiscount: number;
+  grossSubTotal: number;
   subTotal: number;
   vatRate: number;
   vatAmount: number;
   totalAmount: number;
   lines: RestaurantOrderLine[];
+}
+
+export interface SetLineDiscountInput {
+  discountAmount: number;
+}
+
+export interface SetOrderDiscountInput {
+  discountAmount: number;
 }
 
 export interface BillOrderInput {

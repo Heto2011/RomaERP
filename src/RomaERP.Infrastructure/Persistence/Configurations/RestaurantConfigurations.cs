@@ -25,6 +25,7 @@ public class RestaurantOrderConfiguration : IEntityTypeConfiguration<RestaurantO
         builder.Property(o => o.CustomerPhone).HasMaxLength(30);
         builder.Property(o => o.DeliveryAddress).HasMaxLength(500);
         builder.Property(o => o.Notes).HasMaxLength(1000);
+        builder.Property(o => o.DiscountAmount).HasPrecision(18, 2);
         builder.HasIndex(o => o.OrderNumber).IsUnique();
 
         builder.HasOne(o => o.Table)
@@ -68,6 +69,7 @@ public class RestaurantOrderLineConfiguration : IEntityTypeConfiguration<Restaur
         builder.Property(l => l.Quantity).HasPrecision(18, 4);
         builder.Property(l => l.UnitPrice).HasPrecision(18, 2);
         builder.Property(l => l.LineTotal).HasPrecision(18, 2);
+        builder.Property(l => l.DiscountAmount).HasPrecision(18, 2);
         builder.Property(l => l.Notes).HasMaxLength(500);
 
         builder.HasOne(l => l.Item)

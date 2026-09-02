@@ -180,6 +180,37 @@ export default function RestaurantPOS() {
     }
   }
 
+  async function handleLineDiscount(lineId: string) {
+    if (!selectedOrder) return;
+    const current = selectedOrder.lines.find((l) => l.id === lineId);
+    const input = window.prompt(t.restaurant.discountPrompt, String(current?.discountAmount ?? 0));
+    if (input === null) return;
+    const discountAmount = Number(input);
+    if (Number.isNaN(discountAmount) || discountAmount < 0) return;
+    setError(null);
+    try {
+      await RestaurantApi.setLineDiscount(selectedOrder.id, lineId, { discountAmount });
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleOrderDiscount() {
+    if (!selectedOrder) return;
+    const input = window.prompt(t.restaurant.orderDiscountPrompt, String(selectedOrder.discountAmount));
+    if (input === null) return;
+    const discountAmount = Number(input);
+    if (Number.isNaN(discountAmount) || discountAmount < 0) return;
+    setError(null);
+    try {
+      await RestaurantApi.setOrderDiscount(selectedOrder.id, { discountAmount });
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function handleCancelOrder() {
     if (!selectedOrder) return;
     setError(null);
@@ -423,7 +454,10 @@ export default function RestaurantPOS() {
                   <div key={line.id} className="pos-cart-line">
                     <div className="pos-cart-line-info">
                       <div className="pos-cart-line-name">{line.itemName}</div>
-                      <div className="text-muted">{line.unitPrice.toLocaleString()}</div>
+                      <div className="text-muted">
+                        {line.unitPrice.toLocaleString()}
+                        {line.discountAmount > 0 && ` — ${t.restaurant.discount} ${line.discountAmount.toLocaleString()}`}
+                      </div>
                     </div>
                     <div className="pos-cart-line-qty">
                       <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleLineQuantity(line.id, line.quantity - 1)}>-</button>
@@ -431,13 +465,27 @@ export default function RestaurantPOS() {
                       <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleLineQuantity(line.id, line.quantity + 1)}>+</button>
                     </div>
                     <div className="pos-cart-line-total">{line.lineTotal.toLocaleString()}</div>
+                    {selectedOrder.status === RestaurantOrderStatus.Open && (
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => handleLineDiscount(line.id)} title={t.restaurant.discount}>%</button>
+                    )}
                     <button type="button" className="pos-cart-line-remove" onClick={() => handleRemoveLine(line.id)} title={t.common.delete}>✕</button>
                   </div>
                 ))}
               </div>
 
               <div className="pos-cart-totals">
-                <div><span>{t.common.subtotal}</span><span>{selectedOrder.subTotal.toLocaleString()}</span></div>
+                <div><span>{t.common.subtotal}</span><span>{selectedOrder.grossSubTotal.toLocaleString()}</span></div>
+                <div>
+                  <span>
+                    {t.restaurant.discount}
+                    {selectedOrder.status === RestaurantOrderStatus.Open && (
+                      <button type="button" className="btn btn-secondary btn-sm" style={{ marginInlineStart: 8 }} onClick={handleOrderDiscount}>
+                        {t.common.edit}
+                      </button>
+                    )}
+                  </span>
+                  <span>{selectedOrder.totalDiscount.toLocaleString()}</span>
+                </div>
                 <div><span>{t.common.vat} ({(selectedOrder.vatRate * 100).toFixed(0)}%)</span><span>{selectedOrder.vatAmount.toLocaleString()}</span></div>
                 <div className="pos-cart-total-grand"><span>{t.common.total}</span><span>{selectedOrder.totalAmount.toLocaleString()}</span></div>
               </div>

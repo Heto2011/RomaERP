@@ -296,6 +296,42 @@ public class RestaurantService : IRestaurantService
         return await GetOrderAsync(orderId, ct);
     }
 
+    public async Task<RestaurantOrderDto> SetLineDiscountAsync(Guid orderId, Guid lineId, SetLineDiscountDto dto, CancellationToken ct = default)
+    {
+        if (dto.DiscountAmount < 0)
+            throw new ValidationAppException("قيمة الخصم لا يمكن أن تكون سالبة.");
+
+        var order = await LoadOrderAsync(orderId, ct);
+        EnsureOpen(order);
+
+        var line = order.Lines.FirstOrDefault(l => l.Id == lineId)
+            ?? throw new NotFoundException(nameof(RestaurantOrderLine), lineId);
+
+        if (dto.DiscountAmount > line.LineTotal)
+            throw new ValidationAppException("قيمة الخصم أكبر من إجمالي البند.");
+
+        line.DiscountAmount = dto.DiscountAmount;
+        await _context.SaveChangesAsync(ct);
+        return await GetOrderAsync(orderId, ct);
+    }
+
+    public async Task<RestaurantOrderDto> SetOrderDiscountAsync(Guid orderId, SetOrderDiscountDto dto, CancellationToken ct = default)
+    {
+        if (dto.DiscountAmount < 0)
+            throw new ValidationAppException("قيمة الخصم لا يمكن أن تكون سالبة.");
+
+        var order = await LoadOrderAsync(orderId, ct);
+        EnsureOpen(order);
+
+        var grossSubTotal = order.Lines.Sum(l => l.LineTotal - l.DiscountAmount);
+        if (dto.DiscountAmount > grossSubTotal)
+            throw new ValidationAppException("قيمة الخصم أكبر من إجمالي الطلب.");
+
+        order.DiscountAmount = dto.DiscountAmount;
+        await _context.SaveChangesAsync(ct);
+        return await GetOrderAsync(orderId, ct);
+    }
+
     public async Task<RestaurantOrderDto> CancelOrderAsync(Guid orderId, CancellationToken ct = default)
     {
         var order = await LoadOrderAsync(orderId, ct);
@@ -373,14 +409,27 @@ public class RestaurantService : IRestaurantService
             ? await GetOrCreatePlatformCustomerAsync(dto.DeliveryPlatformName!, ct)
             : await GetOrCreateWalkInCustomerAsync(ct);
 
-        var invoiceLines = order.Lines.Select(l => new SalesInvoiceLineInputDto
+        // Any order-level discount is spread proportionally across lines (by their own gross share) rather
+        // than carried as its own negative invoice line, since SalesInvoiceLineInputDto rejects a negative
+        // UnitPrice — every line's discounted price still ends up clamped to zero or above.
+        var grossOrderTotal = order.Lines.Sum(l => l.LineTotal);
+        var invoiceLines = order.Lines.Select(l =>
         {
-            Description = string.IsNullOrWhiteSpace(l.Notes) ? l.Item!.NameAr : $"{l.Item!.NameAr} ({l.Notes})",
-            Quantity = l.Quantity,
-            UnitPrice = l.UnitPrice,
-            // Recipe-based items go through as service lines (no ItemId) so ISalesService doesn't also try
-            // to decrement the finished-product Item itself — only its non-recipe raw materials, below.
-            ItemId = l.Item!.RecipeLines.Count > 0 ? null : l.ItemId
+            var orderDiscountShare = grossOrderTotal > 0
+                ? Math.Round(order.DiscountAmount * (l.LineTotal / grossOrderTotal), 2)
+                : 0;
+            var netLineTotal = Math.Max(0, l.LineTotal - l.DiscountAmount - orderDiscountShare);
+            var discountedUnitPrice = l.Quantity > 0 ? Math.Round(netLineTotal / l.Quantity, 2) : 0;
+
+            return new SalesInvoiceLineInputDto
+            {
+                Description = string.IsNullOrWhiteSpace(l.Notes) ? l.Item!.NameAr : $"{l.Item!.NameAr} ({l.Notes})",
+                Quantity = l.Quantity,
+                UnitPrice = discountedUnitPrice,
+                // Recipe-based items go through as service lines (no ItemId) so ISalesService doesn't also try
+                // to decrement the finished-product Item itself — only its non-recipe raw materials, below.
+                ItemId = l.Item!.RecipeLines.Count > 0 ? null : l.ItemId
+            };
         }).ToList();
 
         var orderLabel = order.OrderType switch
@@ -543,7 +592,10 @@ public class RestaurantService : IRestaurantService
 
     private static RestaurantOrderDto Map(RestaurantOrder o, decimal vatRate)
     {
-        var subTotal = o.Lines.Sum(l => l.LineTotal);
+        var grossSubTotal = o.Lines.Sum(l => l.LineTotal);
+        var lineDiscounts = o.Lines.Sum(l => l.DiscountAmount);
+        var totalDiscount = lineDiscounts + o.DiscountAmount;
+        var subTotal = Math.Max(0, grossSubTotal - totalDiscount);
         var vatAmount = Math.Round(subTotal * vatRate, 2);
 
         return new RestaurantOrderDto
@@ -564,6 +616,9 @@ public class RestaurantService : IRestaurantService
             Notes = o.Notes,
             SalesInvoiceId = o.SalesInvoiceId,
             SalesInvoiceNumber = o.SalesInvoice?.InvoiceNumber,
+            DiscountAmount = o.DiscountAmount,
+            TotalDiscount = totalDiscount,
+            GrossSubTotal = grossSubTotal,
             SubTotal = subTotal,
             VatRate = vatRate,
             VatAmount = vatAmount,
@@ -577,6 +632,7 @@ public class RestaurantService : IRestaurantService
                 Quantity = l.Quantity,
                 UnitPrice = l.UnitPrice,
                 LineTotal = l.LineTotal,
+                DiscountAmount = l.DiscountAmount,
                 Notes = l.Notes
             }).ToList()
         };

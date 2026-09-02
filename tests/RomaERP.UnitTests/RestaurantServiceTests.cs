@@ -199,6 +199,46 @@ public class RestaurantServiceTests
     }
 
     [Fact]
+    public async Task SetLineDiscount_ReducesOrderSubTotal_AndRejectsExcessiveAmount()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.Takeaway, WarehouseId = seed.Warehouse.Id });
+        var afterAdd = await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Water.Id, Quantity = 2 }); // LineTotal = 20
+        var lineId = afterAdd.Lines.Single().Id;
+
+        var discounted = await service.SetLineDiscountAsync(order.Id, lineId, new SetLineDiscountDto { DiscountAmount = 5 });
+        Assert.Equal(5, discounted.Lines.Single().DiscountAmount);
+        Assert.Equal(5, discounted.TotalDiscount);
+        Assert.Equal(15, discounted.SubTotal); // 20 - 5
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            service.SetLineDiscountAsync(order.Id, lineId, new SetLineDiscountDto { DiscountAmount = 25 }));
+    }
+
+    [Fact]
+    public async Task SetOrderDiscount_AppliedProportionallyAtBilling_ReducesInvoiceRevenue()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.Takeaway, WarehouseId = seed.Warehouse.Id });
+        await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Water.Id, Quantity = 2 }); // LineTotal = 20
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            service.SetOrderDiscountAsync(order.Id, new SetOrderDiscountDto { DiscountAmount = 100 }));
+
+        var discounted = await service.SetOrderDiscountAsync(order.Id, new SetOrderDiscountDto { DiscountAmount = 4 });
+        Assert.Equal(16, discounted.SubTotal); // 20 - 4
+
+        var billed = await service.BillOrderAsync(order.Id, new BillOrderDto { PaymentTerm = PaymentTerm.Cash, FiscalPeriodId = seed.Period.Id });
+
+        var invoice = await seed.Ctx.SalesInvoices.FirstAsync(i => i.Id == billed.SalesInvoiceId);
+        Assert.Equal(16, invoice.SubTotal); // one line: unit price drops from 10 to 8, so 8 * 2 = 16 exactly
+    }
+
+    [Fact]
     public async Task CancelOrder_FreesTableWithoutPostingAnything()
     {
         var seed = await SeedAsync();

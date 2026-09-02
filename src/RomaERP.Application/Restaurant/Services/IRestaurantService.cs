@@ -19,6 +19,8 @@ public interface IRestaurantService
     Task<RestaurantOrderDto> AddLineAsync(Guid orderId, AddOrderLineDto dto, CancellationToken ct = default);
     Task<RestaurantOrderDto> UpdateLineQuantityAsync(Guid orderId, Guid lineId, UpdateOrderLineQuantityDto dto, CancellationToken ct = default);
     Task<RestaurantOrderDto> RemoveLineAsync(Guid orderId, Guid lineId, CancellationToken ct = default);
+    Task<RestaurantOrderDto> SetLineDiscountAsync(Guid orderId, Guid lineId, SetLineDiscountDto dto, CancellationToken ct = default);
+    Task<RestaurantOrderDto> SetOrderDiscountAsync(Guid orderId, SetOrderDiscountDto dto, CancellationToken ct = default);
     Task<RestaurantOrderDto> CancelOrderAsync(Guid orderId, CancellationToken ct = default);
     Task<RestaurantOrderDto> BillOrderAsync(Guid orderId, BillOrderDto dto, CancellationToken ct = default);
 }

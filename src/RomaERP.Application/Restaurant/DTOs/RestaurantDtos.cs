@@ -78,6 +78,19 @@ public class UpdateOrderLineQuantityDto
     public decimal Quantity { get; set; }
 }
 
+/// <summary>A manual, cashier-entered discount off one order line — must not exceed that line's total.</summary>
+public class SetLineDiscountDto
+{
+    public decimal DiscountAmount { get; set; }
+}
+
+/// <summary>A manual, cashier-entered discount off the whole order's total, on top of any per-line
+/// discounts — must not exceed the order's gross subtotal.</summary>
+public class SetOrderDiscountDto
+{
+    public decimal DiscountAmount { get; set; }
+}
+
 public class RestaurantOrderLineDto
 {
     public Guid Id { get; set; }
@@ -87,6 +100,7 @@ public class RestaurantOrderLineDto
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+    public decimal DiscountAmount { get; set; }
     public string? Notes { get; set; }
 }
 
@@ -108,6 +122,11 @@ public class RestaurantOrderDto
     public string? Notes { get; set; }
     public Guid? SalesInvoiceId { get; set; }
     public string? SalesInvoiceNumber { get; set; }
+    public decimal DiscountAmount { get; set; }
+    /// <summary>Sum of every line's own discount plus the order-level discount — the total taken off
+    /// GrossSubTotal to reach SubTotal.</summary>
+    public decimal TotalDiscount { get; set; }
+    public decimal GrossSubTotal { get; set; }
     public decimal SubTotal { get; set; }
     public decimal VatRate { get; set; }
     public decimal VatAmount { get; set; }
