@@ -115,8 +115,10 @@ public class RestaurantOrderDto
     public List<RestaurantOrderLineDto> Lines { get; set; } = new();
 }
 
-/// <summary>Cash/Card only — a walk-in restaurant order never extends credit to the shared placeholder
-/// "walk-in customer" the way a real named B2B customer might.</summary>
+/// <summary>Cash/Card settle immediately against the shared walk-in customer. Credit is only valid for a
+/// Delivery order — the platform (HungerStation, Talabat, ...) collects from the diner and pays the
+/// restaurant later, so DeliveryPlatformName is required in that case and routes the invoice to that
+/// platform's own Customer record (tracked separately in AR) instead of the walk-in one.</summary>
 public class BillOrderDto
 {
     public PaymentTerm PaymentTerm { get; set; }
@@ -124,4 +126,7 @@ public class BillOrderDto
     /// <summary>The cashier's currently open CashierShift, if any — links this sale to that shift's
     /// cash-drawer reconciliation. Optional so billing still works with no shift open.</summary>
     public Guid? CashierShiftId { get; set; }
+    /// <summary>Required only when PaymentTerm is Credit — the delivery platform's name, used to find or
+    /// create its own Customer record so each platform's amount owed is tracked separately.</summary>
+    public string? DeliveryPlatformName { get; set; }
 }

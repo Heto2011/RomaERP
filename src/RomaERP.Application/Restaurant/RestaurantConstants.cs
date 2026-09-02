@@ -9,4 +9,8 @@ public static class RestaurantConstants
     public const string WalkInCustomerNameEn = "Restaurant Walk-in Customer";
 
     public const string RestaurantOrderReference = "RESTAURANT-ORDER";
+
+    /// <summary>Prefix for the auto-generated Customer.Code of each delivery platform's own AR record
+    /// (e.g. "DLV-PLATFORM-001"), so platform customers can be told apart from real named customers.</summary>
+    public const string DeliveryPlatformCustomerCodePrefix = "DLV-PLATFORM-";
 }

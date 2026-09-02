@@ -1340,6 +1340,7 @@ export interface BillOrderInput {
   paymentTerm: PaymentTerm;
   fiscalPeriodId: string;
   cashierShiftId?: string | null;
+  deliveryPlatformName?: string | null;
 }
 
 export interface CashierShift {

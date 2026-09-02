@@ -319,10 +319,19 @@ public class RestaurantService : IRestaurantService
     /// duplicating its revenue/tax logic.</summary>
     public async Task<RestaurantOrderDto> BillOrderAsync(Guid orderId, BillOrderDto dto, CancellationToken ct = default)
     {
-        if (dto.PaymentTerm != PaymentTerm.Cash && dto.PaymentTerm != PaymentTerm.Card)
-            throw new ValidationAppException("فواتير المطعم بتتحصل كاش أو شبكة بس.");
+        if (dto.PaymentTerm != PaymentTerm.Cash && dto.PaymentTerm != PaymentTerm.Card && dto.PaymentTerm != PaymentTerm.Credit)
+            throw new ValidationAppException("فواتير المطعم بتتحصل كاش أو شبكة أو آجل (لطلبات التوصيل بس).");
 
         var order = await LoadOrderAsync(orderId, ct);
+
+        if (dto.PaymentTerm == PaymentTerm.Credit)
+        {
+            if (order.OrderType != RestaurantOrderType.Delivery)
+                throw new ValidationAppException("التحصيل الآجل متاح بس لطلبات الدليفري.");
+            if (string.IsNullOrWhiteSpace(dto.DeliveryPlatformName))
+                throw new ValidationAppException("لازم تكتب اسم منصة التوصيل عشان تحصّل آجل.");
+        }
+
         EnsureOpen(order);
         if (order.Lines.Count == 0)
             throw new ValidationAppException("لازم يكون في بند واحد على الأقل في الطلب قبل التحصيل.");
@@ -360,7 +369,9 @@ public class RestaurantService : IRestaurantService
                 throw new ValidationAppException($"الكمية المطلوبة من مكوّن ({item.Code} - {item.NameAr}) أكبر من الرصيد المتاح ({item.QuantityOnHand}).");
         }
 
-        var customer = await GetOrCreateWalkInCustomerAsync(ct);
+        var customer = dto.PaymentTerm == PaymentTerm.Credit
+            ? await GetOrCreatePlatformCustomerAsync(dto.DeliveryPlatformName!, ct)
+            : await GetOrCreateWalkInCustomerAsync(ct);
 
         var invoiceLines = order.Lines.Select(l => new SalesInvoiceLineInputDto
         {
@@ -461,6 +472,34 @@ public class RestaurantService : IRestaurantService
             Code = RestaurantConstants.WalkInCustomerCode,
             NameAr = RestaurantConstants.WalkInCustomerNameAr,
             NameEn = RestaurantConstants.WalkInCustomerNameEn,
+            IsActive = true
+        };
+        _context.Customers.Add(customer);
+        await _context.SaveChangesAsync(ct);
+        return customer;
+    }
+
+    /// <summary>Finds or creates the Customer record a delivery platform (HungerStation, Talabat, ...) bills
+    /// under, matched by name (trimmed) among existing platform customers — each platform gets its own AR
+    /// balance instead of sharing the generic walk-in customer, so what each platform owes stays separate
+    /// and shows up on its own row in AR aging.</summary>
+    private async Task<Customer> GetOrCreatePlatformCustomerAsync(string platformName, CancellationToken ct)
+    {
+        var name = platformName.Trim();
+        var existing = await _context.Customers
+            .Where(c => c.Code.StartsWith(RestaurantConstants.DeliveryPlatformCustomerCodePrefix))
+            .FirstOrDefaultAsync(c => c.NameAr == name, ct);
+        if (existing is not null)
+            return existing;
+
+        var count = await _context.Customers
+            .CountAsync(c => c.Code.StartsWith(RestaurantConstants.DeliveryPlatformCustomerCodePrefix), ct);
+
+        var customer = new Customer
+        {
+            Code = $"{RestaurantConstants.DeliveryPlatformCustomerCodePrefix}{count + 1:D3}",
+            NameAr = name,
+            NameEn = name,
             IsActive = true
         };
         _context.Customers.Add(customer);

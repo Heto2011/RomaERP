@@ -53,6 +53,7 @@ export default function RestaurantPOS() {
   const [showBillDialog, setShowBillDialog] = useState(false);
   const [billPaymentTerm, setBillPaymentTerm] = useState<PaymentTerm>(PaymentTerm.Cash);
   const [billFiscalPeriodId, setBillFiscalPeriodId] = useState("");
+  const [billDeliveryPlatformName, setBillDeliveryPlatformName] = useState("");
 
   const selectedOrder = useMemo(() => orders.find((o) => o.id === selectedOrderId) ?? null, [orders, selectedOrderId]);
   const availableTables = tables.filter((tb) => tb.status === RestaurantTableStatus.Available);
@@ -194,6 +195,7 @@ export default function RestaurantPOS() {
   function openBillDialog() {
     setBillPaymentTerm(PaymentTerm.Cash);
     setBillFiscalPeriodId(periods.find((p) => !p.isClosed)?.id ?? "");
+    setBillDeliveryPlatformName("");
     setShowBillDialog(true);
   }
 
@@ -206,6 +208,7 @@ export default function RestaurantPOS() {
         paymentTerm: billPaymentTerm,
         fiscalPeriodId: billFiscalPeriodId,
         cashierShiftId: activeShift?.id ?? null,
+        deliveryPlatformName: billPaymentTerm === PaymentTerm.Credit ? billDeliveryPlatformName : null,
       });
       setShowBillDialog(false);
       if (res.data.salesInvoiceId) {
@@ -521,8 +524,22 @@ export default function RestaurantPOS() {
                 <select value={billPaymentTerm} onChange={(e) => setBillPaymentTerm(Number(e.target.value) as PaymentTerm)}>
                   <option value={PaymentTerm.Cash}>💵 {t.paymentTerm.cash}</option>
                   <option value={PaymentTerm.Card}>💳 {t.paymentTerm.card}</option>
+                  {selectedOrder.orderType === RestaurantOrderType.Delivery && (
+                    <option value={PaymentTerm.Credit}>🛵 {t.restaurant.deliveryPlatformCredit}</option>
+                  )}
                 </select>
               </div>
+              {billPaymentTerm === PaymentTerm.Credit && (
+                <div className="form-field">
+                  <label>{t.restaurant.deliveryPlatformName}</label>
+                  <input
+                    value={billDeliveryPlatformName}
+                    onChange={(e) => setBillDeliveryPlatformName(e.target.value)}
+                    placeholder={t.restaurant.deliveryPlatformNamePlaceholder}
+                    required
+                  />
+                </div>
+              )}
               <div className="form-field">
                 <label>{t.common.fiscalPeriod}</label>
                 <select value={billFiscalPeriodId} onChange={(e) => setBillFiscalPeriodId(e.target.value)} required>
