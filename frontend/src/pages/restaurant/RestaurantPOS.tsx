@@ -16,10 +16,12 @@ import {
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
+import { useAuth } from "../../context/AuthContext";
 import { IconGrid, IconBox, IconTruck } from "../../components/icons";
 
 export default function RestaurantPOS() {
   const { t, lang } = useLanguage();
+  const { logout } = useAuth();
   const navigate = useNavigate();
   const [orders, setOrders] = useState<RestaurantOrder[]>([]);
   const [tables, setTables] = useState<RestaurantTable[]>([]);
@@ -253,7 +255,14 @@ export default function RestaurantPOS() {
   const activeItems = menuByCategory.find(([cat]) => cat === activeCategory)?.[1] ?? [];
 
   const exitButton = (
-    <button type="button" className="btn btn-secondary" onClick={() => navigate("/")}>
+    <button
+      type="button"
+      className="btn btn-secondary"
+      onClick={() => {
+        logout();
+        navigate("/pos-login");
+      }}
+    >
       {t.restaurant.exitPos}
     </button>
   );
