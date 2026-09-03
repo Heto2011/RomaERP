@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.Inventory.DTOs;
 using RomaERP.Application.Inventory.Services;
@@ -6,7 +7,7 @@ using RomaERP.Application.Inventory.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant")]
+[Authorize(Policy = ModulePermissions.InventoryPolicy)]
 [Route("api/[controller]")]
 public class InventoryReportsController : ControllerBase
 {

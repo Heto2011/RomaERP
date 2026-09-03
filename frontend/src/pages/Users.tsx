@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { EmployeesApi, UsersApi } from "../api/services";
-import { AppRoles, type AppUser, type Employee } from "../api/types";
+import { AppRoles, ModulePermissions, type AppUser, type Employee } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 import { bilingualName } from "../i18n/bilingual";
@@ -19,6 +19,9 @@ export default function Users() {
 
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingRoles, setEditingRoles] = useState<string[]>([]);
+
+  const [editingModulesId, setEditingModulesId] = useState<string | null>(null);
+  const [editingModules, setEditingModules] = useState<string[]>([]);
 
   const [pinEditingId, setPinEditingId] = useState<string | null>(null);
   const [pinValue, setPinValue] = useState("");
@@ -63,6 +66,22 @@ export default function Users() {
     try {
       await UsersApi.updateRoles(id, editingRoles);
       setEditingId(null);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  function startEditModules(user: AppUser) {
+    setEditingModulesId(user.id);
+    setEditingModules(user.modules);
+  }
+
+  async function saveModules(id: string) {
+    setError(null);
+    try {
+      await UsersApi.updateModules(id, editingModules);
+      setEditingModulesId(null);
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -165,6 +184,7 @@ export default function Users() {
               <th>{t.users.fullName}</th>
               <th>{t.users.email}</th>
               <th>{t.users.roles}</th>
+              <th>{t.users.modules}</th>
               <th>{t.users.linkedEmployee}</th>
               <th>{t.users.posPin}</th>
               <th>{t.common.status}</th>
@@ -174,7 +194,7 @@ export default function Users() {
           <tbody>
             {users.length === 0 && (
               <tr>
-                <td colSpan={7} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
+                <td colSpan={8} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
                   {t.common.noData}
                 </td>
               </tr>
@@ -195,6 +215,26 @@ export default function Users() {
                     </div>
                   ) : (
                     u.roles.map((r) => t.roles[r as keyof typeof t.roles] ?? r).join("، ")
+                  )}
+                </td>
+                <td>
+                  {editingModulesId === u.id ? (
+                    <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                      {ModulePermissions.map((module) => (
+                        <label key={module} style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: "normal" }}>
+                          <input
+                            type="checkbox"
+                            checked={editingModules.includes(module)}
+                            onChange={() => setEditingModules((prev) => toggleRole(prev, module))}
+                          />
+                          {t.modules[module]}
+                        </label>
+                      ))}
+                    </div>
+                  ) : u.modules.length > 0 ? (
+                    u.modules.map((m) => t.modules[m as keyof typeof t.modules] ?? m).join("، ")
+                  ) : (
+                    <span className="text-muted">—</span>
                   )}
                 </td>
                 <td>
@@ -245,15 +285,21 @@ export default function Users() {
                     {u.isActive ? t.users.active : t.users.inactive}
                   </span>
                 </td>
-                <td style={{ display: "flex", gap: 6 }}>
+                <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {editingId === u.id ? (
                     <>
                       <button className="btn btn-sm" onClick={() => saveRoles(u.id)}>{t.users.saveRoles}</button>
                       <button className="btn btn-secondary btn-sm" onClick={() => setEditingId(null)}>{t.common.cancel}</button>
                     </>
+                  ) : editingModulesId === u.id ? (
+                    <>
+                      <button className="btn btn-sm" onClick={() => saveModules(u.id)}>{t.users.saveModules}</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => setEditingModulesId(null)}>{t.common.cancel}</button>
+                    </>
                   ) : (
                     <>
                       <button className="btn btn-secondary btn-sm" onClick={() => startEditRoles(u)}>{t.users.editRoles}</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => startEditModules(u)}>{t.users.editModules}</button>
                       <button className="btn btn-secondary btn-sm" onClick={() => toggleActive(u)}>
                         {u.isActive ? t.users.deactivate : t.users.activate}
                       </button>

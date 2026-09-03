@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.Purchasing.DTOs;
 using RomaERP.Application.Purchasing.Services;
@@ -6,7 +7,7 @@ using RomaERP.Application.Purchasing.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant")]
+[Authorize(Policy = ModulePermissions.PurchasingPolicy)]
 [Route("api/purchasing")]
 public class PurchasingController : ControllerBase
 {

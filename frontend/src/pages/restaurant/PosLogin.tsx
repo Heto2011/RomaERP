@@ -27,7 +27,7 @@ export default function PosLogin() {
     try {
       const res = await AuthApi.posPinLogin(companyCode.trim().toLowerCase(), fullPin);
       const { data } = res;
-      loginWithToken(companyCode.trim().toLowerCase(), data.token, data.email, data.fullName, data.roles);
+      loginWithToken(companyCode.trim().toLowerCase(), data.token, data.email, data.fullName, data.roles, data.modules);
       navigate("/restaurant/pos");
     } catch (err) {
       setError(getErrorMessage(err) || t.posLogin.wrongPin);

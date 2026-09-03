@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.Accounting.DTOs;
 using RomaERP.Application.Accounting.Services;
@@ -6,7 +7,7 @@ using RomaERP.Application.Accounting.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant")]
+[Authorize(Policy = ModulePermissions.AccountingPolicy)]
 [Route("api/[controller]")]
 public class OpeningBalanceController : ControllerBase
 {

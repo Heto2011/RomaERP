@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.API.Contracts;
 using RomaERP.Application.HR.DTOs;
@@ -7,7 +8,7 @@ using RomaERP.Application.HR.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,HR")]
+[Authorize(Policy = ModulePermissions.HRPolicy)]
 [Route("api/[controller]")]
 public class SalaryComponentsController : ControllerBase
 {
@@ -23,7 +24,7 @@ public class SalaryComponentsController : ControllerBase
         => Ok(await _salaryComponentService.GetAllAsync(ct));
 
     [HttpPost]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<SalaryComponentDto>> Create(CreateSalaryComponentDto dto, CancellationToken ct)
         => Ok(await _salaryComponentService.CreateAsync(dto, ct));
 
@@ -32,7 +33,7 @@ public class SalaryComponentsController : ControllerBase
         => Ok(await _salaryComponentService.GetForEmployeeAsync(employeeId, ct));
 
     [HttpPost("employees/{employeeId:guid}/assign")]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<IActionResult> AssignToEmployee(Guid employeeId, AssignSalaryComponentRequest request, CancellationToken ct)
     {
         await _salaryComponentService.AssignToEmployeeAsync(employeeId, request.SalaryComponentId, request.Value, ct);
@@ -40,7 +41,7 @@ public class SalaryComponentsController : ControllerBase
     }
 
     [HttpDelete("employees/{employeeId:guid}/{salaryComponentId:guid}")]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<IActionResult> RemoveFromEmployee(Guid employeeId, Guid salaryComponentId, CancellationToken ct)
     {
         await _salaryComponentService.RemoveFromEmployeeAsync(employeeId, salaryComponentId, ct);

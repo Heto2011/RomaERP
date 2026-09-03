@@ -103,13 +103,13 @@ import type {
 
 export const AuthApi = {
   login: (companyCode: string, email: string, password: string) =>
-    apiClient.post<{ token: string; email: string; fullName: string; roles: string[] }>(
+    apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[] }>(
       "/auth/login",
       { email, password },
       { headers: { "X-Company-Code": companyCode } }
     ),
   posPinLogin: (companyCode: string, pin: string) =>
-    apiClient.post<{ token: string; email: string; fullName: string; roles: string[] }>(
+    apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[] }>(
       "/auth/pos-pin-login",
       { pin },
       { headers: { "X-Company-Code": companyCode } }
@@ -426,6 +426,7 @@ export const UsersApi = {
   getAll: () => apiClient.get<AppUser[]>("/users"),
   create: (data: CreateUserInput) => apiClient.post<AppUser>("/users", data),
   updateRoles: (id: string, roles: string[]) => apiClient.put<AppUser>(`/users/${id}/roles`, { roles }),
+  updateModules: (id: string, modules: string[]) => apiClient.put<AppUser>(`/users/${id}/modules`, { modules }),
   deactivate: (id: string) => apiClient.post<AppUser>(`/users/${id}/deactivate`),
   activate: (id: string) => apiClient.post<AppUser>(`/users/${id}/activate`),
   linkEmployee: (id: string, employeeId: string | null) => apiClient.put<AppUser>(`/users/${id}/employee-link`, { employeeId }),

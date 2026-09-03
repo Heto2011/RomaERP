@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.Alerts.DTOs;
 using RomaERP.Application.Alerts.Services;
@@ -6,7 +7,7 @@ using RomaERP.Application.Alerts.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant")]
+[Authorize(Policy = ModulePermissions.ReportsPolicy)]
 [Route("api/[controller]")]
 public class AlertsController : ControllerBase
 {

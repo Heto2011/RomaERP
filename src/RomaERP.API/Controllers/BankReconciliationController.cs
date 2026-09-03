@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.Assistant.DTOs;
 using RomaERP.Application.Assistant.Services;
@@ -8,7 +9,7 @@ using RomaERP.Application.Common.Exceptions;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant")]
+[Authorize(Policy = ModulePermissions.AccountingPolicy)]
 [Route("api/[controller]")]
 public class BankReconciliationController : ControllerBase
 {

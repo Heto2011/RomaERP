@@ -8,6 +8,7 @@ using Microsoft.OpenApi.Models;
 using RomaERP.API.Middleware;
 using RomaERP.API.Services;
 using RomaERP.Application;
+using RomaERP.Application.Common;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Tenancy;
 using RomaERP.Infrastructure;
@@ -65,7 +66,21 @@ builder.Services.AddAuthentication(options =>
         };
     });
 
-builder.Services.AddAuthorization();
+builder.Services.AddAuthorization(options =>
+{
+    // A per-user "module" grant (see ModulePermissions) always passes for Admin and for that module's
+    // existing fallback role (Accountant/HR keep working exactly as before), and additionally passes for
+    // anyone individually granted that module's claim — letting an Admin hand one specific area to a
+    // user without making them a full Accountant/HR.
+    foreach (var module in ModulePermissions.All)
+    {
+        var fallbackRoles = ModulePermissions.FallbackRoles[module];
+        options.AddPolicy(ModulePermissions.PolicyName(module), policy => policy.RequireAssertion(ctx =>
+            ctx.User.IsInRole("Admin") ||
+            fallbackRoles.Any(ctx.User.IsInRole) ||
+            ctx.User.HasClaim(ModulePermissions.ClaimType, module)));
+    }
+});
 
 // Each self-service trial signup provisions a real, isolated database, so the public endpoint
 // gets a per-IP throttle to blunt casual abuse/bots — not a full defense, but a cheap first guard.

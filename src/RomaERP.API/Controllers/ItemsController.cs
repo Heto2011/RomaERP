@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.Inventory.DTOs;
 using RomaERP.Application.Inventory.Services;
@@ -6,7 +7,7 @@ using RomaERP.Application.Inventory.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant")]
+[Authorize(Policy = ModulePermissions.InventoryPolicy)]
 [Route("api/[controller]")]
 public class ItemsController : ControllerBase
 {
@@ -26,7 +27,7 @@ public class ItemsController : ControllerBase
         => Ok(await _itemService.GetByIdAsync(id, ct));
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Accountant")]
+    [Authorize(Policy = ModulePermissions.InventoryPolicy)]
     public async Task<ActionResult<ItemDto>> Create(CreateItemDto dto, CancellationToken ct)
     {
         var result = await _itemService.CreateAsync(dto, ct);
@@ -34,7 +35,7 @@ public class ItemsController : ControllerBase
     }
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin,Accountant")]
+    [Authorize(Policy = ModulePermissions.InventoryPolicy)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await _itemService.DeleteAsync(id, ct);

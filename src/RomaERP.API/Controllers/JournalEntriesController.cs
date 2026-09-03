@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.Accounting.DTOs;
 using RomaERP.Application.Accounting.Services;
@@ -6,7 +7,7 @@ using RomaERP.Application.Accounting.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant")]
+[Authorize(Policy = ModulePermissions.AccountingPolicy)]
 [Route("api/[controller]")]
 public class JournalEntriesController : ControllerBase
 {
@@ -30,7 +31,7 @@ public class JournalEntriesController : ControllerBase
         => Ok(await _journalEntryService.GetTrialBalanceAsync(asOfDate, ct));
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Accountant")]
+    [Authorize(Policy = ModulePermissions.AccountingPolicy)]
     public async Task<ActionResult<JournalEntryDto>> Create(CreateJournalEntryDto dto, CancellationToken ct)
     {
         var result = await _journalEntryService.CreateAsync(dto, ct);
@@ -38,12 +39,12 @@ public class JournalEntriesController : ControllerBase
     }
 
     [HttpPost("{id:guid}/post")]
-    [Authorize(Roles = "Admin,Accountant")]
+    [Authorize(Policy = ModulePermissions.AccountingPolicy)]
     public async Task<ActionResult<JournalEntryDto>> Post(Guid id, CancellationToken ct)
         => Ok(await _journalEntryService.PostAsync(id, ct));
 
     [HttpPost("{id:guid}/reverse")]
-    [Authorize(Roles = "Admin,Accountant")]
+    [Authorize(Policy = ModulePermissions.AccountingPolicy)]
     public async Task<ActionResult<JournalEntryDto>> Reverse(Guid id, CancellationToken ct)
         => Ok(await _journalEntryService.ReverseAsync(id, ct));
 }

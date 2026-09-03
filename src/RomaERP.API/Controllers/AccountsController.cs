@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.Accounting.DTOs;
 using RomaERP.Application.Accounting.Services;
@@ -6,7 +7,7 @@ using RomaERP.Application.Accounting.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant")]
+[Authorize(Policy = ModulePermissions.AccountingPolicy)]
 [Route("api/[controller]")]
 public class AccountsController : ControllerBase
 {
@@ -30,7 +31,7 @@ public class AccountsController : ControllerBase
         => Ok(await _accountService.GetByIdAsync(id, ct));
 
     [HttpPost]
-    [Authorize(Roles = "Admin,Accountant")]
+    [Authorize(Policy = ModulePermissions.AccountingPolicy)]
     public async Task<ActionResult<AccountDto>> Create(CreateAccountDto dto, CancellationToken ct)
     {
         var result = await _accountService.CreateAsync(dto, ct);
@@ -38,12 +39,12 @@ public class AccountsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin,Accountant")]
+    [Authorize(Policy = ModulePermissions.AccountingPolicy)]
     public async Task<ActionResult<AccountDto>> Update(Guid id, UpdateAccountDto dto, CancellationToken ct)
         => Ok(await _accountService.UpdateAsync(id, dto, ct));
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin,Accountant")]
+    [Authorize(Policy = ModulePermissions.AccountingPolicy)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await _accountService.DeleteAsync(id, ct);

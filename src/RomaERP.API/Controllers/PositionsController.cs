@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.HR.DTOs;
 using RomaERP.Application.HR.Services;
@@ -22,17 +23,17 @@ public class PositionsController : ControllerBase
         => Ok(await _positionService.GetAllAsync(ct));
 
     [HttpPost]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<PositionDto>> Create(CreatePositionDto dto, CancellationToken ct)
         => Ok(await _positionService.CreateAsync(dto, ct));
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<PositionDto>> Update(Guid id, CreatePositionDto dto, CancellationToken ct)
         => Ok(await _positionService.UpdateAsync(id, dto, ct));
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await _positionService.DeleteAsync(id, ct);

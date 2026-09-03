@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
@@ -22,7 +23,7 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpGet]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<List<EmployeeDto>>> GetAll(CancellationToken ct)
         => Ok(await _employeeService.GetAllAsync(ct));
 
@@ -39,12 +40,12 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpGet("{id:guid}")]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<EmployeeDto>> GetById(Guid id, CancellationToken ct)
         => Ok(await _employeeService.GetByIdAsync(id, ct));
 
     [HttpPost]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<EmployeeDto>> Create(CreateEmployeeDto dto, CancellationToken ct)
     {
         var result = await _employeeService.CreateAsync(dto, ct);
@@ -52,12 +53,12 @@ public class EmployeesController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<EmployeeDto>> Update(Guid id, UpdateEmployeeDto dto, CancellationToken ct)
         => Ok(await _employeeService.UpdateAsync(id, dto, ct));
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await _employeeService.DeleteAsync(id, ct);

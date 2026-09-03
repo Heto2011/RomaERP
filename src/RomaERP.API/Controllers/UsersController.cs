@@ -1,8 +1,10 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.API.Contracts;
+using RomaERP.Application.Common;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.HR.Services;
 using RomaERP.Infrastructure.Identity;
@@ -45,8 +47,9 @@ public class UsersController : ControllerBase
         foreach (var user in users)
         {
             var roles = await _userManager.GetRolesAsync(user);
+            var modules = await GetModulesAsync(user);
             var linkedEmployee = employeeByUserId.GetValueOrDefault(user.Id);
-            result.Add(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+            result.Add(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
         }
 
         return Ok(result);
@@ -64,8 +67,9 @@ public class UsersController : ControllerBase
             await _employeeService.LinkUserAsync(currentlyLinked.Id, null, ct);
 
         var roles = await _userManager.GetRolesAsync(user);
+        var modules = await GetModulesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
     }
 
     [HttpPost]
@@ -99,7 +103,7 @@ public class UsersController : ControllerBase
 
         await _userManager.AddToRolesAsync(user, request.Roles);
 
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, null, null, false));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, Array.Empty<string>(), null, null, false));
     }
 
     [HttpPut("{id:guid}/roles")]
@@ -122,8 +126,34 @@ public class UsersController : ControllerBase
         await _userManager.RemoveFromRolesAsync(user, currentRoles);
         await _userManager.AddToRolesAsync(user, request.Roles);
 
+        var modules = await GetModulesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+    }
+
+    [HttpPut("{id:guid}/modules")]
+    public async Task<ActionResult<UserDto>> UpdateModules(Guid id, UpdateUserModulesRequest request, CancellationToken ct)
+    {
+        var unknownModule = request.Modules.FirstOrDefault(m => !ModulePermissions.All.Contains(m));
+        if (unknownModule is not null)
+            return BadRequest(new { error = $"وحدة صلاحيات غير معروفة: {unknownModule}" });
+
+        var user = await _userManager.FindByIdAsync(id.ToString())
+            ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+
+        var existingClaims = (await _userManager.GetClaimsAsync(user))
+            .Where(c => c.Type == ModulePermissions.ClaimType)
+            .ToList();
+        if (existingClaims.Count > 0)
+            await _userManager.RemoveClaimsAsync(user, existingClaims);
+
+        var newModules = request.Modules.Distinct().ToList();
+        if (newModules.Count > 0)
+            await _userManager.AddClaimsAsync(user, newModules.Select(m => new Claim(ModulePermissions.ClaimType, m)));
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), newModules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
     }
 
     [HttpPost("{id:guid}/deactivate")]
@@ -139,8 +169,9 @@ public class UsersController : ControllerBase
         await _userManager.UpdateAsync(user);
 
         var roles = await _userManager.GetRolesAsync(user);
+        var modules = await GetModulesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
     }
 
     [HttpPost("{id:guid}/activate")]
@@ -153,8 +184,9 @@ public class UsersController : ControllerBase
         await _userManager.UpdateAsync(user);
 
         var roles = await _userManager.GetRolesAsync(user);
+        var modules = await GetModulesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
     }
 
     [HttpPut("{id:guid}/pos-pin")]
@@ -184,13 +216,20 @@ public class UsersController : ControllerBase
         await _userManager.UpdateAsync(user);
 
         var roles = await _userManager.GetRolesAsync(user);
+        var modules = await GetModulesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
     }
 
     private async Task<Application.HR.DTOs.EmployeeDto?> GetLinkedEmployeeAsync(Guid userId, CancellationToken ct)
     {
         var employees = await _employeeService.GetAllAsync(ct);
         return employees.FirstOrDefault(e => e.ApplicationUserId == userId);
+    }
+
+    private async Task<List<string>> GetModulesAsync(ApplicationUser user)
+    {
+        var claims = await _userManager.GetClaimsAsync(user);
+        return claims.Where(c => c.Type == ModulePermissions.ClaimType).Select(c => c.Value).ToList();
     }
 }

@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.API.Contracts;
+using RomaERP.Application.Common;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Infrastructure.Identity;
 
@@ -44,9 +45,10 @@ public class AuthController : ControllerBase
             return Unauthorized(new { error = "بيانات الدخول غير صحيحة." });
 
         var roles = await _userManager.GetRolesAsync(user);
-        var token = _tokenService.GenerateToken(user.Id, user.UserName!, user.Email!, _tenantContext.CompanyCode, roles);
+        var modules = await GetModulesAsync(user);
+        var token = _tokenService.GenerateToken(user.Id, user.UserName!, user.Email!, _tenantContext.CompanyCode, roles, modules);
 
-        return Ok(new AuthResponse(token, user.Email!, user.FullName, roles));
+        return Ok(new AuthResponse(token, user.Email!, user.FullName, roles, modules));
     }
 
     /// <summary>Quick POS entry with a short PIN an Admin set for this user, instead of full email/password —
@@ -68,11 +70,18 @@ public class AuthController : ControllerBase
             if (_passwordHasher.VerifyHashedPassword(user, user.PosPinHash!, request.Pin) == PasswordVerificationResult.Success)
             {
                 var roles = await _userManager.GetRolesAsync(user);
-                var token = _tokenService.GenerateToken(user.Id, user.UserName!, user.Email!, _tenantContext.CompanyCode, roles);
-                return Ok(new AuthResponse(token, user.Email!, user.FullName, roles));
+                var modules = await GetModulesAsync(user);
+                var token = _tokenService.GenerateToken(user.Id, user.UserName!, user.Email!, _tenantContext.CompanyCode, roles, modules);
+                return Ok(new AuthResponse(token, user.Email!, user.FullName, roles, modules));
             }
         }
 
         return Unauthorized(new { error = "الرقم السري غير صحيح." });
+    }
+
+    private async Task<List<string>> GetModulesAsync(ApplicationUser user)
+    {
+        var claims = await _userManager.GetClaimsAsync(user);
+        return claims.Where(c => c.Type == ModulePermissions.ClaimType).Select(c => c.Value).ToList();
     }
 }

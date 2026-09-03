@@ -279,7 +279,24 @@ export default function Layout({ children }: { children: ReactNode }) {
       : []),
   ];
 
-  const links = isCashierOnly ? cashierLinks : fullLinks;
+  // Each of these sections requires either the base role that's always had it, or the matching
+  // per-user "module" grant (see ModulePermissions on the backend) — Admin always sees everything.
+  const isAdmin = user?.roles.includes("Admin") ?? false;
+  const sectionAccess: Record<string, { module: string; fallbackRoles: string[] }> = {
+    [t.nav.accounting]: { module: "Accounting", fallbackRoles: ["Accountant"] },
+    [t.nav.reports]: { module: "Reports", fallbackRoles: ["Accountant"] },
+    [t.nav.sales]: { module: "Sales", fallbackRoles: ["Accountant"] },
+    [t.nav.purchasing]: { module: "Purchasing", fallbackRoles: ["Accountant"] },
+    [t.nav.hr]: { module: "HR", fallbackRoles: ["HR"] },
+    [t.nav.inventory]: { module: "Inventory", fallbackRoles: ["Accountant"] },
+  };
+  function canSeeSection(section: string) {
+    const access = sectionAccess[section];
+    if (!access) return true;
+    return isAdmin || access.fallbackRoles.some((r) => user?.roles.includes(r)) || (user?.modules.includes(access.module) ?? false);
+  }
+
+  const links = (isCashierOnly ? cashierLinks : fullLinks).filter((group) => canSeeSection(group.section));
 
   useEffect(() => {
     let activeSection: string | null = null;

@@ -1135,12 +1135,18 @@ export interface VendorAging {
 export const AppRoles = ["Admin", "Accountant", "HR", "Employee"] as const;
 export type AppRole = (typeof AppRoles)[number];
 
+// A per-user module grant, on top of their role — see ModulePermissions on the backend. Lets an Admin
+// hand one specific area (e.g. just Sales) to a user without making them a full Accountant/HR.
+export const ModulePermissions = ["Accounting", "Reports", "Sales", "Purchasing", "HR", "Inventory"] as const;
+export type ModulePermission = (typeof ModulePermissions)[number];
+
 export interface AppUser {
   id: string;
   email: string;
   fullName: string;
   isActive: boolean;
   roles: string[];
+  modules: string[];
   employeeId: string | null;
   employeeName: string | null;
   hasPosPin: boolean;
@@ -1151,6 +1157,10 @@ export interface CreateUserInput {
   password: string;
   fullName: string;
   roles: string[];
+}
+
+export interface UpdateUserModulesInput {
+  modules: string[];
 }
 
 export enum EInvoicingProvider {

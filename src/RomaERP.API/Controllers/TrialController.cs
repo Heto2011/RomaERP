@@ -91,7 +91,7 @@ public class TrialController : ControllerBase
         }
 
         var roles = await userManager.GetRolesAsync(user);
-        var token = _tokenService.GenerateToken(user.Id, user.UserName!, user.Email!, tenant.CompanyCode, roles);
+        var token = _tokenService.GenerateToken(user.Id, user.UserName!, user.Email!, tenant.CompanyCode, roles, Array.Empty<string>());
 
         return Ok(new TrialSignupResponse(token, tenant.CompanyCode, user.Email!, user.FullName, roles.ToList(), tenant.ExpiresAtUtc));
     }

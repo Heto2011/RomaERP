@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.HR.DTOs;
 using RomaERP.Application.HR.Services;
@@ -26,7 +27,7 @@ public class DepartmentsController : ControllerBase
         => Ok(await _departmentService.GetByIdAsync(id, ct));
 
     [HttpPost]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<DepartmentDto>> Create(CreateDepartmentDto dto, CancellationToken ct)
     {
         var result = await _departmentService.CreateAsync(dto, ct);
@@ -34,12 +35,12 @@ public class DepartmentsController : ControllerBase
     }
 
     [HttpPut("{id:guid}")]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<DepartmentDto>> Update(Guid id, CreateDepartmentDto dto, CancellationToken ct)
         => Ok(await _departmentService.UpdateAsync(id, dto, ct));
 
     [HttpDelete("{id:guid}")]
-    [Authorize(Roles = "Admin,HR")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
         await _departmentService.DeleteAsync(id, ct);

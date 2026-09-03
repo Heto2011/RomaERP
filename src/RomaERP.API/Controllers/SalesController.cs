@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.EInvoicing.DTOs;
 using RomaERP.Application.EInvoicing.Services;
@@ -8,7 +9,7 @@ using RomaERP.Application.Sales.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant")]
+[Authorize(Policy = ModulePermissions.SalesPolicy)]
 [Route("api/sales")]
 public class SalesController : ControllerBase
 {
