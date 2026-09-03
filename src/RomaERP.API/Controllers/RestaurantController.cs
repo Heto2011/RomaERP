@@ -7,7 +7,7 @@ using RomaERP.Domain.Restaurant;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant")]
+[Authorize(Roles = "Admin,Accountant,Employee")]
 [Route("api/restaurant")]
 public class RestaurantController : ControllerBase
 {
@@ -41,6 +41,7 @@ public class RestaurantController : ControllerBase
         => Ok(await _restaurantService.GetRecipeAsync(itemId, ct));
 
     [HttpPut("menu/{itemId:guid}")]
+    [Authorize(Roles = "Admin,Accountant")]
     public async Task<IActionResult> SetMenuItem(Guid itemId, SetMenuItemDto dto, CancellationToken ct)
     {
         await _restaurantService.SetMenuItemAsync(itemId, dto, ct);

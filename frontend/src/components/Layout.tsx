@@ -149,7 +149,23 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: "/inventory/reports/movement-analysis#excess", label: t.inventory.navExcessStock },
   ];
 
-  const links: { section: string; items: NavItem[] }[] = [
+  // A user whose only role is Employee is a cashier — the sidebar collapses to just what a cashier
+  // needs, so they never see accounting/HR/purchasing data even if they bypass the standalone POS
+  // login and land in the regular app shell.
+  const isCashierOnly = user?.roles.length === 1 && user.roles[0] === "Employee";
+
+  const cashierLinks: { section: string; items: NavItem[] }[] = [
+    {
+      section: t.nav.general,
+      items: [{ to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> }],
+    },
+    {
+      section: t.nav.restaurant,
+      items: [{ to: "/restaurant/pos", label: t.nav.restaurantPos, icon: <IconCart /> }],
+    },
+  ];
+
+  const fullLinks: { section: string; items: NavItem[] }[] = [
     {
       section: t.nav.general,
       items: [
@@ -262,6 +278,8 @@ export default function Layout({ children }: { children: ReactNode }) {
         ]
       : []),
   ];
+
+  const links = isCashierOnly ? cashierLinks : fullLinks;
 
   useEffect(() => {
     let activeSection: string | null = null;

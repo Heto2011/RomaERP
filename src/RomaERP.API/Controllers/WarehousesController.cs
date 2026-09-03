@@ -6,7 +6,7 @@ using RomaERP.Application.Inventory.Services;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant")]
+[Authorize(Roles = "Admin,Accountant,Employee")]
 [Route("api/[controller]")]
 public class WarehousesController : ControllerBase
 {

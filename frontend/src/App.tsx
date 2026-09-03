@@ -76,6 +76,15 @@ function ProtectedRoute({ children, layout = true, loginPath = "/login" }: { chi
   return layout ? <Layout>{children}</Layout> : <>{children}</>;
 }
 
+// A user whose only role is Employee is a cashier — send them straight to the POS screen instead of
+// the general dashboard, matching the restricted sidebar Layout shows them.
+function HomeRoute() {
+  const { user } = useAuth();
+  const isCashierOnly = user?.roles.length === 1 && user.roles[0] === "Employee";
+  if (isCashierOnly) return <Navigate to="/restaurant/pos" replace />;
+  return <Dashboard />;
+}
+
 export default function App() {
   return (
     <Routes>
@@ -83,7 +92,7 @@ export default function App() {
       <Route path="/start-trial" element={<StartTrial />} />
       <Route path="/pos-login" element={<PosLogin />} />
       <Route path="/system/demo-tenants" element={<DemoTenantsPage />} />
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+      <Route path="/" element={<ProtectedRoute><HomeRoute /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/my-profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
       <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />

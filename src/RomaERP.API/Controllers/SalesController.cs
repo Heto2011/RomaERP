@@ -38,6 +38,7 @@ public class SalesController : ControllerBase
         => Ok(await _salesService.GetInvoiceAsync(id, ct));
 
     [HttpGet("invoices/{id:guid}/pdf")]
+    [Authorize(Roles = "Admin,Accountant,Employee")]
     public async Task<IActionResult> GetInvoicePdf(Guid id, CancellationToken ct)
     {
         var pdfBytes = await _salesService.GetInvoicePdfAsync(id, ct);
