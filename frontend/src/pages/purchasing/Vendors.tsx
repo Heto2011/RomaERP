@@ -1,13 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { PurchasingApi } from "../../api/services";
 import type { Vendor } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import QuickAddBulk from "../../components/QuickAddBulk";
+import { makeSequentialCodeGenerator } from "../../utils/sequentialCode";
 
 export default function Vendors() {
   const { t } = useLanguage();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const codeGenRef = useRef<() => string>(() => "");
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [nameAr, setNameAr] = useState("");
@@ -47,10 +51,33 @@ export default function Vendors() {
     <div>
       <div className="page-header">
         <h1>{t.purchasing.vendorsTitle}</h1>
-        <button className="btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? t.common.cancel : t.purchasing.newVendor}
-        </button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => {
+              codeGenRef.current = makeSequentialCodeGenerator(vendors.map((v) => v.code), "VEND");
+              setShowQuickAdd(true);
+            }}
+          >
+            {t.common.quickAdd}
+          </button>
+          <button className="btn" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? t.common.cancel : t.purchasing.newVendor}
+          </button>
+        </div>
       </div>
+
+      <QuickAddBulk
+        open={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        title={t.purchasing.quickAddVendorsTitle}
+        hint={t.purchasing.quickAddVendorsHint}
+        placeholder={t.purchasing.quickAddVendorsPlaceholder}
+        onCreateOne={async (name) => {
+          await PurchasingApi.createVendor({ code: codeGenRef.current(), nameAr: name, nameEn: name, phone: null, email: null, taxRegistrationNumber: null });
+        }}
+        onFinished={load}
+      />
 
       {error && <div className="alert-error">{error}</div>}
 

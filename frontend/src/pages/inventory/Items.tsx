@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ItemCategoriesApi, ItemsApi } from "../../api/services";
 import type { Item, ItemCategory } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
+import QuickAddBulk from "../../components/QuickAddBulk";
+import { makeSequentialCodeGenerator } from "../../utils/sequentialCode";
 
 export default function Items() {
   const { t, lang } = useLanguage();
@@ -11,6 +13,10 @@ export default function Items() {
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [quickAddCategoryId, setQuickAddCategoryId] = useState("");
+  const [quickAddUnit, setQuickAddUnit] = useState("");
+  const codeGenRef = useRef<() => string>(() => "");
   const [error, setError] = useState<string | null>(null);
 
   const [code, setCode] = useState("");
@@ -97,6 +103,17 @@ export default function Items() {
           <button className="btn btn-secondary" onClick={() => setShowCategoryForm((v) => !v)}>
             {showCategoryForm ? t.common.cancel : t.inventory.newCategory}
           </button>
+          <button
+            className="btn btn-secondary"
+            onClick={() => {
+              codeGenRef.current = makeSequentialCodeGenerator(items.map((i) => i.code), "ITM");
+              setQuickAddCategoryId("");
+              setQuickAddUnit("");
+              setShowQuickAdd(true);
+            }}
+          >
+            {t.common.quickAdd}
+          </button>
           <button className="btn" onClick={() => setShowForm((v) => !v)}>
             {showForm ? t.common.cancel : t.inventory.newItem}
           </button>
@@ -104,6 +121,45 @@ export default function Items() {
       </div>
 
       {error && <div className="alert-error">{error}</div>}
+
+      <QuickAddBulk
+        open={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        title={t.inventory.quickAddItemsTitle}
+        hint={t.inventory.quickAddItemsHint}
+        placeholder={t.inventory.quickAddItemsPlaceholder}
+        disabled={!quickAddCategoryId || !quickAddUnit.trim()}
+        extraFields={
+          <div className="form-grid" style={{ marginTop: 10 }}>
+            <div className="form-field">
+              <label>{t.inventory.category}</label>
+              <select value={quickAddCategoryId} onChange={(e) => setQuickAddCategoryId(e.target.value)}>
+                <option value="">{t.inventory.selectCategory}</option>
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.code} - {bilingualName(c.nameAr, c.nameEn, lang)}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="form-field">
+              <label>{t.inventory.unitOfMeasure}</label>
+              <input value={quickAddUnit} onChange={(e) => setQuickAddUnit(e.target.value)} placeholder={t.inventory.unitOfMeasurePlaceholder} />
+            </div>
+          </div>
+        }
+        onCreateOne={async (name) => {
+          await ItemsApi.create({
+            code: codeGenRef.current(),
+            nameAr: name,
+            nameEn: name,
+            unitOfMeasure: quickAddUnit,
+            itemCategoryId: quickAddCategoryId,
+            reorderLevel: 0,
+          });
+        }}
+        onFinished={load}
+      />
 
       {showCategoryForm && (
         <div className="card">

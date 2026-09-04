@@ -1,13 +1,17 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SalesApi } from "../../api/services";
 import type { Customer } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import QuickAddBulk from "../../components/QuickAddBulk";
+import { makeSequentialCodeGenerator } from "../../utils/sequentialCode";
 
 export default function Customers() {
   const { t } = useLanguage();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const codeGenRef = useRef<() => string>(() => "");
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [nameAr, setNameAr] = useState("");
@@ -47,10 +51,33 @@ export default function Customers() {
     <div>
       <div className="page-header">
         <h1>{t.sales.customersTitle}</h1>
-        <button className="btn" onClick={() => setShowForm((v) => !v)}>
-          {showForm ? t.common.cancel : t.sales.newCustomer}
-        </button>
+        <div style={{ display: "flex", gap: 10 }}>
+          <button
+            className="btn btn-secondary"
+            onClick={() => {
+              codeGenRef.current = makeSequentialCodeGenerator(customers.map((c) => c.code), "CUST");
+              setShowQuickAdd(true);
+            }}
+          >
+            {t.common.quickAdd}
+          </button>
+          <button className="btn" onClick={() => setShowForm((v) => !v)}>
+            {showForm ? t.common.cancel : t.sales.newCustomer}
+          </button>
+        </div>
       </div>
+
+      <QuickAddBulk
+        open={showQuickAdd}
+        onClose={() => setShowQuickAdd(false)}
+        title={t.sales.quickAddCustomersTitle}
+        hint={t.sales.quickAddCustomersHint}
+        placeholder={t.sales.quickAddCustomersPlaceholder}
+        onCreateOne={async (name) => {
+          await SalesApi.createCustomer({ code: codeGenRef.current(), nameAr: name, nameEn: name, phone: null, email: null, taxRegistrationNumber: null });
+        }}
+        onFinished={load}
+      />
 
       {error && <div className="alert-error">{error}</div>}
 
