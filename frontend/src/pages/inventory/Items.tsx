@@ -126,7 +126,17 @@ export default function Items() {
           >
             {t.common.quickAdd}
           </button>
-          <button className="btn" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
+          <button
+            className="btn"
+            onClick={() => {
+              if (showForm) {
+                resetForm();
+                return;
+              }
+              setCode(makeSequentialCodeGenerator(items.map((i) => i.code))());
+              setShowForm(true);
+            }}
+          >
             {showForm ? t.common.cancel : t.inventory.newItem}
           </button>
         </div>
@@ -203,7 +213,7 @@ export default function Items() {
             <div className="form-grid">
               <div className="form-field">
                 <label>{t.inventory.itemCode}</label>
-                <input value={code} onChange={(e) => setCode(e.target.value)} required disabled={!!editingId} />
+                <input value={code} required disabled />
               </div>
               <div className="form-field">
                 <label>{t.common.nameAr}</label>
