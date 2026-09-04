@@ -34,6 +34,11 @@ public class ItemsController : ControllerBase
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }
 
+    [HttpPut("{id:guid}")]
+    [Authorize(Policy = ModulePermissions.InventoryPolicy)]
+    public async Task<ActionResult<ItemDto>> Update(Guid id, UpdateItemDto dto, CancellationToken ct)
+        => Ok(await _itemService.UpdateAsync(id, dto, ct));
+
     [HttpDelete("{id:guid}")]
     [Authorize(Policy = ModulePermissions.InventoryPolicy)]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)

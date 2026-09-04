@@ -159,6 +159,25 @@ public class ItemService : IItemService
         return await GetByIdAsync(item.Id, ct);
     }
 
+    public async Task<ItemDto> UpdateAsync(Guid id, UpdateItemDto dto, CancellationToken ct = default)
+    {
+        var item = await _context.Items.FirstOrDefaultAsync(i => i.Id == id && !i.IsDeleted, ct)
+            ?? throw new NotFoundException(nameof(Item), id);
+
+        var categoryExists = await _context.ItemCategories.AnyAsync(c => c.Id == dto.ItemCategoryId && !c.IsDeleted, ct);
+        if (!categoryExists)
+            throw new NotFoundException(nameof(ItemCategory), dto.ItemCategoryId);
+
+        item.NameAr = dto.NameAr.Trim();
+        item.NameEn = dto.NameEn.Trim();
+        item.UnitOfMeasure = dto.UnitOfMeasure.Trim();
+        item.ItemCategoryId = dto.ItemCategoryId;
+        item.ReorderLevel = dto.ReorderLevel;
+
+        await _context.SaveChangesAsync(ct);
+        return await GetByIdAsync(item.Id, ct);
+    }
+
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
     {
         var item = await _context.Items.FirstOrDefaultAsync(i => i.Id == id, ct)

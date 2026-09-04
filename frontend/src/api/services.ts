@@ -339,6 +339,7 @@ export const WarehousesApi = {
 export const ItemsApi = {
   getAll: () => apiClient.get<Item[]>("/items"),
   create: (data: Partial<Item>) => apiClient.post<Item>("/items", data),
+  update: (id: string, data: Partial<Item>) => apiClient.put<Item>(`/items/${id}`, data),
   remove: (id: string) => apiClient.delete(`/items/${id}`),
 };
 

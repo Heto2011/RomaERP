@@ -58,3 +58,13 @@ public class CreateItemDto
     public Guid ItemCategoryId { get; set; }
     public decimal ReorderLevel { get; set; }
 }
+
+/// <summary>Code is intentionally excluded — it's referenced by existing stock movements/invoices, so it stays stable after creation.</summary>
+public class UpdateItemDto
+{
+    public string NameAr { get; set; } = string.Empty;
+    public string NameEn { get; set; } = string.Empty;
+    public string UnitOfMeasure { get; set; } = string.Empty;
+    public Guid ItemCategoryId { get; set; }
+    public decimal ReorderLevel { get; set; }
+}

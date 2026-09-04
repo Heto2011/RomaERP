@@ -21,5 +21,6 @@ public interface IItemService
     Task<List<ItemDto>> GetAllAsync(CancellationToken ct = default);
     Task<ItemDto> GetByIdAsync(Guid id, CancellationToken ct = default);
     Task<ItemDto> CreateAsync(CreateItemDto dto, CancellationToken ct = default);
+    Task<ItemDto> UpdateAsync(Guid id, UpdateItemDto dto, CancellationToken ct = default);
     Task DeleteAsync(Guid id, CancellationToken ct = default);
 }

@@ -12,6 +12,7 @@ export default function Items() {
   const [items, setItems] = useState<Item[]>([]);
   const [categories, setCategories] = useState<ItemCategory[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [showCategoryForm, setShowCategoryForm] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
   const [quickAddCategoryId, setQuickAddCategoryId] = useState("");
@@ -45,25 +46,36 @@ export default function Items() {
     return cat ? bilingualName(cat.nameAr, cat.nameEn, lang) : "";
   }
 
+  function resetForm() {
+    setShowForm(false);
+    setEditingId(null);
+    setCode("");
+    setNameAr("");
+    setNameEn("");
+    setUnitOfMeasure("");
+    setItemCategoryId("");
+    setReorderLevel("0");
+  }
+
+  function startEdit(item: Item) {
+    setEditingId(item.id);
+    setCode(item.code);
+    setNameAr(item.nameAr);
+    setNameEn(item.nameEn);
+    setUnitOfMeasure(item.unitOfMeasure);
+    setItemCategoryId(item.itemCategoryId);
+    setReorderLevel(String(item.reorderLevel));
+    setShowForm(true);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     try {
-      await ItemsApi.create({
-        code,
-        nameAr,
-        nameEn,
-        unitOfMeasure,
-        itemCategoryId,
-        reorderLevel: Number(reorderLevel) || 0,
-      });
-      setShowForm(false);
-      setCode("");
-      setNameAr("");
-      setNameEn("");
-      setUnitOfMeasure("");
-      setItemCategoryId("");
-      setReorderLevel("0");
+      const payload = { nameAr, nameEn, unitOfMeasure, itemCategoryId, reorderLevel: Number(reorderLevel) || 0 };
+      if (editingId) await ItemsApi.update(editingId, payload);
+      else await ItemsApi.create({ ...payload, code });
+      resetForm();
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -114,7 +126,7 @@ export default function Items() {
           >
             {t.common.quickAdd}
           </button>
-          <button className="btn" onClick={() => setShowForm((v) => !v)}>
+          <button className="btn" onClick={() => (showForm ? resetForm() : setShowForm(true))}>
             {showForm ? t.common.cancel : t.inventory.newItem}
           </button>
         </div>
@@ -191,7 +203,7 @@ export default function Items() {
             <div className="form-grid">
               <div className="form-field">
                 <label>{t.inventory.itemCode}</label>
-                <input value={code} onChange={(e) => setCode(e.target.value)} required />
+                <input value={code} onChange={(e) => setCode(e.target.value)} required disabled={!!editingId} />
               </div>
               <div className="form-field">
                 <label>{t.common.nameAr}</label>
@@ -254,7 +266,10 @@ export default function Items() {
                 </td>
                 <td>{item.averageCost.toLocaleString()}</td>
                 <td>{item.reorderLevel.toLocaleString()}</td>
-                <td>
+                <td style={{ display: "flex", gap: 6 }}>
+                  <button className="btn btn-secondary btn-sm" onClick={() => startEdit(item)}>
+                    {t.common.edit}
+                  </button>
                   <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(item.id)}>
                     {t.common.delete}
                   </button>
