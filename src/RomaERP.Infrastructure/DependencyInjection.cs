@@ -35,6 +35,8 @@ public static class DependencyInjection
         services.AddScoped<ITenantContext>(provider => provider.GetRequiredService<TenantContext>());
         services.AddScoped<ITenantRegistry, TenantRegistry>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
+        services.AddScoped<ISubscriptionBillingService, RomaERP.Infrastructure.Billing.SubscriptionBillingService>();
+        services.AddHttpClient<IPaymentGatewayProvider, RomaERP.Infrastructure.Billing.MoyasarPaymentProvider>();
 
         // Every tenant has its own, fully separate database. The connection string is only known once
         // TenantResolutionMiddleware resolves the request's company code, so it's read lazily here from

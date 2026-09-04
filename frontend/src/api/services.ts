@@ -24,6 +24,10 @@ import type {
   ProvisionTenantRequest,
   Tenant,
   Usage,
+  SubscriptionPlan,
+  TenantSubscription,
+  SubscriptionInvoice,
+  BillingRunResult,
   AuditLogEntry,
   TrialSignupRequest,
   TrialSignupResponse,
@@ -461,4 +465,25 @@ export const SystemApi = {
     systemApiClient.get<Tenant[]>("/system/tenants", { params: { demoOnly }, headers: { "X-System-Key": systemKey } }),
   expireDemoTenants: (systemKey: string) =>
     systemApiClient.post<{ deactivatedCount: number }>("/system/tenants/expire-demo", null, { headers: { "X-System-Key": systemKey } }),
+};
+
+export const SubscriptionsApi = {
+  getPlans: (systemKey: string) =>
+    systemApiClient.get<SubscriptionPlan[]>("/system/subscriptions/plans", { headers: { "X-System-Key": systemKey } }),
+  getTenantSubscriptions: (systemKey: string) =>
+    systemApiClient.get<TenantSubscription[]>("/system/subscriptions/tenants", { headers: { "X-System-Key": systemKey } }),
+  setPlan: (systemKey: string, tenantId: string, planId: string) =>
+    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/plan`, { planId }, { headers: { "X-System-Key": systemKey } }),
+  setBillingAccount: (systemKey: string, tenantId: string, billingAccountId: string | null) =>
+    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/billing-account`, { billingAccountId }, { headers: { "X-System-Key": systemKey } }),
+  suspend: (systemKey: string, tenantId: string) =>
+    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/suspend`, null, { headers: { "X-System-Key": systemKey } }),
+  reactivate: (systemKey: string, tenantId: string) =>
+    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/reactivate`, null, { headers: { "X-System-Key": systemKey } }),
+  getInvoices: (systemKey: string, tenantId?: string) =>
+    systemApiClient.get<SubscriptionInvoice[]>("/system/subscriptions/invoices", { params: tenantId ? { tenantId } : undefined, headers: { "X-System-Key": systemKey } }),
+  markInvoicePaid: (systemKey: string, invoiceId: string, paymentReference: string | null) =>
+    systemApiClient.post<SubscriptionInvoice>(`/system/subscriptions/invoices/${invoiceId}/mark-paid`, { paymentReference }, { headers: { "X-System-Key": systemKey } }),
+  runBillingCycle: (systemKey: string) =>
+    systemApiClient.post<BillingRunResult>("/system/subscriptions/run-billing-cycle", null, { headers: { "X-System-Key": systemKey } }),
 };

@@ -164,6 +164,7 @@ static async Task MigrateAllTenantsAsync(IServiceProvider services)
     using var centralScope = services.CreateScope();
     var central = centralScope.ServiceProvider.GetRequiredService<CentralDbContext>();
     await central.Database.MigrateAsync();
+    await SeedSubscriptionPlansAsync(central);
 
     var tenants = await central.Tenants.AsNoTracking().Where(t => t.IsActive).ToListAsync();
 
@@ -177,6 +178,21 @@ static async Task MigrateAllTenantsAsync(IServiceProvider services)
         var db = tenantScope.ServiceProvider.GetRequiredService<RomaERP.Infrastructure.Persistence.ApplicationDbContext>();
         await db.Database.MigrateAsync();
     }
+}
+
+// Seeds the 4 public pricing tiers (marketing/pricing.html) once, on first startup after this feature
+// deployed. Safe to call on every startup — only inserts when the table is empty.
+static async Task SeedSubscriptionPlansAsync(CentralDbContext central)
+{
+    if (await central.SubscriptionPlans.AnyAsync()) return;
+
+    central.SubscriptionPlans.AddRange(
+        new RomaERP.Domain.Tenancy.SubscriptionPlan { Code = "essential", NameAr = "Essential", NameEn = "Essential", MonthlyBasePrice = 499, IncludedBranches = 1, IncludedUsers = 2, SortOrder = 1 },
+        new RomaERP.Domain.Tenancy.SubscriptionPlan { Code = "business", NameAr = "Business", NameEn = "Business", MonthlyBasePrice = 799, IncludedBranches = 3, IncludedUsers = 5, SortOrder = 2 },
+        new RomaERP.Domain.Tenancy.SubscriptionPlan { Code = "professional", NameAr = "Professional", NameEn = "Professional", MonthlyBasePrice = 1299, IncludedBranches = 7, IncludedUsers = 10, SortOrder = 3 },
+        new RomaERP.Domain.Tenancy.SubscriptionPlan { Code = "enterprise", NameAr = "Enterprise", NameEn = "Enterprise", MonthlyBasePrice = 2499, IncludedBranches = int.MaxValue, IncludedUsers = int.MaxValue, IsCustomPricing = true, SortOrder = 4 }
+    );
+    await central.SaveChangesAsync();
 }
 
 // Creates/seeds the "demo" tenant on startup in Development so the existing dev database keeps working

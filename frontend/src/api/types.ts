@@ -1440,6 +1440,84 @@ export interface Tenant {
   createdAtUtc: string;
 }
 
+export const SubscriptionStatus = {
+  Trialing: 0,
+  Active: 1,
+  PastDue: 2,
+  Suspended: 3,
+  Cancelled: 4,
+} as const;
+export type SubscriptionStatus = (typeof SubscriptionStatus)[keyof typeof SubscriptionStatus];
+
+export const SubscriptionInvoiceStatus = {
+  Pending: 0,
+  Paid: 1,
+  Failed: 2,
+  Cancelled: 3,
+} as const;
+export type SubscriptionInvoiceStatus = (typeof SubscriptionInvoiceStatus)[keyof typeof SubscriptionInvoiceStatus];
+
+export interface SubscriptionPlan {
+  id: string;
+  code: string;
+  nameAr: string;
+  nameEn: string;
+  monthlyBasePrice: number;
+  includedBranches: number;
+  includedUsers: number;
+  isCustomPricing: boolean;
+  isActive: boolean;
+}
+
+export interface TenantSubscription {
+  tenantId: string;
+  companyCode: string;
+  companyNameAr: string;
+  companyNameEn: string;
+  tenantIsActive: boolean;
+  subscriptionId: string;
+  planId: string;
+  planCode: string;
+  planNameAr: string;
+  status: SubscriptionStatus;
+  currentPeriodStart: string;
+  currentPeriodEnd: string;
+  billingAccountId: string | null;
+  paymentProvider: string;
+  currentBranches: number;
+  currentUsers: number;
+  outstandingAmount: number;
+}
+
+export interface SubscriptionInvoice {
+  id: string;
+  tenantId: string;
+  companyNameAr: string;
+  planCode: string;
+  planNameAr: string;
+  periodStart: string;
+  periodEnd: string;
+  baseAmount: number;
+  extraBranches: number;
+  extraBranchesAmount: number;
+  extraUsers: number;
+  extraUsersAmount: number;
+  multiCompanyDiscountAmount: number;
+  totalAmount: number;
+  currency: string;
+  status: SubscriptionInvoiceStatus;
+  dueDateUtc: string;
+  paidAtUtc: string | null;
+  paymentReference: string | null;
+}
+
+export interface BillingRunResult {
+  invoicesGenerated: number;
+  autoCharged: number;
+  suspended: number;
+  notes: string[];
+}
+
 export interface Usage {
   activeUsers: number;
   activeBranches: number;
