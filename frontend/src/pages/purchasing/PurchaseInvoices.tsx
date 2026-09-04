@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { AccountsApi, LookupsApi, PurchasingApi } from "../../api/services";
-import { PaymentTerm, type Account, type FiscalPeriod, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
+import { AccountsApi, ItemsApi, LookupsApi, PurchasingApi } from "../../api/services";
+import { PaymentTerm, type Account, type FiscalPeriod, type Item, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
+import QuickAddItemsPicker from "../../components/QuickAddItemsPicker";
 
 const emptyLine = (defaultAccountId: string): PurchaseInvoiceLineInput => ({ description: "", accountId: defaultAccountId, itemId: null, quantity: 1, unitPrice: 0 });
 
@@ -13,10 +14,12 @@ export default function PurchaseInvoices() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
   const [accounts, setAccounts] = useState<Account[]>([]);
+  const [items, setItems] = useState<Item[]>([]);
   const [vatRate, setVatRate] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
+  const [showItemPicker, setShowItemPicker] = useState(false);
   const [vendorId, setVendorId] = useState("");
   const [fiscalPeriodId, setFiscalPeriodId] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -36,17 +39,19 @@ export default function PurchaseInvoices() {
   const grandTotal = netTotal + vatTotal;
 
   async function load() {
-    const [invRes, vendRes, periodRes, accRes, settingsRes] = await Promise.all([
+    const [invRes, vendRes, periodRes, accRes, itemsRes, settingsRes] = await Promise.all([
       PurchasingApi.getInvoices(),
       PurchasingApi.getVendors(),
       LookupsApi.fiscalPeriods(),
       AccountsApi.getAll(),
+      ItemsApi.getAll(),
       LookupsApi.companySettings(),
     ]);
     setInvoices(invRes.data);
     setVendors(vendRes.data);
     setPeriods(periodRes.data);
     setAccounts(accRes.data);
+    setItems(itemsRes.data);
     setVatRate(settingsRes.data.vatRate);
   }
 
@@ -63,6 +68,20 @@ export default function PurchaseInvoices() {
 
   function updateLine(idx: number, patch: Partial<PurchaseInvoiceLineInput>) {
     setLines((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
+  }
+
+  function handleAddItems(selected: Item[]) {
+    const newLines: PurchaseInvoiceLineInput[] = selected.map((item) => ({
+      description: bilingualName(item.nameAr, item.nameEn, lang),
+      accountId: expenseAccounts[0]?.id ?? "",
+      itemId: item.id,
+      quantity: 1,
+      unitPrice: item.averageCost || 0,
+    }));
+    setLines((prev) => {
+      const isUntouchedBlankLine = prev.length === 1 && !prev[0].itemId && prev[0].description === "" && prev[0].unitPrice === 0;
+      return isUntouchedBlankLine ? newLines : [...prev, ...newLines];
+    });
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -218,14 +237,26 @@ export default function PurchaseInvoices() {
                   ))}
                 </tbody>
               </table>
-              <button
-                type="button"
-                className="btn btn-secondary btn-sm"
-                style={{ marginTop: 8 }}
-                onClick={() => setLines((prev) => [...prev, emptyLine(expenseAccounts[0]?.id ?? "")])}
-              >
-                {t.purchasing.addLine}
-              </button>
+              <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setLines((prev) => [...prev, emptyLine(expenseAccounts[0]?.id ?? "")])}
+                >
+                  {t.purchasing.addLine}
+                </button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowItemPicker(true)}>
+                  {t.common.quickAdd}
+                </button>
+              </div>
+
+              <QuickAddItemsPicker
+                open={showItemPicker}
+                onClose={() => setShowItemPicker(false)}
+                title={t.purchasing.quickAddItemsToInvoiceTitle}
+                items={items}
+                onAdd={handleAddItems}
+              />
 
               <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 12 }}>
                 <table style={{ width: 260 }}>
