@@ -106,7 +106,7 @@ export default function Items() {
           <button
             className="btn btn-secondary"
             onClick={() => {
-              codeGenRef.current = makeSequentialCodeGenerator(items.map((i) => i.code), "ITM");
+              codeGenRef.current = makeSequentialCodeGenerator(items.map((i) => i.code));
               setQuickAddCategoryId("");
               setQuickAddUnit("");
               setShowQuickAdd(true);

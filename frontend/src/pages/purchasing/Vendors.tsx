@@ -55,7 +55,7 @@ export default function Vendors() {
           <button
             className="btn btn-secondary"
             onClick={() => {
-              codeGenRef.current = makeSequentialCodeGenerator(vendors.map((v) => v.code), "VEND");
+              codeGenRef.current = makeSequentialCodeGenerator(vendors.map((v) => v.code));
               setShowQuickAdd(true);
             }}
           >
