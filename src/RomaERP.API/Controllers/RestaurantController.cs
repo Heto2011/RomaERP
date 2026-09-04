@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using RomaERP.Application.Common;
 using RomaERP.Application.Restaurant.DTOs;
 using RomaERP.Application.Restaurant.Services;
 using RomaERP.Domain.Restaurant;
@@ -7,7 +8,7 @@ using RomaERP.Domain.Restaurant;
 namespace RomaERP.API.Controllers;
 
 [ApiController]
-[Authorize(Roles = "Admin,Accountant,Employee")]
+[Authorize(Policy = ModulePermissions.POSPolicy)]
 [Route("api/restaurant")]
 public class RestaurantController : ControllerBase
 {

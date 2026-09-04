@@ -102,6 +102,7 @@ const ar = {
     Purchasing: "المشتريات",
     HR: "الموارد البشرية",
     Inventory: "المخزون",
+    POS: "نقطة البيع",
   },
   language: "English",
   collapseSidebar: "طي القائمة",
@@ -1093,6 +1094,7 @@ const en: typeof ar = {
     Purchasing: "Purchasing",
     HR: "HR",
     Inventory: "Inventory",
+    POS: "POS",
   },
   nav: {
     general: "General",

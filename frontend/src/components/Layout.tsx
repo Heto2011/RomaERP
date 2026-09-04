@@ -289,6 +289,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     [t.nav.purchasing]: { module: "Purchasing", fallbackRoles: ["Accountant"] },
     [t.nav.hr]: { module: "HR", fallbackRoles: ["HR"] },
     [t.nav.inventory]: { module: "Inventory", fallbackRoles: ["Accountant"] },
+    [t.nav.restaurant]: { module: "POS", fallbackRoles: ["Accountant", "Employee"] },
   };
   function canSeeSection(section: string) {
     const access = sectionAccess[section];

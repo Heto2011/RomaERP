@@ -16,8 +16,9 @@ public static class ModulePermissions
     public const string Purchasing = "Purchasing";
     public const string HR = "HR";
     public const string Inventory = "Inventory";
+    public const string POS = "POS";
 
-    public static readonly string[] All = { Accounting, Reports, Sales, Purchasing, HR, Inventory };
+    public static readonly string[] All = { Accounting, Reports, Sales, Purchasing, HR, Inventory, POS };
 
     // Policy names as compile-time constants so [Authorize(Policy = ...)] attributes can reference them.
     public const string AccountingPolicy = "Module:" + Accounting;
@@ -26,6 +27,7 @@ public static class ModulePermissions
     public const string PurchasingPolicy = "Module:" + Purchasing;
     public const string HRPolicy = "Module:" + HR;
     public const string InventoryPolicy = "Module:" + Inventory;
+    public const string POSPolicy = "Module:" + POS;
 
     /// <summary>Existing roles that already imply this module, in addition to Admin (which always passes).</summary>
     public static readonly IReadOnlyDictionary<string, string[]> FallbackRoles = new Dictionary<string, string[]>
@@ -36,6 +38,7 @@ public static class ModulePermissions
         [Purchasing] = new[] { "Accountant" },
         [Inventory] = new[] { "Accountant" },
         [HR] = new[] { "HR" },
+        [POS] = new[] { "Accountant", "Employee" },
     };
 
     public static string PolicyName(string module) => $"Module:{module}";

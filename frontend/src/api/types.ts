@@ -1137,7 +1137,7 @@ export type AppRole = (typeof AppRoles)[number];
 
 // A per-user module grant, on top of their role — see ModulePermissions on the backend. Lets an Admin
 // hand one specific area (e.g. just Sales) to a user without making them a full Accountant/HR.
-export const ModulePermissions = ["Accounting", "Reports", "Sales", "Purchasing", "HR", "Inventory"] as const;
+export const ModulePermissions = ["Accounting", "Reports", "Sales", "Purchasing", "HR", "Inventory", "POS"] as const;
 export type ModulePermission = (typeof ModulePermissions)[number];
 
 export interface AppUser {
