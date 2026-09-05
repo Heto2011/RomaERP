@@ -33,7 +33,12 @@ export default function Manufacturing() {
   const [orderDate, setOrderDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [orderProducedQuantity, setOrderProducedQuantity] = useState(1);
   const [orderNotes, setOrderNotes] = useState("");
+  const [orderLotNumber, setOrderLotNumber] = useState("");
+  const [orderExpiryDate, setOrderExpiryDate] = useState("");
   const [savingOrder, setSavingOrder] = useState(false);
+
+  const orderOutputItem = items.find((i) => i.id === orderBomOutputItemId);
+  const orderOutputIsLotTracked = orderOutputItem?.isLotTracked ?? false;
 
   async function load() {
     const [itemsRes, warehousesRes, bomsRes, ordersRes] = await Promise.all([
@@ -133,6 +138,8 @@ export default function Manufacturing() {
     setOrderDate(new Date().toISOString().slice(0, 10));
     setOrderProducedQuantity(boms[0]?.outputQuantity ?? 1);
     setOrderNotes("");
+    setOrderLotNumber("");
+    setOrderExpiryDate("");
     setError(null);
   }
 
@@ -147,6 +154,8 @@ export default function Manufacturing() {
         productionDate: orderDate,
         producedQuantity: orderProducedQuantity,
         notes: orderNotes || null,
+        outputLotNumber: orderLotNumber || null,
+        outputExpiryDate: orderExpiryDate || null,
       });
       setShowOrderForm(false);
       await load();
@@ -352,6 +361,18 @@ export default function Manufacturing() {
                   <label>{t.common.notes}</label>
                   <input value={orderNotes} onChange={(e) => setOrderNotes(e.target.value)} />
                 </div>
+                {orderOutputIsLotTracked && (
+                  <>
+                    <div className="form-field">
+                      <label>{t.inventory.lotNumber}</label>
+                      <input value={orderLotNumber} onChange={(e) => setOrderLotNumber(e.target.value)} required />
+                    </div>
+                    <div className="form-field">
+                      <label>{t.inventory.expiryDate}</label>
+                      <input type="date" value={orderExpiryDate} onChange={(e) => setOrderExpiryDate(e.target.value)} required />
+                    </div>
+                  </>
+                )}
                 <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
                   <button className="btn" type="submit" disabled={savingOrder}>{t.common.save}</button>
                   <button className="btn btn-secondary" type="button" onClick={() => setShowOrderForm(false)}>{t.common.cancel}</button>

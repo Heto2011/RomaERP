@@ -59,6 +59,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<ManufacturingBomLine> ManufacturingBomLines => Set<ManufacturingBomLine>();
     public DbSet<ManufacturingOrder> ManufacturingOrders => Set<ManufacturingOrder>();
     public DbSet<ManufacturingOrderLine> ManufacturingOrderLines => Set<ManufacturingOrderLine>();
+    public DbSet<ItemLot> ItemLots => Set<ItemLot>();
 
     public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
     public DbSet<RestaurantOrder> RestaurantOrders => Set<RestaurantOrder>();

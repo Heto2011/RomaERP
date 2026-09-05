@@ -42,7 +42,7 @@ public class ManufacturingServiceTests
     public async Task SetBomAsync_CreatesBomWithLines()
     {
         var seed = await SeedAsync();
-        var service = new ManufacturingService(seed.Ctx);
+        var service = new ManufacturingService(seed.Ctx, new ItemLotService(seed.Ctx));
 
         var bom = await service.SetBomAsync(seed.Sauce.Id, new SetManufacturingBomDto
         {
@@ -62,7 +62,7 @@ public class ManufacturingServiceTests
     public async Task SetBomAsync_RejectsOutputItemAsItsOwnIngredient()
     {
         var seed = await SeedAsync();
-        var service = new ManufacturingService(seed.Ctx);
+        var service = new ManufacturingService(seed.Ctx, new ItemLotService(seed.Ctx));
 
         await Assert.ThrowsAsync<ValidationAppException>(() => service.SetBomAsync(seed.Sauce.Id, new SetManufacturingBomDto
         {
@@ -75,7 +75,7 @@ public class ManufacturingServiceTests
     public async Task CreateOrderAsync_ScalesConsumptionAndProducesOutputAtRolledUpCost()
     {
         var seed = await SeedAsync();
-        var service = new ManufacturingService(seed.Ctx);
+        var service = new ManufacturingService(seed.Ctx, new ItemLotService(seed.Ctx));
 
         await service.SetBomAsync(seed.Sauce.Id, new SetManufacturingBomDto
         {
@@ -114,7 +114,7 @@ public class ManufacturingServiceTests
     public async Task CreateOrderAsync_RejectsWhenRawMaterialStockInsufficient()
     {
         var seed = await SeedAsync();
-        var service = new ManufacturingService(seed.Ctx);
+        var service = new ManufacturingService(seed.Ctx, new ItemLotService(seed.Ctx));
 
         await service.SetBomAsync(seed.Sauce.Id, new SetManufacturingBomDto
         {

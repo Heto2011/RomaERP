@@ -26,6 +26,7 @@ export default function Items() {
   const [unitOfMeasure, setUnitOfMeasure] = useState("");
   const [itemCategoryId, setItemCategoryId] = useState("");
   const [reorderLevel, setReorderLevel] = useState("0");
+  const [isLotTracked, setIsLotTracked] = useState(false);
 
   const [categoryCode, setCategoryCode] = useState("");
   const [categoryNameAr, setCategoryNameAr] = useState("");
@@ -55,6 +56,7 @@ export default function Items() {
     setUnitOfMeasure("");
     setItemCategoryId("");
     setReorderLevel("0");
+    setIsLotTracked(false);
   }
 
   function startEdit(item: Item) {
@@ -65,6 +67,7 @@ export default function Items() {
     setUnitOfMeasure(item.unitOfMeasure);
     setItemCategoryId(item.itemCategoryId);
     setReorderLevel(String(item.reorderLevel));
+    setIsLotTracked(item.isLotTracked);
     setShowForm(true);
   }
 
@@ -72,7 +75,7 @@ export default function Items() {
     e.preventDefault();
     setError(null);
     try {
-      const payload = { nameAr, nameEn, unitOfMeasure, itemCategoryId, reorderLevel: Number(reorderLevel) || 0 };
+      const payload = { nameAr, nameEn, unitOfMeasure, itemCategoryId, reorderLevel: Number(reorderLevel) || 0, isLotTracked };
       if (editingId) await ItemsApi.update(editingId, payload);
       else await ItemsApi.create({ ...payload, code });
       resetForm();
@@ -242,6 +245,13 @@ export default function Items() {
                 <label>{t.inventory.reorderLevel}</label>
                 <input type="number" step="0.01" value={reorderLevel} onChange={(e) => setReorderLevel(e.target.value)} />
               </div>
+            </div>
+            <div className="form-field" style={{ marginTop: 10 }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: "normal" }}>
+                <input type="checkbox" checked={isLotTracked} onChange={(e) => setIsLotTracked(e.target.checked)} />
+                {t.inventory.isLotTracked}
+              </label>
+              <p className="text-muted" style={{ marginTop: 4, fontSize: 13 }}>{t.inventory.isLotTrackedHint}</p>
             </div>
             <button className="btn" type="submit" style={{ marginTop: 14 }}>
               {t.common.save}

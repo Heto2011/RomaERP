@@ -150,7 +150,8 @@ public class ItemService : IItemService
             ReorderLevel = dto.ReorderLevel,
             IsActive = true,
             QuantityOnHand = 0,
-            AverageCost = 0
+            AverageCost = 0,
+            IsLotTracked = dto.IsLotTracked
         };
 
         _context.Items.Add(item);
@@ -173,6 +174,7 @@ public class ItemService : IItemService
         item.UnitOfMeasure = dto.UnitOfMeasure.Trim();
         item.ItemCategoryId = dto.ItemCategoryId;
         item.ReorderLevel = dto.ReorderLevel;
+        item.IsLotTracked = dto.IsLotTracked;
 
         await _context.SaveChangesAsync(ct);
         return await GetByIdAsync(item.Id, ct);
@@ -205,6 +207,7 @@ public class ItemService : IItemService
         AverageCost = i.AverageCost,
         IsActive = i.IsActive,
         IsMenuItem = i.IsMenuItem,
-        MenuPrice = i.MenuPrice
+        MenuPrice = i.MenuPrice,
+        IsLotTracked = i.IsLotTracked
     };
 }

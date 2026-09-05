@@ -11,10 +11,12 @@ namespace RomaERP.Application.Inventory.Services;
 public class InventoryService : IInventoryService
 {
     private readonly IApplicationDbContext _context;
+    private readonly IItemLotService _lotService;
 
-    public InventoryService(IApplicationDbContext context)
+    public InventoryService(IApplicationDbContext context, IItemLotService lotService)
     {
         _context = context;
+        _lotService = lotService;
     }
 
     public async Task<List<StockMovementDto>> GetMovementsAsync(CancellationToken ct = default)
@@ -57,6 +59,8 @@ public class InventoryService : IInventoryService
 
         item.QuantityOnHand = newQuantity;
         item.AverageCost = Math.Round(newAverageCost, 4);
+
+        await _lotService.ReceiveLotAsync(item.Id, dto.WarehouseId, dto.LotNumber, dto.Quantity, dto.UnitCost, dto.ExpiryDate, dto.MovementDate, ct);
 
         var (inventoryAccount, _, payableAccount) = await GetInventoryAccountsAsync(ct, needsPayable: true);
 
@@ -109,6 +113,8 @@ public class InventoryService : IInventoryService
         var totalCost = Math.Round(dto.Quantity * unitCost, 2);
 
         item.QuantityOnHand -= dto.Quantity;
+
+        await _lotService.ConsumeFefoAsync(item.Id, dto.WarehouseId, dto.Quantity, ct);
 
         var (inventoryAccount, cogsAccount, _) = await GetInventoryAccountsAsync(ct, needsCogs: true);
 

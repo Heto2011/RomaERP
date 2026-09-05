@@ -32,6 +32,8 @@ import type {
   SetManufacturingBomInput,
   ManufacturingOrder,
   CreateManufacturingOrderInput,
+  ItemLot,
+  ExpiringLot,
   AuditLogEntry,
   TrialSignupRequest,
   TrialSignupResponse,
@@ -364,6 +366,8 @@ export const InventoryApi = {
   getMovements: () => apiClient.get<StockMovement[]>("/inventory/movements"),
   receive: (data: unknown) => apiClient.post<StockMovement>("/inventory/receive", data),
   issue: (data: unknown) => apiClient.post<StockMovement>("/inventory/issue", data),
+  getLots: () => apiClient.get<ItemLot[]>("/inventory/lots"),
+  getExpiringLots: (withinDays: number) => apiClient.get<ExpiringLot[]>("/inventory/lots/expiring", { params: { withinDays } }),
 };
 
 export const SalesApi = {

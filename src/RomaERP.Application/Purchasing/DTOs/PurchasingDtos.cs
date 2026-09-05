@@ -52,6 +52,10 @@ public class ReceiveInventoryPurchaseLineInputDto
     public Guid ItemId { get; set; }
     public decimal Quantity { get; set; } = 1;
     public decimal UnitCost { get; set; }
+
+    /// <summary>Required only when the item is lot-tracked (Item.IsLotTracked).</summary>
+    public string? LotNumber { get; set; }
+    public DateTime? ExpiryDate { get; set; }
 }
 
 /// <summary>Records what physically arrived from a vendor, item by item — an internal-control record

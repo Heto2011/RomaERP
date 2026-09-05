@@ -205,3 +205,26 @@ public class ManufacturingOrderLineConfiguration : IEntityTypeConfiguration<Manu
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public class ItemLotConfiguration : IEntityTypeConfiguration<ItemLot>
+{
+    public void Configure(EntityTypeBuilder<ItemLot> builder)
+    {
+        builder.Property(l => l.LotNumber).HasMaxLength(60).IsRequired();
+        builder.Property(l => l.QuantityOnHand).HasPrecision(18, 4);
+        builder.Property(l => l.UnitCost).HasPrecision(18, 4);
+        builder.HasIndex(l => new { l.ItemId, l.WarehouseId, l.LotNumber }).IsUnique();
+
+        builder.HasOne(l => l.Item)
+            .WithMany(i => i.Lots)
+            .HasForeignKey(l => l.ItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(l => l.Warehouse)
+            .WithMany()
+            .HasForeignKey(l => l.WarehouseId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(l => !l.IsDeleted);
+    }
+}

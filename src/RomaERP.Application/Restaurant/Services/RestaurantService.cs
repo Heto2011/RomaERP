@@ -3,6 +3,7 @@ using RomaERP.Application.Accounting;
 using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
+using RomaERP.Application.Inventory.Services;
 using RomaERP.Application.Restaurant.DTOs;
 using RomaERP.Application.Sales.DTOs;
 using RomaERP.Application.Sales.Services;
@@ -19,11 +20,13 @@ public class RestaurantService : IRestaurantService
 {
     private readonly IApplicationDbContext _context;
     private readonly ISalesService _salesService;
+    private readonly IItemLotService _lotService;
 
-    public RestaurantService(IApplicationDbContext context, ISalesService salesService)
+    public RestaurantService(IApplicationDbContext context, ISalesService salesService, IItemLotService lotService)
     {
         _context = context;
         _salesService = salesService;
+        _lotService = lotService;
     }
 
     // ---------- Tables ----------
@@ -466,6 +469,8 @@ public class RestaurantService : IRestaurantService
                 var movementCost = Math.Round(qty * unitCost, 2);
                 totalCogs += movementCost;
                 item.QuantityOnHand -= qty;
+
+                await _lotService.ConsumeFefoAsync(item.Id, order.WarehouseId, qty, ct);
 
                 stockMovements.Add(new StockMovement
                 {

@@ -11,7 +11,7 @@ import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
 
-const emptyLine = (): ReceiveInventoryPurchaseLineInput => ({ itemId: "", quantity: 1, unitCost: 0 });
+const emptyLine = (): ReceiveInventoryPurchaseLineInput => ({ itemId: "", quantity: 1, unitCost: 0, lotNumber: "", expiryDate: "" });
 
 export default function PurchaseReceivingPage() {
   const { t, lang } = useLanguage();
@@ -71,7 +71,7 @@ export default function PurchaseReceivingPage() {
         receiptDate,
         warehouseId,
         notes: notes || null,
-        lines: lines.filter((l) => l.itemId),
+        lines: lines.filter((l) => l.itemId).map((l) => ({ ...l, lotNumber: l.lotNumber || null, expiryDate: l.expiryDate || null })),
       });
       setLastReceipt(res.data);
       setLines([emptyLine()]);
@@ -157,35 +157,49 @@ export default function PurchaseReceivingPage() {
                 <th>{t.inventory.itemsTitle}</th>
                 <th>{t.common.quantity}</th>
                 <th>{t.restaurant.unitCostExVat}</th>
+                <th>{t.inventory.lotNumber}</th>
+                <th>{t.inventory.expiryDate}</th>
                 <th>{t.common.total}</th>
                 <th></th>
               </tr>
             </thead>
             <tbody>
-              {lines.map((line, idx) => (
-                <tr key={idx}>
-                  <td>
-                    <select value={line.itemId} onChange={(e) => updateLine(idx, { itemId: e.target.value })} required>
-                      <option value="" disabled>-</option>
-                      {items.map((i) => (
-                        <option key={i.id} value={i.id}>{i.code} - {bilingualName(i.nameAr, i.nameEn, lang)}</option>
-                      ))}
-                    </select>
-                  </td>
-                  <td>
-                    <input type="number" min={0.001} step="0.001" style={{ width: 100 }} value={line.quantity}
-                      onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })} required />
-                  </td>
-                  <td>
-                    <input type="number" min={0} step="0.01" style={{ width: 120 }} value={line.unitCost}
-                      onChange={(e) => updateLine(idx, { unitCost: Number(e.target.value) })} required />
-                  </td>
-                  <td>{(line.quantity * line.unitCost).toLocaleString()}</td>
-                  <td>
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => removeLine(idx)}>{t.common.delete}</button>
-                  </td>
-                </tr>
-              ))}
+              {lines.map((line, idx) => {
+                const selectedItem = items.find((i) => i.id === line.itemId);
+                const isLotTracked = selectedItem?.isLotTracked ?? false;
+                return (
+                  <tr key={idx}>
+                    <td>
+                      <select value={line.itemId} onChange={(e) => updateLine(idx, { itemId: e.target.value })} required>
+                        <option value="" disabled>-</option>
+                        {items.map((i) => (
+                          <option key={i.id} value={i.id}>{i.code} - {bilingualName(i.nameAr, i.nameEn, lang)}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td>
+                      <input type="number" min={0.001} step="0.001" style={{ width: 100 }} value={line.quantity}
+                        onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })} required />
+                    </td>
+                    <td>
+                      <input type="number" min={0} step="0.01" style={{ width: 120 }} value={line.unitCost}
+                        onChange={(e) => updateLine(idx, { unitCost: Number(e.target.value) })} required />
+                    </td>
+                    <td>
+                      <input value={line.lotNumber ?? ""} disabled={!isLotTracked} required={isLotTracked} style={{ width: 110 }}
+                        onChange={(e) => updateLine(idx, { lotNumber: e.target.value })} />
+                    </td>
+                    <td>
+                      <input type="date" value={line.expiryDate ?? ""} disabled={!isLotTracked} required={isLotTracked}
+                        onChange={(e) => updateLine(idx, { expiryDate: e.target.value })} />
+                    </td>
+                    <td>{(line.quantity * line.unitCost).toLocaleString()}</td>
+                    <td>
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={() => removeLine(idx)}>{t.common.delete}</button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
           <button type="button" className="btn btn-secondary btn-sm" style={{ marginTop: 10 }} onClick={addLine}>

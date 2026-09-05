@@ -9,10 +9,12 @@ namespace RomaERP.Application.Inventory.Services;
 public class ManufacturingService : IManufacturingService
 {
     private readonly IApplicationDbContext _context;
+    private readonly IItemLotService _lotService;
 
-    public ManufacturingService(IApplicationDbContext context)
+    public ManufacturingService(IApplicationDbContext context, IItemLotService lotService)
     {
         _context = context;
+        _lotService = lotService;
     }
 
     public async Task<List<ManufacturingBomDto>> GetBomsAsync(CancellationToken ct = default)
@@ -167,6 +169,8 @@ public class ManufacturingService : IManufacturingService
             rawMaterial.QuantityOnHand -= consumedQty;
             totalCost += lineCost;
 
+            await _lotService.ConsumeFefoAsync(rawMaterial.Id, dto.WarehouseId, consumedQty, ct);
+
             order.Lines.Add(new ManufacturingOrderLine
             {
                 RawMaterialItemId = rawMaterial.Id,
@@ -199,6 +203,9 @@ public class ManufacturingService : IManufacturingService
         outputItem.QuantityOnHand = newQuantity;
         outputItem.AverageCost = Math.Round(newAverageCost, 4);
 
+        var outputUnitCost = dto.ProducedQuantity == 0 ? 0 : Math.Round(totalCost / dto.ProducedQuantity, 4);
+        await _lotService.ReceiveLotAsync(outputItem.Id, dto.WarehouseId, dto.OutputLotNumber, dto.ProducedQuantity, outputUnitCost, dto.OutputExpiryDate, dto.ProductionDate, ct);
+
         stockMovements.Add(new StockMovement
         {
             MovementNumber = $"SM-{(movementCount + ++movementIndex):D6}",
@@ -207,7 +214,7 @@ public class ManufacturingService : IManufacturingService
             ItemId = outputItem.Id,
             WarehouseId = dto.WarehouseId,
             Quantity = dto.ProducedQuantity,
-            UnitCost = dto.ProducedQuantity == 0 ? 0 : Math.Round(totalCost / dto.ProducedQuantity, 4),
+            UnitCost = outputUnitCost,
             TotalCost = totalCost,
             Reference = orderNumber,
             Description = $"إنتاج تصنيع - {orderNumber}",

@@ -63,4 +63,8 @@ public class CreateManufacturingOrderDto
     public DateTime ProductionDate { get; set; }
     public decimal ProducedQuantity { get; set; }
     public string? Notes { get; set; }
+
+    /// <summary>Required only when the output item is lot-tracked (Item.IsLotTracked).</summary>
+    public string? OutputLotNumber { get; set; }
+    public DateTime? OutputExpiryDate { get; set; }
 }

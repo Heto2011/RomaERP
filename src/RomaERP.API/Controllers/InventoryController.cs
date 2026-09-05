@@ -12,10 +12,12 @@ namespace RomaERP.API.Controllers;
 public class InventoryController : ControllerBase
 {
     private readonly IInventoryService _inventoryService;
+    private readonly IItemLotService _lotService;
 
-    public InventoryController(IInventoryService inventoryService)
+    public InventoryController(IInventoryService inventoryService, IItemLotService lotService)
     {
         _inventoryService = inventoryService;
+        _lotService = lotService;
     }
 
     [HttpGet("movements")]
@@ -31,4 +33,12 @@ public class InventoryController : ControllerBase
     [Authorize(Policy = ModulePermissions.InventoryPolicy)]
     public async Task<ActionResult<StockMovementDto>> Issue(IssueStockDto dto, CancellationToken ct)
         => Ok(await _inventoryService.IssueStockAsync(dto, ct));
+
+    [HttpGet("lots")]
+    public async Task<ActionResult<List<ItemLotDto>>> GetLots(CancellationToken ct)
+        => Ok(await _lotService.GetLotsAsync(ct));
+
+    [HttpGet("lots/expiring")]
+    public async Task<ActionResult<List<ExpiringLotDto>>> GetExpiringLots([FromQuery] int withinDays, CancellationToken ct)
+        => Ok(await _lotService.GetExpiringLotsAsync(withinDays <= 0 ? 7 : withinDays, ct));
 }

@@ -42,6 +42,7 @@ public interface IApplicationDbContext
     DbSet<ManufacturingBomLine> ManufacturingBomLines { get; }
     DbSet<ManufacturingOrder> ManufacturingOrders { get; }
     DbSet<ManufacturingOrderLine> ManufacturingOrderLines { get; }
+    DbSet<ItemLot> ItemLots { get; }
 
     DbSet<RestaurantTable> RestaurantTables { get; }
     DbSet<RestaurantOrder> RestaurantOrders { get; }

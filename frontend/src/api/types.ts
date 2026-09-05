@@ -800,6 +800,35 @@ export interface Item {
   isActive: boolean;
   isMenuItem: boolean;
   menuPrice: number;
+  isLotTracked: boolean;
+}
+
+export interface ItemLot {
+  id: string;
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  warehouseId: string;
+  warehouseName: string;
+  lotNumber: string;
+  quantityOnHand: number;
+  unitCost: number;
+  expiryDate: string | null;
+  receivedDate: string;
+}
+
+export interface ExpiringLot {
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  warehouseName: string;
+  lotNumber: string;
+  quantityOnHand: number;
+  unitCost: number;
+  valueAtRisk: number;
+  expiryDate: string;
+  isExpired: boolean;
+  daysUntilExpiry: number;
 }
 
 export interface ManufacturingBomLine {
@@ -858,6 +887,8 @@ export interface CreateManufacturingOrderInput {
   productionDate: string;
   producedQuantity: number;
   notes?: string | null;
+  outputLotNumber?: string | null;
+  outputExpiryDate?: string | null;
 }
 
 export enum StockMovementType {
@@ -1121,6 +1152,8 @@ export interface ReceiveInventoryPurchaseLineInput {
   itemId: string;
   quantity: number;
   unitCost: number;
+  lotNumber?: string | null;
+  expiryDate?: string | null;
 }
 
 export interface ReceiveInventoryPurchaseInput {

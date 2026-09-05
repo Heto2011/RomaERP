@@ -177,7 +177,7 @@ public class InventoryReportServiceTests
         ctx.Warehouses.Add(warehouse);
         await ctx.SaveChangesAsync();
 
-        var wasteService = new WasteEntryService(ctx, new InventoryService(ctx));
+        var wasteService = new WasteEntryService(ctx, new InventoryService(ctx, new ItemLotService(ctx)));
         await wasteService.CreateAsync(new CreateWasteEntryDto
         {
             ItemId = item.Id,

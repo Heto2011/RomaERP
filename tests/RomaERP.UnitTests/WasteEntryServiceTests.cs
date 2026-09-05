@@ -48,7 +48,7 @@ public class WasteEntryServiceTests
     public async Task CreateAsync_IssuesRealStockMovementAndReducesQuantityOnHand()
     {
         var (ctx, item, warehouse, period) = await SeedAsync();
-        var inventoryService = new InventoryService(ctx);
+        var inventoryService = new InventoryService(ctx, new ItemLotService(ctx));
         var service = new WasteEntryService(ctx, inventoryService);
 
         var result = await service.CreateAsync(new CreateWasteEntryDto
@@ -80,7 +80,7 @@ public class WasteEntryServiceTests
     public async Task GetAllAsync_ReturnsCreatedEntriesWithReason()
     {
         var (ctx, item, warehouse, period) = await SeedAsync();
-        var inventoryService = new InventoryService(ctx);
+        var inventoryService = new InventoryService(ctx, new ItemLotService(ctx));
         var service = new WasteEntryService(ctx, inventoryService);
 
         await service.CreateAsync(new CreateWasteEntryDto

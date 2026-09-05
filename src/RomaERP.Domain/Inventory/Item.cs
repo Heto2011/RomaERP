@@ -27,7 +27,14 @@ public class Item : AuditableEntity
     public bool IsMenuItem { get; set; }
     public decimal MenuPrice { get; set; }
 
+    /// <summary>When true, receipts and consumption for this item also maintain per-batch quantity and
+    /// expiry tracking in <see cref="ItemLot"/> (FEFO — first-expiring lot consumed first). Costing itself is
+    /// unaffected: QuantityOnHand/AverageCost above stay the single source of truth either way, lots are a
+    /// side ledger purely for "what do I have, and when does it expire".</summary>
+    public bool IsLotTracked { get; set; }
+
     public ICollection<StockMovement> Movements { get; set; } = new List<StockMovement>();
+    public ICollection<ItemLot> Lots { get; set; } = new List<ItemLot>();
 
     /// <summary>Ingredients consumed when this item (as a menu item) is sold. Empty means this item is its
     /// own raw material — sold and decremented directly.</summary>

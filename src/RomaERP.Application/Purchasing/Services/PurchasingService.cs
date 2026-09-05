@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Accounting;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
+using RomaERP.Application.Inventory.Services;
 using RomaERP.Application.Purchasing.DTOs;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
@@ -15,11 +16,13 @@ public class PurchasingService : IPurchasingService
 {
     private readonly IApplicationDbContext _context;
     private readonly IHtmlToPdfRenderer _pdfRenderer;
+    private readonly IItemLotService _lotService;
 
-    public PurchasingService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer)
+    public PurchasingService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer, IItemLotService lotService)
     {
         _context = context;
         _pdfRenderer = pdfRenderer;
+        _lotService = lotService;
     }
 
     public async Task<List<VendorDto>> GetVendorsAsync(CancellationToken ct = default)
@@ -244,6 +247,8 @@ public class PurchasingService : IPurchasingService
 
             item.QuantityOnHand = newQuantity;
             item.AverageCost = Math.Round(newAverageCost, 4);
+
+            await _lotService.ReceiveLotAsync(item.Id, dto.WarehouseId, dtoLine.LotNumber, dtoLine.Quantity, dtoLine.UnitCost, dtoLine.ExpiryDate, dto.ReceiptDate, ct);
 
             _context.StockMovements.Add(new StockMovement
             {

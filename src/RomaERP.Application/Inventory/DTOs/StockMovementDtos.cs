@@ -31,6 +31,10 @@ public class ReceiveStockDto
     public decimal UnitCost { get; set; }
     public string? Reference { get; set; }
     public string? Description { get; set; }
+
+    /// <summary>Required only when the item is lot-tracked (Item.IsLotTracked).</summary>
+    public string? LotNumber { get; set; }
+    public DateTime? ExpiryDate { get; set; }
 }
 
 public class IssueStockDto

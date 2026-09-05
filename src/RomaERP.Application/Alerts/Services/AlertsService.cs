@@ -12,21 +12,26 @@ public class AlertsService : IAlertsService
     private const decimal LowMarginPercentThreshold = 10m;
     private const int MovementWindowDays = 30;
 
+    private const int ExpiringStockWindowDays = 7;
+
     private readonly IInventoryReportService _inventoryReportService;
     private readonly IFinancialReportService _financialReportService;
     private readonly ISalesService _salesService;
     private readonly IPurchasingService _purchasingService;
+    private readonly IItemLotService _lotService;
 
     public AlertsService(
         IInventoryReportService inventoryReportService,
         IFinancialReportService financialReportService,
         ISalesService salesService,
-        IPurchasingService purchasingService)
+        IPurchasingService purchasingService,
+        IItemLotService lotService)
     {
         _inventoryReportService = inventoryReportService;
         _financialReportService = financialReportService;
         _salesService = salesService;
         _purchasingService = purchasingService;
+        _lotService = lotService;
     }
 
     public async Task<AlertsReportDto> GetAlertsAsync(CancellationToken ct = default)
@@ -97,6 +102,21 @@ public class AlertsService : IAlertsService
                 Severity = AlertSeverity.Warning,
                 Title = $"{lowMarginItems.Count} sold item(s) below {LowMarginPercentThreshold:0}% margin",
                 Detail = string.Join(", ", lowMarginItems.Take(5).Select(i => $"{i.ItemCode} ({i.MarginPercent:0.#}%)"))
+            });
+        }
+
+        var expiringLots = await _lotService.GetExpiringLotsAsync(ExpiringStockWindowDays, ct);
+        if (expiringLots.Count > 0)
+        {
+            var expiredCount = expiringLots.Count(l => l.IsExpired);
+            alerts.Add(new AlertDto
+            {
+                Category = "Inventory",
+                Severity = expiredCount > 0 ? AlertSeverity.Critical : AlertSeverity.Warning,
+                Title = expiredCount > 0
+                    ? $"{expiredCount} lot(s) already expired, {expiringLots.Count - expiredCount} more expiring within {ExpiringStockWindowDays} days"
+                    : $"{expiringLots.Count} lot(s) expiring within {ExpiringStockWindowDays} days",
+                Detail = string.Join(", ", expiringLots.Take(5).Select(l => $"{l.ItemCode} ({l.LotNumber}, {l.ExpiryDate:yyyy-MM-dd})"))
             });
         }
 
