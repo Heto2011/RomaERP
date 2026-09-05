@@ -127,3 +127,81 @@ public class WasteEntryConfiguration : IEntityTypeConfiguration<WasteEntry>
         builder.HasQueryFilter(w => !w.IsDeleted);
     }
 }
+
+public class ManufacturingBomConfiguration : IEntityTypeConfiguration<ManufacturingBom>
+{
+    public void Configure(EntityTypeBuilder<ManufacturingBom> builder)
+    {
+        builder.Property(b => b.OutputQuantity).HasPrecision(18, 4);
+        builder.HasIndex(b => b.OutputItemId).IsUnique();
+
+        builder.HasOne(b => b.OutputItem)
+            .WithMany()
+            .HasForeignKey(b => b.OutputItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(b => !b.IsDeleted);
+    }
+}
+
+public class ManufacturingBomLineConfiguration : IEntityTypeConfiguration<ManufacturingBomLine>
+{
+    public void Configure(EntityTypeBuilder<ManufacturingBomLine> builder)
+    {
+        builder.Property(l => l.QuantityPerBatch).HasPrecision(18, 4);
+
+        builder.HasOne(l => l.Bom)
+            .WithMany(b => b.Lines)
+            .HasForeignKey(l => l.BomId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(l => l.RawMaterialItem)
+            .WithMany()
+            .HasForeignKey(l => l.RawMaterialItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class ManufacturingOrderConfiguration : IEntityTypeConfiguration<ManufacturingOrder>
+{
+    public void Configure(EntityTypeBuilder<ManufacturingOrder> builder)
+    {
+        builder.Property(o => o.OrderNumber).HasMaxLength(30).IsRequired();
+        builder.Property(o => o.ProducedQuantity).HasPrecision(18, 4);
+        builder.Property(o => o.TotalCost).HasPrecision(18, 2);
+        builder.Property(o => o.Notes).HasMaxLength(500);
+        builder.HasIndex(o => o.OrderNumber).IsUnique();
+
+        builder.HasOne(o => o.Bom)
+            .WithMany()
+            .HasForeignKey(o => o.BomId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(o => o.Warehouse)
+            .WithMany()
+            .HasForeignKey(o => o.WarehouseId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(o => !o.IsDeleted);
+    }
+}
+
+public class ManufacturingOrderLineConfiguration : IEntityTypeConfiguration<ManufacturingOrderLine>
+{
+    public void Configure(EntityTypeBuilder<ManufacturingOrderLine> builder)
+    {
+        builder.Property(l => l.QuantityConsumed).HasPrecision(18, 4);
+        builder.Property(l => l.UnitCost).HasPrecision(18, 4);
+        builder.Property(l => l.TotalCost).HasPrecision(18, 2);
+
+        builder.HasOne(l => l.ManufacturingOrder)
+            .WithMany(o => o.Lines)
+            .HasForeignKey(l => l.ManufacturingOrderId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(l => l.RawMaterialItem)
+            .WithMany()
+            .HasForeignKey(l => l.RawMaterialItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}

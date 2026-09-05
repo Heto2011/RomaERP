@@ -55,6 +55,10 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
     public DbSet<PhysicalStockCount> PhysicalStockCounts => Set<PhysicalStockCount>();
     public DbSet<WasteEntry> WasteEntries => Set<WasteEntry>();
+    public DbSet<ManufacturingBom> ManufacturingBoms => Set<ManufacturingBom>();
+    public DbSet<ManufacturingBomLine> ManufacturingBomLines => Set<ManufacturingBomLine>();
+    public DbSet<ManufacturingOrder> ManufacturingOrders => Set<ManufacturingOrder>();
+    public DbSet<ManufacturingOrderLine> ManufacturingOrderLines => Set<ManufacturingOrderLine>();
 
     public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
     public DbSet<RestaurantOrder> RestaurantOrders => Set<RestaurantOrder>();

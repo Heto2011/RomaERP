@@ -802,6 +802,64 @@ export interface Item {
   menuPrice: number;
 }
 
+export interface ManufacturingBomLine {
+  rawMaterialItemId: string;
+  rawMaterialItemCode: string;
+  rawMaterialItemName: string;
+  quantityPerBatch: number;
+}
+
+export interface ManufacturingBom {
+  id: string;
+  outputItemId: string;
+  outputItemCode: string;
+  outputItemName: string;
+  outputQuantity: number;
+  lines: ManufacturingBomLine[];
+}
+
+export interface CreateManufacturingBomLineInput {
+  rawMaterialItemId: string;
+  quantityPerBatch: number;
+}
+
+export interface SetManufacturingBomInput {
+  outputQuantity: number;
+  lines: CreateManufacturingBomLineInput[];
+}
+
+export interface ManufacturingOrderLine {
+  rawMaterialItemId: string;
+  rawMaterialItemCode: string;
+  rawMaterialItemName: string;
+  quantityConsumed: number;
+  unitCost: number;
+  totalCost: number;
+}
+
+export interface ManufacturingOrder {
+  id: string;
+  orderNumber: string;
+  outputItemId: string;
+  outputItemCode: string;
+  outputItemName: string;
+  warehouseId: string;
+  warehouseName: string;
+  productionDate: string;
+  producedQuantity: number;
+  totalCost: number;
+  notes: string | null;
+  lines: ManufacturingOrderLine[];
+}
+
+export interface CreateManufacturingOrderInput {
+  outputItemId: string;
+  warehouseId: string;
+  productionDate: string;
+  producedQuantity: number;
+  notes?: string | null;
+}
+
 export enum StockMovementType {
   Receipt = 1,
   Issue = 2,

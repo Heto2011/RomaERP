@@ -28,6 +28,10 @@ import type {
   TenantSubscription,
   SubscriptionInvoice,
   BillingRunResult,
+  ManufacturingBom,
+  SetManufacturingBomInput,
+  ManufacturingOrder,
+  CreateManufacturingOrderInput,
   AuditLogEntry,
   TrialSignupRequest,
   TrialSignupResponse,
@@ -345,6 +349,15 @@ export const ItemsApi = {
   create: (data: Partial<Item>) => apiClient.post<Item>("/items", data),
   update: (id: string, data: Partial<Item>) => apiClient.put<Item>(`/items/${id}`, data),
   remove: (id: string) => apiClient.delete(`/items/${id}`),
+};
+
+export const ManufacturingApi = {
+  getBoms: () => apiClient.get<ManufacturingBom[]>("/manufacturing/boms"),
+  getBom: (outputItemId: string) => apiClient.get<ManufacturingBom>(`/manufacturing/boms/${outputItemId}`),
+  setBom: (outputItemId: string, data: SetManufacturingBomInput) => apiClient.put<ManufacturingBom>(`/manufacturing/boms/${outputItemId}`, data),
+  removeBom: (outputItemId: string) => apiClient.delete(`/manufacturing/boms/${outputItemId}`),
+  getOrders: () => apiClient.get<ManufacturingOrder[]>("/manufacturing/orders"),
+  createOrder: (data: CreateManufacturingOrderInput) => apiClient.post<ManufacturingOrder>("/manufacturing/orders", data),
 };
 
 export const InventoryApi = {

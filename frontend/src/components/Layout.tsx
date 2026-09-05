@@ -249,6 +249,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       items: [
         { to: "/inventory/items", label: t.nav.items, icon: <IconBox /> },
         { to: "/inventory/warehouses", label: t.nav.warehouses, icon: <IconArchive /> },
+        { to: "/inventory/manufacturing", label: t.inventory.manufacturingTitle, icon: <IconRefresh /> },
         { to: "/inventory/movements", label: t.nav.stockMovements, icon: <IconSwap /> },
         { to: "/inventory/physical-stock-counts", label: t.inventory.physicalStockCountsTitle, icon: <IconCheck /> },
         { to: "/inventory/waste-entries", label: t.inventory.wasteEntriesTitle, icon: <IconTrendDown /> },

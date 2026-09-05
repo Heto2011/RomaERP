@@ -40,6 +40,7 @@ public static class DependencyInjection
         services.AddScoped<IInventoryReportService, InventoryReportService>();
         services.AddScoped<IPhysicalStockCountService, PhysicalStockCountService>();
         services.AddScoped<IWasteEntryService, WasteEntryService>();
+        services.AddScoped<IManufacturingService, ManufacturingService>();
 
         services.AddScoped<IExpenseAssistantService, ExpenseAssistantService>();
         services.AddScoped<IBankReconciliationService, BankReconciliationService>();

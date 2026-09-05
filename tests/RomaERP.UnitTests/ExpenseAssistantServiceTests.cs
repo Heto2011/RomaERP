@@ -88,9 +88,10 @@ public class ExpenseAssistantServiceTests
     public async Task StartFromReceiptImage_WithReadableAmount_JumpsStraightToFundingSourceQuestion()
     {
         var (ctx, cash, fuelExpense, _, _) = await SeedAsync();
+        var receiptDate = DateTime.UtcNow.Date.AddDays(-5);
         var parser = new FakeClaudeExpenseParser
         {
-            ImageHandler = (_, _) => new ExpenseExtractionResult(145, "EGP", "مطعم الشيف", "5300", false, null, new DateTime(2026, 8, 20))
+            ImageHandler = (_, _) => new ExpenseExtractionResult(145, "EGP", "مطعم الشيف", "5300", false, null, receiptDate)
         };
         var service = new ExpenseAssistantService(ctx, parser);
 
@@ -99,7 +100,7 @@ public class ExpenseAssistantServiceTests
         Assert.Equal(ExpenseCaptureStatus.AwaitingFundingSource, first.Status);
         Assert.Equal(145, first.Capture!.Amount);
         Assert.Equal("مطعم الشيف", first.Capture.Description);
-        Assert.Equal(new DateTime(2026, 8, 20), first.Capture.EntryDate);
+        Assert.Equal(receiptDate, first.Capture.EntryDate);
         Assert.Equal("5300", first.Capture.SuggestedAccountCode);
 
         var second = await service.SendMessageAsync(new ChatTurnRequestDto { CaptureId = first.CaptureId, Message = "جاري" }, "user-1");

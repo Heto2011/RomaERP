@@ -38,6 +38,10 @@ public interface IApplicationDbContext
     DbSet<StockMovement> StockMovements { get; }
     DbSet<PhysicalStockCount> PhysicalStockCounts { get; }
     DbSet<WasteEntry> WasteEntries { get; }
+    DbSet<ManufacturingBom> ManufacturingBoms { get; }
+    DbSet<ManufacturingBomLine> ManufacturingBomLines { get; }
+    DbSet<ManufacturingOrder> ManufacturingOrders { get; }
+    DbSet<ManufacturingOrderLine> ManufacturingOrderLines { get; }
 
     DbSet<RestaurantTable> RestaurantTables { get; }
     DbSet<RestaurantOrder> RestaurantOrders { get; }

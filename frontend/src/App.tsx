@@ -49,6 +49,7 @@ import LaborReportPage from "./pages/hr/LaborReport";
 import SalaryComponentsPage from "./pages/hr/SalaryComponents";
 import Items from "./pages/inventory/Items";
 import Warehouses from "./pages/inventory/Warehouses";
+import Manufacturing from "./pages/inventory/Manufacturing";
 import StockMovements from "./pages/inventory/StockMovements";
 import StockValuationPage from "./pages/inventory/StockValuation";
 import InventoryMovementPage from "./pages/inventory/InventoryMovement";
@@ -145,6 +146,7 @@ export default function App() {
       <Route path="/restaurant/pos" element={<ProtectedRoute layout={false} loginPath="/pos-login"><RestaurantPOS /></ProtectedRoute>} />
       <Route path="/inventory/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
       <Route path="/inventory/warehouses" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />
+      <Route path="/inventory/manufacturing" element={<ProtectedRoute><Manufacturing /></ProtectedRoute>} />
       <Route path="/inventory/movements" element={<ProtectedRoute><StockMovements /></ProtectedRoute>} />
       <Route path="/inventory/reports/stock-valuation" element={<ProtectedRoute><StockValuationPage /></ProtectedRoute>} />
       <Route path="/inventory/reports/movement-analysis" element={<ProtectedRoute><InventoryMovementPage /></ProtectedRoute>} />
