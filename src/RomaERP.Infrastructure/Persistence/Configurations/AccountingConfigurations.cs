@@ -1,0 +1,185 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+using RomaERP.Domain.Accounting;
+
+namespace RomaERP.Infrastructure.Persistence.Configurations;
+
+public class AccountConfiguration : IEntityTypeConfiguration<Account>
+{
+    public void Configure(EntityTypeBuilder<Account> builder)
+    {
+        builder.Property(a => a.Code).HasMaxLength(20).IsRequired();
+        builder.Property(a => a.NameAr).HasMaxLength(200).IsRequired();
+        builder.Property(a => a.NameEn).HasMaxLength(200).IsRequired();
+        builder.HasIndex(a => a.Code).IsUnique();
+
+        builder.HasOne(a => a.ParentAccount)
+            .WithMany(a => a.Children)
+            .HasForeignKey(a => a.ParentAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(a => !a.IsDeleted);
+    }
+}
+
+public class CostCenterConfiguration : IEntityTypeConfiguration<CostCenter>
+{
+    public void Configure(EntityTypeBuilder<CostCenter> builder)
+    {
+        builder.Property(c => c.Code).HasMaxLength(20).IsRequired();
+        builder.Property(c => c.NameAr).HasMaxLength(200).IsRequired();
+        builder.Property(c => c.NameEn).HasMaxLength(200).IsRequired();
+        builder.HasIndex(c => c.Code).IsUnique();
+        builder.HasQueryFilter(c => !c.IsDeleted);
+    }
+}
+
+public class FiscalYearConfiguration : IEntityTypeConfiguration<FiscalYear>
+{
+    public void Configure(EntityTypeBuilder<FiscalYear> builder)
+    {
+        builder.Property(f => f.Name).HasMaxLength(50).IsRequired();
+        builder.HasQueryFilter(f => !f.IsDeleted);
+    }
+}
+
+public class FiscalPeriodConfiguration : IEntityTypeConfiguration<FiscalPeriod>
+{
+    public void Configure(EntityTypeBuilder<FiscalPeriod> builder)
+    {
+        builder.Property(p => p.Name).HasMaxLength(50).IsRequired();
+
+        builder.HasOne(p => p.FiscalYear)
+            .WithMany(y => y.Periods)
+            .HasForeignKey(p => p.FiscalYearId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(p => !p.IsDeleted);
+    }
+}
+
+public class JournalEntryConfiguration : IEntityTypeConfiguration<JournalEntry>
+{
+    public void Configure(EntityTypeBuilder<JournalEntry> builder)
+    {
+        builder.Property(e => e.EntryNumber).HasMaxLength(30).IsRequired();
+        builder.Property(e => e.Description).HasMaxLength(500);
+        builder.Property(e => e.Reference).HasMaxLength(100);
+        builder.HasIndex(e => e.EntryNumber).IsUnique();
+
+        builder.HasOne(e => e.FiscalPeriod)
+            .WithMany()
+            .HasForeignKey(e => e.FiscalPeriodId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(e => e.Lines)
+            .WithOne(l => l.JournalEntry)
+            .HasForeignKey(l => l.JournalEntryId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.Ignore(e => e.TotalDebit);
+        builder.Ignore(e => e.TotalCredit);
+        builder.Ignore(e => e.IsBalanced);
+
+        builder.HasQueryFilter(e => !e.IsDeleted);
+    }
+}
+
+public class JournalEntryLineConfiguration : IEntityTypeConfiguration<JournalEntryLine>
+{
+    public void Configure(EntityTypeBuilder<JournalEntryLine> builder)
+    {
+        builder.Property(l => l.Debit).HasPrecision(18, 2);
+        builder.Property(l => l.Credit).HasPrecision(18, 2);
+        builder.Property(l => l.Description).HasMaxLength(500);
+
+        builder.HasOne(l => l.Account)
+            .WithMany(a => a.JournalEntryLines)
+            .HasForeignKey(l => l.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(l => l.CostCenter)
+            .WithMany()
+            .HasForeignKey(l => l.CostCenterId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class FixedAssetConfiguration : IEntityTypeConfiguration<FixedAsset>
+{
+    public void Configure(EntityTypeBuilder<FixedAsset> builder)
+    {
+        builder.Property(a => a.Code).HasMaxLength(20).IsRequired();
+        builder.Property(a => a.NameAr).HasMaxLength(200).IsRequired();
+        builder.Property(a => a.NameEn).HasMaxLength(200).IsRequired();
+        builder.Property(a => a.AcquisitionCost).HasPrecision(18, 2);
+        builder.Property(a => a.SalvageValue).HasPrecision(18, 2);
+        builder.Property(a => a.DecliningBalanceRate).HasPrecision(9, 4);
+        builder.Property(a => a.AccumulatedDepreciation).HasPrecision(18, 2);
+        builder.HasIndex(a => a.Code).IsUnique();
+
+        builder.HasOne(a => a.AssetAccount)
+            .WithMany()
+            .HasForeignKey(a => a.AssetAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(a => a.AccumulatedDepreciationAccount)
+            .WithMany()
+            .HasForeignKey(a => a.AccumulatedDepreciationAccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Ignore(a => a.DepreciableBase);
+        builder.Ignore(a => a.BookValue);
+
+        builder.HasQueryFilter(a => !a.IsDeleted);
+    }
+}
+
+public class DepreciationRunConfiguration : IEntityTypeConfiguration<DepreciationRun>
+{
+    public void Configure(EntityTypeBuilder<DepreciationRun> builder)
+    {
+        builder.Property(r => r.Description).HasMaxLength(500);
+
+        builder.HasOne(r => r.FiscalPeriod)
+            .WithMany()
+            .HasForeignKey(r => r.FiscalPeriodId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(r => r.JournalEntry)
+            .WithMany()
+            .HasForeignKey(r => r.JournalEntryId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasMany(r => r.Lines)
+            .WithOne(l => l.DepreciationRun)
+            .HasForeignKey(l => l.DepreciationRunId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(r => !r.IsDeleted);
+    }
+}
+
+public class DepreciationRunLineConfiguration : IEntityTypeConfiguration<DepreciationRunLine>
+{
+    public void Configure(EntityTypeBuilder<DepreciationRunLine> builder)
+    {
+        builder.Property(l => l.Amount).HasPrecision(18, 2);
+
+        builder.HasOne(l => l.FixedAsset)
+            .WithMany()
+            .HasForeignKey(l => l.FixedAssetId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class ManualProfitEntryConfiguration : IEntityTypeConfiguration<ManualProfitEntry>
+{
+    public void Configure(EntityTypeBuilder<ManualProfitEntry> builder)
+    {
+        builder.Property(e => e.Name).HasMaxLength(200).IsRequired();
+        builder.Property(e => e.Revenue).HasPrecision(18, 2);
+        builder.Property(e => e.Cost).HasPrecision(18, 2);
+        builder.HasQueryFilter(e => !e.IsDeleted);
+    }
+}
