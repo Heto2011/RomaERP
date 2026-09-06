@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { AccountsApi, ItemsApi, LookupsApi, PurchasingApi } from "../../api/services";
+import { AccountsApi, ExchangeRatesApi, ItemsApi, LookupsApi, PurchasingApi } from "../../api/services";
 import { PaymentTerm, type Account, type FiscalPeriod, type Item, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
@@ -16,6 +16,8 @@ export default function PurchaseInvoices() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [items, setItems] = useState<Item[]>([]);
   const [vatRate, setVatRate] = useState(0);
+  const [functionalCurrency, setFunctionalCurrency] = useState("");
+  const [foreignCurrencies, setForeignCurrencies] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
@@ -24,6 +26,7 @@ export default function PurchaseInvoices() {
   const [fiscalPeriodId, setFiscalPeriodId] = useState("");
   const [invoiceDate, setInvoiceDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [paymentTerm, setPaymentTerm] = useState<PaymentTerm>(PaymentTerm.Cash);
+  const [currencyCode, setCurrencyCode] = useState("");
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<PurchaseInvoiceLineInput[]>([]);
 
@@ -39,13 +42,14 @@ export default function PurchaseInvoices() {
   const grandTotal = netTotal + vatTotal;
 
   async function load() {
-    const [invRes, vendRes, periodRes, accRes, itemsRes, settingsRes] = await Promise.all([
+    const [invRes, vendRes, periodRes, accRes, itemsRes, settingsRes, ratesRes] = await Promise.all([
       PurchasingApi.getInvoices(),
       PurchasingApi.getVendors(),
       LookupsApi.fiscalPeriods(),
       AccountsApi.getAll(),
       ItemsApi.getAll(),
       LookupsApi.companySettings(),
+      ExchangeRatesApi.getAll(),
     ]);
     setInvoices(invRes.data);
     setVendors(vendRes.data);
@@ -53,6 +57,8 @@ export default function PurchaseInvoices() {
     setAccounts(accRes.data);
     setItems(itemsRes.data);
     setVatRate(settingsRes.data.vatRate);
+    setFunctionalCurrency(settingsRes.data.defaultCurrency);
+    setForeignCurrencies([...new Set(ratesRes.data.map((r) => r.currencyCode))]);
   }
 
   useEffect(() => {
@@ -94,11 +100,13 @@ export default function PurchaseInvoices() {
         fiscalPeriodId,
         paymentTerm,
         notes: notes || null,
+        currencyCode: currencyCode || null,
         lines,
       });
       setShowForm(false);
       setVendorId("");
       setFiscalPeriodId("");
+      setCurrencyCode("");
       setNotes("");
       setLines(expenseAccounts.length > 0 ? [emptyLine(expenseAccounts[0].id)] : []);
       setPaymentTerm(PaymentTerm.Cash);
@@ -198,6 +206,17 @@ export default function PurchaseInvoices() {
                   <option value={PaymentTerm.Credit}>🗓 {t.paymentTerm.credit}</option>
                 </select>
               </div>
+              {foreignCurrencies.length > 0 && (
+                <div className="form-field">
+                  <label>{t.accounting.currencyCode}</label>
+                  <select value={currencyCode} onChange={(e) => setCurrencyCode(e.target.value)}>
+                    <option value="">{functionalCurrency} ({t.accounting.functionalCurrency})</option>
+                    {foreignCurrencies.map((c) => (
+                      <option key={c} value={c}>{c}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             <div style={{ marginTop: 16 }}>
@@ -320,7 +339,7 @@ export default function PurchaseInvoices() {
                 <td>{inv.vendorName}</td>
                 <td>{inv.subTotal.toLocaleString()}</td>
                 <td>{inv.vatAmount.toLocaleString()}</td>
-                <td>{inv.totalAmount.toLocaleString()}</td>
+                <td>{inv.totalAmount.toLocaleString()} {inv.currencyCode !== functionalCurrency ? inv.currencyCode : ""}</td>
                 <td>{paymentTermLabel[inv.paymentTerm]}</td>
                 <td>{inv.outstandingAmount.toLocaleString()}</td>
                 <td style={{ display: "flex", gap: 6 }}>

@@ -22,6 +22,55 @@ public static class TenantBaselineSeeder
         await context.SaveChangesAsync();
     }
 
+    /// <summary>Backfills the two FX Gain/Loss accounts (added after go-live, alongside multi-currency) into
+    /// tenant databases whose chart of accounts was already seeded before these existed. Safe to run on
+    /// every startup — SeedChartOfAccountsAsync above is a no-op once any account exists, so this is the
+    /// only path that reaches already-provisioned tenants.</summary>
+    public static async Task EnsureFxAccountsAsync(ApplicationDbContext context)
+    {
+        var toAdd = new List<Account>();
+
+        if (!await context.Accounts.AnyAsync(a => a.Code == "4210"))
+        {
+            var revenue = await context.Accounts.FirstOrDefaultAsync(a => a.Code == "4000");
+            toAdd.Add(new Account
+            {
+                Code = "4210",
+                NameAr = "أرباح فروق العملة",
+                NameEn = "Foreign Exchange Gain",
+                AccountType = AccountType.Revenue,
+                Nature = AccountNature.Credit,
+                ParentAccountId = revenue?.Id,
+                IsControlAccount = false,
+                Level = 2,
+                IsActive = true
+            });
+        }
+
+        if (!await context.Accounts.AnyAsync(a => a.Code == "5450"))
+        {
+            var expenses = await context.Accounts.FirstOrDefaultAsync(a => a.Code == "5000");
+            toAdd.Add(new Account
+            {
+                Code = "5450",
+                NameAr = "خسائر فروق العملة",
+                NameEn = "Foreign Exchange Loss",
+                AccountType = AccountType.Expense,
+                Nature = AccountNature.Debit,
+                ParentAccountId = expenses?.Id,
+                IsControlAccount = false,
+                Level = 2,
+                IsActive = true
+            });
+        }
+
+        if (toAdd.Count == 0)
+            return;
+
+        await context.Accounts.AddRangeAsync(toAdd);
+        await context.SaveChangesAsync();
+    }
+
     public static async Task SeedFiscalYearAsync(ApplicationDbContext context)
     {
         if (await context.FiscalYears.AnyAsync())

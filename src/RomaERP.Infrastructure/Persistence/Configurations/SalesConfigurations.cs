@@ -26,6 +26,8 @@ public class SalesInvoiceConfiguration : IEntityTypeConfiguration<SalesInvoice>
     public void Configure(EntityTypeBuilder<SalesInvoice> builder)
     {
         builder.Property(i => i.InvoiceNumber).HasMaxLength(20).IsRequired();
+        builder.Property(i => i.CurrencyCode).HasMaxLength(10).IsRequired();
+        builder.Property(i => i.ExchangeRateToFunctional).HasPrecision(18, 6);
         builder.Property(i => i.SubTotal).HasPrecision(18, 2);
         builder.Property(i => i.VatRate).HasPrecision(5, 4);
         builder.Property(i => i.VatAmount).HasPrecision(18, 2);
@@ -105,6 +107,7 @@ public class SalesPaymentConfiguration : IEntityTypeConfiguration<SalesPayment>
     public void Configure(EntityTypeBuilder<SalesPayment> builder)
     {
         builder.Property(p => p.Amount).HasPrecision(18, 2);
+        builder.Property(p => p.ExchangeRateToFunctional).HasPrecision(18, 6);
         builder.Property(p => p.Reference).HasMaxLength(200);
 
         builder.HasOne(p => p.JournalEntry)

@@ -27,7 +27,7 @@ public static class PurchaseInvoiceHtmlTemplate
             PaymentTerm.Credit => "آجل",
             _ => invoice.PaymentTerm.ToString()
         };
-        var currency = Enc(settings.DefaultCurrency);
+        var currency = Enc(string.IsNullOrWhiteSpace(invoice.CurrencyCode) ? settings.DefaultCurrency : invoice.CurrencyCode);
 
         var linesHtml = new StringBuilder();
         foreach (var line in invoice.Lines.OrderBy(l => l.LineNumber))

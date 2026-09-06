@@ -121,6 +121,7 @@ const ar = {
     openingBalances: "الأرصدة الافتتاحية",
     journalEntries: "القيود اليومية",
     fiscalPeriods: "إقفال الفترات",
+    exchangeRates: "أسعار الصرف",
     fixedAssets: "الأصول الثابتة",
     depreciationRuns: "قيود الإهلاك",
     reports: "التقارير",
@@ -550,6 +551,15 @@ const ar = {
     openStatus: "مفتوحة",
     closePeriod: "إقفال",
     reopenPeriod: "فتح",
+
+    exchangeRatesTitle: "أسعار الصرف",
+    exchangeRatesIntro:
+      "أضف سعر صرف لأي عملة أجنبية عشان تقدر تصدر فواتير بيع وشراء بغير عملة الشركة الأساسية. سعر الصرف = كام وحدة من عملة الشركة تساوي وحدة واحدة من العملة الأجنبية.",
+    currencyCode: "كود العملة",
+    functionalCurrency: "عملة الشركة الأساسية",
+    rateDate: "التاريخ",
+    rateToFunctional: "سعر الصرف",
+    addRate: "+ إضافة سعر صرف",
   },
   fixedAssets: {
     title: "الأصول الثابتة",
@@ -1149,6 +1159,7 @@ const en: typeof ar = {
     openingBalances: "Opening Balances",
     journalEntries: "Journal Entries",
     fiscalPeriods: "Period Closing",
+    exchangeRates: "Exchange Rates",
     fixedAssets: "Fixed Assets",
     depreciationRuns: "Depreciation Runs",
     reports: "Reports",
@@ -1578,6 +1589,15 @@ const en: typeof ar = {
     openStatus: "Open",
     closePeriod: "Close",
     reopenPeriod: "Reopen",
+
+    exchangeRatesTitle: "Exchange Rates",
+    exchangeRatesIntro:
+      "Add an exchange rate for any foreign currency so you can raise sales and purchase invoices in it. Rate = how many units of the company's own currency equal 1 unit of the foreign currency.",
+    currencyCode: "Currency Code",
+    functionalCurrency: "Company's Functional Currency",
+    rateDate: "Date",
+    rateToFunctional: "Exchange Rate",
+    addRate: "+ Add Exchange Rate",
   },
   fixedAssets: {
     title: "Fixed Assets",

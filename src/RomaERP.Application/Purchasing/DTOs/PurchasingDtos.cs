@@ -42,6 +42,11 @@ public class CreatePurchaseInvoiceDto
     public Guid FiscalPeriodId { get; set; }
     public PaymentTerm PaymentTerm { get; set; }
     public string? Notes { get; set; }
+
+    /// <summary>Optional — the currency the invoice amounts are entered in. Null/omitted means the
+    /// tenant's own functional currency (CompanySettings.DefaultCurrency). A foreign currency needs an
+    /// exchange rate already set up (see Exchange Rates screen) for this invoice's date.</summary>
+    public string? CurrencyCode { get; set; }
     public List<PurchaseInvoiceLineInputDto> Lines { get; set; } = new();
 }
 
@@ -131,6 +136,8 @@ public class PurchaseInvoiceDto
     public DateTime InvoiceDate { get; set; }
     public Guid VendorId { get; set; }
     public string VendorName { get; set; } = string.Empty;
+    public string CurrencyCode { get; set; } = string.Empty;
+    public decimal ExchangeRateToFunctional { get; set; }
     public decimal SubTotal { get; set; }
     public decimal VatRate { get; set; }
     public decimal VatAmount { get; set; }

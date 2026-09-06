@@ -53,6 +53,8 @@ import type {
   ChatTurnResponse,
   CompanySettingsLookup,
   CostCenterLookup,
+  ExchangeRate,
+  SetExchangeRateInput,
   CreateCustomerInput,
   CreatePurchaseInvoiceInput,
   CreateDepreciationRunInput,
@@ -144,6 +146,11 @@ export const JournalEntriesApi = {
     apiClient.get<TrialBalanceLine[]>("/journalentries/trial-balance", {
       params: asOfDate ? { asOfDate } : undefined,
     }),
+};
+
+export const ExchangeRatesApi = {
+  getAll: () => apiClient.get<ExchangeRate[]>("/exchange-rates"),
+  set: (data: SetExchangeRateInput) => apiClient.post<ExchangeRate>("/exchange-rates", data),
 };
 
 export const LookupsApi = {

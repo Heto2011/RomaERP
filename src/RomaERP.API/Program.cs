@@ -177,6 +177,7 @@ static async Task MigrateAllTenantsAsync(IServiceProvider services)
 
         var db = tenantScope.ServiceProvider.GetRequiredService<RomaERP.Infrastructure.Persistence.ApplicationDbContext>();
         await db.Database.MigrateAsync();
+        await RomaERP.Infrastructure.Persistence.Seed.TenantBaselineSeeder.EnsureFxAccountsAsync(db);
     }
 }
 

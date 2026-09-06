@@ -189,6 +189,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/accounting/opening-balances", label: t.nav.openingBalances, icon: <IconWallet /> },
         { to: "/accounting/journal-entries", label: t.nav.journalEntries, icon: <IconBook /> },
         { to: "/accounting/fiscal-periods", label: t.nav.fiscalPeriods, icon: <IconCalendar /> },
+        { to: "/accounting/exchange-rates", label: t.nav.exchangeRates, icon: <IconSwap /> },
         { to: "/accounting/fixed-assets", label: t.nav.fixedAssets, icon: <IconBox /> },
         { to: "/accounting/depreciation-runs", label: t.nav.depreciationRuns, icon: <IconTrendDown /> },
       ],

@@ -631,6 +631,19 @@ export interface CompanySettingsLookup {
   defaultCurrency: string;
 }
 
+export interface ExchangeRate {
+  id: string;
+  currencyCode: string;
+  rateDate: string;
+  rateToFunctional: number;
+}
+
+export interface SetExchangeRateInput {
+  currencyCode: string;
+  rateDate: string;
+  rateToFunctional: number;
+}
+
 export interface FiscalPeriod {
   id: string;
   name: string;
@@ -975,6 +988,8 @@ export interface CreateSalesInvoiceInput {
   paymentTerm: PaymentTerm;
   notes?: string | null;
   warehouseId?: string | null;
+  /// Optional — omit to invoice in the tenant's own functional currency.
+  currencyCode?: string | null;
   lines: SalesInvoiceLineInput[];
   /// Required only when paymentTerm is Installment.
   numberOfInstallments?: number | null;
@@ -1001,6 +1016,8 @@ export interface SalesInvoice {
   invoiceDate: string;
   customerId: string;
   customerName: string;
+  currencyCode: string;
+  exchangeRateToFunctional: number;
   subTotal: number;
   vatRate: number;
   vatAmount: number;
@@ -1138,6 +1155,8 @@ export interface CreatePurchaseInvoiceInput {
   fiscalPeriodId: string;
   paymentTerm: PaymentTerm;
   notes?: string | null;
+  /// Optional — omit to invoice in the tenant's own functional currency.
+  currencyCode?: string | null;
   lines: PurchaseInvoiceLineInput[];
 }
 
@@ -1188,6 +1207,8 @@ export interface PurchaseInvoice {
   invoiceDate: string;
   vendorId: string;
   vendorName: string;
+  currencyCode: string;
+  exchangeRateToFunctional: number;
   subTotal: number;
   vatRate: number;
   vatAmount: number;

@@ -87,8 +87,9 @@ public static class ChartOfAccountsFactory
         var revenue = New("4000", "الإيرادات", "Revenue", AccountType.Revenue, AccountNature.Credit, null, true, 1);
         var salesRevenue = New("4100", "إيرادات المبيعات", "Sales Revenue", AccountType.Revenue, AccountNature.Credit, revenue, false, 2);
         var otherRevenue = New("4200", "إيرادات أخرى", "Other Revenue", AccountType.Revenue, AccountNature.Credit, revenue, false, 2);
+        var fxGain = New("4210", "أرباح فروق العملة", "Foreign Exchange Gain", AccountType.Revenue, AccountNature.Credit, revenue, false, 2);
 
-        accounts.AddRange(new[] { revenue, salesRevenue, otherRevenue });
+        accounts.AddRange(new[] { revenue, salesRevenue, otherRevenue, fxGain });
 
         // ===== 5000 المصروفات =====
         var expenses = New("5000", "المصروفات", "Expenses", AccountType.Expense, AccountNature.Debit, null, true, 1);
@@ -97,10 +98,11 @@ public static class ChartOfAccountsFactory
         var adminExpenses = New("5300", "مصروفات إدارية وعمومية", "General & Admin Expenses", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
         var depreciationExpense = New("5400", "مصروف الإهلاك", "Depreciation Expense", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
         var costOfGoodsSold = New("5500", "تكلفة البضاعة المباعة", "Cost of Goods Sold", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
+        var fxLoss = New("5450", "خسائر فروق العملة", "Foreign Exchange Loss", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
 
         accounts.AddRange(new[]
         {
-            expenses, salariesExpense, rentExpense, adminExpenses, depreciationExpense, costOfGoodsSold
+            expenses, salariesExpense, rentExpense, adminExpenses, depreciationExpense, costOfGoodsSold, fxLoss
         });
 
         return accounts;

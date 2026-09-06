@@ -1,10 +1,12 @@
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Accounting;
+using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.Sales.DTOs;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Common;
+using RomaERP.Domain.EInvoicing;
 using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Sales;
 using RomaERP.Domain.Tenancy;
@@ -15,11 +17,13 @@ public class SalesService : ISalesService
 {
     private readonly IApplicationDbContext _context;
     private readonly IHtmlToPdfRenderer _pdfRenderer;
+    private readonly IExchangeRateService _exchangeRateService;
 
-    public SalesService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer)
+    public SalesService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer, IExchangeRateService exchangeRateService)
     {
         _context = context;
         _pdfRenderer = pdfRenderer;
+        _exchangeRateService = exchangeRateService;
     }
 
     public async Task<List<CustomerDto>> GetCustomersAsync(CancellationToken ct = default)
@@ -134,7 +138,17 @@ public class SalesService : ISalesService
             }
         }
 
-        var vatRate = await GetVatRateAsync(ct);
+        var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct);
+        var vatRate = settings?.VatRate ?? 0;
+
+        if (!string.IsNullOrWhiteSpace(dto.CurrencyCode)
+            && dto.CurrencyCode.Trim().ToUpperInvariant() != (settings?.DefaultCurrency ?? "EGP")
+            && settings is not null && settings.EInvoicingProvider != EInvoicingProvider.None)
+        {
+            throw new ValidationAppException("لا يمكن حاليًا إصدار فاتورة بعملة مختلفة عن عملة الشركة الأساسية لمنشأة مفعّل عليها الفوترة الإلكترونية.");
+        }
+
+        var (currencyCode, exchangeRate) = await _exchangeRateService.ResolveAsync(dto.CurrencyCode, dto.InvoiceDate, ct);
 
         // Fetched once: this request may add up to two new journal entries (revenue + COGS) before either
         // is saved, so GenerateEntryNumberAsync's DB count can't be re-queried between them without colliding.
@@ -154,15 +168,21 @@ public class SalesService : ISalesService
         var vatAmount = Math.Round(subTotal * vatRate, 2);
         var totalAmount = subTotal + vatAmount;
 
+        // GL posting and AR always happen in the tenant's functional currency — only the invoice document
+        // itself (SubTotal/VatAmount/TotalAmount below) is denominated in the transaction currency.
+        var functionalSubTotal = Math.Round(subTotal * exchangeRate, 2);
+        var functionalVatAmount = Math.Round(vatAmount * exchangeRate, 2);
+        var functionalTotalAmount = functionalSubTotal + functionalVatAmount;
+
         var salesRevenueAccount = await GetAccountAsync(AccountingConstants.SalesRevenueAccountCode, "إيرادات المبيعات", ct);
         var outputVatAccount = vatAmount > 0 ? await GetAccountAsync(AccountingConstants.OutputVatAccountCode, "ضريبة القيمة المضافة (مخرجات)", ct) : null;
 
         var journalLines = new List<JournalEntryLine>
         {
-            new() { LineNumber = 2, AccountId = salesRevenueAccount.Id, Debit = 0, Credit = subTotal, Description = "إيرادات مبيعات" }
+            new() { LineNumber = 2, AccountId = salesRevenueAccount.Id, Debit = 0, Credit = functionalSubTotal, Description = "إيرادات مبيعات" }
         };
         if (outputVatAccount is not null)
-            journalLines.Add(new JournalEntryLine { LineNumber = 3, AccountId = outputVatAccount.Id, Debit = 0, Credit = vatAmount, Description = "ضريبة مخرجات" });
+            journalLines.Add(new JournalEntryLine { LineNumber = 3, AccountId = outputVatAccount.Id, Debit = 0, Credit = functionalVatAmount, Description = "ضريبة مخرجات" });
 
         if (dto.PaymentTerm == PaymentTerm.Installment)
         {
@@ -176,14 +196,14 @@ public class SalesService : ISalesService
         if (dto.PaymentTerm is PaymentTerm.Credit or PaymentTerm.Installment)
         {
             var arAccount = await GetAccountAsync(AccountingConstants.AccountsReceivableAccountCode, "العملاء", ct);
-            journalLines.Insert(0, new JournalEntryLine { LineNumber = 1, AccountId = arAccount.Id, Debit = totalAmount, Credit = 0, Description = $"فاتورة مبيعات آجلة - {customer.NameAr}" });
-            customer.ArBalance += totalAmount;
+            journalLines.Insert(0, new JournalEntryLine { LineNumber = 1, AccountId = arAccount.Id, Debit = functionalTotalAmount, Credit = 0, Description = $"فاتورة مبيعات آجلة - {customer.NameAr}" });
+            customer.ArBalance += functionalTotalAmount;
             paidAmount = 0;
         }
         else
         {
             var settlementAccount = await GetSettlementAccountAsync(dto.PaymentTerm, ct);
-            journalLines.Insert(0, new JournalEntryLine { LineNumber = 1, AccountId = settlementAccount.Id, Debit = totalAmount, Credit = 0, Description = $"فاتورة مبيعات - {customer.NameAr}" });
+            journalLines.Insert(0, new JournalEntryLine { LineNumber = 1, AccountId = settlementAccount.Id, Debit = functionalTotalAmount, Credit = 0, Description = $"فاتورة مبيعات - {customer.NameAr}" });
             paidAmount = totalAmount;
         }
 
@@ -208,6 +228,8 @@ public class SalesService : ISalesService
             CustomerId = customer.Id,
             FiscalPeriodId = dto.FiscalPeriodId,
             WarehouseId = warehouse?.Id,
+            CurrencyCode = currencyCode,
+            ExchangeRateToFunctional = exchangeRate,
             SubTotal = subTotal,
             VatRate = vatRate,
             VatAmount = vatAmount,
@@ -328,6 +350,29 @@ public class SalesService : ISalesService
         var settlementAccount = await GetSettlementAccountAsync(dto.Method, ct);
         var arAccount = await GetAccountAsync(AccountingConstants.AccountsReceivableAccountCode, "العملاء", ct);
 
+        // Payment is always collected in the invoice's own currency; the rate on the payment date may
+        // differ from the invoice's rate, in which case the gap is a realized FX gain/loss.
+        var (_, paymentRate) = await _exchangeRateService.ResolveAsync(invoice.CurrencyCode, dto.PaymentDate, ct);
+        var functionalAtInvoiceRate = Math.Round(dto.Amount * invoice.ExchangeRateToFunctional, 2);
+        var functionalAtPaymentRate = Math.Round(dto.Amount * paymentRate, 2);
+        var fxDifference = functionalAtPaymentRate - functionalAtInvoiceRate;
+
+        var entryLines = new List<JournalEntryLine>
+        {
+            new() { LineNumber = 1, AccountId = settlementAccount.Id, Debit = functionalAtPaymentRate, Credit = 0, Description = "تحصيل" },
+            new() { LineNumber = 2, AccountId = arAccount.Id, Debit = 0, Credit = functionalAtInvoiceRate, Description = "تخفيض رصيد العميل" }
+        };
+        if (fxDifference > 0)
+        {
+            var fxGainAccount = await GetAccountAsync(AccountingConstants.FxGainAccountCode, "أرباح فروق العملة", ct);
+            entryLines.Add(new JournalEntryLine { LineNumber = 3, AccountId = fxGainAccount.Id, Debit = 0, Credit = fxDifference, Description = "أرباح فروق عملة عند التحصيل" });
+        }
+        else if (fxDifference < 0)
+        {
+            var fxLossAccount = await GetAccountAsync(AccountingConstants.FxLossAccountCode, "خسائر فروق العملة", ct);
+            entryLines.Add(new JournalEntryLine { LineNumber = 3, AccountId = fxLossAccount.Id, Debit = -fxDifference, Credit = 0, Description = "خسائر فروق عملة عند التحصيل" });
+        }
+
         var entry = new JournalEntry
         {
             EntryNumber = await GenerateEntryNumberAsync(ct),
@@ -336,16 +381,12 @@ public class SalesService : ISalesService
             Description = $"تحصيل فاتورة مبيعات {invoice.InvoiceNumber} - {invoice.Customer!.NameAr}",
             Reference = AccountingConstants.SalesInvoiceReference,
             Status = JournalEntryStatus.Posted,
-            Lines =
-            {
-                new JournalEntryLine { LineNumber = 1, AccountId = settlementAccount.Id, Debit = dto.Amount, Credit = 0, Description = "تحصيل" },
-                new JournalEntryLine { LineNumber = 2, AccountId = arAccount.Id, Debit = 0, Credit = dto.Amount, Description = "تخفيض رصيد العميل" }
-            }
+            Lines = entryLines
         };
         _context.JournalEntries.Add(entry);
 
         invoice.PaidAmount += dto.Amount;
-        invoice.Customer!.ArBalance -= dto.Amount;
+        invoice.Customer!.ArBalance -= functionalAtInvoiceRate;
 
         _context.SalesPayments.Add(new SalesPayment
         {
@@ -354,6 +395,7 @@ public class SalesService : ISalesService
             Amount = dto.Amount,
             Method = dto.Method,
             Reference = dto.Reference,
+            ExchangeRateToFunctional = paymentRate,
             JournalEntry = entry
         });
 
@@ -658,6 +700,8 @@ public class SalesService : ISalesService
         InvoiceDate = i.InvoiceDate,
         CustomerId = i.CustomerId,
         CustomerName = i.Customer?.NameAr ?? string.Empty,
+        CurrencyCode = i.CurrencyCode,
+        ExchangeRateToFunctional = i.ExchangeRateToFunctional,
         SubTotal = i.SubTotal,
         VatRate = i.VatRate,
         VatAmount = i.VatAmount,

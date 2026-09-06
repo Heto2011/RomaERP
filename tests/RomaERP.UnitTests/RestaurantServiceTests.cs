@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Inventory.Services;
 using RomaERP.Application.Restaurant.DTOs;
@@ -67,7 +68,7 @@ public class RestaurantServiceTests
     }
 
     private static RestaurantService BuildService(ApplicationDbContext ctx)
-        => new(ctx, new SalesService(ctx, new FakeHtmlToPdfRenderer()), new ItemLotService(ctx));
+        => new(ctx, new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx)), new ItemLotService(ctx));
 
     [Fact]
     public async Task CreateOrder_DineIn_OccupiesTableAndGeneratesOrderNumber()

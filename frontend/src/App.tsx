@@ -32,6 +32,7 @@ import BreakEvenPage from "./pages/accounting/BreakEven";
 import WhatIfCalculatorPage from "./pages/accounting/WhatIfCalculator";
 import BottleneckPage from "./pages/accounting/Bottleneck";
 import FiscalPeriods from "./pages/accounting/FiscalPeriods";
+import ExchangeRates from "./pages/accounting/ExchangeRates";
 import FixedAssets from "./pages/accounting/FixedAssets";
 import DepreciationRuns from "./pages/accounting/DepreciationRuns";
 import Customers from "./pages/sales/Customers";
@@ -125,6 +126,7 @@ export default function App() {
       <Route path="/accounting/what-if" element={<ProtectedRoute><WhatIfCalculatorPage /></ProtectedRoute>} />
       <Route path="/accounting/bottleneck" element={<ProtectedRoute><BottleneckPage /></ProtectedRoute>} />
       <Route path="/accounting/fiscal-periods" element={<ProtectedRoute><FiscalPeriods /></ProtectedRoute>} />
+      <Route path="/accounting/exchange-rates" element={<ProtectedRoute><ExchangeRates /></ProtectedRoute>} />
       <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssets /></ProtectedRoute>} />
       <Route path="/accounting/depreciation-runs" element={<ProtectedRoute><DepreciationRuns /></ProtectedRoute>} />
       <Route path="/sales/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />

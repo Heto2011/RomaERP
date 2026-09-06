@@ -20,6 +20,15 @@ public class SalesInvoice : AuditableEntity
     public Guid? WarehouseId { get; set; }
     public Warehouse? Warehouse { get; set; }
 
+    /// <summary>ISO-like currency code the invoice's amounts (SubTotal/VatAmount/TotalAmount/PaidAmount) are
+    /// denominated in. Defaults to the tenant's functional currency (CompanySettings.DefaultCurrency), in
+    /// which case ExchangeRateToFunctional is always 1 and nothing below behaves differently than before
+    /// multi-currency existed.</summary>
+    public string CurrencyCode { get; set; } = string.Empty;
+    /// <summary>Units of the tenant's functional currency equal to 1 unit of CurrencyCode, captured at
+    /// invoice creation — used to convert this invoice's AR/GL postings into the functional currency.</summary>
+    public decimal ExchangeRateToFunctional { get; set; } = 1;
+
     public decimal SubTotal { get; set; }
     public decimal VatRate { get; set; }
     public decimal VatAmount { get; set; }
@@ -89,6 +98,11 @@ public class SalesPayment : AuditableEntity
     public decimal Amount { get; set; }
     public PaymentTerm Method { get; set; }
     public string? Reference { get; set; }
+
+    /// <summary>Rate used to convert this payment (always in the invoice's own CurrencyCode) into the
+    /// tenant's functional currency on the payment date — may differ from the invoice's own rate, in
+    /// which case the difference is posted as a realized FX gain/loss.</summary>
+    public decimal ExchangeRateToFunctional { get; set; } = 1;
 
     public Guid? JournalEntryId { get; set; }
     public JournalEntry? JournalEntry { get; set; }

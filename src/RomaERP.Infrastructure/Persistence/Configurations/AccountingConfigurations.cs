@@ -173,6 +173,17 @@ public class DepreciationRunLineConfiguration : IEntityTypeConfiguration<Depreci
     }
 }
 
+public class ExchangeRateConfiguration : IEntityTypeConfiguration<ExchangeRate>
+{
+    public void Configure(EntityTypeBuilder<ExchangeRate> builder)
+    {
+        builder.Property(r => r.CurrencyCode).HasMaxLength(10).IsRequired();
+        builder.Property(r => r.RateToFunctional).HasPrecision(18, 6);
+        builder.HasIndex(r => new { r.CurrencyCode, r.RateDate }).IsUnique();
+        builder.HasQueryFilter(r => !r.IsDeleted);
+    }
+}
+
 public class ManualProfitEntryConfiguration : IEntityTypeConfiguration<ManualProfitEntry>
 {
     public void Configure(EntityTypeBuilder<ManualProfitEntry> builder)

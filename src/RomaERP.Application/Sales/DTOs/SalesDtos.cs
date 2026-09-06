@@ -43,6 +43,11 @@ public class CreateSalesInvoiceDto
     public PaymentTerm PaymentTerm { get; set; }
     public string? Notes { get; set; }
 
+    /// <summary>Optional — the currency the invoice amounts are entered in. Null/omitted means the
+    /// tenant's own functional currency (CompanySettings.DefaultCurrency). A foreign currency needs an
+    /// exchange rate already set up (see Exchange Rates screen) for this invoice's date.</summary>
+    public string? CurrencyCode { get; set; }
+
     /// <summary>Required only when at least one line has an ItemId.</summary>
     public Guid? WarehouseId { get; set; }
     public List<SalesInvoiceLineInputDto> Lines { get; set; } = new();
@@ -99,6 +104,8 @@ public class SalesInvoiceDto
     public DateTime InvoiceDate { get; set; }
     public Guid CustomerId { get; set; }
     public string CustomerName { get; set; } = string.Empty;
+    public string CurrencyCode { get; set; } = string.Empty;
+    public decimal ExchangeRateToFunctional { get; set; }
     public decimal SubTotal { get; set; }
     public decimal VatRate { get; set; }
     public decimal VatAmount { get; set; }

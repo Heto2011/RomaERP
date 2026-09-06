@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Accounting;
+using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.Inventory.Services;
@@ -17,12 +18,14 @@ public class PurchasingService : IPurchasingService
     private readonly IApplicationDbContext _context;
     private readonly IHtmlToPdfRenderer _pdfRenderer;
     private readonly IItemLotService _lotService;
+    private readonly IExchangeRateService _exchangeRateService;
 
-    public PurchasingService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer, IItemLotService lotService)
+    public PurchasingService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer, IItemLotService lotService, IExchangeRateService exchangeRateService)
     {
         _context = context;
         _pdfRenderer = pdfRenderer;
         _lotService = lotService;
+        _exchangeRateService = exchangeRateService;
     }
 
     public async Task<List<VendorDto>> GetVendorsAsync(CancellationToken ct = default)
@@ -118,6 +121,7 @@ public class PurchasingService : IPurchasingService
         }
 
         var vatRate = await GetVatRateAsync(ct);
+        var (currencyCode, exchangeRate) = await _exchangeRateService.ResolveAsync(dto.CurrencyCode, dto.InvoiceDate, ct);
 
         var lines = dto.Lines.Select((l, idx) => new PurchaseInvoiceLine
         {
@@ -134,6 +138,10 @@ public class PurchasingService : IPurchasingService
         var vatAmount = Math.Round(subTotal * vatRate, 2);
         var totalAmount = subTotal + vatAmount;
 
+        // GL posting and AP always happen in the tenant's functional currency — only the invoice document
+        // itself (SubTotal/VatAmount/TotalAmount below) is denominated in the transaction currency.
+        var functionalVatAmount = Math.Round(vatAmount * exchangeRate, 2);
+
         var journalLines = new List<JournalEntryLine>();
         var lineNumber = 1;
         foreach (var lineGroup in lines.GroupBy(l => l.AccountId))
@@ -142,7 +150,7 @@ public class PurchasingService : IPurchasingService
             {
                 LineNumber = lineNumber++,
                 AccountId = lineGroup.Key,
-                Debit = lineGroup.Sum(l => l.LineTotal),
+                Debit = Math.Round(lineGroup.Sum(l => l.LineTotal) * exchangeRate, 2),
                 Credit = 0,
                 Description = "بند فاتورة مشتريات"
             });
@@ -152,21 +160,23 @@ public class PurchasingService : IPurchasingService
         if (vatAmount > 0)
         {
             inputVatAccount = await GetAccountAsync(AccountingConstants.InputVatAccountCode, "ضريبة القيمة المضافة (مدخلات)", ct);
-            journalLines.Add(new JournalEntryLine { LineNumber = lineNumber++, AccountId = inputVatAccount.Id, Debit = vatAmount, Credit = 0, Description = "ضريبة مدخلات" });
+            journalLines.Add(new JournalEntryLine { LineNumber = lineNumber++, AccountId = inputVatAccount.Id, Debit = functionalVatAmount, Credit = 0, Description = "ضريبة مدخلات" });
         }
+
+        var functionalTotalAmount = journalLines.Sum(l => l.Debit);
 
         decimal paidAmount;
         if (dto.PaymentTerm == PaymentTerm.Credit)
         {
             var apAccount = await GetAccountAsync(AccountingConstants.AccountsPayableAccountCode, "الموردون", ct);
-            journalLines.Add(new JournalEntryLine { LineNumber = lineNumber++, AccountId = apAccount.Id, Debit = 0, Credit = totalAmount, Description = $"فاتورة مشتريات آجلة - {vendor.NameAr}" });
-            vendor.ApBalance += totalAmount;
+            journalLines.Add(new JournalEntryLine { LineNumber = lineNumber++, AccountId = apAccount.Id, Debit = 0, Credit = functionalTotalAmount, Description = $"فاتورة مشتريات آجلة - {vendor.NameAr}" });
+            vendor.ApBalance += functionalTotalAmount;
             paidAmount = 0;
         }
         else
         {
             var settlementAccount = await GetSettlementAccountAsync(dto.PaymentTerm, ct);
-            journalLines.Add(new JournalEntryLine { LineNumber = lineNumber++, AccountId = settlementAccount.Id, Debit = 0, Credit = totalAmount, Description = $"فاتورة مشتريات - {vendor.NameAr}" });
+            journalLines.Add(new JournalEntryLine { LineNumber = lineNumber++, AccountId = settlementAccount.Id, Debit = 0, Credit = functionalTotalAmount, Description = $"فاتورة مشتريات - {vendor.NameAr}" });
             paidAmount = totalAmount;
         }
 
@@ -188,6 +198,8 @@ public class PurchasingService : IPurchasingService
             InvoiceDate = dto.InvoiceDate,
             VendorId = vendor.Id,
             FiscalPeriodId = dto.FiscalPeriodId,
+            CurrencyCode = currencyCode,
+            ExchangeRateToFunctional = exchangeRate,
             SubTotal = subTotal,
             VatRate = vatRate,
             VatAmount = vatAmount,
@@ -314,6 +326,29 @@ public class PurchasingService : IPurchasingService
         var settlementAccount = await GetSettlementAccountAsync(dto.Method, ct);
         var apAccount = await GetAccountAsync(AccountingConstants.AccountsPayableAccountCode, "الموردون", ct);
 
+        // Payment is always made in the invoice's own currency; the rate on the payment date may differ
+        // from the invoice's rate, in which case the gap is a realized FX gain/loss.
+        var (_, paymentRate) = await _exchangeRateService.ResolveAsync(invoice.CurrencyCode, dto.PaymentDate, ct);
+        var functionalAtInvoiceRate = Math.Round(dto.Amount * invoice.ExchangeRateToFunctional, 2);
+        var functionalAtPaymentRate = Math.Round(dto.Amount * paymentRate, 2);
+        var fxDifference = functionalAtPaymentRate - functionalAtInvoiceRate;
+
+        var entryLines = new List<JournalEntryLine>
+        {
+            new() { LineNumber = 1, AccountId = apAccount.Id, Debit = functionalAtInvoiceRate, Credit = 0, Description = "تخفيض رصيد المورد" },
+            new() { LineNumber = 2, AccountId = settlementAccount.Id, Debit = 0, Credit = functionalAtPaymentRate, Description = "سداد" }
+        };
+        if (fxDifference > 0)
+        {
+            var fxLossAccount = await GetAccountAsync(AccountingConstants.FxLossAccountCode, "خسائر فروق العملة", ct);
+            entryLines.Add(new JournalEntryLine { LineNumber = 3, AccountId = fxLossAccount.Id, Debit = fxDifference, Credit = 0, Description = "خسائر فروق عملة عند السداد" });
+        }
+        else if (fxDifference < 0)
+        {
+            var fxGainAccount = await GetAccountAsync(AccountingConstants.FxGainAccountCode, "أرباح فروق العملة", ct);
+            entryLines.Add(new JournalEntryLine { LineNumber = 3, AccountId = fxGainAccount.Id, Debit = 0, Credit = -fxDifference, Description = "أرباح فروق عملة عند السداد" });
+        }
+
         var entry = new JournalEntry
         {
             EntryNumber = await GenerateEntryNumberAsync(ct),
@@ -322,16 +357,12 @@ public class PurchasingService : IPurchasingService
             Description = $"سداد فاتورة مشتريات {invoice.InvoiceNumber} - {invoice.Vendor!.NameAr}",
             Reference = AccountingConstants.PurchaseInvoiceReference,
             Status = JournalEntryStatus.Posted,
-            Lines =
-            {
-                new JournalEntryLine { LineNumber = 1, AccountId = apAccount.Id, Debit = dto.Amount, Credit = 0, Description = "تخفيض رصيد المورد" },
-                new JournalEntryLine { LineNumber = 2, AccountId = settlementAccount.Id, Debit = 0, Credit = dto.Amount, Description = "سداد" }
-            }
+            Lines = entryLines
         };
         _context.JournalEntries.Add(entry);
 
         invoice.PaidAmount += dto.Amount;
-        invoice.Vendor!.ApBalance -= dto.Amount;
+        invoice.Vendor!.ApBalance -= functionalAtInvoiceRate;
 
         _context.PurchasePayments.Add(new PurchasePayment
         {
@@ -340,6 +371,7 @@ public class PurchasingService : IPurchasingService
             Amount = dto.Amount,
             Method = dto.Method,
             Reference = dto.Reference,
+            ExchangeRateToFunctional = paymentRate,
             JournalEntry = entry
         });
 
@@ -448,6 +480,8 @@ public class PurchasingService : IPurchasingService
         InvoiceDate = i.InvoiceDate,
         VendorId = i.VendorId,
         VendorName = i.Vendor?.NameAr ?? string.Empty,
+        CurrencyCode = i.CurrencyCode,
+        ExchangeRateToFunctional = i.ExchangeRateToFunctional,
         SubTotal = i.SubTotal,
         VatRate = i.VatRate,
         VatAmount = i.VatAmount,
