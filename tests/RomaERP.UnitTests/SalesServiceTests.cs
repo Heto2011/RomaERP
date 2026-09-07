@@ -14,6 +14,13 @@ using Xunit;
 
 namespace RomaERP.UnitTests;
 
+/// <summary>Test double for the live-rate lookup — always returns null (no live rate) since these tests
+/// exercise manual-rate business logic, not the market-data integration.</summary>
+public class FakeExchangeRateProvider : IExchangeRateProvider
+{
+    public Task<decimal?> GetRateAsync(string fromCurrencyCode, string toCurrencyCode, CancellationToken ct = default) => Task.FromResult<decimal?>(null);
+}
+
 /// <summary>No-op stand-in for the real Playwright-backed renderer — SalesServiceTests exercises invoice
 /// business logic, not PDF rendering (see SalesInvoicePdfTests for that).</summary>
 public class FakeHtmlToPdfRenderer : IHtmlToPdfRenderer
@@ -89,7 +96,7 @@ public class SalesServiceTests
     public async Task CreateInvoice_WithCashTerm_SettlesImmediatelyWithoutTouchingAr()
     {
         var (ctx, cash, _, _, revenue, outputVat, customer, period) = await SeedAsync();
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -120,7 +127,7 @@ public class SalesServiceTests
     public async Task CreateInvoice_WithCreditTerm_PostsToArAndIncreasesCustomerBalance()
     {
         var (ctx, _, _, ar, revenue, outputVat, customer, period) = await SeedAsync();
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -148,7 +155,7 @@ public class SalesServiceTests
     public async Task CreateInvoice_WithInstallmentTerm_PostsToArAndGeneratesEqualMonthlySchedule()
     {
         var (ctx, _, _, ar, revenue, outputVat, customer, period) = await SeedAsync();
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
         var firstDue = DateTime.UtcNow.Date;
 
         var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
@@ -193,7 +200,7 @@ public class SalesServiceTests
     public async Task CreateInvoice_WithInstallmentTerm_RequiresScheduleFields()
     {
         var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         await Assert.ThrowsAsync<ValidationAppException>(() => service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -209,7 +216,7 @@ public class SalesServiceTests
     public async Task RecordPayment_OnCreditInvoice_ReducesOutstandingAndCustomerBalance()
     {
         var (ctx, _, bank, ar, _, _, customer, period) = await SeedAsync();
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -246,7 +253,7 @@ public class SalesServiceTests
     public async Task RecordPayment_ExceedingOutstanding_Throws()
     {
         var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -265,7 +272,7 @@ public class SalesServiceTests
     public async Task GetArAging_BucketsOutstandingInvoicesByAge()
     {
         var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
         var today = DateTime.UtcNow.Date;
 
         async Task<SalesInvoiceDto> CreateAt(DateTime invoiceDate, decimal unitPrice)
@@ -301,7 +308,7 @@ public class SalesServiceTests
     public async Task GetArAging_ExcludesCashInvoicesAndFullyPaidCreditInvoices()
     {
         var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -332,7 +339,7 @@ public class SalesServiceTests
     {
         var (ctx, cash, _, _, revenue, outputVat, customer, period) = await SeedAsync();
         var (cogs, inventory, item, warehouse) = await AddInventoryAsync(ctx, quantityOnHand: 50, averageCost: 30);
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -380,7 +387,7 @@ public class SalesServiceTests
     {
         var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
         var (_, _, item, warehouse) = await AddInventoryAsync(ctx, quantityOnHand: 3, averageCost: 30);
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         await Assert.ThrowsAsync<ValidationAppException>(() => service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -400,7 +407,7 @@ public class SalesServiceTests
     public async Task CreateNote_Credit_DecreasesCustomerArBalanceAndDebitsRevenue()
     {
         var (ctx, _, _, ar, revenue, outputVat, customer, period) = await SeedAsync();
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -441,7 +448,7 @@ public class SalesServiceTests
     public async Task CreateNote_Debit_IncreasesCustomerArBalanceAndCreditsRevenue()
     {
         var (ctx, _, _, ar, revenue, outputVat, customer, period) = await SeedAsync();
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -480,7 +487,7 @@ public class SalesServiceTests
     public async Task CreateNote_WithoutReason_Throws()
     {
         var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -507,7 +514,7 @@ public class SalesServiceTests
     {
         var (ctx, _, _, _, _, _, customer, period) = await SeedAsync();
         var (_, _, item, _) = await AddInventoryAsync(ctx, quantityOnHand: 50, averageCost: 30);
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         await Assert.ThrowsAsync<ValidationAppException>(() => service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {

@@ -55,6 +55,9 @@ import type {
   CostCenterLookup,
   ExchangeRate,
   SetExchangeRateInput,
+  BudgetLine,
+  SetBudgetLineInput,
+  BudgetVsActualReport,
   CreateCustomerInput,
   CreatePurchaseInvoiceInput,
   CreateDepreciationRunInput,
@@ -151,6 +154,14 @@ export const JournalEntriesApi = {
 export const ExchangeRatesApi = {
   getAll: () => apiClient.get<ExchangeRate[]>("/exchange-rates"),
   set: (data: SetExchangeRateInput) => apiClient.post<ExchangeRate>("/exchange-rates", data),
+  track: (currencyCode: string) => apiClient.post<ExchangeRate>("/exchange-rates/track", { currencyCode }),
+  refresh: () => apiClient.post("/exchange-rates/refresh"),
+};
+
+export const BudgetsApi = {
+  getLines: (fiscalYearId: string) => apiClient.get<BudgetLine[]>(`/budgets/fiscal-years/${fiscalYearId}/lines`),
+  setLine: (data: SetBudgetLineInput) => apiClient.post<BudgetLine>("/budgets/lines", data),
+  getVsActual: (fiscalYearId: string) => apiClient.get<BudgetVsActualReport>(`/budgets/fiscal-years/${fiscalYearId}/vs-actual`),
 };
 
 export const LookupsApi = {

@@ -179,8 +179,30 @@ public class ExchangeRateConfiguration : IEntityTypeConfiguration<ExchangeRate>
     {
         builder.Property(r => r.CurrencyCode).HasMaxLength(10).IsRequired();
         builder.Property(r => r.RateToFunctional).HasPrecision(18, 6);
+        builder.Property(r => r.Source).HasMaxLength(20).IsRequired();
         builder.HasIndex(r => new { r.CurrencyCode, r.RateDate }).IsUnique();
         builder.HasQueryFilter(r => !r.IsDeleted);
+    }
+}
+
+public class BudgetConfiguration : IEntityTypeConfiguration<Budget>
+{
+    public void Configure(EntityTypeBuilder<Budget> builder)
+    {
+        builder.Property(b => b.Amount).HasPrecision(18, 2);
+        builder.HasIndex(b => new { b.AccountId, b.FiscalPeriodId }).IsUnique();
+
+        builder.HasOne(b => b.Account)
+            .WithMany()
+            .HasForeignKey(b => b.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(b => b.FiscalPeriod)
+            .WithMany()
+            .HasForeignKey(b => b.FiscalPeriodId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(b => !b.IsDeleted);
     }
 }
 

@@ -25,4 +25,15 @@ public class ExchangeRatesController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ExchangeRateDto>> Set(SetExchangeRateDto dto, CancellationToken ct)
         => Ok(await _exchangeRateService.SetRateAsync(dto, ct));
+
+    [HttpPost("track")]
+    public async Task<ActionResult<ExchangeRateDto>> Track(AddTrackedCurrencyDto dto, CancellationToken ct)
+        => Ok(await _exchangeRateService.AddTrackedCurrencyAsync(dto.CurrencyCode, ct));
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh(CancellationToken ct)
+    {
+        await _exchangeRateService.RefreshAllTrackedCurrenciesAsync(ct);
+        return NoContent();
+    }
 }

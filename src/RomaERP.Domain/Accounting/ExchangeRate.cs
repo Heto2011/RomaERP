@@ -13,4 +13,8 @@ public class ExchangeRate : AuditableEntity
 
     /// <summary>Units of the tenant's functional currency equal to 1 unit of CurrencyCode.</summary>
     public decimal RateToFunctional { get; set; }
+
+    /// <summary>"Auto" when fetched from the live market-rate provider, "Manual" when typed in by a user.
+    /// A manual entry for today's date is never overwritten by the automatic refresh.</summary>
+    public string Source { get; set; } = "Manual";
 }

@@ -68,7 +68,7 @@ public class RestaurantServiceTests
     }
 
     private static RestaurantService BuildService(ApplicationDbContext ctx)
-        => new(ctx, new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx)), new ItemLotService(ctx));
+        => new(ctx, new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider())), new ItemLotService(ctx));
 
     [Fact]
     public async Task CreateOrder_DineIn_OccupiesTableAndGeneratesOrderNumber()

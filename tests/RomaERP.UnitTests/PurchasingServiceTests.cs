@@ -53,7 +53,7 @@ public class PurchasingServiceTests
     public async Task CreateInvoice_WithCashTerm_SettlesImmediatelyWithoutTouchingAp()
     {
         var (ctx, cash, _, _, expense, inputVat, vendor, period) = await SeedAsync();
-        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx));
+        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreatePurchaseInvoiceDto
         {
@@ -83,7 +83,7 @@ public class PurchasingServiceTests
     public async Task CreateInvoice_WithCreditTerm_PostsToApAndIncreasesVendorBalance()
     {
         var (ctx, _, _, ap, expense, inputVat, vendor, period) = await SeedAsync();
-        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx));
+        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreatePurchaseInvoiceDto
         {
@@ -111,7 +111,7 @@ public class PurchasingServiceTests
     public async Task RecordPayment_OnCreditInvoice_ReducesOutstandingAndVendorBalance()
     {
         var (ctx, cash, _, ap, expense, _, vendor, period) = await SeedAsync();
-        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx));
+        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreatePurchaseInvoiceDto
         {
@@ -148,7 +148,7 @@ public class PurchasingServiceTests
     public async Task GetApAging_BucketsOutstandingInvoicesByAge()
     {
         var (ctx, _, _, _, expense, _, vendor, period) = await SeedAsync();
-        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx));
+        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
         var today = DateTime.UtcNow.Date;
 
         async Task<PurchaseInvoiceDto> CreateAt(DateTime invoiceDate, decimal unitPrice)
@@ -183,7 +183,7 @@ public class PurchasingServiceTests
     public async Task GetApAging_ExcludesCashInvoicesAndFullyPaidCreditInvoices()
     {
         var (ctx, _, _, _, expense, _, vendor, period) = await SeedAsync();
-        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx));
+        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         await service.CreateInvoiceAsync(new CreatePurchaseInvoiceDto
         {
@@ -224,7 +224,7 @@ public class PurchasingServiceTests
         var journalEntriesBefore = await ctx.JournalEntries.CountAsync();
         var invoicesBefore = await ctx.PurchaseInvoices.CountAsync();
 
-        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx));
+        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var receipt = await service.ReceiveInventoryPurchaseAsync(new ReceiveInventoryPurchaseDto
         {

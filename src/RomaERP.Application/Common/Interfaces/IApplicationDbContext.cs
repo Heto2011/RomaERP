@@ -15,6 +15,7 @@ public interface IApplicationDbContext
 {
     DbSet<Account> Accounts { get; }
     DbSet<ExchangeRate> ExchangeRates { get; }
+    DbSet<Budget> Budgets { get; }
     DbSet<CostCenter> CostCenters { get; }
     DbSet<ManualProfitEntry> ManualProfitEntries { get; }
     DbSet<FiscalYear> FiscalYears { get; }

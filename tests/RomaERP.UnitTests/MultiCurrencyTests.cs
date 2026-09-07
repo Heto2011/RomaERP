@@ -39,7 +39,7 @@ public class ExchangeRateServiceTests
     public async Task ResolveAsync_NullCurrency_ReturnsFunctionalCurrencyAtRateOne()
     {
         var ctx = await SeedAsync();
-        var service = new ExchangeRateService(ctx);
+        var service = new ExchangeRateService(ctx, new FakeExchangeRateProvider());
 
         var (code, rate) = await service.ResolveAsync(null, DateTime.UtcNow);
 
@@ -51,7 +51,7 @@ public class ExchangeRateServiceTests
     public async Task ResolveAsync_ForeignCurrencyWithNoRate_Throws()
     {
         var ctx = await SeedAsync();
-        var service = new ExchangeRateService(ctx);
+        var service = new ExchangeRateService(ctx, new FakeExchangeRateProvider());
 
         await Assert.ThrowsAsync<ValidationAppException>(() => service.ResolveAsync("USD", DateTime.UtcNow));
     }
@@ -60,7 +60,7 @@ public class ExchangeRateServiceTests
     public async Task SetRateAsync_ThenResolve_UsesLatestRateOnOrBeforeDate()
     {
         var ctx = await SeedAsync();
-        var service = new ExchangeRateService(ctx);
+        var service = new ExchangeRateService(ctx, new FakeExchangeRateProvider());
 
         await service.SetRateAsync(new SetExchangeRateDto { CurrencyCode = "usd", RateDate = new DateTime(2026, 1, 1), RateToFunctional = 30m });
         await service.SetRateAsync(new SetExchangeRateDto { CurrencyCode = "USD", RateDate = new DateTime(2026, 2, 1), RateToFunctional = 31m });
@@ -75,10 +75,67 @@ public class ExchangeRateServiceTests
     public async Task SetRateAsync_ForFunctionalCurrency_Throws()
     {
         var ctx = await SeedAsync();
-        var service = new ExchangeRateService(ctx);
+        var service = new ExchangeRateService(ctx, new FakeExchangeRateProvider());
 
         await Assert.ThrowsAsync<ValidationAppException>(() =>
             service.SetRateAsync(new SetExchangeRateDto { CurrencyCode = "EGP", RateDate = DateTime.UtcNow, RateToFunctional = 1m }));
+    }
+
+    [Fact]
+    public async Task AddTrackedCurrencyAsync_FetchesLiveRateAndStoresAsAuto()
+    {
+        var ctx = await SeedAsync();
+        var provider = new StubExchangeRateProvider();
+        provider.Rates["USD"] = 30.5m;
+        var service = new ExchangeRateService(ctx, provider);
+
+        var result = await service.AddTrackedCurrencyAsync("usd");
+
+        Assert.Equal("USD", result.CurrencyCode);
+        Assert.Equal(30.5m, result.RateToFunctional);
+        Assert.Equal("Auto", result.Source);
+    }
+
+    [Fact]
+    public async Task AddTrackedCurrencyAsync_ProviderHasNoRate_Throws()
+    {
+        var ctx = await SeedAsync();
+        var service = new ExchangeRateService(ctx, new StubExchangeRateProvider());
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.AddTrackedCurrencyAsync("XYZ"));
+    }
+
+    [Fact]
+    public async Task RefreshAllTrackedCurrenciesAsync_UpdatesAutoRates_ButNeverClobbersATodayManualOverride()
+    {
+        var ctx = await SeedAsync();
+        var provider = new StubExchangeRateProvider();
+        provider.Rates["USD"] = 30m;
+        provider.Rates["EUR"] = 33m;
+        var service = new ExchangeRateService(ctx, provider);
+
+        await service.AddTrackedCurrencyAsync("USD");
+        await service.SetRateAsync(new SetExchangeRateDto { CurrencyCode = "EUR", RateDate = DateTime.UtcNow.Date, RateToFunctional = 40m });
+
+        // The market moves after both were recorded for today.
+        provider.Rates["USD"] = 31m;
+        provider.Rates["EUR"] = 35m;
+
+        await service.RefreshAllTrackedCurrenciesAsync();
+
+        var (_, usdRate) = await service.ResolveAsync("USD", DateTime.UtcNow);
+        var (_, eurRate) = await service.ResolveAsync("EUR", DateTime.UtcNow);
+
+        Assert.Equal(31m, usdRate);
+        Assert.Equal(40m, eurRate);
+    }
+
+    private class StubExchangeRateProvider : IExchangeRateProvider
+    {
+        public Dictionary<string, decimal> Rates { get; } = new();
+
+        public Task<decimal?> GetRateAsync(string fromCurrencyCode, string toCurrencyCode, CancellationToken ct = default)
+            => Task.FromResult(Rates.TryGetValue(fromCurrencyCode, out var rate) ? rate : (decimal?)null);
     }
 }
 
@@ -115,7 +172,7 @@ public class SalesServiceMultiCurrencyTests
         ctx.CompanySettings.Add(new CompanySettings { CompanyNameAr = "شركة", CompanyNameEn = "Co", Country = Country.Egypt, VatRate = 0m, DefaultCurrency = "EGP" });
         await ctx.SaveChangesAsync();
 
-        var exchangeRateService = new ExchangeRateService(ctx);
+        var exchangeRateService = new ExchangeRateService(ctx, new FakeExchangeRateProvider());
         await exchangeRateService.SetRateAsync(new SetExchangeRateDto { CurrencyCode = "USD", RateDate = today, RateToFunctional = 30m });
 
         var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), exchangeRateService);
@@ -186,7 +243,7 @@ public class SalesServiceMultiCurrencyTests
         ctx.CompanySettings.Add(new CompanySettings { CompanyNameAr = "شركة", CompanyNameEn = "Co", Country = Country.Egypt, VatRate = 0m, DefaultCurrency = "EGP" });
         await ctx.SaveChangesAsync();
 
-        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx));
+        var service = new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
 
         var invoice = await service.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
@@ -236,7 +293,7 @@ public class PurchasingServiceMultiCurrencyTests
         ctx.CompanySettings.Add(new CompanySettings { CompanyNameAr = "شركة", CompanyNameEn = "Co", Country = Country.Egypt, VatRate = 0m, DefaultCurrency = "EGP" });
         await ctx.SaveChangesAsync();
 
-        var exchangeRateService = new ExchangeRateService(ctx);
+        var exchangeRateService = new ExchangeRateService(ctx, new FakeExchangeRateProvider());
         await exchangeRateService.SetRateAsync(new SetExchangeRateDto { CurrencyCode = "USD", RateDate = today, RateToFunctional = 30m });
 
         var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), exchangeRateService);

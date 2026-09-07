@@ -631,11 +631,52 @@ export interface CompanySettingsLookup {
   defaultCurrency: string;
 }
 
+export interface BudgetLine {
+  id: string;
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  fiscalPeriodId: string;
+  fiscalPeriodName: string;
+  amount: number;
+}
+
+export interface SetBudgetLineInput {
+  accountId: string;
+  fiscalPeriodId: string;
+  amount: number;
+}
+
+export interface BudgetVsActualLine {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  accountType: AccountType;
+  budgetedAmount: number;
+  actualAmount: number;
+  varianceAmount: number;
+  variancePercent: number | null;
+}
+
+export interface BudgetVsActualReport {
+  fiscalYearId: string;
+  fiscalYearName: string;
+  revenueLines: BudgetVsActualLine[];
+  expenseLines: BudgetVsActualLine[];
+  totalBudgetedRevenue: number;
+  totalActualRevenue: number;
+  totalBudgetedExpense: number;
+  totalActualExpense: number;
+  budgetedNetIncome: number;
+  actualNetIncome: number;
+}
+
 export interface ExchangeRate {
   id: string;
   currencyCode: string;
   rateDate: string;
   rateToFunctional: number;
+  source: "Manual" | "Auto";
 }
 
 export interface SetExchangeRateInput {
