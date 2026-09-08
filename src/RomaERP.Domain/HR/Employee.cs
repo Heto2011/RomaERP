@@ -27,6 +27,14 @@ public class Employee : AuditableEntity
 
     public decimal BasicSalary { get; set; }
 
+    public Guid? WorkLocationId { get; set; }
+    public WorkLocation? WorkLocation { get; set; }
+
+    /// <summary>Stored filename of the reference photo used to verify attendance selfies against
+    /// (App_Data/employee-faces/) — set via EmployeesController's photo upload. Null until uploaded, and
+    /// face verification is skipped (GPS-only) for a check-in until it exists.</summary>
+    public string? FaceReferencePhotoPath { get; set; }
+
     public string? Email { get; set; }
     public string? Phone { get; set; }
     public string? Address { get; set; }

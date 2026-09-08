@@ -15,11 +15,13 @@ public class EmployeesController : ControllerBase
 {
     private readonly IEmployeeService _employeeService;
     private readonly ICurrentUserService _currentUser;
+    private readonly IWebHostEnvironment _environment;
 
-    public EmployeesController(IEmployeeService employeeService, ICurrentUserService currentUser)
+    public EmployeesController(IEmployeeService employeeService, ICurrentUserService currentUser, IWebHostEnvironment environment)
     {
         _employeeService = employeeService;
         _currentUser = currentUser;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -63,5 +65,27 @@ public class EmployeesController : ControllerBase
     {
         await _employeeService.DeleteAsync(id, ct);
         return NoContent();
+    }
+
+    [HttpPost("{id:guid}/face-photo")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    public async Task<ActionResult<EmployeeDto>> UploadFacePhoto(Guid id, IFormFile file, CancellationToken ct)
+    {
+        if (file.Length == 0)
+            throw new ValidationAppException("الملف المرفوع فارغ.");
+
+        if (file.ContentType?.ToLowerInvariant() is not ("image/jpeg" or "image/jpg"))
+            throw new ValidationAppException("صورة الوجه المرجعية لازم تكون JPEG.");
+
+        var facesDir = Path.Combine(_environment.ContentRootPath, "App_Data", "employee-faces");
+        Directory.CreateDirectory(facesDir);
+
+        await using (var stream = System.IO.File.Create(Path.Combine(facesDir, $"{id}.jpg")))
+        {
+            await file.CopyToAsync(stream, ct);
+        }
+
+        return Ok(await _employeeService.SetFaceReferencePhotoAsync(id, $"{id}.jpg", ct));
     }
 }

@@ -11,4 +11,5 @@ public interface IEmployeeService
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<EmployeeDto?> GetMyProfileAsync(Guid applicationUserId, CancellationToken ct = default);
     Task<EmployeeDto> LinkUserAsync(Guid employeeId, Guid? applicationUserId, CancellationToken ct = default);
+    Task<EmployeeDto> SetFaceReferencePhotoAsync(Guid employeeId, string storedFileName, CancellationToken ct = default);
 }

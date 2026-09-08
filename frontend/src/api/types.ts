@@ -803,6 +803,78 @@ export interface Employee {
   bankAccountNumber: string | null;
   iban: string | null;
   applicationUserId: string | null;
+  workLocationId: string | null;
+  workLocationName: string | null;
+  hasFaceReferencePhoto: boolean;
+}
+
+export interface WorkLocation {
+  id: string;
+  name: string;
+  latitude: number;
+  longitude: number;
+  geofenceRadiusMeters: number;
+  isActive: boolean;
+}
+
+export interface SaveWorkLocationInput {
+  name: string;
+  latitude: number;
+  longitude: number;
+  geofenceRadiusMeters: number;
+  isActive: boolean;
+}
+
+export interface AttendanceRecord {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  checkInAtUtc: string;
+  checkInWithinGeofence: boolean;
+  checkInFaceVerified: boolean | null;
+  checkInFaceSimilarityPercent: number | null;
+  checkOutAtUtc: string | null;
+  checkOutWithinGeofence: boolean | null;
+  checkOutFaceVerified: boolean | null;
+  checkOutFaceSimilarityPercent: number | null;
+  isWithinGeofence: boolean;
+}
+
+export enum EmployeeRequestType {
+  Leave = 1,
+  Permission = 2,
+  Other = 3,
+}
+
+export enum EmployeeRequestStatus {
+  Pending = 1,
+  Approved = 2,
+  Rejected = 3,
+}
+
+export interface EmployeeRequest {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  type: EmployeeRequestType;
+  dateFrom: string;
+  dateTo: string | null;
+  reason: string | null;
+  status: EmployeeRequestStatus;
+  decidedAtUtc: string | null;
+  decisionNote: string | null;
+}
+
+export interface CreateEmployeeRequestInput {
+  type: EmployeeRequestType;
+  dateFrom: string;
+  dateTo: string | null;
+  reason: string | null;
+}
+
+export interface DecideEmployeeRequestInput {
+  approve: boolean;
+  decisionNote?: string | null;
 }
 
 export enum SalaryComponentType {
@@ -851,6 +923,8 @@ export interface PayrollRunLine {
   totalAllowances: number;
   totalDeductions: number;
   netSalary: number;
+  unpaidLeaveDays: number;
+  unpaidLeaveDeductionAmount: number;
 }
 
 export interface PayrollRun {

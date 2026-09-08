@@ -55,6 +55,12 @@ import type {
   ImportBankFeedCsvResult,
   SyncLiveBankFeedResult,
   BankFeedProviderStatus,
+  WorkLocation,
+  SaveWorkLocationInput,
+  AttendanceRecord,
+  EmployeeRequest,
+  CreateEmployeeRequestInput,
+  DecideEmployeeRequestInput,
   ChatTurnResponse,
   CompanySettingsLookup,
   CostCenterLookup,
@@ -210,6 +216,55 @@ export const EmployeesApi = {
   create: (data: Partial<Employee>) => apiClient.post<Employee>("/employees", data),
   update: (id: string, data: Partial<Employee>) => apiClient.put<Employee>(`/employees/${id}`, data),
   remove: (id: string) => apiClient.delete(`/employees/${id}`),
+  uploadFacePhoto: (id: string, file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient.post<Employee>(`/employees/${id}/face-photo`, formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+};
+
+export const WorkLocationsApi = {
+  getAll: () => apiClient.get<WorkLocation[]>("/work-locations"),
+  create: (data: SaveWorkLocationInput) => apiClient.post<WorkLocation>("/work-locations", data),
+  update: (id: string, data: SaveWorkLocationInput) => apiClient.put<WorkLocation>(`/work-locations/${id}`, data),
+  remove: (id: string) => apiClient.delete(`/work-locations/${id}`),
+};
+
+export const AttendanceApi = {
+  checkIn: (latitude: number, longitude: number, selfie: Blob | null) => {
+    const formData = new FormData();
+    formData.append("latitude", String(latitude));
+    formData.append("longitude", String(longitude));
+    if (selfie) formData.append("selfie", selfie, "selfie.jpg");
+    return apiClient.post<AttendanceRecord>("/attendance/check-in", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  checkOut: (latitude: number, longitude: number, selfie: Blob | null) => {
+    const formData = new FormData();
+    formData.append("latitude", String(latitude));
+    formData.append("longitude", String(longitude));
+    if (selfie) formData.append("selfie", selfie, "selfie.jpg");
+    return apiClient.post<AttendanceRecord>("/attendance/check-out", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  getMine: (from?: string, to?: string) =>
+    apiClient.get<AttendanceRecord[]>(`/attendance/mine${from || to ? `?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}) })}` : ""}`),
+  getAll: (from?: string, to?: string, employeeId?: string) =>
+    apiClient.get<AttendanceRecord[]>(
+      `/attendance?${new URLSearchParams({ ...(from ? { from } : {}), ...(to ? { to } : {}), ...(employeeId ? { employeeId } : {}) })}`
+    ),
+};
+
+export const EmployeeRequestsApi = {
+  create: (data: CreateEmployeeRequestInput) => apiClient.post<EmployeeRequest>("/employee-requests", data),
+  getMine: () => apiClient.get<EmployeeRequest[]>("/employee-requests/mine"),
+  getPending: () => apiClient.get<EmployeeRequest[]>("/employee-requests/pending"),
+  getAll: () => apiClient.get<EmployeeRequest[]>("/employee-requests"),
+  decide: (id: string, data: DecideEmployeeRequestInput) => apiClient.post<EmployeeRequest>(`/employee-requests/${id}/decide`, data),
 };
 
 export const SalaryComponentsApi = {

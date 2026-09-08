@@ -34,6 +34,9 @@ public interface IApplicationDbContext
     DbSet<EmployeeSalaryComponent> EmployeeSalaryComponents { get; }
     DbSet<PayrollRun> PayrollRuns { get; }
     DbSet<PayrollRunLine> PayrollRunLines { get; }
+    DbSet<WorkLocation> WorkLocations { get; }
+    DbSet<AttendanceRecord> AttendanceRecords { get; }
+    DbSet<EmployeeRequest> EmployeeRequests { get; }
 
     DbSet<ItemCategory> ItemCategories { get; }
     DbSet<Warehouse> Warehouses { get; }

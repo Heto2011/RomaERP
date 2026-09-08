@@ -76,7 +76,61 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
             .HasForeignKey(e => e.ApplicationUserId)
             .OnDelete(DeleteBehavior.SetNull);
 
+        builder.Property(e => e.FaceReferencePhotoPath).HasMaxLength(300);
+
+        builder.HasOne(e => e.WorkLocation)
+            .WithMany()
+            .HasForeignKey(e => e.WorkLocationId)
+            .OnDelete(DeleteBehavior.SetNull);
+
         builder.HasQueryFilter(e => !e.IsDeleted);
+    }
+}
+
+public class WorkLocationConfiguration : IEntityTypeConfiguration<WorkLocation>
+{
+    public void Configure(EntityTypeBuilder<WorkLocation> builder)
+    {
+        builder.Property(w => w.Name).HasMaxLength(200).IsRequired();
+        builder.Property(w => w.Latitude).HasPrecision(9, 6);
+        builder.Property(w => w.Longitude).HasPrecision(9, 6);
+        builder.HasQueryFilter(w => !w.IsDeleted);
+    }
+}
+
+public class AttendanceRecordConfiguration : IEntityTypeConfiguration<AttendanceRecord>
+{
+    public void Configure(EntityTypeBuilder<AttendanceRecord> builder)
+    {
+        builder.Property(a => a.CheckInLatitude).HasPrecision(9, 6);
+        builder.Property(a => a.CheckInLongitude).HasPrecision(9, 6);
+        builder.Property(a => a.CheckOutLatitude).HasPrecision(9, 6);
+        builder.Property(a => a.CheckOutLongitude).HasPrecision(9, 6);
+        builder.Property(a => a.CheckInFaceSimilarityPercent).HasPrecision(5, 2);
+        builder.Property(a => a.CheckOutFaceSimilarityPercent).HasPrecision(5, 2);
+
+        builder.HasOne(a => a.Employee)
+            .WithMany()
+            .HasForeignKey(a => a.EmployeeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(a => !a.IsDeleted);
+    }
+}
+
+public class EmployeeRequestConfiguration : IEntityTypeConfiguration<EmployeeRequest>
+{
+    public void Configure(EntityTypeBuilder<EmployeeRequest> builder)
+    {
+        builder.Property(r => r.Reason).HasMaxLength(500);
+        builder.Property(r => r.DecisionNote).HasMaxLength(500);
+
+        builder.HasOne(r => r.Employee)
+            .WithMany()
+            .HasForeignKey(r => r.EmployeeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(r => !r.IsDeleted);
     }
 }
 
@@ -151,6 +205,7 @@ public class PayrollRunLineConfiguration : IEntityTypeConfiguration<PayrollRunLi
         builder.Property(l => l.TotalAllowances).HasPrecision(18, 2);
         builder.Property(l => l.TotalDeductions).HasPrecision(18, 2);
         builder.Property(l => l.NetSalary).HasPrecision(18, 2);
+        builder.Property(l => l.UnpaidLeaveDeductionAmount).HasPrecision(18, 2);
 
         builder.HasOne(l => l.Employee)
             .WithMany()

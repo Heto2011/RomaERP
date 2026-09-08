@@ -21,6 +21,7 @@ public class EmployeeService : IEmployeeService
             .AsNoTracking()
             .Include(e => e.Department)
             .Include(e => e.Position)
+            .Include(e => e.WorkLocation)
             .Where(e => !e.IsDeleted)
             .OrderBy(e => e.EmployeeCode)
             .ToListAsync(ct);
@@ -34,6 +35,7 @@ public class EmployeeService : IEmployeeService
             .AsNoTracking()
             .Include(e => e.Department)
             .Include(e => e.Position)
+            .Include(e => e.WorkLocation)
             .FirstOrDefaultAsync(e => e.Id == id, ct)
             ?? throw new NotFoundException(nameof(Employee), id);
 
@@ -66,6 +68,7 @@ public class EmployeeService : IEmployeeService
             Address = dto.Address,
             BankAccountNumber = dto.BankAccountNumber,
             Iban = dto.Iban,
+            WorkLocationId = dto.WorkLocationId,
             EmploymentStatus = EmploymentStatus.Active
         };
 
@@ -97,6 +100,7 @@ public class EmployeeService : IEmployeeService
         employee.Address = dto.Address;
         employee.BankAccountNumber = dto.BankAccountNumber;
         employee.Iban = dto.Iban;
+        employee.WorkLocationId = dto.WorkLocationId;
         employee.EmploymentStatus = dto.EmploymentStatus;
         employee.TerminationDate = dto.TerminationDate;
 
@@ -123,6 +127,7 @@ public class EmployeeService : IEmployeeService
             .AsNoTracking()
             .Include(e => e.Department)
             .Include(e => e.Position)
+            .Include(e => e.WorkLocation)
             .FirstOrDefaultAsync(e => e.ApplicationUserId == applicationUserId, ct);
 
         return employee is null ? null : Map(employee);
@@ -142,6 +147,16 @@ public class EmployeeService : IEmployeeService
         }
 
         employee.ApplicationUserId = applicationUserId;
+        await _context.SaveChangesAsync(ct);
+        return await GetByIdAsync(employeeId, ct);
+    }
+
+    public async Task<EmployeeDto> SetFaceReferencePhotoAsync(Guid employeeId, string storedFileName, CancellationToken ct = default)
+    {
+        var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == employeeId, ct)
+            ?? throw new NotFoundException(nameof(Employee), employeeId);
+
+        employee.FaceReferencePhotoPath = storedFileName;
         await _context.SaveChangesAsync(ct);
         return await GetByIdAsync(employeeId, ct);
     }
@@ -182,6 +197,9 @@ public class EmployeeService : IEmployeeService
         Address = e.Address,
         BankAccountNumber = e.BankAccountNumber,
         Iban = e.Iban,
-        ApplicationUserId = e.ApplicationUserId
+        ApplicationUserId = e.ApplicationUserId,
+        WorkLocationId = e.WorkLocationId,
+        WorkLocationName = e.WorkLocation?.Name,
+        HasFaceReferencePhoto = !string.IsNullOrEmpty(e.FaceReferencePhotoPath)
     };
 }

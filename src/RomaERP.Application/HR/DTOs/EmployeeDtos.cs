@@ -26,6 +26,9 @@ public class EmployeeDto
     public string? BankAccountNumber { get; set; }
     public string? Iban { get; set; }
     public Guid? ApplicationUserId { get; set; }
+    public Guid? WorkLocationId { get; set; }
+    public string? WorkLocationName { get; set; }
+    public bool HasFaceReferencePhoto { get; set; }
 }
 
 public class CreateEmployeeDto
@@ -46,6 +49,7 @@ public class CreateEmployeeDto
     public string? Address { get; set; }
     public string? BankAccountNumber { get; set; }
     public string? Iban { get; set; }
+    public Guid? WorkLocationId { get; set; }
 }
 
 public class UpdateEmployeeDto : CreateEmployeeDto

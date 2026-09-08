@@ -157,7 +157,11 @@ export default function Layout({ children }: { children: ReactNode }) {
   const cashierLinks: { section: string; items: NavItem[] }[] = [
     {
       section: t.nav.general,
-      items: [{ to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> }],
+      items: [
+        { to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> },
+        { to: "/hr/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
+        { to: "/hr/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },
+      ],
     },
     {
       section: t.nav.restaurant,
@@ -172,6 +176,8 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/", label: t.nav.dashboard, icon: <IconGrid /> },
         { to: "/alerts", label: t.alerts.title, icon: <IconBell /> },
         { to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> },
+        { to: "/hr/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
+        { to: "/hr/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },
       ],
     },
     {
@@ -245,6 +251,8 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/hr/salary-components", label: t.hr.salaryComponentsTitle, icon: <IconWallet /> },
         { to: "/hr/payroll", label: t.nav.payroll, icon: <IconDollar /> },
         { to: "/hr/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
+        { to: "/hr/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
+        { to: "/hr/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },
       ],
     },
     {

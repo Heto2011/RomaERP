@@ -47,6 +47,10 @@ import ApAging from "./pages/purchasing/ApAging";
 import Departments from "./pages/hr/Departments";
 import Positions from "./pages/hr/Positions";
 import Employees from "./pages/hr/Employees";
+import WorkLocations from "./pages/hr/WorkLocations";
+import Attendance from "./pages/hr/Attendance";
+import MyRequests from "./pages/hr/MyRequests";
+import EmployeeRequestsAdmin from "./pages/hr/EmployeeRequestsAdmin";
 import Payroll from "./pages/hr/Payroll";
 import LaborReportPage from "./pages/hr/LaborReport";
 import SalaryComponentsPage from "./pages/hr/SalaryComponents";
@@ -146,6 +150,10 @@ export default function App() {
       <Route path="/hr/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
       <Route path="/hr/salary-components" element={<ProtectedRoute><SalaryComponentsPage /></ProtectedRoute>} />
       <Route path="/hr/labor-report" element={<ProtectedRoute><LaborReportPage /></ProtectedRoute>} />
+      <Route path="/hr/work-locations" element={<ProtectedRoute><WorkLocations /></ProtectedRoute>} />
+      <Route path="/hr/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
+      <Route path="/hr/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
+      <Route path="/hr/employee-requests" element={<ProtectedRoute><EmployeeRequestsAdmin /></ProtectedRoute>} />
       <Route path="/restaurant/tables" element={<ProtectedRoute><RestaurantTables /></ProtectedRoute>} />
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />
       <Route path="/restaurant/purchase-receiving" element={<ProtectedRoute><PurchaseReceivingPage /></ProtectedRoute>} />

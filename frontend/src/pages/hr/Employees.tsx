@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { DepartmentsApi, EmployeesApi, PositionsApi, SalaryComponentsApi } from "../../api/services";
+import { useEffect, useRef, useState } from "react";
+import { DepartmentsApi, EmployeesApi, PositionsApi, SalaryComponentsApi, WorkLocationsApi } from "../../api/services";
 import {
   CalculationType,
   Gender,
@@ -10,6 +10,7 @@ import {
   type EmployeeSalaryComponentAssignment,
   type Position,
   type SalaryComponent,
+  type WorkLocation,
 } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
@@ -20,8 +21,11 @@ export default function Employees() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
+  const [workLocations, setWorkLocations] = useState<WorkLocation[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const facePhotoInputRef = useRef<HTMLInputElement>(null);
+  const [facePhotoEmployeeId, setFacePhotoEmployeeId] = useState<string | null>(null);
 
   const [employeeCode, setEmployeeCode] = useState("");
   const [fullNameAr, setFullNameAr] = useState("");
@@ -34,6 +38,7 @@ export default function Employees() {
   const [basicSalary, setBasicSalary] = useState("");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
+  const [workLocationId, setWorkLocationId] = useState("");
 
   const [allComponents, setAllComponents] = useState<SalaryComponent[]>([]);
   const [componentsEmployee, setComponentsEmployee] = useState<Employee | null>(null);
@@ -43,16 +48,18 @@ export default function Employees() {
   const [componentsError, setComponentsError] = useState<string | null>(null);
 
   async function load() {
-    const [empRes, depRes, posRes, compRes] = await Promise.all([
+    const [empRes, depRes, posRes, compRes, locRes] = await Promise.all([
       EmployeesApi.getAll(),
       DepartmentsApi.getAll(),
       PositionsApi.getAll(),
       SalaryComponentsApi.getAll(),
+      WorkLocationsApi.getAll(),
     ]);
     setEmployees(empRes.data);
     setDepartments(depRes.data);
     setPositions(posRes.data);
     setAllComponents(compRes.data);
+    setWorkLocations(locRes.data);
   }
 
   useEffect(() => {
@@ -77,6 +84,7 @@ export default function Employees() {
         basicSalary: Number(basicSalary) || 0,
         email: email || null,
         phone: phone || null,
+        workLocationId: workLocationId || null,
       });
       setShowForm(false);
       setEmployeeCode("");
@@ -87,6 +95,7 @@ export default function Employees() {
       setBasicSalary("");
       setEmail("");
       setPhone("");
+      setWorkLocationId("");
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -100,6 +109,24 @@ export default function Employees() {
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
+    }
+  }
+
+  function startFacePhotoUpload(employeeId: string) {
+    setFacePhotoEmployeeId(employeeId);
+    facePhotoInputRef.current?.click();
+  }
+
+  async function handleFacePhotoSelected(file: File) {
+    if (!facePhotoEmployeeId) return;
+    setError(null);
+    try {
+      await EmployeesApi.uploadFacePhoto(facePhotoEmployeeId, file);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setFacePhotoEmployeeId(null);
     }
   }
 
@@ -227,6 +254,17 @@ export default function Employees() {
                 <label>{t.common.phone}</label>
                 <input value={phone} onChange={(e) => setPhone(e.target.value)} />
               </div>
+              <div className="form-field">
+                <label>{t.hr.workLocation}</label>
+                <select value={workLocationId} onChange={(e) => setWorkLocationId(e.target.value)}>
+                  <option value="">{t.hr.noWorkLocation}</option>
+                  {workLocations.map((w) => (
+                    <option key={w.id} value={w.id}>
+                      {w.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
             <button className="btn" type="submit" style={{ marginTop: 14 }}>
               {t.common.save}
@@ -244,6 +282,7 @@ export default function Employees() {
               <th>{t.hr.department}</th>
               <th>{t.hr.position}</th>
               <th>{t.hr.basicSalary}</th>
+              <th>{t.hr.faceReferencePhoto}</th>
               <th></th>
             </tr>
           </thead>
@@ -255,7 +294,15 @@ export default function Employees() {
                 <td>{emp.departmentName}</td>
                 <td>{emp.positionName}</td>
                 <td>{emp.basicSalary.toLocaleString()}</td>
+                <td>
+                  <span className={`badge ${emp.hasFaceReferencePhoto ? "badge-posted" : "badge-draft"}`}>
+                    {emp.hasFaceReferencePhoto ? t.hr.faceReferencePhotoSet : t.hr.faceReferencePhotoNotSet}
+                  </span>
+                </td>
                 <td style={{ display: "flex", gap: 8 }}>
+                  <button className="btn btn-secondary btn-sm" onClick={() => startFacePhotoUpload(emp.id)}>
+                    {t.hr.uploadFaceReferencePhoto}
+                  </button>
                   <button className="btn btn-secondary btn-sm" onClick={() => openComponentsModal(emp)}>
                     {t.hr.salaryComponentsButton}
                   </button>
@@ -268,6 +315,14 @@ export default function Employees() {
           </tbody>
         </table>
       </div>
+
+      <input
+        ref={facePhotoInputRef}
+        type="file"
+        accept="image/jpeg"
+        style={{ display: "none" }}
+        onChange={(e) => e.target.files?.[0] && handleFacePhotoSelected(e.target.files[0])}
+      />
 
       {componentsEmployee && (
         <div className="modal-overlay" onClick={() => setComponentsEmployee(null)}>

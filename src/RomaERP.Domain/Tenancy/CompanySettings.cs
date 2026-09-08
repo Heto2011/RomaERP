@@ -13,6 +13,10 @@ public class CompanySettings : AuditableEntity
     public decimal VatRate { get; set; }
     public string DefaultCurrency { get; set; } = "EGP";
 
+    /// <summary>Days per month used to derive a daily salary rate for unpaid-leave payroll deductions
+    /// (BasicSalary ÷ this). Configurable since labor conventions differ by country.</summary>
+    public int PayrollDaysPerMonth { get; set; } = 30;
+
     // ----- E-invoicing (government tax authority integration) -----
     public EInvoicingProvider EInvoicingProvider { get; set; } = EInvoicingProvider.None;
     public EInvoicingEnvironment EInvoicingEnvironment { get; set; } = EInvoicingEnvironment.Sandbox;

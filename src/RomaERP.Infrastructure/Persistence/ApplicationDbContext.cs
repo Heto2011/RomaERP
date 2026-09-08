@@ -51,6 +51,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<EmployeeSalaryComponent> EmployeeSalaryComponents => Set<EmployeeSalaryComponent>();
     public DbSet<PayrollRun> PayrollRuns => Set<PayrollRun>();
     public DbSet<PayrollRunLine> PayrollRunLines => Set<PayrollRunLine>();
+    public DbSet<WorkLocation> WorkLocations => Set<WorkLocation>();
+    public DbSet<AttendanceRecord> AttendanceRecords => Set<AttendanceRecord>();
+    public DbSet<EmployeeRequest> EmployeeRequests => Set<EmployeeRequest>();
 
     public DbSet<ItemCategory> ItemCategories => Set<ItemCategory>();
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();

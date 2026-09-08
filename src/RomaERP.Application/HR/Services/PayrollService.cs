@@ -52,6 +52,16 @@ public class PayrollService : IPayrollService
             .Where(e => !e.IsDeleted && e.EmploymentStatus == EmploymentStatus.Active)
             .ToListAsync(ct);
 
+        var payrollDaysPerMonth = (await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct))?.PayrollDaysPerMonth ?? 30;
+
+        var approvedLeaves = await _context.EmployeeRequests
+            .AsNoTracking()
+            .Where(r => r.Type == EmployeeRequestType.Leave
+                        && r.Status == EmployeeRequestStatus.Approved
+                        && r.DateFrom <= period.EndDate
+                        && (r.DateTo ?? r.DateFrom) >= period.StartDate)
+            .ToListAsync(ct);
+
         var run = new PayrollRun
         {
             FiscalPeriodId = dto.FiscalPeriodId,
@@ -78,13 +88,28 @@ public class PayrollService : IPayrollService
                     deductions += amount;
             }
 
+            var unpaidLeaveDays = approvedLeaves
+                .Where(r => r.EmployeeId == employee.Id)
+                .Sum(r =>
+                {
+                    var from = r.DateFrom < period.StartDate ? period.StartDate : r.DateFrom;
+                    var to = (r.DateTo ?? r.DateFrom) > period.EndDate ? period.EndDate : (r.DateTo ?? r.DateFrom);
+                    return (to.Date - from.Date).Days + 1;
+                });
+
+            var dailyRate = payrollDaysPerMonth > 0 ? employee.BasicSalary / payrollDaysPerMonth : 0;
+            var unpaidLeaveDeduction = Math.Round(unpaidLeaveDays * dailyRate, 2);
+            deductions += unpaidLeaveDeduction;
+
             run.Lines.Add(new PayrollRunLine
             {
                 EmployeeId = employee.Id,
                 BasicSalary = employee.BasicSalary,
                 TotalAllowances = allowances,
                 TotalDeductions = deductions,
-                NetSalary = employee.BasicSalary + allowances - deductions
+                NetSalary = employee.BasicSalary + allowances - deductions,
+                UnpaidLeaveDays = unpaidLeaveDays,
+                UnpaidLeaveDeductionAmount = unpaidLeaveDeduction
             });
         }
 
@@ -175,7 +200,10 @@ public class PayrollService : IPayrollService
 
         foreach (var line in run.Lines)
         {
-            totalGross += line.BasicSalary + line.TotalAllowances;
+            // Net of unpaid-leave deduction: the company simply incurs less salary expense for days not
+            // worked, unlike a component deduction (tax, insurance…) which is owed elsewhere and routed
+            // to its own linked account below — that split is what keeps this entry balanced.
+            totalGross += line.BasicSalary + line.TotalAllowances - line.UnpaidLeaveDeductionAmount;
             totalNet += line.NetSalary;
 
             foreach (var esc in line.Employee!.SalaryComponents.Where(x => x.SalaryComponent!.ComponentType == SalaryComponentType.Deduction))
@@ -287,7 +315,9 @@ public class PayrollService : IPayrollService
             BasicSalary = l.BasicSalary,
             TotalAllowances = l.TotalAllowances,
             TotalDeductions = l.TotalDeductions,
-            NetSalary = l.NetSalary
+            NetSalary = l.NetSalary,
+            UnpaidLeaveDays = l.UnpaidLeaveDays,
+            UnpaidLeaveDeductionAmount = l.UnpaidLeaveDeductionAmount
         }).ToList()
     };
 }

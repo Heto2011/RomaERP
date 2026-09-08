@@ -47,6 +47,8 @@ public class PayrollRunLineDto
     public decimal TotalAllowances { get; set; }
     public decimal TotalDeductions { get; set; }
     public decimal NetSalary { get; set; }
+    public int UnpaidLeaveDays { get; set; }
+    public decimal UnpaidLeaveDeductionAmount { get; set; }
 }
 
 public class PayrollRunDto

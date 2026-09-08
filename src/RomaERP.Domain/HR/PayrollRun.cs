@@ -30,4 +30,10 @@ public class PayrollRunLine : BaseEntity
     public decimal TotalAllowances { get; set; }
     public decimal TotalDeductions { get; set; }
     public decimal NetSalary { get; set; }
+
+    /// <summary>Informational only — already folded into <see cref="TotalDeductions"/>. Approved unpaid
+    /// leave days (see EmployeeRequest) overlapping this run's fiscal period, and the amount deducted for
+    /// them at BasicSalary ÷ CompanySettings.PayrollDaysPerMonth per day.</summary>
+    public int UnpaidLeaveDays { get; set; }
+    public decimal UnpaidLeaveDeductionAmount { get; set; }
 }
