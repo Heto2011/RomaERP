@@ -258,6 +258,37 @@ export default function RestaurantPOS() {
     }
   }
 
+  /// Voids the billed order (reverses revenue/VAT/settlement/AR and inventory/COGS on the backend), then
+  /// immediately reopens a fresh editable order pre-filled with the same lines — covers a plain void
+  /// (cashier just doesn't touch the new order) and an exchange (cashier edits it before re-billing) with
+  /// one action, matching how the feature was originally asked for.
+  async function handleVoidOrder() {
+    if (!selectedOrder) return;
+    const reason = window.prompt(t.restaurant.voidOrderPrompt);
+    if (!reason || !reason.trim()) return;
+    setError(null);
+    try {
+      await RestaurantApi.voidOrder(selectedOrder.id, { reason: reason.trim() });
+
+      const replacement = await RestaurantApi.createOrder({
+        orderType: selectedOrder.orderType,
+        tableId: selectedOrder.orderType === RestaurantOrderType.DineIn ? selectedOrder.tableId : null,
+        customerName: selectedOrder.orderType !== RestaurantOrderType.DineIn ? selectedOrder.customerName : null,
+        customerPhone: selectedOrder.orderType !== RestaurantOrderType.DineIn ? selectedOrder.customerPhone : null,
+        deliveryAddress: selectedOrder.orderType === RestaurantOrderType.Delivery ? selectedOrder.deliveryAddress : null,
+        warehouseId: selectedOrder.warehouseId,
+      });
+      for (const line of selectedOrder.lines) {
+        await RestaurantApi.addLine(replacement.data.id, { itemId: line.itemId, quantity: line.quantity });
+      }
+
+      setSelectedOrderId(replacement.data.id);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   const orderTypeLabel: Record<RestaurantOrderType, string> = {
     [RestaurantOrderType.DineIn]: t.restaurant.dineIn,
     [RestaurantOrderType.Takeaway]: t.restaurant.takeaway,
@@ -423,7 +454,16 @@ export default function RestaurantPOS() {
               </div>
             </>
           )}
-          {selectedOrder && selectedOrder.status !== RestaurantOrderStatus.Open && (
+          {selectedOrder && selectedOrder.status === RestaurantOrderStatus.Billed && (
+            <div style={{ padding: 24, textAlign: "center" }}>
+              <div className="text-muted" style={{ marginBottom: 14 }}>{selectedOrder.orderNumber}</div>
+              <button className="btn btn-secondary" onClick={handleVoidOrder}>
+                ↩️ {t.restaurant.voidOrder}
+              </button>
+              <p className="text-muted" style={{ marginTop: 10, maxWidth: 320, marginInline: "auto" }}>{t.restaurant.voidOrderHint}</p>
+            </div>
+          )}
+          {selectedOrder && (selectedOrder.status === RestaurantOrderStatus.Cancelled || selectedOrder.status === RestaurantOrderStatus.Voided) && (
             <div className="text-muted" style={{ padding: 24 }}>{selectedOrder.orderNumber}</div>
           )}
         </div>

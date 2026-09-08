@@ -902,6 +902,9 @@ const ar = {
     billOrder: "تحصيل الفاتورة",
     confirmBill: "تأكيد التحصيل",
     emptyCart: "لسه مفيش أصناف في الطلب — اختر من المنيو تحت.",
+    voidOrder: "إلغاء/استبدال",
+    voidOrderPrompt: "سبب الإلغاء:",
+    voidOrderHint: "هيتم إلغاء الفاتورة بالكامل (الإيرادات والضريبة والمخزون) وفتح طلب جديد بنفس الأصناف تقدر تعدّله وتحصّله تاني.",
     menu: "المنيو",
     noMenuItemsHint: "مفيش أصناف على المنيو لسه — روح شاشة \"المنيو والوصفات\" وحدد الأصناف اللي هتتباع.",
 
@@ -1963,6 +1966,9 @@ const en: typeof ar = {
     billOrder: "Bill Order",
     confirmBill: "Confirm Billing",
     emptyCart: "No items in this order yet — pick from the menu below.",
+    voidOrder: "Void/Exchange",
+    voidOrderPrompt: "Reason for voiding:",
+    voidOrderHint: "This reverses the invoice in full (revenue, VAT, and inventory) and opens a fresh order with the same items so you can adjust and re-bill it.",
     menu: "Menu",
     noMenuItemsHint: "No items on the menu yet — go to \"Menu & Recipes\" and mark the items you sell.",
 

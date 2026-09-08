@@ -112,6 +112,7 @@ import type {
   CreateRestaurantOrderInput,
   AddOrderLineInput,
   BillOrderInput,
+  VoidOrderInput,
   SetLineDiscountInput,
   SetOrderDiscountInput,
 } from "./types";
@@ -454,6 +455,7 @@ export const RestaurantApi = {
     apiClient.put<RestaurantOrder>(`/restaurant/orders/${orderId}/discount`, data),
   cancelOrder: (orderId: string) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/cancel`),
   billOrder: (orderId: string, data: BillOrderInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/bill`, data),
+  voidOrder: (orderId: string, data: VoidOrderInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/void`, data),
 };
 
 export const CashierShiftsApi = {

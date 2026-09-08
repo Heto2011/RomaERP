@@ -1445,6 +1445,7 @@ export enum RestaurantOrderStatus {
   Open = 1,
   Billed = 2,
   Cancelled = 3,
+  Voided = 4,
 }
 
 export interface CreateRestaurantOrderInput {
@@ -1500,11 +1501,17 @@ export interface RestaurantOrder {
   vatRate: number;
   vatAmount: number;
   totalAmount: number;
+  voidedAtUtc: string | null;
+  voidReason: string | null;
   lines: RestaurantOrderLine[];
 }
 
 export interface SetLineDiscountInput {
   discountAmount: number;
+}
+
+export interface VoidOrderInput {
+  reason: string;
 }
 
 export interface SetOrderDiscountInput {
