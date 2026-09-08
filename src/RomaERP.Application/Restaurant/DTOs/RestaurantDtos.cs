@@ -131,6 +131,8 @@ public class RestaurantOrderDto
     public decimal VatRate { get; set; }
     public decimal VatAmount { get; set; }
     public decimal TotalAmount { get; set; }
+    public DateTime? VoidedAtUtc { get; set; }
+    public string? VoidReason { get; set; }
     public List<RestaurantOrderLineDto> Lines { get; set; } = new();
 }
 
@@ -148,4 +150,12 @@ public class BillOrderDto
     /// <summary>Required only when PaymentTerm is Credit — the delivery platform's name, used to find or
     /// create its own Customer record so each platform's amount owed is tracked separately.</summary>
     public string? DeliveryPlatformName { get; set; }
+}
+
+/// <summary>Reverses a Billed order in full: revenue/VAT/settlement (and AR, for a Credit sale) via the
+/// standard journal-entry reversal, plus every stock issue tied to the order and its COGS. See
+/// RestaurantService.VoidOrderAsync for the exact mechanics and its limits.</summary>
+public class VoidOrderDto
+{
+    public string Reason { get; set; } = string.Empty;
 }

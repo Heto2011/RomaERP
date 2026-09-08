@@ -21,12 +21,14 @@ public class RestaurantService : IRestaurantService
     private readonly IApplicationDbContext _context;
     private readonly ISalesService _salesService;
     private readonly IItemLotService _lotService;
+    private readonly IJournalEntryService _journalEntryService;
 
-    public RestaurantService(IApplicationDbContext context, ISalesService salesService, IItemLotService lotService)
+    public RestaurantService(IApplicationDbContext context, ISalesService salesService, IItemLotService lotService, IJournalEntryService journalEntryService)
     {
         _context = context;
         _salesService = salesService;
         _lotService = lotService;
+        _journalEntryService = journalEntryService;
     }
 
     // ---------- Tables ----------
@@ -515,6 +517,90 @@ public class RestaurantService : IRestaurantService
         return await GetOrderAsync(order.Id, ct);
     }
 
+    /// <summary>Reverses a Billed order in full — revenue/VAT/settlement (Cash/Card/AR alike, whatever the
+    /// original entry used) via the same journal-entry reversal used for manual entries, plus every stock
+    /// issue tied to the order (both recipe-consumption movements referenced by the order number, and
+    /// direct-item movements ISalesService posted under the invoice number) and the COGS entries behind
+    /// them. Frees the cashier to immediately reopen a fresh order with the same lines for an "exchange"
+    /// (the frontend does that by calling CreateOrderAsync/AddLineAsync again — no separate exchange
+    /// endpoint is needed). Deliberately refuses a Credit-term order that already has a payment recorded,
+    /// since only the invoice's own entry gets reversed, not any later partial-payment entries.</summary>
+    public async Task<RestaurantOrderDto> VoidOrderAsync(Guid orderId, VoidOrderDto dto, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Reason))
+            throw new ValidationAppException("لازم تكتب سبب الإلغاء.");
+
+        var order = await LoadOrderAsync(orderId, ct);
+        if (order.Status != RestaurantOrderStatus.Billed)
+            throw new ValidationAppException("الإلغاء بعد التحصيل متاح بس للطلبات المحصّلة.");
+        if (order.SalesInvoiceId is null)
+            throw new ValidationAppException("الطلب ده مش مرتبط بفاتورة.");
+
+        var invoice = await _context.SalesInvoices
+            .Include(i => i.Customer)
+            .FirstOrDefaultAsync(i => i.Id == order.SalesInvoiceId, ct)
+            ?? throw new NotFoundException(nameof(SalesInvoice), order.SalesInvoiceId.Value);
+
+        if (invoice.PaymentTerm == PaymentTerm.Credit && invoice.PaidAmount > 0)
+            throw new ValidationAppException("الفاتورة دي اتحصل منها جزء بالفعل، مينفعش تتلغي بالطريقة دي.");
+
+        if (invoice.JournalEntryId is { } mainEntryId)
+            await _journalEntryService.ReverseAsync(mainEntryId, ct);
+
+        if (invoice.PaymentTerm == PaymentTerm.Credit)
+            invoice.Customer!.ArBalance -= (invoice.TotalAmount - invoice.PaidAmount);
+
+        var issuedMovements = await _context.StockMovements
+            .Where(m => m.MovementType == StockMovementType.Issue
+                        && (m.Reference == order.OrderNumber || m.Reference == invoice.InvoiceNumber))
+            .ToListAsync(ct);
+
+        if (issuedMovements.Count > 0)
+        {
+            var itemIds = issuedMovements.Select(m => m.ItemId).Distinct().ToList();
+            var itemsById = (await _context.Items.Where(i => itemIds.Contains(i.Id)).ToListAsync(ct)).ToDictionary(i => i.Id);
+
+            var returnSequenceBase = await _context.StockMovements.CountAsync(ct);
+            var returnMovements = new List<StockMovement>();
+            var cogsEntryIdsToReverse = new HashSet<Guid>();
+
+            foreach (var (movement, idx) in issuedMovements.Select((m, i) => (m, i)))
+            {
+                if (itemsById.TryGetValue(movement.ItemId, out var item))
+                    item.QuantityOnHand += movement.Quantity;
+
+                returnMovements.Add(new StockMovement
+                {
+                    MovementNumber = $"SM-{(returnSequenceBase + idx + 1):D6}",
+                    MovementDate = DateTime.UtcNow.Date,
+                    MovementType = StockMovementType.Receipt,
+                    ItemId = movement.ItemId,
+                    WarehouseId = movement.WarehouseId,
+                    Quantity = movement.Quantity,
+                    UnitCost = movement.UnitCost,
+                    TotalCost = movement.TotalCost,
+                    Reference = order.OrderNumber,
+                    Description = $"استرجاع مخزون - إلغاء طلب مطعم {order.OrderNumber}"
+                });
+
+                if (movement.JournalEntryId is { } cogsEntryId)
+                    cogsEntryIdsToReverse.Add(cogsEntryId);
+            }
+
+            _context.StockMovements.AddRange(returnMovements);
+
+            foreach (var entryId in cogsEntryIdsToReverse)
+                await _journalEntryService.ReverseAsync(entryId, ct);
+        }
+
+        order.Status = RestaurantOrderStatus.Voided;
+        order.VoidedAtUtc = DateTime.UtcNow;
+        order.VoidReason = dto.Reason;
+
+        await _context.SaveChangesAsync(ct);
+        return await GetOrderAsync(orderId, ct);
+    }
+
     private async Task<Customer> GetOrCreateWalkInCustomerAsync(CancellationToken ct)
     {
         var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Code == RestaurantConstants.WalkInCustomerCode, ct);
@@ -628,6 +714,8 @@ public class RestaurantService : IRestaurantService
             VatRate = vatRate,
             VatAmount = vatAmount,
             TotalAmount = subTotal + vatAmount,
+            VoidedAtUtc = o.VoidedAtUtc,
+            VoidReason = o.VoidReason,
             Lines = o.Lines.OrderBy(l => l.LineNumber).Select(l => new RestaurantOrderLineDto
             {
                 Id = l.Id,

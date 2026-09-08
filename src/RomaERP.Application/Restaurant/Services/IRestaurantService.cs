@@ -23,4 +23,5 @@ public interface IRestaurantService
     Task<RestaurantOrderDto> SetOrderDiscountAsync(Guid orderId, SetOrderDiscountDto dto, CancellationToken ct = default);
     Task<RestaurantOrderDto> CancelOrderAsync(Guid orderId, CancellationToken ct = default);
     Task<RestaurantOrderDto> BillOrderAsync(Guid orderId, BillOrderDto dto, CancellationToken ct = default);
+    Task<RestaurantOrderDto> VoidOrderAsync(Guid orderId, VoidOrderDto dto, CancellationToken ct = default);
 }

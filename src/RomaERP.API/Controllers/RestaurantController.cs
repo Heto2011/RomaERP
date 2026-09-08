@@ -88,4 +88,8 @@ public class RestaurantController : ControllerBase
     [HttpPost("orders/{id:guid}/bill")]
     public async Task<ActionResult<RestaurantOrderDto>> BillOrder(Guid id, BillOrderDto dto, CancellationToken ct)
         => Ok(await _restaurantService.BillOrderAsync(id, dto, ct));
+
+    [HttpPost("orders/{id:guid}/void")]
+    public async Task<ActionResult<RestaurantOrderDto>> VoidOrder(Guid id, VoidOrderDto dto, CancellationToken ct)
+        => Ok(await _restaurantService.VoidOrderAsync(id, dto, ct));
 }

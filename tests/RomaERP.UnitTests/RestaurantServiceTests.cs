@@ -26,7 +26,7 @@ public class RestaurantServiceTests
     }
 
     private record SeedResult(
-        ApplicationDbContext Ctx, Account Cash, Account Revenue, Account OutputVat, Account Cogs, Account Inventory,
+        ApplicationDbContext Ctx, Account Cash, Account Revenue, Account OutputVat, Account Cogs, Account Inventory, Account Ar,
         Warehouse Warehouse, FiscalPeriod Period, RestaurantTable Table, Item Flour, Item Pizza, Item Water);
 
     private static async Task<SeedResult> SeedAsync(decimal vatRate = 0.14m)
@@ -38,6 +38,7 @@ public class RestaurantServiceTests
         var outputVat = new Account { Code = "2161", NameAr = "ضريبة مخرجات", NameEn = "Output VAT", AccountType = AccountType.Liability, Nature = AccountNature.Credit };
         var cogs = new Account { Code = "5500", NameAr = "تكلفة البضاعة المباعة", NameEn = "COGS", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
         var inventory = new Account { Code = "1160", NameAr = "المخزون", NameEn = "Inventory", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+        var ar = new Account { Code = "1120", NameAr = "العملاء", NameEn = "AR", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
 
         var today = DateTime.UtcNow.Date;
         var year = new FiscalYear { Name = today.Year.ToString(), StartDate = new DateTime(today.Year, 1, 1), EndDate = new DateTime(today.Year, 12, 31) };
@@ -51,7 +52,7 @@ public class RestaurantServiceTests
         var pizza = new Item { Code = "MENU-PIZZA", NameAr = "بيتزا", NameEn = "Pizza", UnitOfMeasure = "قطعة", ItemCategoryId = category.Id, IsMenuItem = true, MenuPrice = 100 };
         var water = new Item { Code = "MENU-WATER", NameAr = "مياه معدنية", NameEn = "Water", UnitOfMeasure = "قطعة", ItemCategoryId = category.Id, IsMenuItem = true, MenuPrice = 10, QuantityOnHand = 50, AverageCost = 5 };
 
-        ctx.Accounts.AddRange(cash, revenue, outputVat, cogs, inventory);
+        ctx.Accounts.AddRange(cash, revenue, outputVat, cogs, inventory, ar);
         ctx.FiscalYears.Add(year);
         ctx.FiscalPeriods.Add(period);
         ctx.Warehouses.Add(warehouse);
@@ -64,11 +65,11 @@ public class RestaurantServiceTests
         ctx.MenuRecipeLines.Add(new MenuRecipeLine { MenuItemId = pizza.Id, RawMaterialItemId = flour.Id, QuantityPerUnit = 0.5m });
         await ctx.SaveChangesAsync();
 
-        return new SeedResult(ctx, cash, revenue, outputVat, cogs, inventory, warehouse, period, table, flour, pizza, water);
+        return new SeedResult(ctx, cash, revenue, outputVat, cogs, inventory, ar, warehouse, period, table, flour, pizza, water);
     }
 
     private static RestaurantService BuildService(ApplicationDbContext ctx)
-        => new(ctx, new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider())), new ItemLotService(ctx));
+        => new(ctx, new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider())), new ItemLotService(ctx), new JournalEntryService(ctx));
 
     [Fact]
     public async Task CreateOrder_DineIn_OccupiesTableAndGeneratesOrderNumber()
@@ -270,5 +271,103 @@ public class RestaurantServiceTests
         var withoutLine = await service.UpdateLineQuantityAsync(order.Id, lineId, new UpdateOrderLineQuantityDto { Quantity = 0 });
 
         Assert.Empty(withoutLine.Lines);
+    }
+
+    [Fact]
+    public async Task VoidOrder_RecipeItemCashOrder_ReversesRevenueVatCogsAndInventory()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.DineIn, TableId = seed.Table.Id, WarehouseId = seed.Warehouse.Id });
+        await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Pizza.Id, Quantity = 2 });
+        var billed = await service.BillOrderAsync(order.Id, new BillOrderDto { PaymentTerm = PaymentTerm.Cash, FiscalPeriodId = seed.Period.Id });
+
+        var voided = await service.VoidOrderAsync(order.Id, new VoidOrderDto { Reason = "طلب غلط" });
+
+        Assert.Equal(RestaurantOrderStatus.Voided, voided.Status);
+        Assert.Equal("طلب غلط", voided.VoidReason);
+        Assert.NotNull(voided.VoidedAtUtc);
+
+        // Both original entries (revenue+VAT+cash, and recipe COGS) are now Reversed, with mirror entries posted.
+        var allEntries = await seed.Ctx.JournalEntries.Include(e => e.Lines).ToListAsync();
+        Assert.Equal(4, allEntries.Count); // original revenue + original COGS + 2 reversals
+        Assert.Equal(2, allEntries.Count(e => e.Status == JournalEntryStatus.Reversed));
+
+        // The reversal entry's own Reference is set to the *original* entry's number (per
+        // JournalEntryService.ReverseAsync), not "SALES-INVOICE"/"RESTAURANT-ORDER" — so it's identified
+        // by its Status and lines instead.
+        var reversalOfRevenue = allEntries.Single(e => e.Status == JournalEntryStatus.Posted && e.Lines.Any(l => l.AccountId == seed.Cash.Id && l.Credit == 228));
+        Assert.Contains(reversalOfRevenue.Lines, l => l.AccountId == seed.Revenue.Id && l.Debit == 200);
+        Assert.Contains(reversalOfRevenue.Lines, l => l.AccountId == seed.OutputVat.Id && l.Debit == 28);
+
+        var reversalOfCogs = allEntries.Single(e => e.Status == JournalEntryStatus.Posted && e.Lines.Any(l => l.AccountId == seed.Inventory.Id && l.Debit == 20));
+        Assert.Contains(reversalOfCogs.Lines, l => l.AccountId == seed.Cogs.Id && l.Credit == 20);
+
+        var flour = await seed.Ctx.Items.FirstAsync(i => i.Id == seed.Flour.Id);
+        Assert.Equal(100, flour.QuantityOnHand); // fully restored: 99 + 1 (2 pizzas * 0.5kg)
+    }
+
+    [Fact]
+    public async Task VoidOrder_NonRecipeItem_RestoresStockIssuedBySalesService()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.Takeaway, WarehouseId = seed.Warehouse.Id });
+        await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Water.Id, Quantity = 3 });
+        await service.BillOrderAsync(order.Id, new BillOrderDto { PaymentTerm = PaymentTerm.Cash, FiscalPeriodId = seed.Period.Id });
+
+        await service.VoidOrderAsync(order.Id, new VoidOrderDto { Reason = "استبدال" });
+
+        var water = await seed.Ctx.Items.FirstAsync(i => i.Id == seed.Water.Id);
+        Assert.Equal(50, water.QuantityOnHand); // fully restored: 47 + 3
+    }
+
+    [Fact]
+    public async Task VoidOrder_RejectsAnOrderThatWasNeverBilled()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.Takeaway, WarehouseId = seed.Warehouse.Id });
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.VoidOrderAsync(order.Id, new VoidOrderDto { Reason = "سبب" }));
+    }
+
+    [Fact]
+    public async Task VoidOrder_CreditDeliveryOrder_ReducesPlatformArBalance()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.Delivery, WarehouseId = seed.Warehouse.Id });
+        await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Water.Id, Quantity = 1 });
+        await service.BillOrderAsync(order.Id, new BillOrderDto { PaymentTerm = PaymentTerm.Credit, FiscalPeriodId = seed.Period.Id, DeliveryPlatformName = "Talabat" });
+
+        var platformCustomer = await seed.Ctx.Customers.SingleAsync(c => c.NameAr == "Talabat");
+        Assert.True(platformCustomer.ArBalance > 0);
+
+        await service.VoidOrderAsync(order.Id, new VoidOrderDto { Reason = "إلغاء طلب دليفري" });
+
+        var afterVoid = await seed.Ctx.Customers.SingleAsync(c => c.Id == platformCustomer.Id);
+        Assert.Equal(0, afterVoid.ArBalance);
+    }
+
+    [Fact]
+    public async Task VoidOrder_CreditOrderAlreadyPartiallyPaid_Rejected()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.Delivery, WarehouseId = seed.Warehouse.Id });
+        await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Water.Id, Quantity = 1 });
+        var billed = await service.BillOrderAsync(order.Id, new BillOrderDto { PaymentTerm = PaymentTerm.Credit, FiscalPeriodId = seed.Period.Id, DeliveryPlatformName = "Talabat" });
+
+        var invoice = await seed.Ctx.SalesInvoices.FirstAsync(i => i.Id == billed.SalesInvoiceId);
+        invoice.PaidAmount = 1;
+        await seed.Ctx.SaveChangesAsync();
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.VoidOrderAsync(order.Id, new VoidOrderDto { Reason = "سبب" }));
     }
 }

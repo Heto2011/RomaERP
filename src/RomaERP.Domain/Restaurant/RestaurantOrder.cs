@@ -16,7 +16,11 @@ public enum RestaurantOrderStatus
 {
     Open = 1,
     Billed = 2,
-    Cancelled = 3
+    Cancelled = 3,
+    /// <summary>A previously-Billed order reversed after the fact (revenue/VAT/settlement/AR, inventory,
+    /// and COGS all undone) — distinct from Cancelled, which only ever applies to an order that was never
+    /// billed in the first place.</summary>
+    Voided = 4
 }
 
 /// <summary>A running order at a table (or a takeaway/delivery ticket) being built up before it's billed.
@@ -59,6 +63,9 @@ public class RestaurantOrder : AuditableEntity
     /// cash-drawer reconciliation. Null for orders billed with no shift open (or before this feature existed).</summary>
     public Guid? CashierShiftId { get; set; }
     public CashierShift? CashierShift { get; set; }
+
+    public DateTime? VoidedAtUtc { get; set; }
+    public string? VoidReason { get; set; }
 
     public ICollection<RestaurantOrderLine> Lines { get; set; } = new List<RestaurantOrderLine>();
 }

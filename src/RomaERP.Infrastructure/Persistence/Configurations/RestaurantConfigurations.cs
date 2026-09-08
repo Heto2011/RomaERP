@@ -25,6 +25,7 @@ public class RestaurantOrderConfiguration : IEntityTypeConfiguration<RestaurantO
         builder.Property(o => o.CustomerPhone).HasMaxLength(30);
         builder.Property(o => o.DeliveryAddress).HasMaxLength(500);
         builder.Property(o => o.Notes).HasMaxLength(1000);
+        builder.Property(o => o.VoidReason).HasMaxLength(500);
         builder.Property(o => o.DiscountAmount).HasPrecision(18, 2);
         builder.HasIndex(o => o.OrderNumber).IsUnique();
 

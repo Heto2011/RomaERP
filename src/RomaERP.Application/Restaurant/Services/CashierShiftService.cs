@@ -68,7 +68,8 @@ public class CashierShiftService : ICashierShiftService
 
         var cashSalesTotal = await _context.RestaurantOrders
             .AsNoTracking()
-            .Where(o => o.CashierShiftId == shiftId && o.SalesInvoice != null && o.SalesInvoice.PaymentTerm == PaymentTerm.Cash)
+            .Where(o => o.CashierShiftId == shiftId && o.Status == RestaurantOrderStatus.Billed
+                        && o.SalesInvoice != null && o.SalesInvoice.PaymentTerm == PaymentTerm.Cash)
             .SumAsync(o => o.SalesInvoice!.TotalAmount, ct);
 
         shift.ExpectedCash = shift.OpeningFloat + cashSalesTotal;
