@@ -36,7 +36,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantRegistry, TenantRegistry>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
         services.AddScoped<ISubscriptionBillingService, RomaERP.Infrastructure.Billing.SubscriptionBillingService>();
-        services.AddHttpClient<IPaymentGatewayProvider, RomaERP.Infrastructure.Billing.MoyasarPaymentProvider>();
+        services.AddHttpClient<IPaymentGatewayProvider, RomaERP.Infrastructure.Billing.PayTabsPaymentProvider>();
         services.AddHttpClient<RomaERP.Application.Accounting.Services.IExchangeRateProvider, RomaERP.Infrastructure.Accounting.OpenErApiExchangeRateProvider>();
 
         // Every tenant has its own, fully separate database. The connection string is only known once

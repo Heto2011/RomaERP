@@ -15,7 +15,7 @@ public record PaymentChargeResult(bool Success, string? ProviderReference, strin
 /// hand), so the whole subscription system works before any gateway account exists.</summary>
 public interface IPaymentGatewayProvider
 {
-    /// <summary>Matches <see cref="Domain.Tenancy.Subscription.PaymentProvider"/>, e.g. "Moyasar".</summary>
+    /// <summary>Matches <see cref="Domain.Tenancy.Subscription.PaymentProvider"/>, e.g. "PayTabs".</summary>
     string Name { get; }
     bool IsConfigured { get; }
     Task<PaymentChargeResult> ChargeAsync(PaymentChargeRequest request, CancellationToken ct = default);

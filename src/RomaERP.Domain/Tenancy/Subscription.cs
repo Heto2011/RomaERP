@@ -13,7 +13,7 @@ public enum SubscriptionStatus
 
 /// <summary>One tenant's billing relationship: which plan, current billing period, and how it pays.
 /// <see cref="PaymentProvider"/> starts as "Manual" (admin records bank-transfer payments by hand) and can be
-/// switched to a real gateway (e.g. "Moyasar") once a saved card token exists for auto-charge.</summary>
+/// switched to a real gateway (e.g. "PayTabs") once a saved card token exists for auto-charge.</summary>
 public class Subscription : AuditableEntity
 {
     public Guid TenantId { get; set; }
