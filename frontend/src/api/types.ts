@@ -584,6 +584,56 @@ export interface BankStatementImportResult {
   matchedCount: number;
 }
 
+export interface BankFeedTransaction {
+  id: string;
+  accountId: string;
+  transactionDate: string;
+  description: string;
+  amount: number;
+  source: string;
+  isMatched: boolean;
+  matchedJournalEntryLineId: string | null;
+}
+
+export interface UnmatchedGlLine {
+  journalEntryLineId: string;
+  journalEntryId: string;
+  entryNumber: string;
+  entryDate: string;
+  description: string | null;
+  amount: number;
+}
+
+export interface BankFeedReconciliationSummary {
+  accountId: string;
+  accountName: string;
+  fromDate: string;
+  toDate: string;
+  matchedCount: number;
+  unmatchedFeedLines: BankFeedTransaction[];
+  unmatchedGlLines: UnmatchedGlLine[];
+  feedNetMovement: number;
+  glNetMovement: number;
+  isBalanced: boolean;
+}
+
+export interface ImportBankFeedCsvResult {
+  importedCount: number;
+  autoMatchedCount: number;
+}
+
+export interface SyncLiveBankFeedResult {
+  success: boolean;
+  failureReason: string | null;
+  importedCount: number;
+  autoMatchedCount: number;
+}
+
+export interface BankFeedProviderStatus {
+  name: string;
+  isConfigured: boolean;
+}
+
 export interface DeliverySettlementImportResult {
   id: string;
   fileName: string;

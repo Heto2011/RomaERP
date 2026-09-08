@@ -50,6 +50,11 @@ import type {
   CloseCashierShiftInput,
   BankStatementImportResult,
   BankStatementLine,
+  BankFeedTransaction,
+  BankFeedReconciliationSummary,
+  ImportBankFeedCsvResult,
+  SyncLiveBankFeedResult,
+  BankFeedProviderStatus,
   ChatTurnResponse,
   CompanySettingsLookup,
   CostCenterLookup,
@@ -267,6 +272,26 @@ export const BankReconciliationApi = {
   autoMatch: () => apiClient.post<number>("/bankreconciliation/auto-match"),
   matchManual: (expenseCaptureId: string, bankStatementLineId: string) =>
     apiClient.post<ExpenseCapture>("/bankreconciliation/match", { expenseCaptureId, bankStatementLineId }),
+};
+
+export const BankFeedReconciliationApi = {
+  getProviderStatus: () => apiClient.get<BankFeedProviderStatus>("/bank-feed-reconciliation/provider-status"),
+  import: (file: File, accountId: string) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("accountId", accountId);
+    return apiClient.post<ImportBankFeedCsvResult>("/bank-feed-reconciliation/import", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
+  syncLive: (accountId: string, fromDate: string, toDate: string) =>
+    apiClient.post<SyncLiveBankFeedResult>(`/bank-feed-reconciliation/sync-live?accountId=${accountId}&fromDate=${fromDate}&toDate=${toDate}`),
+  getSummary: (accountId: string, fromDate: string, toDate: string) =>
+    apiClient.get<BankFeedReconciliationSummary>(`/bank-feed-reconciliation/summary?accountId=${accountId}&fromDate=${fromDate}&toDate=${toDate}`),
+  autoMatch: (accountId: string) => apiClient.post<number>(`/bank-feed-reconciliation/auto-match?accountId=${accountId}`),
+  matchManual: (bankFeedTransactionId: string, journalEntryLineId: string) =>
+    apiClient.post<BankFeedTransaction>("/bank-feed-reconciliation/match", { bankFeedTransactionId, journalEntryLineId }),
+  unmatch: (bankFeedTransactionId: string) => apiClient.post<BankFeedTransaction>(`/bank-feed-reconciliation/${bankFeedTransactionId}/unmatch`),
 };
 
 export const DeliveryReconciliationApi = {

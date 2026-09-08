@@ -206,6 +206,32 @@ public class BudgetConfiguration : IEntityTypeConfiguration<Budget>
     }
 }
 
+public class BankFeedTransactionConfiguration : IEntityTypeConfiguration<BankFeedTransaction>
+{
+    public void Configure(EntityTypeBuilder<BankFeedTransaction> builder)
+    {
+        builder.Property(t => t.Description).HasMaxLength(500).IsRequired();
+        builder.Property(t => t.Amount).HasPrecision(18, 2);
+        builder.Property(t => t.Source).HasMaxLength(20).IsRequired();
+        builder.Property(t => t.ExternalId).HasMaxLength(100);
+
+        builder.HasIndex(t => new { t.AccountId, t.ExternalId }).IsUnique()
+            .HasFilter("[ExternalId] IS NOT NULL");
+
+        builder.HasOne(t => t.Account)
+            .WithMany()
+            .HasForeignKey(t => t.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(t => t.MatchedJournalEntryLine)
+            .WithMany()
+            .HasForeignKey(t => t.MatchedJournalEntryLineId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(t => !t.IsDeleted);
+    }
+}
+
 public class ManualProfitEntryConfiguration : IEntityTypeConfiguration<ManualProfitEntry>
 {
     public void Configure(EntityTypeBuilder<ManualProfitEntry> builder)
