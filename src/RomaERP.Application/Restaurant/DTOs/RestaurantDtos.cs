@@ -64,6 +64,11 @@ public class CreateRestaurantOrderDto
     public Guid? WaiterEmployeeId { get; set; }
     public Guid WarehouseId { get; set; }
     public string? Notes { get; set; }
+
+    /// <summary>Set only by the delivery-webhook intake flow — never by the POS UI. See
+    /// RestaurantOrder.SourcePlatform/ExternalOrderRef.</summary>
+    public string? SourcePlatform { get; set; }
+    public string? ExternalOrderRef { get; set; }
 }
 
 public class AddOrderLineDto
@@ -133,6 +138,8 @@ public class RestaurantOrderDto
     public decimal TotalAmount { get; set; }
     public DateTime? VoidedAtUtc { get; set; }
     public string? VoidReason { get; set; }
+    public string? SourcePlatform { get; set; }
+    public string? ExternalOrderRef { get; set; }
     public List<RestaurantOrderLineDto> Lines { get; set; } = new();
 }
 

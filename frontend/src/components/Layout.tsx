@@ -276,6 +276,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/restaurant/menu", label: t.nav.restaurantMenu, icon: <IconBook /> },
         { to: "/restaurant/purchase-receiving", label: t.restaurant.purchaseReceivingTitle, icon: <IconTruck /> },
         { to: "/restaurant/delivery-reconciliation", label: t.inventory.deliveryReconciliationTitle, icon: <IconSwap /> },
+        { to: "/restaurant/delivery-platforms", label: t.restaurant.deliveryPlatformsTitle, icon: <IconRefresh /> },
       ],
     },
     ...(user?.roles.includes("Admin")

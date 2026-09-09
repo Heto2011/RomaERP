@@ -27,7 +27,11 @@ public class RestaurantOrderConfiguration : IEntityTypeConfiguration<RestaurantO
         builder.Property(o => o.Notes).HasMaxLength(1000);
         builder.Property(o => o.VoidReason).HasMaxLength(500);
         builder.Property(o => o.DiscountAmount).HasPrecision(18, 2);
+        builder.Property(o => o.SourcePlatform).HasMaxLength(50);
+        builder.Property(o => o.ExternalOrderRef).HasMaxLength(100);
         builder.HasIndex(o => o.OrderNumber).IsUnique();
+        builder.HasIndex(o => new { o.SourcePlatform, o.ExternalOrderRef }).IsUnique()
+            .HasFilter("[SourcePlatform] IS NOT NULL AND [ExternalOrderRef] IS NOT NULL");
 
         builder.HasOne(o => o.Table)
             .WithMany()
@@ -141,5 +145,41 @@ public class DeliverySettlementLineConfiguration : IEntityTypeConfiguration<Deli
             .WithMany(i => i.Lines)
             .HasForeignKey(l => l.DeliverySettlementImportId)
             .OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class DeliveryPlatformItemMappingConfiguration : IEntityTypeConfiguration<DeliveryPlatformItemMapping>
+{
+    public void Configure(EntityTypeBuilder<DeliveryPlatformItemMapping> builder)
+    {
+        builder.Property(m => m.PlatformName).HasMaxLength(50).IsRequired();
+        builder.Property(m => m.ExternalItemId).HasMaxLength(100).IsRequired();
+        builder.Property(m => m.ExternalItemName).HasMaxLength(200);
+        builder.HasIndex(m => new { m.PlatformName, m.ExternalItemId }).IsUnique();
+
+        builder.HasOne(m => m.Item)
+            .WithMany()
+            .HasForeignKey(m => m.ItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(m => !m.IsDeleted);
+    }
+}
+
+public class DeliveryWebhookEventConfiguration : IEntityTypeConfiguration<DeliveryWebhookEvent>
+{
+    public void Configure(EntityTypeBuilder<DeliveryWebhookEvent> builder)
+    {
+        builder.Property(e => e.PlatformName).HasMaxLength(50).IsRequired();
+        builder.Property(e => e.ExternalOrderId).HasMaxLength(100);
+        builder.Property(e => e.RawPayload).HasColumnType("nvarchar(max)").IsRequired();
+        builder.Property(e => e.ErrorMessage).HasMaxLength(1000);
+
+        builder.HasOne(e => e.CreatedOrder)
+            .WithMany()
+            .HasForeignKey(e => e.CreatedOrderId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(e => !e.IsDeleted);
     }
 }

@@ -56,6 +56,8 @@ public interface IApplicationDbContext
     DbSet<MenuRecipeLine> MenuRecipeLines { get; }
     DbSet<DeliverySettlementImport> DeliverySettlementImports { get; }
     DbSet<DeliverySettlementLine> DeliverySettlementLines { get; }
+    DbSet<DeliveryPlatformItemMapping> DeliveryPlatformItemMappings { get; }
+    DbSet<DeliveryWebhookEvent> DeliveryWebhookEvents { get; }
     DbSet<CashierShift> CashierShifts { get; }
 
     DbSet<ExpenseCapture> ExpenseCaptures { get; }

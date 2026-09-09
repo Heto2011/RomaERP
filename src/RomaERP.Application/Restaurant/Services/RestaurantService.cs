@@ -225,7 +225,9 @@ public class RestaurantService : IRestaurantService
             WaiterEmployeeId = dto.WaiterEmployeeId,
             WarehouseId = warehouse.Id,
             Notes = dto.Notes,
-            Status = RestaurantOrderStatus.Open
+            Status = RestaurantOrderStatus.Open,
+            SourcePlatform = dto.SourcePlatform,
+            ExternalOrderRef = dto.ExternalOrderRef
         };
         _context.RestaurantOrders.Add(order);
 
@@ -716,6 +718,8 @@ public class RestaurantService : IRestaurantService
             TotalAmount = subTotal + vatAmount,
             VoidedAtUtc = o.VoidedAtUtc,
             VoidReason = o.VoidReason,
+            SourcePlatform = o.SourcePlatform,
+            ExternalOrderRef = o.ExternalOrderRef,
             Lines = o.Lines.OrderBy(l => l.LineNumber).Select(l => new RestaurantOrderLineDto
             {
                 Id = l.Id,

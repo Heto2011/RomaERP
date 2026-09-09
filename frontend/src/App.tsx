@@ -78,6 +78,7 @@ import RestaurantTables from "./pages/restaurant/RestaurantTables";
 import RestaurantMenu from "./pages/restaurant/RestaurantMenu";
 import PurchaseReceivingPage from "./pages/restaurant/PurchaseReceiving";
 import DeliveryReconciliationPage from "./pages/restaurant/DeliveryReconciliation";
+import DeliveryPlatforms from "./pages/restaurant/DeliveryPlatforms";
 import RestaurantPOS from "./pages/restaurant/RestaurantPOS";
 
 function ProtectedRoute({ children, layout = true, loginPath = "/login" }: { children: React.ReactNode; layout?: boolean; loginPath?: string }) {
@@ -158,6 +159,7 @@ export default function App() {
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />
       <Route path="/restaurant/purchase-receiving" element={<ProtectedRoute><PurchaseReceivingPage /></ProtectedRoute>} />
       <Route path="/restaurant/delivery-reconciliation" element={<ProtectedRoute><DeliveryReconciliationPage /></ProtectedRoute>} />
+      <Route path="/restaurant/delivery-platforms" element={<ProtectedRoute><DeliveryPlatforms /></ProtectedRoute>} />
       <Route path="/restaurant/pos" element={<ProtectedRoute layout={false} loginPath="/pos-login"><RestaurantPOS /></ProtectedRoute>} />
       <Route path="/inventory/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
       <Route path="/inventory/warehouses" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />

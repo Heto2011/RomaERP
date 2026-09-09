@@ -67,6 +67,16 @@ public class RestaurantOrder : AuditableEntity
     public DateTime? VoidedAtUtc { get; set; }
     public string? VoidReason { get; set; }
 
+    /// <summary>Null for an order entered by staff (POS/manual). Set to a delivery platform's name
+    /// ("HungerStation"/"Jahez"/"Mrsool") when the order was created automatically from that platform's
+    /// webhook — paired with <see cref="ExternalOrderRef"/> for idempotency and Sales Channel
+    /// Profitability attribution.</summary>
+    public string? SourcePlatform { get; set; }
+
+    /// <summary>The delivery platform's own order id, when <see cref="SourcePlatform"/> is set — lets a
+    /// retried/duplicate webhook for the same order be recognized instead of billed twice.</summary>
+    public string? ExternalOrderRef { get; set; }
+
     public ICollection<RestaurantOrderLine> Lines { get; set; } = new List<RestaurantOrderLine>();
 }
 

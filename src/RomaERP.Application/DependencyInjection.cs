@@ -56,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<IPurchasingService, PurchasingService>();
         services.AddScoped<IRestaurantService, RestaurantService>();
         services.AddScoped<IDeliveryReconciliationService, DeliveryReconciliationService>();
+        services.AddScoped<IDeliveryOrderIntakeService, DeliveryOrderIntakeService>();
         services.AddScoped<ICashierShiftService, CashierShiftService>();
 
         // E-invoicing: ZATCA's document signer AND API client are real (see Infrastructure.AddInfrastructure —

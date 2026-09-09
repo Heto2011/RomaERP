@@ -73,6 +73,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<MenuRecipeLine> MenuRecipeLines => Set<MenuRecipeLine>();
     public DbSet<DeliverySettlementImport> DeliverySettlementImports => Set<DeliverySettlementImport>();
     public DbSet<DeliverySettlementLine> DeliverySettlementLines => Set<DeliverySettlementLine>();
+    public DbSet<DeliveryPlatformItemMapping> DeliveryPlatformItemMappings => Set<DeliveryPlatformItemMapping>();
+    public DbSet<DeliveryWebhookEvent> DeliveryWebhookEvents => Set<DeliveryWebhookEvent>();
     public DbSet<CashierShift> CashierShifts => Set<CashierShift>();
 
     public DbSet<ExpenseCapture> ExpenseCaptures => Set<ExpenseCapture>();

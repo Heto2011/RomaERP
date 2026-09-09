@@ -652,6 +652,46 @@ export interface DeliveryReconciliationReport {
   variance: number;
 }
 
+export interface DeliveryPlatformStatus {
+  name: string;
+  isConfigured: boolean;
+}
+
+export enum DeliveryWebhookEventStatus {
+  Received = 1,
+  Processed = 2,
+  Failed = 3,
+}
+
+export interface DeliveryWebhookEvent {
+  id: string;
+  platformName: string;
+  externalOrderId: string | null;
+  status: DeliveryWebhookEventStatus;
+  errorMessage: string | null;
+  isSignatureVerified: boolean;
+  createdOrderId: string | null;
+  createdOrderNumber: string | null;
+  receivedAtUtc: string;
+  processedAtUtc: string | null;
+}
+
+export interface DeliveryPlatformItemMapping {
+  id: string;
+  platformName: string;
+  externalItemId: string;
+  externalItemName: string | null;
+  itemId: string;
+  itemName: string;
+}
+
+export interface SaveDeliveryPlatformItemMappingInput {
+  platformName: string;
+  externalItemId: string;
+  externalItemName: string | null;
+  itemId: string;
+}
+
 export interface FiscalYearDetail {
   id: string;
   name: string;

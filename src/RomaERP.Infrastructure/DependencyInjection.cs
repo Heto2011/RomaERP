@@ -40,6 +40,9 @@ public static class DependencyInjection
         services.AddHttpClient<RomaERP.Application.Accounting.Services.IExchangeRateProvider, RomaERP.Infrastructure.Accounting.OpenErApiExchangeRateProvider>();
         services.AddScoped<IBankFeedProvider, RomaERP.Infrastructure.Banking.NotConnectedBankFeedProvider>();
         services.AddScoped<IFaceVerificationProvider, RomaERP.Infrastructure.HR.AwsRekognitionFaceVerificationProvider>();
+        services.AddScoped<IDeliveryPlatformProvider, RomaERP.Infrastructure.Restaurant.HungerStationDeliveryProvider>();
+        services.AddScoped<IDeliveryPlatformProvider, RomaERP.Infrastructure.Restaurant.JahezDeliveryProvider>();
+        services.AddScoped<IDeliveryPlatformProvider, RomaERP.Infrastructure.Restaurant.MrsoolDeliveryProvider>();
 
         // Every tenant has its own, fully separate database. The connection string is only known once
         // TenantResolutionMiddleware resolves the request's company code, so it's read lazily here from

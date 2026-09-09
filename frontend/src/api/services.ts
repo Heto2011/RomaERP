@@ -61,6 +61,10 @@ import type {
   EmployeeRequest,
   CreateEmployeeRequestInput,
   DecideEmployeeRequestInput,
+  DeliveryPlatformStatus,
+  DeliveryWebhookEvent,
+  DeliveryPlatformItemMapping,
+  SaveDeliveryPlatformItemMappingInput,
   ChatTurnResponse,
   CompanySettingsLookup,
   CostCenterLookup,
@@ -361,6 +365,16 @@ export const DeliveryReconciliationApi = {
   getImports: () => apiClient.get<DeliverySettlementImportResult[]>("/deliveryreconciliation/imports"),
   getReconciliation: (fromDate: string, toDate: string) =>
     apiClient.get<DeliveryReconciliationReport>("/deliveryreconciliation/reconciliation", { params: { fromDate, toDate } }),
+};
+
+export const DeliveryPlatformsApi = {
+  getStatus: () => apiClient.get<DeliveryPlatformStatus[]>("/delivery-platforms/status"),
+  getEvents: () => apiClient.get<DeliveryWebhookEvent[]>("/delivery-platforms/webhook-events"),
+  retryEvent: (id: string) => apiClient.post<DeliveryWebhookEvent>(`/delivery-platforms/webhook-events/${id}/retry`),
+  getItemMappings: (platformName?: string) =>
+    apiClient.get<DeliveryPlatformItemMapping[]>("/delivery-platforms/item-mappings", { params: platformName ? { platformName } : {} }),
+  setItemMapping: (data: SaveDeliveryPlatformItemMappingInput) => apiClient.post<DeliveryPlatformItemMapping>("/delivery-platforms/item-mappings", data),
+  deleteItemMapping: (id: string) => apiClient.delete(`/delivery-platforms/item-mappings/${id}`),
 };
 
 export const OpeningBalanceApi = {
