@@ -81,6 +81,14 @@ public class RestaurantController : ControllerBase
     public async Task<ActionResult<RestaurantOrderDto>> SetOrderDiscount(Guid id, SetOrderDiscountDto dto, CancellationToken ct)
         => Ok(await _restaurantService.SetOrderDiscountAsync(id, dto, ct));
 
+    [HttpPut("orders/{id:guid}/lines/{lineId:guid}/kitchen-status")]
+    public async Task<ActionResult<RestaurantOrderDto>> SetLineKitchenStatus(Guid id, Guid lineId, SetLineKitchenStatusDto dto, CancellationToken ct)
+        => Ok(await _restaurantService.SetLineKitchenStatusAsync(id, lineId, dto, ct));
+
+    [HttpPost("orders/{id:guid}/split")]
+    public async Task<ActionResult<SplitOrderResultDto>> SplitOrder(Guid id, SplitOrderDto dto, CancellationToken ct)
+        => Ok(await _restaurantService.SplitOrderAsync(id, dto, ct));
+
     [HttpPost("orders/{id:guid}/cancel")]
     public async Task<ActionResult<RestaurantOrderDto>> CancelOrder(Guid id, CancellationToken ct)
         => Ok(await _restaurantService.CancelOrderAsync(id, ct));

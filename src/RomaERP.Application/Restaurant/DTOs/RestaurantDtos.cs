@@ -107,6 +107,26 @@ public class RestaurantOrderLineDto
     public decimal LineTotal { get; set; }
     public decimal DiscountAmount { get; set; }
     public string? Notes { get; set; }
+    public KitchenLineStatus KitchenStatus { get; set; }
+}
+
+public class SetLineKitchenStatusDto
+{
+    public KitchenLineStatus Status { get; set; }
+}
+
+/// <summary>Moves the given whole lines out of an Open order into a brand-new Open order (same table/type/
+/// customer), so each half can be billed separately — "split by item". The source order must keep at least
+/// one line; the split-off set can't be all of them.</summary>
+public class SplitOrderDto
+{
+    public List<Guid> LineIds { get; set; } = new();
+}
+
+public class SplitOrderResultDto
+{
+    public RestaurantOrderDto OriginalOrder { get; set; } = null!;
+    public RestaurantOrderDto NewOrder { get; set; } = null!;
 }
 
 public class RestaurantOrderDto

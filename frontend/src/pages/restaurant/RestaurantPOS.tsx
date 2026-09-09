@@ -55,6 +55,9 @@ export default function RestaurantPOS() {
   const [billFiscalPeriodId, setBillFiscalPeriodId] = useState("");
   const [billDeliveryPlatformName, setBillDeliveryPlatformName] = useState("");
 
+  const [showSplitDialog, setShowSplitDialog] = useState(false);
+  const [splitLineIds, setSplitLineIds] = useState<Set<string>>(new Set());
+
   const selectedOrder = useMemo(() => orders.find((o) => o.id === selectedOrderId) ?? null, [orders, selectedOrderId]);
   const availableTables = tables.filter((tb) => tb.status === RestaurantTableStatus.Available);
 
@@ -217,6 +220,34 @@ export default function RestaurantPOS() {
     try {
       await RestaurantApi.cancelOrder(selectedOrder.id);
       setSelectedOrderId(null);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  function openSplitDialog() {
+    setSplitLineIds(new Set());
+    setShowSplitDialog(true);
+  }
+
+  function toggleSplitLine(lineId: string) {
+    setSplitLineIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(lineId)) next.delete(lineId);
+      else next.add(lineId);
+      return next;
+    });
+  }
+
+  async function handleSplitOrder(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedOrder || splitLineIds.size === 0) return;
+    setError(null);
+    try {
+      const res = await RestaurantApi.splitOrder(selectedOrder.id, { lineIds: Array.from(splitLineIds) });
+      setShowSplitDialog(false);
+      setSelectedOrderId(res.data.originalOrder.id);
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -481,11 +512,18 @@ export default function RestaurantPOS() {
                   </div>
                   <div className="text-muted">{selectedOrder.orderNumber}</div>
                 </div>
-                {selectedOrder.status === RestaurantOrderStatus.Open && (
-                  <button className="btn btn-secondary btn-sm" onClick={handleCancelOrder} title={t.restaurant.cancelOrder}>
-                    ✕
-                  </button>
-                )}
+                <div style={{ display: "flex", gap: 8 }}>
+                  {selectedOrder.status === RestaurantOrderStatus.Open && selectedOrder.lines.length >= 2 && (
+                    <button className="btn btn-secondary btn-sm" onClick={openSplitDialog} title={t.restaurant.splitBill}>
+                      ⑂
+                    </button>
+                  )}
+                  {selectedOrder.status === RestaurantOrderStatus.Open && (
+                    <button className="btn btn-secondary btn-sm" onClick={handleCancelOrder} title={t.restaurant.cancelOrder}>
+                      ✕
+                    </button>
+                  )}
+                </div>
               </div>
 
               <div className="pos-cart-lines">
@@ -640,6 +678,32 @@ export default function RestaurantPOS() {
               <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
                 <button className="btn" type="submit">{t.restaurant.confirmBill}</button>
                 <button className="btn btn-secondary" type="button" onClick={() => setShowBillDialog(false)}>{t.common.cancel}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showSplitDialog && selectedOrder && (
+        <div className="modal-overlay" onClick={() => setShowSplitDialog(false)}>
+          <div className="card" style={{ maxWidth: 460, margin: "8% auto" }} onClick={(e) => e.stopPropagation()}>
+            <h3>{t.restaurant.splitBill} — {selectedOrder.orderNumber}</h3>
+            <p className="text-muted" style={{ marginTop: 0 }}>{t.restaurant.splitBillHint}</p>
+            <form onSubmit={handleSplitOrder}>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8, maxHeight: 320, overflowY: "auto" }}>
+                {selectedOrder.lines.map((line) => (
+                  <label key={line.id} style={{ display: "flex", alignItems: "center", gap: 10, padding: "6px 0", borderBottom: "1px solid var(--border-color, #eee)" }}>
+                    <input type="checkbox" checked={splitLineIds.has(line.id)} onChange={() => toggleSplitLine(line.id)} />
+                    <span style={{ flex: 1 }}>{line.quantity} × {line.itemName}</span>
+                    <span>{line.lineTotal.toLocaleString()}</span>
+                  </label>
+                ))}
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+                <button className="btn" type="submit" disabled={splitLineIds.size === 0 || splitLineIds.size === selectedOrder.lines.length}>
+                  {t.restaurant.splitBillConfirm}
+                </button>
+                <button className="btn btn-secondary" type="button" onClick={() => setShowSplitDialog(false)}>{t.common.cancel}</button>
               </div>
             </form>
           </div>

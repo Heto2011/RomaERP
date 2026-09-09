@@ -272,6 +272,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       section: t.nav.restaurant,
       items: [
         { to: "/restaurant/pos", label: t.nav.restaurantPos, icon: <IconCart /> },
+        { to: "/restaurant/kitchen", label: t.nav.kitchenDisplay, icon: <IconClock /> },
         { to: "/restaurant/tables", label: t.nav.restaurantTables, icon: <IconGrid /> },
         { to: "/restaurant/menu", label: t.nav.restaurantMenu, icon: <IconBook /> },
         { to: "/restaurant/purchase-receiving", label: t.restaurant.purchaseReceivingTitle, icon: <IconTruck /> },

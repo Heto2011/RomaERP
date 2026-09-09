@@ -130,6 +130,9 @@ import type {
   VoidOrderInput,
   SetLineDiscountInput,
   SetOrderDiscountInput,
+  SetLineKitchenStatusInput,
+  SplitOrderInput,
+  SplitOrderResult,
 } from "./types";
 
 export const AuthApi = {
@@ -547,6 +550,10 @@ export const RestaurantApi = {
     apiClient.put<RestaurantOrder>(`/restaurant/orders/${orderId}/lines/${lineId}/discount`, data),
   setOrderDiscount: (orderId: string, data: SetOrderDiscountInput) =>
     apiClient.put<RestaurantOrder>(`/restaurant/orders/${orderId}/discount`, data),
+  setLineKitchenStatus: (orderId: string, lineId: string, data: SetLineKitchenStatusInput) =>
+    apiClient.put<RestaurantOrder>(`/restaurant/orders/${orderId}/lines/${lineId}/kitchen-status`, data),
+  splitOrder: (orderId: string, data: SplitOrderInput) =>
+    apiClient.post<SplitOrderResult>(`/restaurant/orders/${orderId}/split`, data),
   cancelOrder: (orderId: string) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/cancel`),
   billOrder: (orderId: string, data: BillOrderInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/bill`, data),
   voidOrder: (orderId: string, data: VoidOrderInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/void`, data),

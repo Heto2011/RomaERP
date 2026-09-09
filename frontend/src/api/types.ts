@@ -1612,6 +1612,13 @@ export enum RestaurantOrderStatus {
   Voided = 4,
 }
 
+export enum KitchenLineStatus {
+  Pending = 1,
+  Preparing = 2,
+  Ready = 3,
+  Served = 4,
+}
+
 export interface CreateRestaurantOrderInput {
   orderType: RestaurantOrderType;
   tableId?: string | null;
@@ -1639,6 +1646,7 @@ export interface RestaurantOrderLine {
   lineTotal: number;
   discountAmount: number;
   notes: string | null;
+  kitchenStatus: KitchenLineStatus;
 }
 
 export interface RestaurantOrder {
@@ -1680,6 +1688,19 @@ export interface VoidOrderInput {
 
 export interface SetOrderDiscountInput {
   discountAmount: number;
+}
+
+export interface SetLineKitchenStatusInput {
+  status: KitchenLineStatus;
+}
+
+export interface SplitOrderInput {
+  lineIds: string[];
+}
+
+export interface SplitOrderResult {
+  originalOrder: RestaurantOrder;
+  newOrder: RestaurantOrder;
 }
 
 export interface BillOrderInput {

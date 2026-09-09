@@ -23,6 +23,16 @@ public enum RestaurantOrderStatus
     Voided = 4
 }
 
+/// <summary>Where one order line stands in the kitchen — shown on the Kitchen Display System (KDS) and
+/// advanced by kitchen staff, independent of the order's own billing Status.</summary>
+public enum KitchenLineStatus
+{
+    Pending = 1,
+    Preparing = 2,
+    Ready = 3,
+    Served = 4
+}
+
 /// <summary>A running order at a table (or a takeaway/delivery ticket) being built up before it's billed.
 /// Billing converts it into a real SalesInvoice via ISalesService — this entity never posts to the GL itself.</summary>
 public class RestaurantOrder : AuditableEntity
@@ -102,4 +112,6 @@ public class RestaurantOrderLine : BaseEntity
     public decimal DiscountAmount { get; set; }
 
     public string? Notes { get; set; }
+
+    public KitchenLineStatus KitchenStatus { get; set; } = KitchenLineStatus.Pending;
 }

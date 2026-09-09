@@ -355,6 +355,68 @@ public class RestaurantServiceTests
     }
 
     [Fact]
+    public async Task AddLine_DefaultsKitchenStatusToPending_AndCanBeAdvanced()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.Takeaway, WarehouseId = seed.Warehouse.Id });
+        var withLine = await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Water.Id, Quantity = 1 });
+        var lineId = withLine.Lines.Single().Id;
+        Assert.Equal(KitchenLineStatus.Pending, withLine.Lines.Single().KitchenStatus);
+
+        var preparing = await service.SetLineKitchenStatusAsync(order.Id, lineId, new SetLineKitchenStatusDto { Status = KitchenLineStatus.Preparing });
+        Assert.Equal(KitchenLineStatus.Preparing, preparing.Lines.Single().KitchenStatus);
+    }
+
+    [Fact]
+    public async Task SplitOrder_MovesSelectedLinesToNewOpenOrder_KeepingTheOriginalOpen()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.DineIn, TableId = seed.Table.Id, WarehouseId = seed.Warehouse.Id });
+        var afterPizza = await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Pizza.Id, Quantity = 1 });
+        var afterWater = await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Water.Id, Quantity = 1 });
+        var waterLineId = afterWater.Lines.Single(l => l.ItemId == seed.Water.Id).Id;
+
+        var result = await service.SplitOrderAsync(order.Id, new SplitOrderDto { LineIds = new List<Guid> { waterLineId } });
+
+        Assert.Equal(RestaurantOrderStatus.Open, result.OriginalOrder.Status);
+        Assert.Single(result.OriginalOrder.Lines);
+        Assert.Equal(seed.Pizza.Id, result.OriginalOrder.Lines.Single().ItemId);
+
+        Assert.Equal(RestaurantOrderStatus.Open, result.NewOrder.Status);
+        Assert.Single(result.NewOrder.Lines);
+        Assert.Equal(seed.Water.Id, result.NewOrder.Lines.Single().ItemId);
+        Assert.Equal(order.TableId, result.NewOrder.TableId);
+        Assert.NotEqual(order.Id, result.NewOrder.Id);
+
+        // Both halves can be billed independently.
+        var billedOriginal = await service.BillOrderAsync(result.OriginalOrder.Id, new BillOrderDto { PaymentTerm = PaymentTerm.Cash, FiscalPeriodId = seed.Period.Id });
+        var billedNew = await service.BillOrderAsync(result.NewOrder.Id, new BillOrderDto { PaymentTerm = PaymentTerm.Cash, FiscalPeriodId = seed.Period.Id });
+        Assert.Equal(RestaurantOrderStatus.Billed, billedOriginal.Status);
+        Assert.Equal(RestaurantOrderStatus.Billed, billedNew.Status);
+    }
+
+    [Fact]
+    public async Task SplitOrder_RejectsMovingAllLines_AndRejectsUnknownLine()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.Takeaway, WarehouseId = seed.Warehouse.Id });
+        var withLine = await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Water.Id, Quantity = 1 });
+        var lineId = withLine.Lines.Single().Id;
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            service.SplitOrderAsync(order.Id, new SplitOrderDto { LineIds = new List<Guid> { lineId } }));
+
+        await Assert.ThrowsAsync<ValidationAppException>(() =>
+            service.SplitOrderAsync(order.Id, new SplitOrderDto { LineIds = new List<Guid> { Guid.NewGuid() } }));
+    }
+
+    [Fact]
     public async Task VoidOrder_CreditOrderAlreadyPartiallyPaid_Rejected()
     {
         var seed = await SeedAsync();

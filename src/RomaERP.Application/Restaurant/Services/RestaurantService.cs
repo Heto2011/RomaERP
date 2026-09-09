@@ -339,6 +339,72 @@ public class RestaurantService : IRestaurantService
         return await GetOrderAsync(orderId, ct);
     }
 
+    /// <summary>Advances (or reverts) a line's kitchen ticket status — purely informational for the KDS,
+    /// doesn't affect billing. Still requires the order to be Open (a Billed/Cancelled/Voided order has no
+    /// kitchen work left to track).</summary>
+    public async Task<RestaurantOrderDto> SetLineKitchenStatusAsync(Guid orderId, Guid lineId, SetLineKitchenStatusDto dto, CancellationToken ct = default)
+    {
+        var order = await LoadOrderAsync(orderId, ct);
+        EnsureOpen(order);
+
+        var line = order.Lines.FirstOrDefault(l => l.Id == lineId)
+            ?? throw new NotFoundException(nameof(RestaurantOrderLine), lineId);
+
+        line.KitchenStatus = dto.Status;
+        await _context.SaveChangesAsync(ct);
+        return await GetOrderAsync(orderId, ct);
+    }
+
+    /// <summary>"Split by item" — moves the given whole lines into a brand-new Open order (same table/type/
+    /// customer/waiter/warehouse), so each half can be billed separately (e.g. two diners on one table asking
+    /// for separate checks). Only whole lines move; splitting a single line's quantity across two checks isn't
+    /// supported — the cashier adds it as two lines up front if that's needed. The table itself stays Occupied
+    /// throughout, now backing two open orders instead of one.</summary>
+    public async Task<SplitOrderResultDto> SplitOrderAsync(Guid orderId, SplitOrderDto dto, CancellationToken ct = default)
+    {
+        if (dto.LineIds is null || dto.LineIds.Count == 0)
+            throw new ValidationAppException("لازم تحدد بند واحد على الأقل عشان تقسم الفاتورة.");
+
+        var order = await LoadOrderAsync(orderId, ct);
+        EnsureOpen(order);
+
+        var lineIds = dto.LineIds.Distinct().ToList();
+        var linesToMove = order.Lines.Where(l => lineIds.Contains(l.Id)).ToList();
+        if (linesToMove.Count != lineIds.Count)
+            throw new ValidationAppException("في بند محدد مش موجود في الطلب ده.");
+        if (linesToMove.Count == order.Lines.Count)
+            throw new ValidationAppException("مينفعش تنقل كل بنود الطلب — لازم يفضل بند واحد على الأقل في الفاتورة الأصلية.");
+
+        var count = await _context.RestaurantOrders.CountAsync(ct);
+        var newOrder = new RestaurantOrder
+        {
+            OrderNumber = $"RO-{(count + 1):D6}",
+            OrderType = order.OrderType,
+            OrderDate = DateTime.UtcNow,
+            TableId = order.TableId,
+            CustomerName = order.CustomerName,
+            CustomerPhone = order.CustomerPhone,
+            DeliveryAddress = order.DeliveryAddress,
+            WaiterEmployeeId = order.WaiterEmployeeId,
+            WarehouseId = order.WarehouseId,
+            Status = RestaurantOrderStatus.Open
+        };
+        _context.RestaurantOrders.Add(newOrder);
+
+        var nextLineNumber = 1;
+        foreach (var line in linesToMove)
+        {
+            line.RestaurantOrderId = newOrder.Id;
+            line.LineNumber = nextLineNumber++;
+        }
+
+        await _context.SaveChangesAsync(ct);
+
+        var originalDto = await GetOrderAsync(order.Id, ct);
+        var newOrderDto = await GetOrderAsync(newOrder.Id, ct);
+        return new SplitOrderResultDto { OriginalOrder = originalDto, NewOrder = newOrderDto };
+    }
+
     public async Task<RestaurantOrderDto> CancelOrderAsync(Guid orderId, CancellationToken ct = default)
     {
         var order = await LoadOrderAsync(orderId, ct);
@@ -730,7 +796,8 @@ public class RestaurantService : IRestaurantService
                 UnitPrice = l.UnitPrice,
                 LineTotal = l.LineTotal,
                 DiscountAmount = l.DiscountAmount,
-                Notes = l.Notes
+                Notes = l.Notes,
+                KitchenStatus = l.KitchenStatus
             }).ToList()
         };
     }
