@@ -207,6 +207,8 @@ export default function Payroll() {
                             <th>{t.hr.allowances}</th>
                             <th>{t.hr.deductions}</th>
                             <th>{t.hr.netSalary}</th>
+                            <th>{t.hr.gosiEmployeeColumn}</th>
+                            <th>{t.hr.gosiEmployerColumn}</th>
                             {run.status === PayrollRunStatus.Draft && <th></th>}
                           </tr>
                         </thead>
@@ -248,6 +250,8 @@ export default function Payroll() {
                                   )}
                                 </td>
                                 <td>{line.netSalary.toLocaleString()}</td>
+                                <td>{line.gosiEmployeeDeductionAmount > 0 ? line.gosiEmployeeDeductionAmount.toLocaleString() : "-"}</td>
+                                <td>{line.gosiEmployerContributionAmount > 0 ? line.gosiEmployerContributionAmount.toLocaleString() : "-"}</td>
                                 {run.status === PayrollRunStatus.Draft && (
                                   <td style={{ display: "flex", gap: 4 }}>
                                     {isEditing ? (

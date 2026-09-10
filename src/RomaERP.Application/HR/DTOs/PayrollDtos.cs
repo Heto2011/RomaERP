@@ -49,6 +49,8 @@ public class PayrollRunLineDto
     public decimal NetSalary { get; set; }
     public int UnpaidLeaveDays { get; set; }
     public decimal UnpaidLeaveDeductionAmount { get; set; }
+    public decimal GosiEmployeeDeductionAmount { get; set; }
+    public decimal GosiEmployerContributionAmount { get; set; }
 }
 
 public class PayrollRunDto
@@ -85,4 +87,17 @@ public class MyPayslipDto
     public decimal TotalAllowances { get; set; }
     public decimal TotalDeductions { get; set; }
     public decimal NetSalary { get; set; }
+}
+
+/// <summary>Small set of company-wide payroll settings, editable from one admin screen: the daily-rate
+/// divisor used for unpaid-leave deductions, plus GOSI (see CompanySettings.GosiEnabled and friends —
+/// disabled by default, and its rates must be verified against the current official GOSI schedule before
+/// relying on them for real filings).</summary>
+public class PayrollSettingsDto
+{
+    public int PayrollDaysPerMonth { get; set; }
+    public bool GosiEnabled { get; set; }
+    public decimal GosiEmployeeRatePercent { get; set; }
+    public decimal GosiEmployerAnnuitiesRatePercent { get; set; }
+    public decimal GosiEmployerHazardsRatePercent { get; set; }
 }

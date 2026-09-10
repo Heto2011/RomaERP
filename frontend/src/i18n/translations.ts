@@ -210,6 +210,7 @@ const ar = {
   },
   common: {
     save: "حفظ",
+    saved: "تم الحفظ",
     cancel: "إلغاء",
     add: "إضافة",
     edit: "تعديل",
@@ -726,6 +727,25 @@ const ar = {
     faceReferencePhotoSet: "متسجلة",
     faceReferencePhotoNotSet: "غير متسجلة",
     unpaidLeaveDeduction: "خصم إجازات غير مدفوعة",
+    isSaudiNational: "سعودي الجنسية",
+    annualLeaveDaysPerYear: "رصيد الإجازة السنوية (يوم)",
+
+    leaveBalanceEntitlement: "الاستحقاق السنوي",
+    leaveBalanceUsed: "المستخدم",
+    leaveBalanceRemaining: "المتبقي",
+
+    gosiEmployeeColumn: "تأمينات (موظف)",
+    gosiEmployerColumn: "تأمينات (شركة)",
+
+    payrollSettingsTitle: "إعدادات الرواتب",
+    payrollSettingsIntro: "إعدادات عامة تؤثر على كل دورات الرواتب الجاية.",
+    payrollDaysPerMonth: "عدد أيام الراتب في الشهر",
+    gosiEnabled: "تفعيل حساب التأمينات الاجتماعية (GOSI) تلقائيًا في الرواتب",
+    gosiRatesDisclaimer: "⚠️ النسب دي افتراضية وممكن تتغير حسب لوائح التأمينات الرسمية — راجعها مع محاسبك قبل الاعتماد عليها في أي تقديم رسمي.",
+    gosiEmployeeRate: "نسبة استقطاع الموظف (%)",
+    gosiEmployerAnnuitiesRate: "نسبة مساهمة الشركة - المعاشات (%)",
+    gosiEmployerHazardsRate: "نسبة مساهمة الشركة - الأخطار المهنية (%)",
+    gosiEligibilityNote: "بيتطبق بس على الموظفين المحددين \"سعودي الجنسية\" في ملفهم — علّم الموظف من شاشة الموظفين.",
 
     workLocationsTitle: "مواقع العمل",
     workLocationsIntro: "حدد مواقع فروعك بإحداثيات GPS عشان نظام الحضور يقدر يتحقق إن الموظف فعلاً واقف جنب الموقع وقت الحضور والانصراف.",
@@ -1397,6 +1417,7 @@ const en: typeof ar = {
   },
   common: {
     save: "Save",
+    saved: "Saved",
     cancel: "Cancel",
     add: "Add",
     edit: "Edit",
@@ -1913,6 +1934,25 @@ const en: typeof ar = {
     faceReferencePhotoSet: "On file",
     faceReferencePhotoNotSet: "Not on file",
     unpaidLeaveDeduction: "Unpaid Leave Deduction",
+    isSaudiNational: "Saudi National",
+    annualLeaveDaysPerYear: "Annual Leave Balance (days)",
+
+    leaveBalanceEntitlement: "Annual Entitlement",
+    leaveBalanceUsed: "Used",
+    leaveBalanceRemaining: "Remaining",
+
+    gosiEmployeeColumn: "GOSI (Employee)",
+    gosiEmployerColumn: "GOSI (Employer)",
+
+    payrollSettingsTitle: "Payroll Settings",
+    payrollSettingsIntro: "Company-wide settings that affect every future payroll run.",
+    payrollDaysPerMonth: "Payroll Days per Month",
+    gosiEnabled: "Automatically calculate GOSI (social insurance) in payroll",
+    gosiRatesDisclaimer: "⚠️ These rates are defaults and may change under official GOSI regulations — verify with your accountant before relying on them for any official filing.",
+    gosiEmployeeRate: "Employee withholding rate (%)",
+    gosiEmployerAnnuitiesRate: "Employer contribution - Annuities (%)",
+    gosiEmployerHazardsRate: "Employer contribution - Occupational Hazards (%)",
+    gosiEligibilityNote: "Applies only to employees marked \"Saudi National\" on their profile — mark the employee from the Employees screen.",
 
     workLocationsTitle: "Work Locations",
     workLocationsIntro: "Set your branches' GPS coordinates so attendance can confirm an employee was actually there at check-in/out.",

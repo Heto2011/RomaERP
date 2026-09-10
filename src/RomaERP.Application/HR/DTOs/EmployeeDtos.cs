@@ -29,6 +29,8 @@ public class EmployeeDto
     public Guid? WorkLocationId { get; set; }
     public string? WorkLocationName { get; set; }
     public bool HasFaceReferencePhoto { get; set; }
+    public bool IsSaudiNational { get; set; }
+    public int AnnualLeaveDaysPerYear { get; set; }
 }
 
 public class CreateEmployeeDto
@@ -50,6 +52,8 @@ public class CreateEmployeeDto
     public string? BankAccountNumber { get; set; }
     public string? Iban { get; set; }
     public Guid? WorkLocationId { get; set; }
+    public bool IsSaudiNational { get; set; }
+    public int AnnualLeaveDaysPerYear { get; set; } = 21;
 }
 
 public class UpdateEmployeeDto : CreateEmployeeDto

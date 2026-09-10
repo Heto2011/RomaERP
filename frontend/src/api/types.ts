@@ -846,6 +846,8 @@ export interface Employee {
   workLocationId: string | null;
   workLocationName: string | null;
   hasFaceReferencePhoto: boolean;
+  isSaudiNational: boolean;
+  annualLeaveDaysPerYear: number;
 }
 
 export interface WorkLocation {
@@ -917,6 +919,13 @@ export interface DecideEmployeeRequestInput {
   decisionNote?: string | null;
 }
 
+export interface LeaveBalance {
+  year: number;
+  annualLeaveDaysPerYear: number;
+  usedDays: number;
+  remainingDays: number;
+}
+
 export enum SalaryComponentType {
   Allowance = 1,
   Deduction = 2,
@@ -965,6 +974,16 @@ export interface PayrollRunLine {
   netSalary: number;
   unpaidLeaveDays: number;
   unpaidLeaveDeductionAmount: number;
+  gosiEmployeeDeductionAmount: number;
+  gosiEmployerContributionAmount: number;
+}
+
+export interface PayrollSettings {
+  payrollDaysPerMonth: number;
+  gosiEnabled: boolean;
+  gosiEmployeeRatePercent: number;
+  gosiEmployerAnnuitiesRatePercent: number;
+  gosiEmployerHazardsRatePercent: number;
 }
 
 export interface PayrollRun {

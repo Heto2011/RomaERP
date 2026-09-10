@@ -17,6 +17,19 @@ public class CompanySettings : AuditableEntity
     /// (BasicSalary ÷ this). Configurable since labor conventions differ by country.</summary>
     public int PayrollDaysPerMonth { get; set; } = 30;
 
+    /// <summary>Off by default — GOSI (Saudi General Organization for Social Insurance) only applies to a
+    /// Saudi-registered company. When enabled, payroll auto-computes the Annuities withholding/contribution
+    /// for every employee marked Employee.IsSaudiNational. The three rates below default to the commonly
+    /// published 2024 GOSI percentages but MUST be verified against the current official GOSI rate schedule
+    /// before relying on them for real filings — they're editable here for exactly that reason.</summary>
+    public bool GosiEnabled { get; set; }
+    /// <summary>Employee-side Annuities branch contribution, withheld from net pay (% of basic salary).</summary>
+    public decimal GosiEmployeeRatePercent { get; set; } = 9.75m;
+    /// <summary>Employer-side Annuities branch contribution — a company cost, not deducted from the employee (% of basic salary).</summary>
+    public decimal GosiEmployerAnnuitiesRatePercent { get; set; } = 9.75m;
+    /// <summary>Employer-side Occupational Hazards branch contribution — a company cost, not deducted from the employee (% of basic salary).</summary>
+    public decimal GosiEmployerHazardsRatePercent { get; set; } = 2.0m;
+
     // ----- E-invoicing (government tax authority integration) -----
     public EInvoicingProvider EInvoicingProvider { get; set; } = EInvoicingProvider.None;
     public EInvoicingEnvironment EInvoicingEnvironment { get; set; } = EInvoicingEnvironment.Sandbox;

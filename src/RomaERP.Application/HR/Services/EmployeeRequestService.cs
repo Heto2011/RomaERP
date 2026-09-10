@@ -93,6 +93,40 @@ public class EmployeeRequestService : IEmployeeRequestService
         return Map(request, request.Employee);
     }
 
+    public async Task<LeaveBalanceDto> GetLeaveBalanceAsync(Guid employeeId, CancellationToken ct = default)
+    {
+        var employee = await _context.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.Id == employeeId && !e.IsDeleted, ct)
+            ?? throw new NotFoundException(nameof(Employee), employeeId);
+
+        var year = DateTime.UtcNow.Year;
+        var yearStart = new DateTime(year, 1, 1);
+        var yearEnd = new DateTime(year, 12, 31);
+
+        var approvedLeaves = await _context.EmployeeRequests
+            .AsNoTracking()
+            .Where(r => r.EmployeeId == employeeId
+                        && r.Type == EmployeeRequestType.Leave
+                        && r.Status == EmployeeRequestStatus.Approved
+                        && r.DateFrom <= yearEnd
+                        && (r.DateTo ?? r.DateFrom) >= yearStart)
+            .ToListAsync(ct);
+
+        var usedDays = approvedLeaves.Sum(r =>
+        {
+            var from = r.DateFrom < yearStart ? yearStart : r.DateFrom;
+            var to = (r.DateTo ?? r.DateFrom) > yearEnd ? yearEnd : (r.DateTo ?? r.DateFrom);
+            return (to.Date - from.Date).Days + 1;
+        });
+
+        return new LeaveBalanceDto
+        {
+            Year = year,
+            AnnualLeaveDaysPerYear = employee.AnnualLeaveDaysPerYear,
+            UsedDays = usedDays,
+            RemainingDays = employee.AnnualLeaveDaysPerYear - usedDays
+        };
+    }
+
     private static EmployeeRequestDto Map(EmployeeRequest r, Employee? employee) => new()
     {
         Id = r.Id,

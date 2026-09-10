@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { EmployeeRequestsApi } from "../../api/services";
-import { EmployeeRequestStatus, EmployeeRequestType, type EmployeeRequest } from "../../api/types";
+import { EmployeeRequestStatus, EmployeeRequestType, type EmployeeRequest, type LeaveBalance } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 
@@ -11,6 +11,7 @@ const statusBadgeClass = { [EmployeeRequestStatus.Pending]: "badge-draft", [Empl
 export default function MyRequests() {
   const { t } = useLanguage();
   const [requests, setRequests] = useState<EmployeeRequest[]>([]);
+  const [leaveBalance, setLeaveBalance] = useState<LeaveBalance | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [type, setType] = useState<EmployeeRequestType>(EmployeeRequestType.Leave);
   const [dateFrom, setDateFrom] = useState(() => new Date().toISOString().slice(0, 10));
@@ -19,8 +20,9 @@ export default function MyRequests() {
   const [error, setError] = useState<string | null>(null);
 
   async function load() {
-    const res = await EmployeeRequestsApi.getMine();
-    setRequests(res.data);
+    const [requestsRes, balanceRes] = await Promise.all([EmployeeRequestsApi.getMine(), EmployeeRequestsApi.getMyLeaveBalance()]);
+    setRequests(requestsRes.data);
+    setLeaveBalance(balanceRes.data);
   }
 
   useEffect(() => {
@@ -50,6 +52,26 @@ export default function MyRequests() {
         </button>
       </div>
       <p className="text-muted">{t.hr.employeeRequestsIntro}</p>
+
+      {leaveBalance && (
+        <div className="card" style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+          <div>
+            <div className="text-muted">{t.hr.leaveBalanceEntitlement}</div>
+            <strong style={{ fontSize: 20 }}>{leaveBalance.annualLeaveDaysPerYear}</strong>
+          </div>
+          <div>
+            <div className="text-muted">{t.hr.leaveBalanceUsed}</div>
+            <strong style={{ fontSize: 20 }}>{leaveBalance.usedDays}</strong>
+          </div>
+          <div>
+            <div className="text-muted">{t.hr.leaveBalanceRemaining}</div>
+            <strong style={{ fontSize: 20 }} className={leaveBalance.remainingDays < 0 ? "text-danger" : "text-success"}>
+              {leaveBalance.remainingDays}
+            </strong>
+          </div>
+          <div className="text-muted" style={{ alignSelf: "center" }}>({leaveBalance.year})</div>
+        </div>
+      )}
 
       {error && <div className="alert-error">{error}</div>}
 

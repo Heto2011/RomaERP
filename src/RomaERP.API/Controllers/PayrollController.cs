@@ -80,4 +80,14 @@ public class PayrollController : ControllerBase
     [Authorize(Roles = "Admin,HR")]
     public async Task<ActionResult<PayrollRunDto>> UpdateLine(Guid id, Guid employeeId, UpdatePayrollLineDto dto, CancellationToken ct)
         => Ok(await _payrollService.UpdateLineAsync(id, employeeId, dto, ct));
+
+    [HttpGet("settings")]
+    [Authorize(Roles = "Admin,HR")]
+    public async Task<ActionResult<PayrollSettingsDto>> GetSettings(CancellationToken ct)
+        => Ok(await _payrollService.GetSettingsAsync(ct));
+
+    [HttpPut("settings")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<PayrollSettingsDto>> UpdateSettings(PayrollSettingsDto dto, CancellationToken ct)
+        => Ok(await _payrollService.UpdateSettingsAsync(dto, ct));
 }

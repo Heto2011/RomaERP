@@ -206,6 +206,8 @@ public class PayrollRunLineConfiguration : IEntityTypeConfiguration<PayrollRunLi
         builder.Property(l => l.TotalDeductions).HasPrecision(18, 2);
         builder.Property(l => l.NetSalary).HasPrecision(18, 2);
         builder.Property(l => l.UnpaidLeaveDeductionAmount).HasPrecision(18, 2);
+        builder.Property(l => l.GosiEmployeeDeductionAmount).HasPrecision(18, 2);
+        builder.Property(l => l.GosiEmployerContributionAmount).HasPrecision(18, 2);
 
         builder.HasOne(l => l.Employee)
             .WithMany()

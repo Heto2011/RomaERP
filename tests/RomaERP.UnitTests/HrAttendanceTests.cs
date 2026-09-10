@@ -195,4 +195,44 @@ public class EmployeeRequestServiceTests
 
         Assert.Single(pending);
     }
+
+    [Fact]
+    public async Task GetLeaveBalanceAsync_SubtractsApprovedLeaveWithinTheCurrentYearOnly()
+    {
+        var (ctx, employee) = await SeedAsync();
+        var service = new EmployeeRequestService(ctx);
+        var currentYear = DateTime.UtcNow.Year;
+
+        var thisYearLeave = await service.CreateAsync(employee.Id, new CreateEmployeeRequestDto
+        {
+            Type = EmployeeRequestType.Leave,
+            DateFrom = new DateTime(currentYear, 3, 1),
+            DateTo = new DateTime(currentYear, 3, 5) // 5 days
+        });
+        await service.DecideAsync(thisYearLeave.Id, Guid.NewGuid(), new DecideEmployeeRequestDto { Approve = true });
+
+        // Approved leave from last year must not count against this year's balance.
+        var lastYearLeave = await service.CreateAsync(employee.Id, new CreateEmployeeRequestDto
+        {
+            Type = EmployeeRequestType.Leave,
+            DateFrom = new DateTime(currentYear - 1, 12, 20),
+            DateTo = new DateTime(currentYear - 1, 12, 25)
+        });
+        await service.DecideAsync(lastYearLeave.Id, Guid.NewGuid(), new DecideEmployeeRequestDto { Approve = true });
+
+        // A still-pending request must not count either.
+        await service.CreateAsync(employee.Id, new CreateEmployeeRequestDto
+        {
+            Type = EmployeeRequestType.Leave,
+            DateFrom = new DateTime(currentYear, 6, 1),
+            DateTo = new DateTime(currentYear, 6, 3)
+        });
+
+        var balance = await service.GetLeaveBalanceAsync(employee.Id);
+
+        Assert.Equal(currentYear, balance.Year);
+        Assert.Equal(21, balance.AnnualLeaveDaysPerYear);
+        Assert.Equal(5, balance.UsedDays);
+        Assert.Equal(16, balance.RemainingDays);
+    }
 }

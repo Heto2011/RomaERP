@@ -186,4 +186,124 @@ public class PayrollServiceTests
         Assert.True(journalEntry.IsBalanced);
         Assert.Equal(journalEntry.TotalDebit, journalEntry.TotalCredit);
     }
+
+    [Fact]
+    public async Task CreateAndCalculateAsync_ComputesGosi_OnlyForSaudiNationalsWhenEnabled()
+    {
+        var ctx = CreateContext();
+        var saudiEmployee = CreateEmployee(basicSalary: 10000);
+        saudiEmployee.IsSaudiNational = true;
+        var nonSaudiEmployee = new Employee
+        {
+            EmployeeCode = "EMP-002", FullNameAr = "موظف أجنبي", FullNameEn = "Foreign Employee",
+            HireDate = new DateTime(2025, 1, 1), BasicSalary = 10000, IsSaudiNational = false
+        };
+        var period = new FiscalPeriod { Name = "September 2026", PeriodNumber = 9, StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2026, 9, 30) };
+        ctx.Employees.AddRange(saudiEmployee, nonSaudiEmployee);
+        ctx.FiscalPeriods.Add(period);
+        ctx.CompanySettings.Add(new CompanySettings
+        {
+            CompanyNameAr = "شركة", CompanyNameEn = "Co", PayrollDaysPerMonth = 30,
+            GosiEnabled = true, GosiEmployeeRatePercent = 9.75m, GosiEmployerAnnuitiesRatePercent = 9.75m, GosiEmployerHazardsRatePercent = 2m
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new PayrollService(ctx);
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = period.Id, RunDate = new DateTime(2026, 9, 30) });
+
+        var saudiLine = run.Lines.Single(l => l.EmployeeId == saudiEmployee.Id);
+        Assert.Equal(975m, saudiLine.GosiEmployeeDeductionAmount); // 10000 * 9.75%
+        Assert.Equal(1175m, saudiLine.GosiEmployerContributionAmount); // 10000 * (9.75% + 2%)
+        Assert.Equal(975m, saudiLine.TotalDeductions);
+        Assert.Equal(9025m, saudiLine.NetSalary);
+
+        var nonSaudiLine = run.Lines.Single(l => l.EmployeeId == nonSaudiEmployee.Id);
+        Assert.Equal(0m, nonSaudiLine.GosiEmployeeDeductionAmount);
+        Assert.Equal(0m, nonSaudiLine.GosiEmployerContributionAmount);
+        Assert.Equal(10000m, nonSaudiLine.NetSalary);
+    }
+
+    [Fact]
+    public async Task CreateAndCalculateAsync_NoGosi_WhenDisabledEvenForSaudiNational()
+    {
+        var ctx = CreateContext();
+        var employee = CreateEmployee(basicSalary: 10000);
+        employee.IsSaudiNational = true;
+        var period = new FiscalPeriod { Name = "September 2026", PeriodNumber = 9, StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2026, 9, 30) };
+        ctx.Employees.Add(employee);
+        ctx.FiscalPeriods.Add(period);
+        ctx.CompanySettings.Add(new CompanySettings { CompanyNameAr = "شركة", CompanyNameEn = "Co", PayrollDaysPerMonth = 30, GosiEnabled = false });
+        await ctx.SaveChangesAsync();
+
+        var service = new PayrollService(ctx);
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = period.Id, RunDate = new DateTime(2026, 9, 30) });
+
+        var line = Assert.Single(run.Lines);
+        Assert.Equal(0m, line.GosiEmployeeDeductionAmount);
+        Assert.Equal(0m, line.GosiEmployerContributionAmount);
+        Assert.Equal(10000m, line.NetSalary);
+    }
+
+    [Fact]
+    public async Task PostAsync_KeepsTheJournalEntryBalanced_AndPostsGosiPayable_WhenALineHasGosi()
+    {
+        var ctx = CreateContext();
+        var employee = CreateEmployee(basicSalary: 10000);
+        employee.IsSaudiNational = true;
+        var salariesExpense = new Account { Code = AccountingConstants.SalariesExpenseAccountCode, NameAr = "مصروف مرتبات", NameEn = "Salaries Expense", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        var accruedSalaries = new Account { Code = AccountingConstants.AccruedSalariesPayableAccountCode, NameAr = "مرتبات مستحقة", NameEn = "Accrued Salaries", AccountType = AccountType.Liability, Nature = AccountNature.Credit };
+        var gosiEmployerExpense = new Account { Code = AccountingConstants.GosiEmployerExpenseAccountCode, NameAr = "مصروف تأمينات", NameEn = "GOSI Employer Expense", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        var gosiPayable = new Account { Code = AccountingConstants.GosiPayableAccountCode, NameAr = "تأمينات مستحقة", NameEn = "GOSI Payable", AccountType = AccountType.Liability, Nature = AccountNature.Credit };
+        var period = new FiscalPeriod { Name = "September 2026", PeriodNumber = 9, StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2026, 9, 30) };
+        ctx.Employees.Add(employee);
+        ctx.Accounts.AddRange(salariesExpense, accruedSalaries, gosiEmployerExpense, gosiPayable);
+        ctx.FiscalPeriods.Add(period);
+        ctx.CompanySettings.Add(new CompanySettings
+        {
+            CompanyNameAr = "شركة", CompanyNameEn = "Co", PayrollDaysPerMonth = 30,
+            GosiEnabled = true, GosiEmployeeRatePercent = 9.75m, GosiEmployerAnnuitiesRatePercent = 9.75m, GosiEmployerHazardsRatePercent = 2m
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new PayrollService(ctx);
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = period.Id, RunDate = new DateTime(2026, 9, 30) });
+        await service.ApproveAsync(run.Id);
+        await service.PostAsync(run.Id);
+
+        var postedRun = await ctx.PayrollRuns.SingleAsync(r => r.Id == run.Id);
+        var journalEntry = await ctx.JournalEntries.Include(e => e.Lines).SingleAsync(e => e.Id == postedRun.JournalEntryId);
+
+        Assert.True(journalEntry.IsBalanced);
+        Assert.Equal(journalEntry.TotalDebit, journalEntry.TotalCredit);
+
+        Assert.Contains(journalEntry.Lines, l => l.AccountId == gosiEmployerExpense.Id && l.Debit == 1175m);
+        Assert.Contains(journalEntry.Lines, l => l.AccountId == gosiPayable.Id && l.Credit == 2150m); // 975 employee + 1175 employer
+        Assert.Contains(journalEntry.Lines, l => l.AccountId == salariesExpense.Id && l.Debit == 10000m); // unaffected by GOSI
+    }
+
+    [Fact]
+    public async Task PostAsync_ThrowsAClearError_WhenGosiAccountsAreMissing()
+    {
+        var ctx = CreateContext();
+        var employee = CreateEmployee(basicSalary: 10000);
+        employee.IsSaudiNational = true;
+        var salariesExpense = new Account { Code = AccountingConstants.SalariesExpenseAccountCode, NameAr = "مصروف مرتبات", NameEn = "Salaries Expense", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        var accruedSalaries = new Account { Code = AccountingConstants.AccruedSalariesPayableAccountCode, NameAr = "مرتبات مستحقة", NameEn = "Accrued Salaries", AccountType = AccountType.Liability, Nature = AccountNature.Credit };
+        var period = new FiscalPeriod { Name = "September 2026", PeriodNumber = 9, StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2026, 9, 30) };
+        ctx.Employees.Add(employee);
+        ctx.Accounts.AddRange(salariesExpense, accruedSalaries); // GOSI accounts deliberately not seeded
+        ctx.FiscalPeriods.Add(period);
+        ctx.CompanySettings.Add(new CompanySettings
+        {
+            CompanyNameAr = "شركة", CompanyNameEn = "Co", PayrollDaysPerMonth = 30,
+            GosiEnabled = true, GosiEmployeeRatePercent = 9.75m, GosiEmployerAnnuitiesRatePercent = 9.75m, GosiEmployerHazardsRatePercent = 2m
+        });
+        await ctx.SaveChangesAsync();
+
+        var service = new PayrollService(ctx);
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = period.Id, RunDate = new DateTime(2026, 9, 30) });
+        await service.ApproveAsync(run.Id);
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.PostAsync(run.Id));
+    }
 }

@@ -39,6 +39,13 @@ public class EmployeeRequestsController : ControllerBase
         return Ok(await _requestService.GetMineAsync(employeeId, ct));
     }
 
+    [HttpGet("my-leave-balance")]
+    public async Task<ActionResult<LeaveBalanceDto>> GetMyLeaveBalance(CancellationToken ct)
+    {
+        var employeeId = await ResolveMyEmployeeIdAsync(ct);
+        return Ok(await _requestService.GetLeaveBalanceAsync(employeeId, ct));
+    }
+
     [HttpGet("pending")]
     [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<List<EmployeeRequestDto>>> GetPending(CancellationToken ct)

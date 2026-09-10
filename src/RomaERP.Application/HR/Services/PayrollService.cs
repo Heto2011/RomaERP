@@ -52,7 +52,8 @@ public class PayrollService : IPayrollService
             .Where(e => !e.IsDeleted && e.EmploymentStatus == EmploymentStatus.Active)
             .ToListAsync(ct);
 
-        var payrollDaysPerMonth = (await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct))?.PayrollDaysPerMonth ?? 30;
+        var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct);
+        var payrollDaysPerMonth = settings?.PayrollDaysPerMonth ?? 30;
 
         var approvedLeaves = await _context.EmployeeRequests
             .AsNoTracking()
@@ -101,6 +102,14 @@ public class PayrollService : IPayrollService
             var unpaidLeaveDeduction = Math.Round(unpaidLeaveDays * dailyRate, 2);
             deductions += unpaidLeaveDeduction;
 
+            decimal gosiEmployeeAmount = 0, gosiEmployerAmount = 0;
+            if (settings?.GosiEnabled == true && employee.IsSaudiNational)
+            {
+                gosiEmployeeAmount = Math.Round(employee.BasicSalary * settings.GosiEmployeeRatePercent / 100m, 2);
+                gosiEmployerAmount = Math.Round(employee.BasicSalary * (settings.GosiEmployerAnnuitiesRatePercent + settings.GosiEmployerHazardsRatePercent) / 100m, 2);
+                deductions += gosiEmployeeAmount;
+            }
+
             run.Lines.Add(new PayrollRunLine
             {
                 EmployeeId = employee.Id,
@@ -109,7 +118,9 @@ public class PayrollService : IPayrollService
                 TotalDeductions = deductions,
                 NetSalary = employee.BasicSalary + allowances - deductions,
                 UnpaidLeaveDays = unpaidLeaveDays,
-                UnpaidLeaveDeductionAmount = unpaidLeaveDeduction
+                UnpaidLeaveDeductionAmount = unpaidLeaveDeduction,
+                GosiEmployeeDeductionAmount = gosiEmployeeAmount,
+                GosiEmployerContributionAmount = gosiEmployerAmount
             });
         }
 
@@ -195,7 +206,7 @@ public class PayrollService : IPayrollService
             ?? throw new ValidationAppException($"حساب المرتبات المستحقة ({AccountingConstants.AccruedSalariesPayableAccountCode}) غير موجود في دليل الحسابات.");
 
         var deductionTotals = new Dictionary<Guid, decimal>();
-        decimal totalGross = 0, totalNet = 0;
+        decimal totalGross = 0, totalNet = 0, totalGosiEmployeeWithheld = 0, totalGosiEmployerContribution = 0;
         var unlinkedDeductionCodes = new HashSet<string>();
 
         foreach (var line in run.Lines)
@@ -205,6 +216,8 @@ public class PayrollService : IPayrollService
             // to its own linked account below — that split is what keeps this entry balanced.
             totalGross += line.BasicSalary + line.TotalAllowances - line.UnpaidLeaveDeductionAmount;
             totalNet += line.NetSalary;
+            totalGosiEmployeeWithheld += line.GosiEmployeeDeductionAmount;
+            totalGosiEmployerContribution += line.GosiEmployerContributionAmount;
 
             foreach (var esc in line.Employee!.SalaryComponents.Where(x => x.SalaryComponent!.ComponentType == SalaryComponentType.Deduction))
             {
@@ -248,6 +261,39 @@ public class PayrollService : IPayrollService
                 Debit = 0,
                 Credit = amount,
                 Description = "خصومات مرتبات"
+            });
+        }
+
+        var totalGosiPayable = totalGosiEmployeeWithheld + totalGosiEmployerContribution;
+        if (totalGosiPayable > 0)
+        {
+            if (totalGosiEmployerContribution > 0)
+            {
+                var gosiEmployerExpenseAccount = await _context.Accounts
+                    .FirstOrDefaultAsync(a => a.Code == AccountingConstants.GosiEmployerExpenseAccountCode && !a.IsDeleted, ct)
+                    ?? throw new ValidationAppException($"حساب مصروف التأمينات الاجتماعية (حصة الشركة) ({AccountingConstants.GosiEmployerExpenseAccountCode}) غير موجود في دليل الحسابات.");
+
+                lines.Add(new JournalEntryLine
+                {
+                    LineNumber = lineNumber++,
+                    AccountId = gosiEmployerExpenseAccount.Id,
+                    Debit = totalGosiEmployerContribution,
+                    Credit = 0,
+                    Description = $"مصروف تأمينات اجتماعية (حصة الشركة) - دورة {run.RunDate:yyyy-MM}"
+                });
+            }
+
+            var gosiPayableAccount = await _context.Accounts
+                .FirstOrDefaultAsync(a => a.Code == AccountingConstants.GosiPayableAccountCode && !a.IsDeleted, ct)
+                ?? throw new ValidationAppException($"حساب التأمينات الاجتماعية المستحقة ({AccountingConstants.GosiPayableAccountCode}) غير موجود في دليل الحسابات.");
+
+            lines.Add(new JournalEntryLine
+            {
+                LineNumber = lineNumber++,
+                AccountId = gosiPayableAccount.Id,
+                Debit = 0,
+                Credit = totalGosiPayable,
+                Description = $"تأمينات اجتماعية مستحقة (حصة الموظف والشركة) - دورة {run.RunDate:yyyy-MM}"
             });
         }
 
@@ -300,6 +346,43 @@ public class PayrollService : IPayrollService
         }).ToList();
     }
 
+    public async Task<PayrollSettingsDto> GetSettingsAsync(CancellationToken ct = default)
+    {
+        var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct)
+            ?? throw new ValidationAppException("إعدادات الشركة غير موجودة.");
+
+        return MapSettings(settings);
+    }
+
+    public async Task<PayrollSettingsDto> UpdateSettingsAsync(PayrollSettingsDto dto, CancellationToken ct = default)
+    {
+        if (dto.PayrollDaysPerMonth <= 0)
+            throw new ValidationAppException("عدد أيام الراتب في الشهر يجب أن يكون أكبر من صفر.");
+        if (dto.GosiEmployeeRatePercent < 0 || dto.GosiEmployerAnnuitiesRatePercent < 0 || dto.GosiEmployerHazardsRatePercent < 0)
+            throw new ValidationAppException("نسب التأمينات الاجتماعية لا يمكن أن تكون سالبة.");
+
+        var settings = await _context.CompanySettings.FirstOrDefaultAsync(ct)
+            ?? throw new ValidationAppException("إعدادات الشركة غير موجودة.");
+
+        settings.PayrollDaysPerMonth = dto.PayrollDaysPerMonth;
+        settings.GosiEnabled = dto.GosiEnabled;
+        settings.GosiEmployeeRatePercent = dto.GosiEmployeeRatePercent;
+        settings.GosiEmployerAnnuitiesRatePercent = dto.GosiEmployerAnnuitiesRatePercent;
+        settings.GosiEmployerHazardsRatePercent = dto.GosiEmployerHazardsRatePercent;
+
+        await _context.SaveChangesAsync(ct);
+        return MapSettings(settings);
+    }
+
+    private static PayrollSettingsDto MapSettings(RomaERP.Domain.Tenancy.CompanySettings s) => new()
+    {
+        PayrollDaysPerMonth = s.PayrollDaysPerMonth,
+        GosiEnabled = s.GosiEnabled,
+        GosiEmployeeRatePercent = s.GosiEmployeeRatePercent,
+        GosiEmployerAnnuitiesRatePercent = s.GosiEmployerAnnuitiesRatePercent,
+        GosiEmployerHazardsRatePercent = s.GosiEmployerHazardsRatePercent
+    };
+
     private static PayrollRunDto Map(PayrollRun r) => new()
     {
         Id = r.Id,
@@ -317,7 +400,9 @@ public class PayrollService : IPayrollService
             TotalDeductions = l.TotalDeductions,
             NetSalary = l.NetSalary,
             UnpaidLeaveDays = l.UnpaidLeaveDays,
-            UnpaidLeaveDeductionAmount = l.UnpaidLeaveDeductionAmount
+            UnpaidLeaveDeductionAmount = l.UnpaidLeaveDeductionAmount,
+            GosiEmployeeDeductionAmount = l.GosiEmployeeDeductionAmount,
+            GosiEmployerContributionAmount = l.GosiEmployerContributionAmount
         }).ToList()
     };
 }

@@ -44,5 +44,15 @@ public class Employee : AuditableEntity
     /// <summary>Running balance of the employee's custody advance (عهدة) — increases when issued, decreases as approved custody-funded expenses are posted.</summary>
     public decimal CustodyBalance { get; set; }
 
+    /// <summary>Drives GOSI eligibility in payroll (Saudi nationals only, per current GOSI rules) — see
+    /// CompanySettings.GosiEnabled/GosiEmployeeRatePercent etc. Defaults to false so no employee is charged
+    /// GOSI by accident; must be explicitly set per employee.</summary>
+    public bool IsSaudiNational { get; set; }
+
+    /// <summary>Annual paid-leave entitlement used to compute the employee's remaining leave balance
+    /// (entitlement minus approved Leave-type requests already taken this calendar year). Defaults to 21,
+    /// the Saudi Labor Law Article 109 minimum — adjust per employee/contract as needed.</summary>
+    public int AnnualLeaveDaysPerYear { get; set; } = 21;
+
     public ICollection<EmployeeSalaryComponent> SalaryComponents { get; set; } = new List<EmployeeSalaryComponent>();
 }

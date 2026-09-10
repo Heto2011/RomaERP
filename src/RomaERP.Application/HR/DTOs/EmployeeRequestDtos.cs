@@ -29,3 +29,13 @@ public class DecideEmployeeRequestDto
     public bool Approve { get; set; }
     public string? DecisionNote { get; set; }
 }
+
+/// <summary>Annual leave entitlement minus approved Leave-type requests already taken within the given
+/// calendar year — a simple balance, not a month-by-month accrual.</summary>
+public class LeaveBalanceDto
+{
+    public int Year { get; set; }
+    public int AnnualLeaveDaysPerYear { get; set; }
+    public int UsedDays { get; set; }
+    public int RemainingDays { get; set; }
+}

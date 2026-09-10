@@ -13,4 +13,6 @@ public interface IPayrollService
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<PayrollRunDto> UpdateLineAsync(Guid runId, Guid employeeId, UpdatePayrollLineDto dto, CancellationToken ct = default);
     Task<List<MyPayslipDto>> GetMyPayslipsAsync(Guid employeeId, CancellationToken ct = default);
+    Task<PayrollSettingsDto> GetSettingsAsync(CancellationToken ct = default);
+    Task<PayrollSettingsDto> UpdateSettingsAsync(PayrollSettingsDto dto, CancellationToken ct = default);
 }

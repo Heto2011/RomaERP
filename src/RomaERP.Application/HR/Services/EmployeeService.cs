@@ -69,6 +69,8 @@ public class EmployeeService : IEmployeeService
             BankAccountNumber = dto.BankAccountNumber,
             Iban = dto.Iban,
             WorkLocationId = dto.WorkLocationId,
+            IsSaudiNational = dto.IsSaudiNational,
+            AnnualLeaveDaysPerYear = dto.AnnualLeaveDaysPerYear,
             EmploymentStatus = EmploymentStatus.Active
         };
 
@@ -101,6 +103,8 @@ public class EmployeeService : IEmployeeService
         employee.BankAccountNumber = dto.BankAccountNumber;
         employee.Iban = dto.Iban;
         employee.WorkLocationId = dto.WorkLocationId;
+        employee.IsSaudiNational = dto.IsSaudiNational;
+        employee.AnnualLeaveDaysPerYear = dto.AnnualLeaveDaysPerYear;
         employee.EmploymentStatus = dto.EmploymentStatus;
         employee.TerminationDate = dto.TerminationDate;
 
@@ -200,6 +204,8 @@ public class EmployeeService : IEmployeeService
         ApplicationUserId = e.ApplicationUserId,
         WorkLocationId = e.WorkLocationId,
         WorkLocationName = e.WorkLocation?.Name,
-        HasFaceReferencePhoto = !string.IsNullOrEmpty(e.FaceReferencePhotoPath)
+        HasFaceReferencePhoto = !string.IsNullOrEmpty(e.FaceReferencePhotoPath),
+        IsSaudiNational = e.IsSaudiNational,
+        AnnualLeaveDaysPerYear = e.AnnualLeaveDaysPerYear
     };
 }

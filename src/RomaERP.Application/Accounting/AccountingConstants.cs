@@ -25,4 +25,6 @@ public static class AccountingConstants
     public const string DepreciationRunReference = "DEPRECIATION-RUN";
     public const string FxGainAccountCode = "4210";
     public const string FxLossAccountCode = "5450";
+    public const string GosiPayableAccountCode = "2170";
+    public const string GosiEmployerExpenseAccountCode = "5150";
 }

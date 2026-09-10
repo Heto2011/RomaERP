@@ -39,6 +39,8 @@ export default function Employees() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [workLocationId, setWorkLocationId] = useState("");
+  const [isSaudiNational, setIsSaudiNational] = useState(false);
+  const [annualLeaveDaysPerYear, setAnnualLeaveDaysPerYear] = useState("21");
 
   const [allComponents, setAllComponents] = useState<SalaryComponent[]>([]);
   const [componentsEmployee, setComponentsEmployee] = useState<Employee | null>(null);
@@ -85,6 +87,8 @@ export default function Employees() {
         email: email || null,
         phone: phone || null,
         workLocationId: workLocationId || null,
+        isSaudiNational,
+        annualLeaveDaysPerYear: Number(annualLeaveDaysPerYear) || 21,
       });
       setShowForm(false);
       setEmployeeCode("");
@@ -96,6 +100,8 @@ export default function Employees() {
       setEmail("");
       setPhone("");
       setWorkLocationId("");
+      setIsSaudiNational(false);
+      setAnnualLeaveDaysPerYear("21");
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -264,6 +270,16 @@ export default function Employees() {
                     </option>
                   ))}
                 </select>
+              </div>
+              <div className="form-field">
+                <label>{t.hr.annualLeaveDaysPerYear}</label>
+                <input type="number" min={0} value={annualLeaveDaysPerYear} onChange={(e) => setAnnualLeaveDaysPerYear(e.target.value)} />
+              </div>
+              <div className="form-field">
+                <label>
+                  <input type="checkbox" checked={isSaudiNational} onChange={(e) => setIsSaudiNational(e.target.checked)} style={{ marginInlineEnd: 6 }} />
+                  {t.hr.isSaudiNational}
+                </label>
               </div>
             </div>
             <button className="btn" type="submit" style={{ marginTop: 14 }}>

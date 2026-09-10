@@ -250,6 +250,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/hr/employees", label: t.nav.employees, icon: <IconUsers /> },
         { to: "/hr/salary-components", label: t.hr.salaryComponentsTitle, icon: <IconWallet /> },
         { to: "/hr/payroll", label: t.nav.payroll, icon: <IconDollar /> },
+        ...(user?.roles.includes("Admin") ? [{ to: "/hr/payroll-settings", label: t.hr.payrollSettingsTitle, icon: <IconWallet /> }] : []),
         { to: "/hr/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
         { to: "/hr/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
         { to: "/hr/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },

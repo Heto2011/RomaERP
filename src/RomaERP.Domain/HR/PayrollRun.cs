@@ -36,4 +36,11 @@ public class PayrollRunLine : BaseEntity
     /// them at BasicSalary ÷ CompanySettings.PayrollDaysPerMonth per day.</summary>
     public int UnpaidLeaveDays { get; set; }
     public decimal UnpaidLeaveDeductionAmount { get; set; }
+
+    /// <summary>GOSI employee-side (Annuities) withholding — already folded into <see cref="TotalDeductions"/>
+    /// — computed only when CompanySettings.GosiEnabled and the employee is marked IsSaudiNational.</summary>
+    public decimal GosiEmployeeDeductionAmount { get; set; }
+    /// <summary>GOSI employer-side (Annuities + Occupational Hazards) contribution — a company cost on top of
+    /// the employee's pay, NOT part of TotalDeductions/NetSalary. Posted separately in PostAsync.</summary>
+    public decimal GosiEmployerContributionAmount { get; set; }
 }

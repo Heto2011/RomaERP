@@ -61,6 +61,8 @@ import type {
   EmployeeRequest,
   CreateEmployeeRequestInput,
   DecideEmployeeRequestInput,
+  LeaveBalance,
+  PayrollSettings,
   DeliveryPlatformStatus,
   DeliveryWebhookEvent,
   DeliveryPlatformItemMapping,
@@ -272,6 +274,7 @@ export const EmployeeRequestsApi = {
   getPending: () => apiClient.get<EmployeeRequest[]>("/employee-requests/pending"),
   getAll: () => apiClient.get<EmployeeRequest[]>("/employee-requests"),
   decide: (id: string, data: DecideEmployeeRequestInput) => apiClient.post<EmployeeRequest>(`/employee-requests/${id}/decide`, data),
+  getMyLeaveBalance: () => apiClient.get<LeaveBalance>("/employee-requests/my-leave-balance"),
 };
 
 export const SalaryComponentsApi = {
@@ -296,6 +299,8 @@ export const PayrollApi = {
   remove: (id: string) => apiClient.delete(`/payroll/${id}`),
   updateLine: (id: string, employeeId: string, data: { totalAllowances: number; totalDeductions: number }) =>
     apiClient.put<PayrollRun>(`/payroll/${id}/lines/${employeeId}`, data),
+  getSettings: () => apiClient.get<PayrollSettings>("/payroll/settings"),
+  updateSettings: (data: PayrollSettings) => apiClient.put<PayrollSettings>("/payroll/settings", data),
 };
 
 export const AiAssistantApi = {
