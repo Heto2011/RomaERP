@@ -61,11 +61,11 @@ export default function MyProfile() {
               </div>
               <div className="form-field">
                 <label>{t.hr.department}</label>
-                <div>{profile.departmentName}</div>
+                <div>{bilingualName(profile.departmentNameAr, profile.departmentNameEn, lang)}</div>
               </div>
               <div className="form-field">
                 <label>{t.hr.position}</label>
-                <div>{profile.positionName}</div>
+                <div>{bilingualName(profile.positionNameAr, profile.positionNameEn, lang)}</div>
               </div>
               <div className="form-field">
                 <label>{t.hr.hireDate}</label>

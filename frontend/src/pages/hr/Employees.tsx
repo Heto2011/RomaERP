@@ -386,8 +386,8 @@ export default function Employees() {
               <tr key={emp.id}>
                 <td>{emp.employeeCode}</td>
                 <td>{bilingualName(emp.fullNameAr, emp.fullNameEn, lang)}</td>
-                <td>{emp.departmentName}</td>
-                <td>{emp.positionName}</td>
+                <td>{bilingualName(emp.departmentNameAr, emp.departmentNameEn, lang)}</td>
+                <td>{bilingualName(emp.positionNameAr, emp.positionNameEn, lang)}</td>
                 <td>{emp.basicSalary.toLocaleString()}</td>
                 <td>
                   <span className={`badge ${employmentStatusBadgeClass[emp.employmentStatus]}`}>

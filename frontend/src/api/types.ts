@@ -833,9 +833,11 @@ export interface Employee {
   terminationDate: string | null;
   employmentStatus: EmploymentStatus;
   departmentId: string;
-  departmentName: string;
+  departmentNameAr: string;
+  departmentNameEn: string;
   positionId: string;
-  positionName: string;
+  positionNameAr: string;
+  positionNameEn: string;
   basicSalary: number;
   email: string | null;
   phone: string | null;

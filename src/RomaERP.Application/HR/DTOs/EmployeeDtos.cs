@@ -16,9 +16,11 @@ public class EmployeeDto
     public DateTime? TerminationDate { get; set; }
     public EmploymentStatus EmploymentStatus { get; set; }
     public Guid DepartmentId { get; set; }
-    public string DepartmentName { get; set; } = string.Empty;
+    public string DepartmentNameAr { get; set; } = string.Empty;
+    public string DepartmentNameEn { get; set; } = string.Empty;
     public Guid PositionId { get; set; }
-    public string PositionName { get; set; } = string.Empty;
+    public string PositionNameAr { get; set; } = string.Empty;
+    public string PositionNameEn { get; set; } = string.Empty;
     public decimal BasicSalary { get; set; }
     public string? Email { get; set; }
     public string? Phone { get; set; }
