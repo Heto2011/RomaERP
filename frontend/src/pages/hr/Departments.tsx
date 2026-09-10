@@ -9,6 +9,7 @@ export default function Departments() {
   const { t, lang } = useLanguage();
   const [departments, setDepartments] = useState<Department[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [nameAr, setNameAr] = useState("");
@@ -24,16 +25,44 @@ export default function Departments() {
     load();
   }, []);
 
+  function resetForm() {
+    setEditingId(null);
+    setCode("");
+    setNameAr("");
+    setNameEn("");
+    setParentDepartmentId("");
+  }
+
+  function startCreate() {
+    resetForm();
+    setShowForm(true);
+  }
+
+  function startEdit(d: Department) {
+    setEditingId(d.id);
+    setCode(d.code);
+    setNameAr(d.nameAr);
+    setNameEn(d.nameEn);
+    setParentDepartmentId(d.parentDepartmentId ?? "");
+    setShowForm(true);
+  }
+
+  function closeForm() {
+    setShowForm(false);
+    resetForm();
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     try {
-      await DepartmentsApi.create({ code, nameAr, nameEn, parentDepartmentId: parentDepartmentId || null });
-      setShowForm(false);
-      setCode("");
-      setNameAr("");
-      setNameEn("");
-      setParentDepartmentId("");
+      const payload = { code, nameAr, nameEn, parentDepartmentId: parentDepartmentId || null };
+      if (editingId) {
+        await DepartmentsApi.update(editingId, payload);
+      } else {
+        await DepartmentsApi.create(payload);
+      }
+      closeForm();
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -54,7 +83,7 @@ export default function Departments() {
     <div>
       <div className="page-header">
         <h1>{t.hr.departmentsTitle}</h1>
-        <button className="btn" onClick={() => setShowForm((v) => !v)}>
+        <button className="btn" onClick={() => (showForm ? closeForm() : startCreate())}>
           {showForm ? t.common.cancel : t.hr.newDepartment}
         </button>
       </div>
@@ -81,7 +110,7 @@ export default function Departments() {
                 <label>{t.hr.parentDepartment}</label>
                 <select value={parentDepartmentId} onChange={(e) => setParentDepartmentId(e.target.value)}>
                   <option value="">{t.common.none}</option>
-                  {departments.map((d) => (
+                  {departments.filter((d) => d.id !== editingId).map((d) => (
                     <option key={d.id} value={d.id}>
                       {d.code} - {bilingualName(d.nameAr, d.nameEn, lang)}
                     </option>
@@ -112,7 +141,10 @@ export default function Departments() {
                 <td>{d.code}</td>
                 <td>{d.nameAr}</td>
                 <td>{d.nameEn}</td>
-                <td>
+                <td style={{ display: "flex", gap: 8 }}>
+                  <button className="btn btn-secondary btn-sm" onClick={() => startEdit(d)}>
+                    {t.common.edit}
+                  </button>
                   <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(d.id)}>
                     {t.common.delete}
                   </button>

@@ -10,6 +10,7 @@ export default function Positions() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [titleAr, setTitleAr] = useState("");
@@ -31,16 +32,44 @@ export default function Positions() {
     return dept ? bilingualName(dept.nameAr, dept.nameEn, lang) : "";
   }
 
+  function resetForm() {
+    setEditingId(null);
+    setCode("");
+    setTitleAr("");
+    setTitleEn("");
+    setDepartmentId("");
+  }
+
+  function startCreate() {
+    resetForm();
+    setShowForm(true);
+  }
+
+  function startEdit(p: Position) {
+    setEditingId(p.id);
+    setCode(p.code);
+    setTitleAr(p.titleAr);
+    setTitleEn(p.titleEn);
+    setDepartmentId(p.departmentId);
+    setShowForm(true);
+  }
+
+  function closeForm() {
+    setShowForm(false);
+    resetForm();
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     try {
-      await PositionsApi.create({ code, titleAr, titleEn, departmentId });
-      setShowForm(false);
-      setCode("");
-      setTitleAr("");
-      setTitleEn("");
-      setDepartmentId("");
+      const payload = { code, titleAr, titleEn, departmentId };
+      if (editingId) {
+        await PositionsApi.update(editingId, payload);
+      } else {
+        await PositionsApi.create(payload);
+      }
+      closeForm();
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -61,7 +90,7 @@ export default function Positions() {
     <div>
       <div className="page-header">
         <h1>{t.hr.positionsTitle}</h1>
-        <button className="btn" onClick={() => setShowForm((v) => !v)}>
+        <button className="btn" onClick={() => (showForm ? closeForm() : startCreate())}>
           {showForm ? t.common.cancel : t.hr.newPosition}
         </button>
       </div>
@@ -119,7 +148,10 @@ export default function Positions() {
                 <td>{p.code}</td>
                 <td>{bilingualName(p.titleAr, p.titleEn, lang)}</td>
                 <td>{departmentName(p.departmentId)}</td>
-                <td>
+                <td style={{ display: "flex", gap: 8 }}>
+                  <button className="btn btn-secondary btn-sm" onClick={() => startEdit(p)}>
+                    {t.common.edit}
+                  </button>
                   <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(p.id)}>
                     {t.common.delete}
                   </button>

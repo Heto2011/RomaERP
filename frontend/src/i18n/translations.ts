@@ -673,6 +673,11 @@ const ar = {
     basicSalary: "الراتب الأساسي",
     employeeCount: "عدد الموظفين",
     salaryComponentsButton: "بدلات وخصومات",
+    employmentStatus: "الحالة الوظيفية",
+    employmentStatusActive: "على رأس العمل",
+    employmentStatusOnLeave: "في إجازة",
+    employmentStatusTerminated: "منتهي الخدمة",
+    terminationDate: "تاريخ انتهاء الخدمة",
 
     salaryComponentsTitle: "بنود الراتب",
     salaryComponentsIntro: "عناصر إضافية زي البدلات والمكافآت والخصومات، تتحسب تلقائيًا مع كل دورة رواتب لأي موظف مربوط بيها.",
@@ -1880,6 +1885,11 @@ const en: typeof ar = {
     basicSalary: "Basic Salary",
     employeeCount: "Employees",
     salaryComponentsButton: "Allowances & Deductions",
+    employmentStatus: "Employment Status",
+    employmentStatusActive: "Active",
+    employmentStatusOnLeave: "On Leave",
+    employmentStatusTerminated: "Terminated",
+    terminationDate: "Termination Date",
 
     salaryComponentsTitle: "Salary Components",
     salaryComponentsIntro: "Extra items like allowances, bonuses, and deductions — calculated automatically in every payroll run for any employee assigned to them.",

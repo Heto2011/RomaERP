@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { DepartmentsApi, EmployeesApi, PositionsApi, SalaryComponentsApi, WorkLocationsApi } from "../../api/services";
 import {
   CalculationType,
+  EmploymentStatus,
   Gender,
   MaritalStatus,
   SalaryComponentType,
@@ -23,6 +24,7 @@ export default function Employees() {
   const [positions, setPositions] = useState<Position[]>([]);
   const [workLocations, setWorkLocations] = useState<WorkLocation[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const facePhotoInputRef = useRef<HTMLInputElement>(null);
   const [facePhotoEmployeeId, setFacePhotoEmployeeId] = useState<string | null>(null);
@@ -41,6 +43,8 @@ export default function Employees() {
   const [workLocationId, setWorkLocationId] = useState("");
   const [isSaudiNational, setIsSaudiNational] = useState(false);
   const [annualLeaveDaysPerYear, setAnnualLeaveDaysPerYear] = useState("21");
+  const [employmentStatus, setEmploymentStatus] = useState(EmploymentStatus.Active);
+  const [terminationDate, setTerminationDate] = useState("");
 
   const [allComponents, setAllComponents] = useState<SalaryComponent[]>([]);
   const [componentsEmployee, setComponentsEmployee] = useState<Employee | null>(null);
@@ -70,11 +74,62 @@ export default function Employees() {
 
   const filteredPositions = positions.filter((p) => p.departmentId === departmentId);
 
+  function resetForm() {
+    setEditingId(null);
+    setEmployeeCode("");
+    setFullNameAr("");
+    setFullNameEn("");
+    setGender(Gender.Male);
+    setMaritalStatus(MaritalStatus.Single);
+    setHireDate(new Date().toISOString().slice(0, 10));
+    setDepartmentId("");
+    setPositionId("");
+    setBasicSalary("");
+    setEmail("");
+    setPhone("");
+    setWorkLocationId("");
+    setIsSaudiNational(false);
+    setAnnualLeaveDaysPerYear("21");
+    setEmploymentStatus(EmploymentStatus.Active);
+    setTerminationDate("");
+  }
+
+  function startCreate() {
+    resetForm();
+    setShowForm(true);
+  }
+
+  function closeForm() {
+    setShowForm(false);
+    resetForm();
+  }
+
+  function startEdit(emp: Employee) {
+    setEditingId(emp.id);
+    setEmployeeCode(emp.employeeCode);
+    setFullNameAr(emp.fullNameAr);
+    setFullNameEn(emp.fullNameEn);
+    setGender(emp.gender);
+    setMaritalStatus(emp.maritalStatus);
+    setHireDate(emp.hireDate.slice(0, 10));
+    setDepartmentId(emp.departmentId);
+    setPositionId(emp.positionId);
+    setBasicSalary(String(emp.basicSalary));
+    setEmail(emp.email ?? "");
+    setPhone(emp.phone ?? "");
+    setWorkLocationId(emp.workLocationId ?? "");
+    setIsSaudiNational(emp.isSaudiNational);
+    setAnnualLeaveDaysPerYear(String(emp.annualLeaveDaysPerYear));
+    setEmploymentStatus(emp.employmentStatus);
+    setTerminationDate(emp.terminationDate ? emp.terminationDate.slice(0, 10) : "");
+    setShowForm(true);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     try {
-      await EmployeesApi.create({
+      const payload = {
         employeeCode,
         fullNameAr,
         fullNameEn,
@@ -89,19 +144,13 @@ export default function Employees() {
         workLocationId: workLocationId || null,
         isSaudiNational,
         annualLeaveDaysPerYear: Number(annualLeaveDaysPerYear) || 21,
-      });
-      setShowForm(false);
-      setEmployeeCode("");
-      setFullNameAr("");
-      setFullNameEn("");
-      setDepartmentId("");
-      setPositionId("");
-      setBasicSalary("");
-      setEmail("");
-      setPhone("");
-      setWorkLocationId("");
-      setIsSaudiNational(false);
-      setAnnualLeaveDaysPerYear("21");
+      };
+      if (editingId) {
+        await EmployeesApi.update(editingId, { ...payload, employmentStatus, terminationDate: terminationDate || null });
+      } else {
+        await EmployeesApi.create(payload);
+      }
+      closeForm();
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -172,11 +221,22 @@ export default function Employees() {
     }
   }
 
+  const employmentStatusLabel: Record<EmploymentStatus, string> = {
+    [EmploymentStatus.Active]: t.hr.employmentStatusActive,
+    [EmploymentStatus.OnLeave]: t.hr.employmentStatusOnLeave,
+    [EmploymentStatus.Terminated]: t.hr.employmentStatusTerminated,
+  };
+  const employmentStatusBadgeClass: Record<EmploymentStatus, string> = {
+    [EmploymentStatus.Active]: "badge-posted",
+    [EmploymentStatus.OnLeave]: "badge-draft",
+    [EmploymentStatus.Terminated]: "badge-reversed",
+  };
+
   return (
     <div>
       <div className="page-header">
         <h1>{t.hr.employeesTitle}</h1>
-        <button className="btn" onClick={() => setShowForm((v) => !v)}>
+        <button className="btn" onClick={() => (showForm ? closeForm() : startCreate())}>
           {showForm ? t.common.cancel : t.hr.newEmployee}
         </button>
       </div>
@@ -281,6 +341,24 @@ export default function Employees() {
                   {t.hr.isSaudiNational}
                 </label>
               </div>
+              {editingId && (
+                <>
+                  <div className="form-field">
+                    <label>{t.hr.employmentStatus}</label>
+                    <select value={employmentStatus} onChange={(e) => setEmploymentStatus(Number(e.target.value))}>
+                      <option value={EmploymentStatus.Active}>{t.hr.employmentStatusActive}</option>
+                      <option value={EmploymentStatus.OnLeave}>{t.hr.employmentStatusOnLeave}</option>
+                      <option value={EmploymentStatus.Terminated}>{t.hr.employmentStatusTerminated}</option>
+                    </select>
+                  </div>
+                  {employmentStatus === EmploymentStatus.Terminated && (
+                    <div className="form-field">
+                      <label>{t.hr.terminationDate}</label>
+                      <input type="date" value={terminationDate} onChange={(e) => setTerminationDate(e.target.value)} />
+                    </div>
+                  )}
+                </>
+              )}
             </div>
             <button className="btn" type="submit" style={{ marginTop: 14 }}>
               {t.common.save}
@@ -298,6 +376,7 @@ export default function Employees() {
               <th>{t.hr.department}</th>
               <th>{t.hr.position}</th>
               <th>{t.hr.basicSalary}</th>
+              <th>{t.hr.employmentStatus}</th>
               <th>{t.hr.faceReferencePhoto}</th>
               <th></th>
             </tr>
@@ -311,11 +390,19 @@ export default function Employees() {
                 <td>{emp.positionName}</td>
                 <td>{emp.basicSalary.toLocaleString()}</td>
                 <td>
+                  <span className={`badge ${employmentStatusBadgeClass[emp.employmentStatus]}`}>
+                    {employmentStatusLabel[emp.employmentStatus]}
+                  </span>
+                </td>
+                <td>
                   <span className={`badge ${emp.hasFaceReferencePhoto ? "badge-posted" : "badge-draft"}`}>
                     {emp.hasFaceReferencePhoto ? t.hr.faceReferencePhotoSet : t.hr.faceReferencePhotoNotSet}
                   </span>
                 </td>
-                <td style={{ display: "flex", gap: 8 }}>
+                <td style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+                  <button className="btn btn-secondary btn-sm" onClick={() => startEdit(emp)}>
+                    {t.common.edit}
+                  </button>
                   <button className="btn btn-secondary btn-sm" onClick={() => startFacePhotoUpload(emp.id)}>
                     {t.hr.uploadFaceReferencePhoto}
                   </button>
