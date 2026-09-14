@@ -1,6 +1,6 @@
-using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Accounting.DTOs;
+using RomaERP.Application.Common;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Accounting;
@@ -37,7 +37,7 @@ public class BankFeedReconciliationService : IBankFeedReconciliationService
 
         var lines = await ParseCsvAsync(csvStream, accountId, ct);
         if (lines.Count == 0)
-            throw new ValidationAppException("لم يتم العثور على أي حركات في الملف المرفوع. تأكد من صيغة الملف: Date,Description,Amount (موجب = إيداع، سالب = سحب).");
+            throw new ValidationAppException("لم يتم العثور على أي حركات في الملف المرفوع. تأكد إن فيه عمود تاريخ وعمود مبلغ (أو مدين/دائن) — بالعربي أو الإنجليزي (موجب = إيداع، سالب = سحب).");
 
         _context.BankFeedTransactions.AddRange(lines);
         await _context.SaveChangesAsync(ct);
@@ -236,48 +236,21 @@ public class BankFeedReconciliationService : IBankFeedReconciliationService
         => await _context.Accounts.FirstOrDefaultAsync(a => a.Id == accountId && !a.IsDeleted, ct)
            ?? throw new NotFoundException(nameof(Account), accountId);
 
+    /// <summary>Sign convention here: positive = deposit (money in), negative = withdrawal (money out) —
+    /// when the file gives separate Debit/Credit columns instead of one signed Amount, that resolves to
+    /// Credit - Debit.</summary>
     private static async Task<List<BankFeedTransaction>> ParseCsvAsync(Stream csvStream, Guid accountId, CancellationToken ct)
     {
-        using var reader = new StreamReader(csvStream);
-        var lines = new List<BankFeedTransaction>();
-        var isFirstLine = true;
+        var parsed = await BankStatementCsvParser.ParseAsync(csvStream, ct);
 
-        while (await reader.ReadLineAsync(ct) is { } rawLine)
+        return parsed.Select(p => new BankFeedTransaction
         {
-            if (string.IsNullOrWhiteSpace(rawLine))
-                continue;
-
-            var fields = rawLine.Split(',').Select(f => f.Trim().Trim('"')).ToArray();
-
-            if (isFirstLine)
-            {
-                isFirstLine = false;
-                if (fields.Length > 0 && !decimal.TryParse(fields.Last(), NumberStyles.Any, CultureInfo.InvariantCulture, out _))
-                    continue; // header row
-            }
-
-            if (fields.Length < 3)
-                continue;
-
-            if (!DateTime.TryParse(fields[0], CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
-                continue;
-
-            if (!decimal.TryParse(fields[^1], NumberStyles.Any, CultureInfo.InvariantCulture, out var amount))
-                continue;
-
-            var description = string.Join(",", fields.Skip(1).Take(fields.Length - 2));
-
-            lines.Add(new BankFeedTransaction
-            {
-                AccountId = accountId,
-                TransactionDate = date,
-                Description = description,
-                Amount = amount,
-                Source = "Manual"
-            });
-        }
-
-        return lines;
+            AccountId = accountId,
+            TransactionDate = p.Date,
+            Description = p.Description,
+            Amount = p.Amount ?? ((p.Credit ?? 0) - (p.Debit ?? 0)),
+            Source = "Manual"
+        }).ToList();
     }
 
     private static BankFeedTransactionDto Map(BankFeedTransaction t) => new()

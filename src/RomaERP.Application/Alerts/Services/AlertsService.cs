@@ -1,5 +1,6 @@
 using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Alerts.DTOs;
+using RomaERP.Application.HR.Services;
 using RomaERP.Application.Inventory.Services;
 using RomaERP.Application.Purchasing.Services;
 using RomaERP.Application.Sales.Services;
@@ -13,25 +14,29 @@ public class AlertsService : IAlertsService
     private const int MovementWindowDays = 30;
 
     private const int ExpiringStockWindowDays = 7;
+    private const int ExpiringContractWindowDays = 30;
 
     private readonly IInventoryReportService _inventoryReportService;
     private readonly IFinancialReportService _financialReportService;
     private readonly ISalesService _salesService;
     private readonly IPurchasingService _purchasingService;
     private readonly IItemLotService _lotService;
+    private readonly IEmployeeContractService _employeeContractService;
 
     public AlertsService(
         IInventoryReportService inventoryReportService,
         IFinancialReportService financialReportService,
         ISalesService salesService,
         IPurchasingService purchasingService,
-        IItemLotService lotService)
+        IItemLotService lotService,
+        IEmployeeContractService employeeContractService)
     {
         _inventoryReportService = inventoryReportService;
         _financialReportService = financialReportService;
         _salesService = salesService;
         _purchasingService = purchasingService;
         _lotService = lotService;
+        _employeeContractService = employeeContractService;
     }
 
     public async Task<AlertsReportDto> GetAlertsAsync(CancellationToken ct = default)
@@ -143,6 +148,21 @@ public class AlertsService : IAlertsService
                 Severity = AlertSeverity.Info,
                 Title = $"{overdueAp.Count} vendor(s) overdue 61+ days",
                 Detail = string.Join(", ", overdueAp.Take(5).Select(a => $"{a.VendorCode} ({(a.Days61To90 + a.Over90Days):0.##})"))
+            });
+        }
+
+        var expiringContracts = await _employeeContractService.GetExpiringAsync(ExpiringContractWindowDays, ct);
+        if (expiringContracts.Count > 0)
+        {
+            var overdueCount = expiringContracts.Count(c => c.DaysUntilExpiry < 0);
+            alerts.Add(new AlertDto
+            {
+                Category = "HR",
+                Severity = overdueCount > 0 ? AlertSeverity.Critical : AlertSeverity.Warning,
+                Title = overdueCount > 0
+                    ? $"{overdueCount} contract(s) already past their end date, {expiringContracts.Count - overdueCount} more expiring within {ExpiringContractWindowDays} days"
+                    : $"{expiringContracts.Count} contract(s) expiring within {ExpiringContractWindowDays} days",
+                Detail = string.Join(", ", expiringContracts.Take(5).Select(c => $"{c.EmployeeName} ({c.EndDate:yyyy-MM-dd})"))
             });
         }
 

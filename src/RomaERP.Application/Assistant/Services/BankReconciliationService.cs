@@ -1,6 +1,6 @@
-using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Assistant.DTOs;
+using RomaERP.Application.Common;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Accounting;
@@ -32,7 +32,7 @@ public class BankReconciliationService : IBankReconciliationService
 
         var lines = await ParseCsvAsync(csvStream, ct);
         if (lines.Count == 0)
-            throw new ValidationAppException("لم يتم العثور على أي حركات في الملف المرفوع. تأكد من صيغة الملف: Date,Description,Amount.");
+            throw new ValidationAppException("لم يتم العثور على أي حركات في الملف المرفوع. تأكد إن فيه عمود تاريخ وعمود مبلغ (أو مدين/دائن) — بالعربي أو الإنجليزي.");
 
         var import = new BankStatementImport
         {
@@ -59,46 +59,20 @@ public class BankReconciliationService : IBankReconciliationService
         };
     }
 
+    /// <summary>Sign convention here: positive = money leaving the account (matches an outgoing card
+    /// expense) — when the file gives separate Debit/Credit columns instead of one signed Amount, that
+    /// resolves to Debit - Credit (the opposite of BankFeedReconciliationService's convention, since that
+    /// one reconciles deposits/withdrawals against the GL rather than matching card-expense captures).</summary>
     private static async Task<List<BankStatementLine>> ParseCsvAsync(Stream csvStream, CancellationToken ct)
     {
-        using var reader = new StreamReader(csvStream);
-        var lines = new List<BankStatementLine>();
-        var isFirstLine = true;
+        var parsed = await BankStatementCsvParser.ParseAsync(csvStream, ct);
 
-        while (await reader.ReadLineAsync(ct) is { } rawLine)
+        return parsed.Select(p => new BankStatementLine
         {
-            if (string.IsNullOrWhiteSpace(rawLine))
-                continue;
-
-            var fields = rawLine.Split(',').Select(f => f.Trim().Trim('"')).ToArray();
-
-            if (isFirstLine)
-            {
-                isFirstLine = false;
-                if (fields.Length > 0 && !decimal.TryParse(fields.Last(), NumberStyles.Any, CultureInfo.InvariantCulture, out _))
-                    continue; // header row
-            }
-
-            if (fields.Length < 3)
-                continue;
-
-            if (!DateTime.TryParse(fields[0], CultureInfo.InvariantCulture, DateTimeStyles.None, out var date))
-                continue;
-
-            if (!decimal.TryParse(fields[^1], NumberStyles.Any, CultureInfo.InvariantCulture, out var amount))
-                continue;
-
-            var description = string.Join(",", fields.Skip(1).Take(fields.Length - 2));
-
-            lines.Add(new BankStatementLine
-            {
-                TransactionDate = date,
-                Description = description,
-                Amount = amount
-            });
-        }
-
-        return lines;
+            TransactionDate = p.Date,
+            Description = p.Description,
+            Amount = p.Amount ?? ((p.Debit ?? 0) - (p.Credit ?? 0))
+        }).ToList();
     }
 
     public async Task<List<BankStatementLineDto>> GetUnmatchedLinesAsync(CancellationToken ct = default)

@@ -37,6 +37,7 @@ public interface IApplicationDbContext
     DbSet<WorkLocation> WorkLocations { get; }
     DbSet<AttendanceRecord> AttendanceRecords { get; }
     DbSet<EmployeeRequest> EmployeeRequests { get; }
+    DbSet<EmployeeContract> EmployeeContracts { get; }
 
     DbSet<ItemCategory> ItemCategories { get; }
     DbSet<Warehouse> Warehouses { get; }

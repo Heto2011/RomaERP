@@ -29,6 +29,10 @@ public class CompanySettings : AuditableEntity
     public decimal GosiEmployerAnnuitiesRatePercent { get; set; } = 9.75m;
     /// <summary>Employer-side Occupational Hazards branch contribution — a company cost, not deducted from the employee (% of basic salary).</summary>
     public decimal GosiEmployerHazardsRatePercent { get; set; } = 2.0m;
+    /// <summary>Applies to employees NOT marked IsSaudiNational — under GOSI, a non-Saudi/resident employee
+    /// pays nothing and is only covered by the employer-paid Occupational Hazards branch (no Annuities or
+    /// SANED). A company cost, not deducted from the employee (% of basic salary).</summary>
+    public decimal GosiNonSaudiEmployerHazardsRatePercent { get; set; } = 2.0m;
 
     // ----- E-invoicing (government tax authority integration) -----
     public EInvoicingProvider EInvoicingProvider { get; set; } = EInvoicingProvider.None;

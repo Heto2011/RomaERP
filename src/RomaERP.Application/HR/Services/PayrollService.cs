@@ -103,11 +103,20 @@ public class PayrollService : IPayrollService
             deductions += unpaidLeaveDeduction;
 
             decimal gosiEmployeeAmount = 0, gosiEmployerAmount = 0;
-            if (settings?.GosiEnabled == true && employee.IsSaudiNational)
+            if (settings?.GosiEnabled == true)
             {
-                gosiEmployeeAmount = Math.Round(employee.BasicSalary * settings.GosiEmployeeRatePercent / 100m, 2);
-                gosiEmployerAmount = Math.Round(employee.BasicSalary * (settings.GosiEmployerAnnuitiesRatePercent + settings.GosiEmployerHazardsRatePercent) / 100m, 2);
-                deductions += gosiEmployeeAmount;
+                if (employee.IsSaudiNational)
+                {
+                    gosiEmployeeAmount = Math.Round(employee.BasicSalary * settings.GosiEmployeeRatePercent / 100m, 2);
+                    gosiEmployerAmount = Math.Round(employee.BasicSalary * (settings.GosiEmployerAnnuitiesRatePercent + settings.GosiEmployerHazardsRatePercent) / 100m, 2);
+                    deductions += gosiEmployeeAmount;
+                }
+                else
+                {
+                    // Non-Saudi/resident employees: no Annuities branch (employee pays nothing), only the
+                    // employer-paid Occupational Hazards branch, at its own (usually lower) rate.
+                    gosiEmployerAmount = Math.Round(employee.BasicSalary * settings.GosiNonSaudiEmployerHazardsRatePercent / 100m, 2);
+                }
             }
 
             run.Lines.Add(new PayrollRunLine
@@ -358,7 +367,7 @@ public class PayrollService : IPayrollService
     {
         if (dto.PayrollDaysPerMonth <= 0)
             throw new ValidationAppException("عدد أيام الراتب في الشهر يجب أن يكون أكبر من صفر.");
-        if (dto.GosiEmployeeRatePercent < 0 || dto.GosiEmployerAnnuitiesRatePercent < 0 || dto.GosiEmployerHazardsRatePercent < 0)
+        if (dto.GosiEmployeeRatePercent < 0 || dto.GosiEmployerAnnuitiesRatePercent < 0 || dto.GosiEmployerHazardsRatePercent < 0 || dto.GosiNonSaudiEmployerHazardsRatePercent < 0)
             throw new ValidationAppException("نسب التأمينات الاجتماعية لا يمكن أن تكون سالبة.");
 
         var settings = await _context.CompanySettings.FirstOrDefaultAsync(ct)
@@ -369,6 +378,7 @@ public class PayrollService : IPayrollService
         settings.GosiEmployeeRatePercent = dto.GosiEmployeeRatePercent;
         settings.GosiEmployerAnnuitiesRatePercent = dto.GosiEmployerAnnuitiesRatePercent;
         settings.GosiEmployerHazardsRatePercent = dto.GosiEmployerHazardsRatePercent;
+        settings.GosiNonSaudiEmployerHazardsRatePercent = dto.GosiNonSaudiEmployerHazardsRatePercent;
 
         await _context.SaveChangesAsync(ct);
         return MapSettings(settings);
@@ -380,7 +390,8 @@ public class PayrollService : IPayrollService
         GosiEnabled = s.GosiEnabled,
         GosiEmployeeRatePercent = s.GosiEmployeeRatePercent,
         GosiEmployerAnnuitiesRatePercent = s.GosiEmployerAnnuitiesRatePercent,
-        GosiEmployerHazardsRatePercent = s.GosiEmployerHazardsRatePercent
+        GosiEmployerHazardsRatePercent = s.GosiEmployerHazardsRatePercent,
+        GosiNonSaudiEmployerHazardsRatePercent = s.GosiNonSaudiEmployerHazardsRatePercent
     };
 
     private static PayrollRunDto Map(PayrollRun r) => new()

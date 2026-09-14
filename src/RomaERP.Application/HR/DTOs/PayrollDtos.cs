@@ -100,4 +100,5 @@ public class PayrollSettingsDto
     public decimal GosiEmployeeRatePercent { get; set; }
     public decimal GosiEmployerAnnuitiesRatePercent { get; set; }
     public decimal GosiEmployerHazardsRatePercent { get; set; }
+    public decimal GosiNonSaudiEmployerHazardsRatePercent { get; set; }
 }

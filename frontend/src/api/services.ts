@@ -63,6 +63,9 @@ import type {
   DecideEmployeeRequestInput,
   LeaveBalance,
   PayrollSettings,
+  EmployeeContract,
+  CreateEmployeeContractInput,
+  EmployeeContractStatus,
   DeliveryPlatformStatus,
   DeliveryWebhookEvent,
   DeliveryPlatformItemMapping,
@@ -275,6 +278,15 @@ export const EmployeeRequestsApi = {
   getAll: () => apiClient.get<EmployeeRequest[]>("/employee-requests"),
   decide: (id: string, data: DecideEmployeeRequestInput) => apiClient.post<EmployeeRequest>(`/employee-requests/${id}/decide`, data),
   getMyLeaveBalance: () => apiClient.get<LeaveBalance>("/employee-requests/my-leave-balance"),
+};
+
+export const EmployeeContractsApi = {
+  getAll: () => apiClient.get<EmployeeContract[]>("/employee-contracts"),
+  getForEmployee: (employeeId: string) => apiClient.get<EmployeeContract[]>(`/employee-contracts/employee/${employeeId}`),
+  create: (data: CreateEmployeeContractInput) => apiClient.post<EmployeeContract>("/employee-contracts", data),
+  updateStatus: (id: string, status: EmployeeContractStatus) =>
+    apiClient.put<EmployeeContract>(`/employee-contracts/${id}/status`, { status }),
+  remove: (id: string) => apiClient.delete(`/employee-contracts/${id}`),
 };
 
 export const SalaryComponentsApi = {

@@ -188,7 +188,7 @@ public class PayrollServiceTests
     }
 
     [Fact]
-    public async Task CreateAndCalculateAsync_ComputesGosi_OnlyForSaudiNationalsWhenEnabled()
+    public async Task CreateAndCalculateAsync_ComputesGosiPerCategory_SaudiFullSplit_NonSaudiEmployerHazardsOnly()
     {
         var ctx = CreateContext();
         var saudiEmployee = CreateEmployee(basicSalary: 10000);
@@ -204,7 +204,8 @@ public class PayrollServiceTests
         ctx.CompanySettings.Add(new CompanySettings
         {
             CompanyNameAr = "شركة", CompanyNameEn = "Co", PayrollDaysPerMonth = 30,
-            GosiEnabled = true, GosiEmployeeRatePercent = 9.75m, GosiEmployerAnnuitiesRatePercent = 9.75m, GosiEmployerHazardsRatePercent = 2m
+            GosiEnabled = true, GosiEmployeeRatePercent = 9.75m, GosiEmployerAnnuitiesRatePercent = 9.75m, GosiEmployerHazardsRatePercent = 2m,
+            GosiNonSaudiEmployerHazardsRatePercent = 1.5m
         });
         await ctx.SaveChangesAsync();
 
@@ -217,9 +218,11 @@ public class PayrollServiceTests
         Assert.Equal(975m, saudiLine.TotalDeductions);
         Assert.Equal(9025m, saudiLine.NetSalary);
 
+        // Non-Saudi: no employee withholding and no employer Annuities — just the employer's own
+        // (usually lower) Occupational Hazards rate, at its own configured percentage.
         var nonSaudiLine = run.Lines.Single(l => l.EmployeeId == nonSaudiEmployee.Id);
         Assert.Equal(0m, nonSaudiLine.GosiEmployeeDeductionAmount);
-        Assert.Equal(0m, nonSaudiLine.GosiEmployerContributionAmount);
+        Assert.Equal(150m, nonSaudiLine.GosiEmployerContributionAmount); // 10000 * 1.5%
         Assert.Equal(10000m, nonSaudiLine.NetSalary);
     }
 

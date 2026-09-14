@@ -134,6 +134,21 @@ public class EmployeeRequestConfiguration : IEntityTypeConfiguration<EmployeeReq
     }
 }
 
+public class EmployeeContractConfiguration : IEntityTypeConfiguration<EmployeeContract>
+{
+    public void Configure(EntityTypeBuilder<EmployeeContract> builder)
+    {
+        builder.Property(c => c.Notes).HasMaxLength(1000);
+
+        builder.HasOne(c => c.Employee)
+            .WithMany()
+            .HasForeignKey(c => c.EmployeeId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(c => !c.IsDeleted);
+    }
+}
+
 public class SalaryComponentConfiguration : IEntityTypeConfiguration<SalaryComponent>
 {
     public void Configure(EntityTypeBuilder<SalaryComponent> builder)

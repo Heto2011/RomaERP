@@ -108,6 +108,17 @@ export default function PayrollSettingsPage() {
                 disabled={!settings.gosiEnabled}
               />
             </div>
+            <div className="form-field">
+              <label>{t.hr.gosiNonSaudiEmployerHazardsRate}</label>
+              <input
+                type="number"
+                step="0.01"
+                min={0}
+                value={settings.gosiNonSaudiEmployerHazardsRatePercent}
+                onChange={(e) => setSettings({ ...settings, gosiNonSaudiEmployerHazardsRatePercent: Number(e.target.value) })}
+                disabled={!settings.gosiEnabled}
+              />
+            </div>
           </div>
 
           <p className="text-muted" style={{ fontSize: 13 }}>{t.hr.gosiEligibilityNote}</p>

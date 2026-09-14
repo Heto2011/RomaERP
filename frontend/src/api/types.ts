@@ -986,6 +986,39 @@ export interface PayrollSettings {
   gosiEmployeeRatePercent: number;
   gosiEmployerAnnuitiesRatePercent: number;
   gosiEmployerHazardsRatePercent: number;
+  gosiNonSaudiEmployerHazardsRatePercent: number;
+}
+
+export enum ContractType {
+  Permanent = 1,
+  FixedTerm = 2,
+  PartTime = 3,
+}
+
+export enum EmployeeContractStatus {
+  Active = 1,
+  Renewed = 2,
+  Terminated = 3,
+}
+
+export interface EmployeeContract {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  contractType: ContractType;
+  startDate: string;
+  endDate: string | null;
+  status: EmployeeContractStatus;
+  notes: string | null;
+  daysUntilExpiry: number | null;
+}
+
+export interface CreateEmployeeContractInput {
+  employeeId: string;
+  contractType: ContractType;
+  startDate: string;
+  endDate: string | null;
+  notes: string | null;
 }
 
 export interface PayrollRun {
