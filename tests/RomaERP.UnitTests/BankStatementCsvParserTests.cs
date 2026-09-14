@@ -78,4 +78,36 @@ public class BankStatementCsvParserTests
         Assert.Equal("Payment, ref 123", line.Description);
         Assert.Equal(100m, line.Amount);
     }
+
+    [Fact]
+    public async Task ParseAsync_ConvertsArabicIndicDigitsInDatesAndAmounts()
+    {
+        var csv = "التاريخ,البيان,المبلغ\n٢٠٢٦-٠١-٠٥,مقهى,-٢٥.٥٠\n";
+        var lines = await BankStatementCsvParser.ParseAsync(ToStream(csv));
+
+        var line = Assert.Single(lines);
+        Assert.Equal(new DateTime(2026, 1, 5), line.Date);
+        Assert.Equal(-25.50m, line.Amount);
+    }
+
+    [Fact]
+    public async Task ParseAsync_StripsInvisibleBidiMarksAroundValues()
+    {
+        var csv = "Date,Description,Amount\n‏2026-01-05‏,Coffee,‏-25.50‏\n";
+        var lines = await BankStatementCsvParser.ParseAsync(ToStream(csv));
+
+        var line = Assert.Single(lines);
+        Assert.Equal(new DateTime(2026, 1, 5), line.Date);
+        Assert.Equal(-25.50m, line.Amount);
+    }
+
+    [Fact]
+    public async Task ParseAsync_StripsCurrencyCodeInlinedWithTheAmount()
+    {
+        var csv = "Date;Description;Amount\n2026-01-05;Coffee;SAR 1,500.00\n";
+        var lines = await BankStatementCsvParser.ParseAsync(ToStream(csv));
+
+        var line = Assert.Single(lines);
+        Assert.Equal(1500.00m, line.Amount);
+    }
 }

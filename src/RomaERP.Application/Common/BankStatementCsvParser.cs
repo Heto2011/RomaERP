@@ -87,7 +87,7 @@ public static class BankStatementCsvParser
             }
             else if (ch == delimiter && !inQuotes)
             {
-                fields.Add(current.ToString().Trim().Trim('"').Trim());
+                fields.Add(CleanField(current.ToString()).Trim().Trim('"').Trim());
                 current.Clear();
             }
             else
@@ -95,8 +95,36 @@ public static class BankStatementCsvParser
                 current.Append(ch);
             }
         }
-        fields.Add(current.ToString().Trim().Trim('"').Trim());
+        fields.Add(CleanField(current.ToString()).Trim().Trim('"').Trim());
         return fields.ToArray();
+    }
+
+    /// <summary>Bank exports (especially Arabic ones re-saved from Excel) routinely embed invisible
+    /// bidi/BOM marks around values and use Arabic-Indic digits — both make an otherwise well-formed
+    /// column silently fail to match a header name or parse as a date/number. Normalize both away for
+    /// every field so header recognition and value parsing see plain content.</summary>
+    private static string CleanField(string raw)
+    {
+        var sb = new System.Text.StringBuilder(raw.Length);
+        foreach (var ch in raw)
+        {
+            switch (ch)
+            {
+                case '\uFEFF': // BOM
+                case '\u200B': // zero-width space
+                case '\u200E': // left-to-right mark
+                case '\u200F': // right-to-left mark
+                    continue;
+                case '\u00A0': // non-breaking space
+                    sb.Append(' ');
+                    continue;
+            }
+
+            if (ch is >= '\u0660' and <= '\u0669') sb.Append((char)('0' + (ch - '\u0660'))); // Arabic-Indic digits
+            else if (ch is >= '\u06F0' and <= '\u06F9') sb.Append((char)('0' + (ch - '\u06F0'))); // Extended Arabic-Indic digits
+            else sb.Append(ch);
+        }
+        return sb.ToString();
     }
 
     private record ColumnMap(int DateIndex, int? DescriptionIndex, int? AmountIndex, int? DebitIndex, int? CreditIndex);
@@ -178,6 +206,11 @@ public static class BankStatementCsvParser
         var negativeParens = raw.StartsWith('(') && raw.EndsWith(')');
         if (negativeParens)
             raw = raw[1..^1];
+
+        // Some banks inline a currency code/symbol with the amount (e.g. "SAR 1,500.00", "1500 ر.س").
+        // Strip anything that isn't part of the number itself rather than requiring the caller's file
+        // to be bare — NumberStyles' currency support only recognizes the invariant "¤" symbol.
+        raw = new string(raw.Where(c => char.IsDigit(c) || c is '.' or ',' or '-' or '+').ToArray());
 
         if (!decimal.TryParse(raw, NumberStyles.Any, CultureInfo.InvariantCulture, out amount))
             return false;
