@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>الأسعار — RomaERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f4ee;
+    --surface: #ffffff;
+    --ink: #1c2620;
+    --ink-soft: #5b6a60;
+    --border: #e2ddd0;
+    --primary: #0f5c4b;
+    --primary-dark: #0a4438;
+    --primary-tint: #e6f0ec;
+    --accent: #c8862e;
+    --accent-tint: #faf1e2;
+    --danger: #b3452f;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(28,38,32,.04), 0 12px 32px -16px rgba(28,38,32,.18);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Tajawal", "Segoe UI", sans-serif;
+    line-height: 1.6;
+  }
+  .mono { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+
+  header.hero {
+    padding: 72px 0 56px;
+    text-align: center;
+    background:
+      radial-gradient(60% 100% at 50% 0%, var(--primary-tint) 0%, transparent 70%);
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 900; font-size: 20px; color: var(--primary-dark);
+    margin-bottom: 28px;
+  }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 15px; font-weight: 900;
+  }
+  h1 {
+    font-size: clamp(30px, 4.5vw, 46px);
+    font-weight: 900;
+    margin: 0 0 16px;
+    text-wrap: balance;
+    color: var(--ink);
+  }
+  h1 span { color: var(--primary); }
+  .hero-sub {
+    max-width: 620px; margin: 0 auto;
+    color: var(--ink-soft); font-size: 18px;
+  }
+  .hero-cta {
+    margin-top: 32px;
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 26px; border-radius: 999px;
+    font-weight: 700; font-size: 15px;
+    text-decoration: none; cursor: pointer; border: none;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 10px 24px -10px rgba(15,92,75,.55); }
+  .btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--border); }
+
+  section { padding: 40px 0; }
+  .section-head { text-align: center; max-width: 560px; margin: 0 auto 40px; }
+  .section-head .eyebrow {
+    color: var(--primary); font-weight: 700; font-size: 13px;
+    letter-spacing: .04em; text-transform: uppercase; margin-bottom: 10px; display: block;
+  }
+  .section-head h2 { font-size: 28px; margin: 0 0 10px; font-weight: 900; }
+  .section-head p { color: var(--ink-soft); margin: 0; }
+
+  /* Tiers */
+  .tiers {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+  }
+  .tier {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 26px 22px;
+    box-shadow: var(--shadow);
+    display: flex; flex-direction: column;
+    position: relative;
+  }
+  .tier.is-recommended {
+    border-color: var(--primary);
+    box-shadow: 0 1px 2px rgba(28,38,32,.04), 0 20px 40px -18px rgba(15,92,75,.4);
+  }
+  .tier-badge {
+    position: absolute; top: -13px; right: 22px;
+    background: var(--primary); color: #fff;
+    font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
+  }
+  .tier-emoji { font-size: 22px; margin-bottom: 10px; }
+  .tier-name { font-weight: 900; font-size: 19px; margin: 0 0 4px; }
+  .tier-desc { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 20px; min-height: 40px; }
+  .tier-price { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+  .tier-price .amount { font-size: 32px; font-weight: 900; }
+  .tier-price .currency { font-size: 14px; color: var(--ink-soft); font-weight: 700; }
+  .tier-price-note { color: var(--ink-soft); font-size: 12.5px; margin-bottom: 20px; }
+  .tier-includes { list-style: none; margin: 0 0 24px; padding: 0; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .tier-includes li { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+  .tier-includes li::before { content: "✓"; color: var(--primary); font-weight: 900; flex-shrink: 0; }
+  .tier .btn { justify-content: center; width: 100%; }
+
+  /* Calculator */
+  .calc-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    padding: 36px;
+    display: grid;
+    grid-template-columns: 1fr 320px;
+    gap: 36px;
+  }
+  .calc-controls { display: flex; flex-direction: column; gap: 26px; }
+  .field-label { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+  .field-label .val { color: var(--primary); font-family: "IBM Plex Mono", monospace; }
+  input[type=range] {
+    width: 100%; height: 6px; border-radius: 999px;
+    background: var(--border); appearance: none; -webkit-appearance: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    appearance: none; -webkit-appearance: none;
+    width: 20px; height: 20px; border-radius: 50%;
+    background: var(--primary); border: 3px solid #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer;
+  }
+  .field-hint { color: var(--ink-soft); font-size: 12.5px; margin-top: 8px; }
+
+  .calc-result {
+    background: var(--primary-dark);
+    color: #fff;
+    border-radius: 16px;
+    padding: 26px;
+    display: flex; flex-direction: column;
+    justify-content: space-between;
+  }
+  .calc-result .tier-tag {
+    align-self: flex-start;
+    background: rgba(255,255,255,.14);
+    font-size: 12.5px; font-weight: 700;
+    padding: 5px 12px; border-radius: 999px;
+    margin-bottom: 18px;
+  }
+  .calc-result .price-label { font-size: 13px; opacity: .75; margin-bottom: 6px; }
+  .calc-result .price { font-size: 42px; font-weight: 900; font-family: "IBM Plex Mono", monospace; }
+  .calc-result .price small { font-size: 15px; opacity: .8; font-family: "Tajawal", sans-serif; font-weight: 700; }
+  .calc-result .breakdown { margin-top: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; opacity: .85; }
+  .calc-result .breakdown div { display: flex; justify-content: space-between; }
+  .calc-result .btn-primary { margin-top: 20px; background: #fff; color: var(--primary-dark); box-shadow: none; }
+
+  .assumptions-note {
+    margin-top: 18px; padding: 14px 18px;
+    background: var(--accent-tint); border: 1px dashed var(--accent);
+    border-radius: 12px; font-size: 13px; color: #6b4a19;
+  }
+
+  /* Everything included */
+  .included-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
+  }
+  .included-grid span {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; font-size: 13.5px; font-weight: 500;
+    text-align: center;
+  }
+
+  /* Trial */
+  .trial-band {
+    background: var(--primary); color: #fff;
+    border-radius: 20px; padding: 44px; text-align: center;
+  }
+  .trial-band h2 { font-size: 26px; margin: 0 0 10px; font-weight: 900; }
+  .trial-band p { opacity: .9; max-width: 560px; margin: 0 auto 24px; }
+  .trial-steps {
+    display: flex; justify-content: center; gap: 24px; margin-top: 28px; flex-wrap: wrap;
+  }
+  .trial-steps div { font-size: 13px; opacity: .85; }
+  .trial-steps strong { display: block; font-size: 15px; margin-bottom: 4px; }
+
+  /* Product preview (real screenshot of the app) */
+  .preview-frame {
+    max-width: 900px; margin: 0 auto;
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(28,38,32,.06), 0 30px 60px -24px rgba(28,38,32,.35);
+    border: 1px solid var(--border);
+  }
+  .preview-chrome {
+    background: #e9e5da; padding: 10px 14px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .preview-chrome span {
+    width: 11px; height: 11px; border-radius: 50%; background: #c9c2b2;
+  }
+  .preview-app {
+    background: #14181d; color: #e5e9ee;
+    font-family: "Tajawal", sans-serif;
+    display: flex; direction: rtl;
+    min-height: 420px;
+  }
+  .preview-sidebar {
+    width: 200px; flex-shrink: 0;
+    background: #14181d; border-inline-start: 1px solid #2c3540;
+    padding: 16px 0; display: flex; flex-direction: column; gap: 2px;
+  }
+  .preview-sidebar .brand {
+    color: #fff; font-weight: 900; font-size: 15px;
+    padding: 0 18px 16px; margin: 0;
+  }
+  .preview-sidebar a {
+    padding: 9px 18px; font-size: 13.5px; color: #8b96a3;
+  }
+  .preview-sidebar a.active {
+    background: #3aa0c4; color: #fff; font-weight: 700;
+  }
+  .preview-main { flex: 1; padding: 22px 26px; min-width: 0; }
+  .preview-main h2 { font-size: 19px; font-weight: 900; margin: 0 0 18px; color: #fff; }
+  .preview-tree { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+  .preview-tree .row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .preview-tree .code { color: #6b98a8; font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+  .preview-tree .l0 { font-weight: 700; color: #fff; }
+  .preview-tree .l1 { padding-inline-start: 20px; color: #c7cdd4; }
+  .preview-tree .l2 { padding-inline-start: 40px; color: #8b96a3; }
+  .preview-caption {
+    text-align: center; color: var(--ink-soft); font-size: 13.5px;
+    max-width: 520px; margin: 18px auto 0;
+  }
+
+  footer { text-align: center; padding: 40px 0 60px; color: var(--ink-soft); font-size: 13px; }
+
+  @media (max-width: 860px) {
+    .tiers { grid-template-columns: 1fr 1fr; }
+    .calc-card { grid-template-columns: 1fr; }
+    .included-grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 540px) {
+    .tiers { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="brand"><span class="brand-mark">R</span> RomaERP</div>
+    <h1>سعر واحد <span>واضح</span>، على قد نشاطك</h1>
+    <p class="hero-sub">مش هنطلب منك تشتري المحاسبة وحدها والـ POS وحده والمخزون والتكاليف كل واحد لوحده. اشتراك واحد، كل الإمكانيات، والسعر بيتغير بس حسب حجمك — عدد الشركات، الفروع، والمستخدمين.</p>
+    <div class="hero-cta">
+      <a href="/start-trial" class="btn btn-primary">جرّب مجانًا 14 يوم</a>
+      <a href="#calculator" class="btn btn-ghost">احسب سعرك</a>
+    </div>
+  </div>
+</header>
+
+<section id="preview">
+  <div class="wrap">
+    <div class="preview-frame">
+      <div class="preview-chrome"><span></span><span></span><span></span></div>
+      <div class="preview-app">
+        <div class="preview-sidebar">
+          <p class="brand">RomaERP</p>
+          <a>عام</a>
+          <a>المساعد الذكي</a>
+          <a class="active">شجرة الحسابات</a>
+          <a>الأرصدة الافتتاحية</a>
+          <a>القيود اليومية</a>
+          <a>التقارير</a>
+          <a>المبيعات</a>
+          <a>المشتريات</a>
+        </div>
+        <div class="preview-main">
+          <h2>شجرة الحسابات</h2>
+          <div class="preview-tree">
+            <div class="row l0"><span>الأصول (إجمالي)</span><span class="code">1000</span></div>
+            <div class="row l1"><span>الأصول المتداولة (إجمالي)</span><span class="code">1100</span></div>
+            <div class="row l2"><span>النقدية وما في حكمها (إجمالي)</span><span class="code">1110</span></div>
+            <div class="row l2"><span>الصندوق</span><span class="code">1111</span></div>
+            <div class="row l2"><span>البنك</span><span class="code">1112</span></div>
+            <div class="row l1"><span>العملاء</span><span class="code">1120</span></div>
+            <div class="row l1"><span>المخزون</span><span class="code">1160</span></div>
+            <div class="row l0"><span>الخصوم (إجمالي)</span><span class="code">2000</span></div>
+            <div class="row l1"><span>الموردون</span><span class="code">2120</span></div>
+            <div class="row l0"><span>حقوق الملكية (إجمالي)</span><span class="code">3000</span></div>
+            <div class="row l0"><span>الإيرادات (إجمالي)</span><span class="code">4000</span></div>
+            <div class="row l1"><span>إيرادات المبيعات</span><span class="code">4100</span></div>
+            <div class="row l0"><span>المصروفات (إجمالي)</span><span class="code">5000</span></div>
+            <div class="row l1"><span>تكلفة البضاعة المباعة</span><span class="code">5500</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <p class="preview-caption">شجرة حسابات محاسبية كاملة بمعايير احترافية — جاهزة من أول يوم، مش محتاج تبنيها بنفسك.</p>
+  </div>
+</section>
+
+<section id="tiers">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">الباقات</span>
+      <h2>نقطة بداية، مش قالب جاهز</h2>
+      <p>الأسعار دي بداية معقولة لكل حجم نشاط. استخدم الحاسبة تحت عشان تشوف السعر الفعلي المناسب لك بالظبط.</p>
+    </div>
+    <div class="tiers" id="tiersGrid"></div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">كل الإمكانيات، مفيش استثناءات</span>
+      <h2>كل مستويات الاشتراك تشمل النظام بالكامل</h2>
+      <p>مفيش Modules منفصلة، ومفيش تقارير أو صلاحيات مقفولة على باقة معينة. الفرق بين الباقات هو حجم النشاط بس.</p>
+    </div>
+    <div class="included-grid" id="includedGrid"></div>
+  </div>
+</section>
+
+<section id="calculator">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow">الحاسبة</span>
+      <h2>احسب السعر المناسب لنشاطك</h2>
+      <p>غيّر عدد الشركات والفروع والمستخدمين وشوف السعر بيتغير على طول.</p>
+    </div>
+    <div class="calc-card">
+      <div class="calc-controls">
+        <div>
+          <div class="field-label"><span>عدد الشركات (كيانات منفصلة)</span><span class="val" id="companiesVal">1</span></div>
+          <input type="range" id="companiesRange" min="1" max="8" value="1" step="1" />
+          <div class="field-hint">كل شركة = حساب مستقل بالكامل ببياناته الخاصة، وبنجمعهم في فاتورة واحدة بخصم على الشركات الإضافية.</div>
+        </div>
+        <div>
+          <div class="field-label"><span>عدد الفروع (لكل شركة)</span><span class="val" id="branchesVal">1</span></div>
+          <input type="range" id="branchesRange" min="1" max="15" value="1" step="1" />
+        </div>
+        <div>
+          <div class="field-label"><span>عدد المستخدمين (لكل شركة)</span><span class="val" id="usersVal">2</span></div>
+          <input type="range" id="usersRange" min="1" max="30" value="2" step="1" />
+        </div>
+      </div>
+      <div class="calc-result">
+        <div>
+          <div class="tier-tag" id="resultTier">Essential 🟢</div>
+          <div class="price-label">السعر الشهري التقديري</div>
+          <div class="price"><span id="resultPrice">499</span> <small>ريال / شهريًا</small></div>
+          <div class="breakdown" id="resultBreakdown"></div>
+        </div>
+        <a href="/start-trial" class="btn btn-primary">ابدأ بهذا السعر</a>
+      </div>
+    </div>
+    <div class="assumptions-note">
+      ⚠️ الأرقام دي نقطة بداية للمراجعة الداخلية قبل الإطلاق — مش أسعار نهائية معلنة. لو حابب تعدلها غيّر الثوابت في أول ملف <code class="mono">pricing.html</code>.
+    </div>
+  </div>
+</section>
+
+<section id="trial">
+  <div class="wrap">
+    <div class="trial-band">
+      <h2>لا تصدّقنا. جرّب ROMA بنفسك.</h2>
+      <p>14 يوم مجانًا، بحساب شركة حقيقي ببياناتك، وكل إمكانيات ROMA متاحة — من غير ما تحط بيانات بطاقة بنكية.</p>
+      <a href="/start-trial" class="btn btn-primary" style="background:#fff;color:var(--primary-dark)">ابدأ تجربتك الآن</a>
+      <div class="trial-steps">
+        <div><strong>1. 14 يوم كاملة</strong>كل الإمكانيات من غير قيود</div>
+        <div><strong>2. تحويل مباشر</strong>لو أعجبك، نفس الحساب ونفس البيانات يستمر بدون فقد أي حاجة</div>
+        <div><strong>3. بدون التزام</strong>مفيش بطاقة بنكية مطلوبة للتجربة</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>© RomaERP — السعودية أولاً. الأسعار قابلة للتغيير حتى الإطلاق الرسمي.</footer>
+
+<script>
+  // ---- Configurable pricing assumptions (placeholders — tune before launch) ----
+  const TIERS = [
+    { id: "essential", emoji: "🟢", name: "Essential", desc: "شركة صغيرة أو فرع واحد", base: 499, includedBranches: 1, includedUsers: 2 },
+    { id: "business", emoji: "🔵", name: "Business", desc: "شركات متعددة الفروع", base: 799, includedBranches: 3, includedUsers: 5, recommended: true },
+    { id: "professional", emoji: "🟣", name: "Professional", desc: "نشاط أكبر واحتياج موسّع", base: 1299, includedBranches: 7, includedUsers: 10 },
+    { id: "enterprise", emoji: "🔴", name: "Enterprise", desc: "الشركات الكبيرة", base: 2499, includedBranches: Infinity, includedUsers: Infinity, custom: true },
+  ];
+  const EXTRA_BRANCH_PRICE = 150; // SAR / branch / month, beyond tier's included branches
+  const EXTRA_USER_PRICE = 40;    // SAR / user / month, beyond tier's included users
+  const ADDITIONAL_COMPANY_DISCOUNT = 0.85; // each company after the first billed at 85% of its own computed price
+
+  const INCLUDED_FEATURES = [
+    "المحاسبة والقيود", "نقاط البيع POS", "المبيعات والمشتريات", "المخزون والتكاليف",
+    "الوصفات والمطاعم", "الموارد البشرية والرواتب", "التقارير المالية", "الذكاء المالي والتنبؤ",
+    "تحليل ماذا-لو", "إدارة الفروع", "الصلاحيات", "سجل التدقيق (Audit Trail)",
+  ];
+
+  function renderTiers() {
+    const grid = document.getElementById("tiersGrid");
+    grid.innerHTML = TIERS.map(t => `
+      <div class="tier ${t.recommended ? "is-recommended" : ""}">
+        ${t.recommended ? '<div class="tier-badge">الأكثر طلبًا</div>' : ""}
+        <div class="tier-emoji">${t.emoji}</div>
+        <h3 class="tier-name">${t.name}</h3>
+        <p class="tier-desc">${t.desc}</p>
+        <div class="tier-price">
+          <span class="amount mono">${t.custom ? "من " + t.base : t.base}</span>
+          <span class="currency">ريال / شهريًا</span>
+        </div>
+        <div class="tier-price-note">${t.custom ? "سعر مخصص حسب النشاط" : `يشمل حتى ${t.includedBranches} ${t.includedBranches === 1 ? "فرع" : "فروع"} و ${t.includedUsers} مستخدمين`}</div>
+        <ul class="tier-includes">
+          <li>كل موديولات ROMA بدون استثناء</li>
+          <li>دعم فني بالعربي</li>
+          <li>${t.custom ? "فروع ومستخدمون بلا حدود عملية" : "زيادة الفروع/المستخدمين بسعر إضافي واضح"}</li>
+        </ul>
+        <a href="#calculator" class="btn ${t.recommended ? "btn-primary" : "btn-ghost"}">${t.custom ? "تواصل معنا" : "احسب سعري"}</a>
+      </div>
+    `).join("");
+  }
+
+  function renderIncluded() {
+    document.getElementById("includedGrid").innerHTML =
+      INCLUDED_FEATURES.map(f => `<span>${f}</span>`).join("");
+  }
+
+  function pickTier(branches, users) {
+    for (const t of TIERS) {
+      if (branches <= t.includedBranches && users <= t.includedUsers) return t;
+    }
+    return TIERS[TIERS.length - 1];
+  }
+
+  function computePrice(companies, branches, users) {
+    const tier = pickTier(branches, users);
+    const extraBranches = tier.custom ? 0 : Math.max(0, branches - tier.includedBranches);
+    const extraUsers = tier.custom ? 0 : Math.max(0, users - tier.includedUsers);
+    const perCompany = tier.base + extraBranches * EXTRA_BRANCH_PRICE + extraUsers * EXTRA_USER_PRICE;
+    const additionalCompanies = Math.max(0, companies - 1);
+    const total = perCompany + additionalCompanies * perCompany * ADDITIONAL_COMPANY_DISCOUNT;
+    return { tier, perCompany, extraBranches, extraUsers, additionalCompanies, total: Math.round(total) };
+  }
+
+  function renderCalculator() {
+    const companies = Number(document.getElementById("companiesRange").value);
+    const branches = Number(document.getElementById("branchesRange").value);
+    const users = Number(document.getElementById("usersRange").value);
+    document.getElementById("companiesVal").textContent = companies;
+    document.getElementById("branchesVal").textContent = branches;
+    document.getElementById("usersVal").textContent = users;
+
+    const r = computePrice(companies, branches, users);
+    document.getElementById("resultTier").textContent = `${r.tier.name} ${r.tier.emoji}`;
+    document.getElementById("resultPrice").textContent = r.total.toLocaleString("en-US");
+
+    const lines = [`<div><span>السعر الأساسي (${r.tier.name})</span><span>${r.tier.base} ريال</span></div>`];
+    if (r.extraBranches > 0) lines.push(`<div><span>فروع إضافية × ${r.extraBranches}</span><span>+${r.extraBranches * EXTRA_BRANCH_PRICE} ريال</span></div>`);
+    if (r.extraUsers > 0) lines.push(`<div><span>مستخدمون إضافيون × ${r.extraUsers}</span><span>+${r.extraUsers * EXTRA_USER_PRICE} ريال</span></div>`);
+    if (r.additionalCompanies > 0) lines.push(`<div><span>${r.additionalCompanies} شركة إضافية (خصم 15%)</span><span>+${Math.round(r.additionalCompanies * r.perCompany * ADDITIONAL_COMPANY_DISCOUNT)} ريال</span></div>`);
+    if (r.tier.custom) lines.push(`<div><span colspan="2">تواصل معنا لعرض دقيق للمؤسسات الكبيرة</span></div>`);
+    document.getElementById("resultBreakdown").innerHTML = lines.join("");
+  }
+
+  renderTiers();
+  renderIncluded();
+  renderCalculator();
+  ["companiesRange", "branchesRange", "usersRange"].forEach(id =>
+    document.getElementById(id).addEventListener("input", renderCalculator)
+  );
+</script>
+</body>
+</html>

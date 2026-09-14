@@ -216,3 +216,29 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ===== .NET =====
+bin/
+obj/
+*.user
+*.suo
+.vs/
+*.dbmdl
+*.dbproj.schemaview
+*.pfx
+appsettings.*.local.json
+
+# ===== Node / React =====
+node_modules/
+frontend/dist/
+frontend/.env.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ===== EF Core =====
+*.mdf
+*.ldf
+
+# ===== App uploads =====
+src/RomaERP.API/App_Data/
