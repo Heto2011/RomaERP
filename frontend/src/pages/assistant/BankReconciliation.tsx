@@ -104,7 +104,7 @@ export default function BankReconciliation() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".csv"
+            accept=".csv,.xlsx,.xls,.xlsm"
             style={{ display: "none" }}
             onChange={(e) => e.target.files?.[0] && handleImport(e.target.files[0])}
           />

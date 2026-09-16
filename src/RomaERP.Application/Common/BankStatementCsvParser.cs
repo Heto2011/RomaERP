@@ -1,4 +1,5 @@
 using System.Globalization;
+using ClosedXML.Excel;
 
 namespace RomaERP.Application.Common;
 
@@ -28,6 +29,18 @@ public static class BankStatementCsvParser
         "dd-MM-yyyy", "d-M-yyyy", "yyyy-MM-dd", "dd.MM.yyyy", "d.M.yyyy"
     };
 
+    /// <summary>Auto-detects the uploaded file's format from its name/content and parses accordingly — a
+    /// bank statement downloaded straight from online banking is at least as often a real .xlsx workbook as
+    /// a CSV, and making the caller pick the right parser just reintroduces the "wrong format" friction this
+    /// class exists to remove.</summary>
+    public static async Task<List<ParsedLine>> ParseAsync(Stream stream, string? fileName, CancellationToken ct = default)
+    {
+        if (IsExcelFile(stream, fileName))
+            return ParseExcel(stream);
+
+        return await ParseAsync(stream, ct);
+    }
+
     public static async Task<List<ParsedLine>> ParseAsync(Stream csvStream, CancellationToken ct = default)
     {
         using var reader = new StreamReader(csvStream);
@@ -42,15 +55,67 @@ public static class BankStatementCsvParser
             return new List<ParsedLine>();
 
         var delimiter = DetectDelimiter(rawLines[0]);
-        var headerFields = SplitRow(rawLines[0], delimiter);
-        var columnMap = MapHeaderColumns(headerFields);
+        var rows = rawLines.Select(l => SplitRow(l, delimiter)).ToList();
+        return ParseRows(rows);
+    }
+
+    /// <summary>Reads the first worksheet of an .xlsx/.xls workbook into the same row-processing pipeline
+    /// the CSV path uses — cells come back as their underlying value (not Excel's display formatting), so a
+    /// date or currency-formatted amount cell converts to a plain, reliably parseable string.</summary>
+    private static List<ParsedLine> ParseExcel(Stream stream)
+    {
+        using var workbook = new XLWorkbook(stream);
+        var worksheet = workbook.Worksheets.FirstOrDefault();
+        var range = worksheet?.RangeUsed();
+        if (range is null)
+            return new List<ParsedLine>();
+
+        var columnCount = range.ColumnCount();
+        var rows = new List<string[]>();
+        foreach (var row in range.RowsUsed())
+        {
+            var fields = row.Cells(1, columnCount).Select(CellToString).ToArray();
+            if (fields.All(string.IsNullOrWhiteSpace)) continue;
+            rows.Add(fields);
+        }
+
+        return ParseRows(rows);
+    }
+
+    private static string CellToString(IXLCell cell) => CleanField(cell.DataType switch
+    {
+        XLDataType.DateTime => cell.GetDateTime().ToString("yyyy-MM-dd", CultureInfo.InvariantCulture),
+        XLDataType.Number => cell.GetDouble().ToString(CultureInfo.InvariantCulture),
+        _ => cell.GetString(),
+    });
+
+    private static bool IsExcelFile(Stream stream, string? fileName)
+    {
+        var extension = fileName is null ? null : Path.GetExtension(fileName).ToLowerInvariant();
+        if (extension is ".xlsx" or ".xlsm" or ".xls") return true;
+        if (extension is ".csv" or ".txt") return false;
+
+        // No (or an unrecognized) extension — fall back to sniffing the .xlsx/.xls "PK" zip-container
+        // signature so a mislabeled or extension-less upload still works.
+        if (!stream.CanSeek) return false;
+        var position = stream.Position;
+        Span<byte> header = stackalloc byte[2];
+        var bytesRead = stream.Read(header);
+        stream.Position = position;
+        return bytesRead == 2 && header[0] == 0x50 && header[1] == 0x4B;
+    }
+
+    private static List<ParsedLine> ParseRows(List<string[]> rows)
+    {
+        if (rows.Count == 0)
+            return new List<ParsedLine>();
+
+        var columnMap = MapHeaderColumns(rows[0]);
+        var dataRows = columnMap is not null ? rows.Skip(1) : rows;
 
         var result = new List<ParsedLine>();
-        var dataLines = columnMap is not null ? rawLines.Skip(1) : rawLines;
-
-        foreach (var rawLine in dataLines)
+        foreach (var fields in dataRows)
         {
-            var fields = SplitRow(rawLine, delimiter);
             var parsed = columnMap is not null
                 ? ParseByColumnMap(fields, columnMap)
                 : ParsePositional(fields);

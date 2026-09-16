@@ -31,7 +31,7 @@ public class BankFeedReconciliationController : ControllerBase
             throw new ValidationAppException("الملف المرفوع فارغ.");
 
         await using var stream = file.OpenReadStream();
-        return Ok(await _service.ImportCsvAsync(stream, accountId, ct));
+        return Ok(await _service.ImportCsvAsync(stream, file.FileName, accountId, ct));
     }
 
     [HttpPost("sync-live")]

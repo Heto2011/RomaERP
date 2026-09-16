@@ -72,7 +72,7 @@ public class BankFeedReconciliationServiceTests
         var csv = "Date,Description,Amount\n2026-01-10,Deposit,5000\n";
         using var stream = new MemoryStream(System.Text.Encoding.UTF8.GetBytes(csv));
 
-        var result = await service.ImportCsvAsync(stream, bank.Id, CancellationToken.None);
+        var result = await service.ImportCsvAsync(stream, "statement.csv", bank.Id, CancellationToken.None);
 
         Assert.Equal(1, result.ImportedCount);
         Assert.Equal(1, result.AutoMatchedCount);

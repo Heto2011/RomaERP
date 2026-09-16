@@ -31,11 +31,11 @@ public class BankFeedReconciliationService : IBankFeedReconciliationService
         IsConfigured = _provider.IsConfigured
     };
 
-    public async Task<ImportBankFeedCsvResultDto> ImportCsvAsync(Stream csvStream, Guid accountId, CancellationToken ct = default)
+    public async Task<ImportBankFeedCsvResultDto> ImportCsvAsync(Stream csvStream, string fileName, Guid accountId, CancellationToken ct = default)
     {
         await GetAccountAsync(accountId, ct);
 
-        var lines = await ParseCsvAsync(csvStream, accountId, ct);
+        var lines = await ParseCsvAsync(csvStream, fileName, accountId, ct);
         if (lines.Count == 0)
             throw new ValidationAppException("لم يتم العثور على أي حركات في الملف المرفوع. تأكد إن فيه عمود تاريخ وعمود مبلغ (أو مدين/دائن) — بالعربي أو الإنجليزي (موجب = إيداع، سالب = سحب).");
 
@@ -239,9 +239,9 @@ public class BankFeedReconciliationService : IBankFeedReconciliationService
     /// <summary>Sign convention here: positive = deposit (money in), negative = withdrawal (money out) —
     /// when the file gives separate Debit/Credit columns instead of one signed Amount, that resolves to
     /// Credit - Debit.</summary>
-    private static async Task<List<BankFeedTransaction>> ParseCsvAsync(Stream csvStream, Guid accountId, CancellationToken ct)
+    private static async Task<List<BankFeedTransaction>> ParseCsvAsync(Stream csvStream, string fileName, Guid accountId, CancellationToken ct)
     {
-        var parsed = await BankStatementCsvParser.ParseAsync(csvStream, ct);
+        var parsed = await BankStatementCsvParser.ParseAsync(csvStream, fileName, ct);
 
         return parsed.Select(p => new BankFeedTransaction
         {

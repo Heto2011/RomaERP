@@ -4,7 +4,7 @@ namespace RomaERP.Application.Accounting.Services;
 
 public interface IBankFeedReconciliationService
 {
-    Task<ImportBankFeedCsvResultDto> ImportCsvAsync(Stream csvStream, Guid accountId, CancellationToken ct = default);
+    Task<ImportBankFeedCsvResultDto> ImportCsvAsync(Stream csvStream, string fileName, Guid accountId, CancellationToken ct = default);
     Task<SyncLiveBankFeedResultDto> SyncLiveAsync(Guid accountId, DateTime fromDate, DateTime toDate, CancellationToken ct = default);
     Task<BankFeedReconciliationSummaryDto> GetSummaryAsync(Guid accountId, DateTime fromDate, DateTime toDate, CancellationToken ct = default);
     Task<int> AutoMatchAsync(Guid accountId, CancellationToken ct = default);

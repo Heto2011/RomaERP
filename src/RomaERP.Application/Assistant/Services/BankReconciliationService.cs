@@ -30,7 +30,7 @@ public class BankReconciliationService : IBankReconciliationService
         var bankAccount = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == bankAccountId && !a.IsDeleted, ct)
             ?? throw new NotFoundException(nameof(Account), bankAccountId);
 
-        var lines = await ParseCsvAsync(csvStream, ct);
+        var lines = await ParseCsvAsync(csvStream, fileName, ct);
         if (lines.Count == 0)
             throw new ValidationAppException("لم يتم العثور على أي حركات في الملف المرفوع. تأكد إن فيه عمود تاريخ وعمود مبلغ (أو مدين/دائن) — بالعربي أو الإنجليزي.");
 
@@ -63,9 +63,9 @@ public class BankReconciliationService : IBankReconciliationService
     /// expense) — when the file gives separate Debit/Credit columns instead of one signed Amount, that
     /// resolves to Debit - Credit (the opposite of BankFeedReconciliationService's convention, since that
     /// one reconciles deposits/withdrawals against the GL rather than matching card-expense captures).</summary>
-    private static async Task<List<BankStatementLine>> ParseCsvAsync(Stream csvStream, CancellationToken ct)
+    private static async Task<List<BankStatementLine>> ParseCsvAsync(Stream csvStream, string fileName, CancellationToken ct)
     {
-        var parsed = await BankStatementCsvParser.ParseAsync(csvStream, ct);
+        var parsed = await BankStatementCsvParser.ParseAsync(csvStream, fileName, ct);
 
         return parsed.Select(p => new BankStatementLine
         {
