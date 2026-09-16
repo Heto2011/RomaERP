@@ -1,0 +1,34 @@
+name: Deploy to Production Server
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Pull latest code, rebuild backend + frontend, restart service
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          password: ${{ secrets.DEPLOY_PASSWORD }}
+          script: |
+            set -e
+            cd /root/RomaERP
+            git fetch origin
+            git checkout claude/project-continuation-gjlk3b
+            git pull origin claude/project-continuation-gjlk3b
+            git log -1 --oneline
+
+            dotnet publish src/RomaERP.API/RomaERP.API.csproj -c Release -o /var/www/romaerp-api
+            systemctl restart romaerp-api
+            systemctl is-active romaerp-api
+
+            cd frontend
+            npm ci
+            npm run build
+            rm -rf /var/www/romaerp/*
+            cp -r dist/* /var/www/romaerp/
+
+            echo "DEPLOY_OK"
