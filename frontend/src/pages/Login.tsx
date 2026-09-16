@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -56,6 +56,9 @@ export default function Login() {
             {loading ? t.login.submitting : t.login.submit}
           </button>
         </form>
+        <p style={{ marginTop: 16, fontSize: 13 }} className="text-muted">
+          {t.login.noAccount} <Link to="/start-trial">{t.login.registerLink}</Link>
+        </p>
       </div>
     </div>
   );

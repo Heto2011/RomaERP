@@ -200,6 +200,8 @@ const ar = {
     password: "كلمة المرور",
     submit: "تسجيل الدخول",
     submitting: "جارٍ الدخول...",
+    noAccount: "شركتك لسه مش مسجلة عندنا؟",
+    registerLink: "سجّل شركتك الآن (مجانًا)",
   },
   posLogin: {
     title: "دخول نقطة البيع",
@@ -1447,6 +1449,8 @@ const en: typeof ar = {
     password: "Password",
     submit: "Sign In",
     submitting: "Signing in...",
+    noAccount: "Your company isn't registered with us yet?",
+    registerLink: "Register your company now (free)",
   },
   posLogin: {
     title: "POS Login",
