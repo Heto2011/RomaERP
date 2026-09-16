@@ -35,6 +35,7 @@ import type {
   ItemLot,
   ExpiringLot,
   AuditLogEntry,
+  LoginHistoryEntry,
   TrialSignupRequest,
   TrialSignupResponse,
   PhysicalStockCountEntry,
@@ -610,6 +611,11 @@ export const AuditLogApi = {
   getAll: (params: { entityName?: string; fromUtc?: string; toUtc?: string; take?: number }) =>
     apiClient.get<AuditLogEntry[]>("/audit-log", { params }),
   getEntityNames: () => apiClient.get<string[]>("/audit-log/entity-names"),
+};
+
+export const LoginHistoryApi = {
+  getAll: (params: { userId?: string; fromUtc?: string; toUtc?: string; take?: number }) =>
+    apiClient.get<LoginHistoryEntry[]>("/login-history", { params }),
 };
 
 /// Not tenant-scoped — authenticated by a system key passed per call, never stored.

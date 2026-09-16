@@ -99,6 +99,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<PurchasePayment> PurchasePayments => Set<PurchasePayment>();
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

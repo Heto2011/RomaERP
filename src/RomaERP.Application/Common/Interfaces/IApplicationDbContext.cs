@@ -82,6 +82,7 @@ public interface IApplicationDbContext
     DbSet<PurchasePayment> PurchasePayments { get; }
 
     DbSet<AuditLog> AuditLogs { get; }
+    DbSet<LoginHistory> LoginHistories { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

@@ -290,6 +290,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               { to: "/users", label: t.nav.users, icon: <IconShield /> },
               { to: "/einvoicing", label: t.nav.eInvoicing, icon: <IconFile /> },
               { to: "/audit-log", label: t.nav.auditLog, icon: <IconList /> },
+              { to: "/login-history", label: t.nav.loginHistory, icon: <IconList /> },
             ],
           },
         ]

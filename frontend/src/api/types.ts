@@ -1951,3 +1951,13 @@ export interface AuditLogEntry {
   occurredAtUtc: string;
   changes: string;
 }
+
+export interface LoginHistoryEntry {
+  id: string;
+  userId: string | null;
+  userName: string;
+  ipAddress: string;
+  success: boolean;
+  method: "Password" | "PosPin";
+  occurredAtUtc: string;
+}
