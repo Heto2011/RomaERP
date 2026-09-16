@@ -40,7 +40,10 @@ public class AuthController : ControllerBase
         _httpContextAccessor = httpContextAccessor;
     }
 
+    /// <summary>IP rate-limited in addition to Identity's per-account lockout — the lockout alone doesn't
+    /// stop password spraying across many different tenant accounts from a single source.</summary>
     [HttpPost("login")]
+    [EnableRateLimiting("auth-login")]
     public async Task<ActionResult<AuthResponse>> Login(LoginRequest request, CancellationToken ct)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);

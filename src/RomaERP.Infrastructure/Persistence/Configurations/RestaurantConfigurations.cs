@@ -166,6 +166,18 @@ public class DeliveryPlatformItemMappingConfiguration : IEntityTypeConfiguration
     }
 }
 
+public class DeliveryPlatformCredentialConfiguration : IEntityTypeConfiguration<DeliveryPlatformCredential>
+{
+    public void Configure(EntityTypeBuilder<DeliveryPlatformCredential> builder)
+    {
+        builder.Property(c => c.PlatformName).HasMaxLength(50).IsRequired();
+        builder.Property(c => c.WebhookSecret).HasMaxLength(200).IsRequired();
+        builder.HasIndex(c => c.PlatformName).IsUnique();
+
+        builder.HasQueryFilter(c => !c.IsDeleted);
+    }
+}
+
 public class DeliveryWebhookEventConfiguration : IEntityTypeConfiguration<DeliveryWebhookEvent>
 {
     public void Configure(EntityTypeBuilder<DeliveryWebhookEvent> builder)

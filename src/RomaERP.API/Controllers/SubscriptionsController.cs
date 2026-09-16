@@ -1,4 +1,7 @@
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using RomaERP.Application.Common.Interfaces;
 
 namespace RomaERP.API.Controllers;
@@ -11,6 +14,7 @@ public record MarkInvoicePaidRequest(string? PaymentReference);
 /// from TenantResolutionMiddleware and protected by a system key instead of a JWT/company code.</summary>
 [ApiController]
 [Route("api/system/subscriptions")]
+[EnableRateLimiting("system-key")]
 public class SubscriptionsController : ControllerBase
 {
     private readonly ISubscriptionBillingService _billing;
@@ -109,9 +113,17 @@ public class SubscriptionsController : ControllerBase
         if (string.IsNullOrEmpty(systemKey))
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = "إدارة الاشتراكات مش مفعّلة — لازم تضيف System:ProvisioningKey في الإعدادات." });
 
-        if (!Request.Headers.TryGetValue("X-System-Key", out var providedKey) || providedKey != systemKey)
+        if (!Request.Headers.TryGetValue("X-System-Key", out var providedKey) || !FixedTimeEquals(providedKey.ToString(), systemKey))
             return Unauthorized(new { error = "مفتاح النظام غير صحيح." });
 
         return null;
+    }
+
+    private static bool FixedTimeEquals(string provided, string expected)
+    {
+        var providedBytes = Encoding.UTF8.GetBytes(provided);
+        var expectedBytes = Encoding.UTF8.GetBytes(expected);
+        if (providedBytes.Length != expectedBytes.Length) return false;
+        return CryptographicOperations.FixedTimeEquals(providedBytes, expectedBytes);
     }
 }

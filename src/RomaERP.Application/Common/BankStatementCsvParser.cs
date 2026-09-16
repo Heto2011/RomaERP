@@ -1,5 +1,6 @@
 using System.Globalization;
 using ClosedXML.Excel;
+using RomaERP.Application.Common.Exceptions;
 
 namespace RomaERP.Application.Common;
 
@@ -16,6 +17,13 @@ namespace RomaERP.Application.Common;
 public static class BankStatementCsvParser
 {
     public record ParsedLine(DateTime Date, string Description, decimal? Amount, decimal? Debit, decimal? Credit);
+
+    // ClosedXML fully materializes the workbook's used range into memory with no built-in cap, so a small
+    // but pathologically wide/tall .xlsx (well within the controllers' request-size limit) could still
+    // balloon into a huge in-memory cell graph. No real bank statement needs anywhere near this many
+    // rows/columns, so reject anything past a generous sanity limit before iterating.
+    private const int MaxExcelRows = 50_000;
+    private const int MaxExcelColumns = 200;
 
     private static readonly string[] DateHeaders = { "date", "transaction date", "trans date", "posting date", "value date", "تاريخ", "التاريخ", "تاريخ العملية", "تاريخ الحركة" };
     private static readonly string[] DescriptionHeaders = { "description", "details", "narrative", "memo", "particulars", "reference", "transaction description", "بيان", "البيان", "التفاصيل", "الوصف", "ملاحظات" };
@@ -69,6 +77,9 @@ public static class BankStatementCsvParser
         var range = worksheet?.RangeUsed();
         if (range is null)
             return new List<ParsedLine>();
+
+        if (range.RowCount() > MaxExcelRows || range.ColumnCount() > MaxExcelColumns)
+            throw new ValidationAppException("ملف الإكسيل كبير جدًا — الحد الأقصى المسموح به هو 50000 صف و200 عمود.");
 
         var columnCount = range.ColumnCount();
         var rows = new List<string[]>();

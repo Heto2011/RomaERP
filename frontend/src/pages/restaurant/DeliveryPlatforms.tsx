@@ -29,6 +29,11 @@ export default function DeliveryPlatforms() {
   const [externalItemName, setExternalItemName] = useState("");
   const [itemId, setItemId] = useState("");
 
+  const [credentialPlatform, setCredentialPlatform] = useState("");
+  const [webhookSecret, setWebhookSecret] = useState("");
+  const [secretSaved, setSecretSaved] = useState(false);
+  const companyCode = localStorage.getItem("companyCode") ?? "";
+
   async function load() {
     const [statusRes, mappingRes, eventRes, itemRes] = await Promise.all([
       DeliveryPlatformsApi.getStatus(),
@@ -41,6 +46,21 @@ export default function DeliveryPlatforms() {
     setEvents(eventRes.data);
     setItems(itemRes.data);
     if (!platformName && statusRes.data.length > 0) setPlatformName(statusRes.data[0].name);
+    if (!credentialPlatform && statusRes.data.length > 0) setCredentialPlatform(statusRes.data[0].name);
+  }
+
+  async function handleSaveSecret(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSecretSaved(false);
+    try {
+      await DeliveryPlatformsApi.setCredential({ platformName: credentialPlatform, webhookSecret });
+      setWebhookSecret("");
+      setSecretSaved(true);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
   }
 
   useEffect(() => {
@@ -100,6 +120,31 @@ export default function DeliveryPlatforms() {
             </span>
           ))}
         </div>
+      </div>
+
+      <div className="card">
+        <h3 style={{ marginTop: 0 }}>{t.restaurant.webhookCredentialTitle}</h3>
+        <p className="text-muted" style={{ marginTop: 0 }}>{t.restaurant.webhookCredentialIntro}</p>
+        <form onSubmit={handleSaveSecret} className="form-grid">
+          <div className="form-field">
+            <label>{t.restaurant.platformLabel}</label>
+            <select value={credentialPlatform} onChange={(e) => setCredentialPlatform(e.target.value)} required>
+              {statuses.map((s) => (
+                <option key={s.name} value={s.name}>{s.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-field">
+            <label>{t.restaurant.webhookUrlLabel}</label>
+            <input readOnly value={`${window.location.origin}/api/delivery-webhooks/${companyCode}/${credentialPlatform}`} onFocus={(e) => e.target.select()} />
+          </div>
+          <div className="form-field">
+            <label>{t.restaurant.webhookSecretLabel}</label>
+            <input type="password" value={webhookSecret} onChange={(e) => setWebhookSecret(e.target.value)} required />
+          </div>
+          <button className="btn" type="submit" style={{ alignSelf: "flex-end" }}>{t.restaurant.saveSecret}</button>
+        </form>
+        {secretSaved && <div className="alert-success" style={{ marginTop: 8 }}>{t.restaurant.secretSavedMessage}</div>}
       </div>
 
       <div className="card">

@@ -71,6 +71,7 @@ import type {
   DeliveryWebhookEvent,
   DeliveryPlatformItemMapping,
   SaveDeliveryPlatformItemMappingInput,
+  SaveDeliveryPlatformCredentialInput,
   ChatTurnResponse,
   CompanySettingsLookup,
   CostCenterLookup,
@@ -396,6 +397,7 @@ export const DeliveryPlatformsApi = {
     apiClient.get<DeliveryPlatformItemMapping[]>("/delivery-platforms/item-mappings", { params: platformName ? { platformName } : {} }),
   setItemMapping: (data: SaveDeliveryPlatformItemMappingInput) => apiClient.post<DeliveryPlatformItemMapping>("/delivery-platforms/item-mappings", data),
   deleteItemMapping: (id: string) => apiClient.delete(`/delivery-platforms/item-mappings/${id}`),
+  setCredential: (data: SaveDeliveryPlatformCredentialInput) => apiClient.post("/delivery-platforms/credential", data),
 };
 
 export const OpeningBalanceApi = {

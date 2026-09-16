@@ -692,6 +692,11 @@ export interface SaveDeliveryPlatformItemMappingInput {
   itemId: string;
 }
 
+export interface SaveDeliveryPlatformCredentialInput {
+  platformName: string;
+  webhookSecret: string;
+}
+
 export interface FiscalYearDetail {
   id: string;
   name: string;

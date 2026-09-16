@@ -3,13 +3,15 @@ using RomaERP.Infrastructure.Tenancy;
 
 namespace RomaERP.API.Middleware;
 
-/// <summary>Every API request (except tenant provisioning itself) must carry an X-Company-Code header.
-/// This resolves it against the central tenant registry and points the request's ApplicationDbContext
-/// at that tenant's own, fully separate database. Must run before Authentication/MapControllers, since
-/// login itself needs the tenant resolved before it can look up users.</summary>
+/// <summary>Every API request (except tenant provisioning itself) must identify its tenant. Almost all of
+/// them do that via an X-Company-Code header; this resolves it against the central tenant registry and
+/// points the request's ApplicationDbContext at that tenant's own, fully separate database. Must run
+/// before Authentication/MapControllers, since login itself needs the tenant resolved before it can look
+/// up users.</summary>
 public class TenantResolutionMiddleware
 {
     private static readonly string[] ExemptPrefixes = { "/api/system", "/api/trial", "/swagger" };
+    private const string DeliveryWebhooksPrefix = "/api/delivery-webhooks/";
 
     private readonly RequestDelegate _next;
 
@@ -27,13 +29,35 @@ public class TenantResolutionMiddleware
             return;
         }
 
-        if (!context.Request.Headers.TryGetValue("X-Company-Code", out var values) || string.IsNullOrWhiteSpace(values.ToString()))
+        // The caller here is an external delivery platform, not our own frontend — it can't be trusted to
+        // (or expected to) send our internal X-Company-Code header, and a client-controllable header would
+        // let a forged webhook target an arbitrary tenant anyway. Each tenant instead gets its own webhook
+        // URL with its company code baked into the path (see DeliveryWebhooksController), and the actual
+        // per-tenant webhook secret — not this route segment — is what a forged/replayed request would
+        // still have to defeat.
+        string companyCode;
+        if (path.StartsWith(DeliveryWebhooksPrefix, StringComparison.OrdinalIgnoreCase))
         {
-            await WriteErrorAsync(context, StatusCodes.Status400BadRequest, "لازم تحدد كود الشركة (X-Company-Code).");
-            return;
+            var remainder = path[DeliveryWebhooksPrefix.Length..];
+            var segmentEnd = remainder.IndexOf('/');
+            companyCode = (segmentEnd < 0 ? remainder : remainder[..segmentEnd]).Trim().ToLowerInvariant();
+            if (companyCode.Length == 0)
+            {
+                await WriteErrorAsync(context, StatusCodes.Status400BadRequest, "رابط الويب هوك غير صحيح.");
+                return;
+            }
+        }
+        else
+        {
+            if (!context.Request.Headers.TryGetValue("X-Company-Code", out var values) || string.IsNullOrWhiteSpace(values.ToString()))
+            {
+                await WriteErrorAsync(context, StatusCodes.Status400BadRequest, "لازم تحدد كود الشركة (X-Company-Code).");
+                return;
+            }
+
+            companyCode = values.ToString().Trim().ToLowerInvariant();
         }
 
-        var companyCode = values.ToString().Trim().ToLowerInvariant();
         var tenant = await tenantRegistry.FindByCompanyCodeAsync(companyCode, context.RequestAborted);
         if (tenant is null)
         {

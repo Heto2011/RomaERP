@@ -19,8 +19,15 @@ public class DeliveryPlatformsController : ControllerBase
     }
 
     [HttpGet("status")]
-    public ActionResult<List<DeliveryPlatformStatusDto>> GetStatus()
-        => Ok(_intakeService.GetPlatformStatuses());
+    public async Task<ActionResult<List<DeliveryPlatformStatusDto>>> GetStatus(CancellationToken ct)
+        => Ok(await _intakeService.GetPlatformStatusesAsync(ct));
+
+    [HttpPost("credential")]
+    public async Task<IActionResult> SetCredential(SaveDeliveryPlatformCredentialDto dto, CancellationToken ct)
+    {
+        await _intakeService.SetCredentialAsync(dto, ct);
+        return NoContent();
+    }
 
     [HttpGet("webhook-events")]
     public async Task<ActionResult<List<DeliveryWebhookEventDto>>> GetEvents(CancellationToken ct)

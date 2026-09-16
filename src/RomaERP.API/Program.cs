@@ -102,6 +102,28 @@ builder.Services.AddRateLimiter(options =>
         partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         factory: _ => new FixedWindowRateLimiterOptions
         {
+            PermitLimit = 5,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        }));
+
+    // Identity's own lockout only throttles repeated guesses against one account, so this adds a
+    // per-IP cap to blunt password spraying across many different tenant accounts from one source.
+    options.AddPolicy("auth-login", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 10,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        }));
+
+    // Guards the platform-wide system-key endpoints (tenant provisioning, billing console) against
+    // brute-forcing the key — a full compromise of these is a cross-tenant compromise.
+    options.AddPolicy("system-key", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
             PermitLimit = 10,
             Window = TimeSpan.FromMinutes(1),
             QueueLimit = 0,

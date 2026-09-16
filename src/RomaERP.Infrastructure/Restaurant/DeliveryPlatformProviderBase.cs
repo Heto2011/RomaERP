@@ -1,37 +1,32 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Microsoft.Extensions.Configuration;
 using RomaERP.Application.Common.Interfaces;
 
 namespace RomaERP.Infrastructure.Restaurant;
 
 /// <summary>Shared HMAC-signature verification and JSON payload parsing for every delivery-platform
 /// provider (see IDeliveryPlatformProvider's doc comment for why the payload shape here is a placeholder,
-/// not a verified spec, until each platform's real partner-program docs are in hand). Inert
-/// (<see cref="IsConfigured"/> false) until "&lt;PlatformConfigKey&gt;:WebhookSecret" is set.</summary>
+/// not a verified spec, until each platform's real partner-program docs are in hand, and for why the
+/// secret is passed in per call rather than read from configuration).</summary>
 public abstract class DeliveryPlatformProviderBase : IDeliveryPlatformProvider
 {
-    private readonly string? _webhookSecret;
-
-    protected DeliveryPlatformProviderBase(IConfiguration configuration, string platformConfigKey, string name)
+    protected DeliveryPlatformProviderBase(string name)
     {
-        _webhookSecret = configuration[$"{platformConfigKey}:WebhookSecret"];
         Name = name;
     }
 
     public string Name { get; }
-    public bool IsConfigured => !string.IsNullOrWhiteSpace(_webhookSecret);
 
-    public WebhookVerificationResult VerifySignature(string rawBody, string? signatureHeader)
+    public WebhookVerificationResult VerifySignature(string rawBody, string? signatureHeader, string secret)
     {
-        if (!IsConfigured)
-            return new WebhookVerificationResult(false, $"{Name} غير مفعّل — لسه مفيش WebhookSecret متظبط في الإعدادات.");
+        if (string.IsNullOrWhiteSpace(secret))
+            return new WebhookVerificationResult(false, $"{Name} غير مفعّل — لسه مفيش سر توقيع (webhook secret) متظبط لهذه الشركة.");
 
         if (string.IsNullOrWhiteSpace(signatureHeader))
             return new WebhookVerificationResult(false, "الطلب وصل من غير توقيع (signature header).");
 
-        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(_webhookSecret!));
+        using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(secret));
         var computed = Convert.ToHexString(hmac.ComputeHash(Encoding.UTF8.GetBytes(rawBody))).ToLowerInvariant();
         var provided = signatureHeader.Trim().ToLowerInvariant();
 

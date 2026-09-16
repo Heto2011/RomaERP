@@ -39,3 +39,9 @@ public class SaveDeliveryPlatformItemMappingDto
     public string? ExternalItemName { get; set; }
     public Guid ItemId { get; set; }
 }
+
+public class SaveDeliveryPlatformCredentialDto
+{
+    public string PlatformName { get; set; } = string.Empty;
+    public string WebhookSecret { get; set; } = string.Empty;
+}

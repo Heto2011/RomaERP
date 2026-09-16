@@ -26,8 +26,37 @@ public class DeliveryOrderIntakeService : IDeliveryOrderIntakeService
         _restaurantService = restaurantService;
     }
 
-    public List<DeliveryPlatformStatusDto> GetPlatformStatuses()
-        => _providers.Select(p => new DeliveryPlatformStatusDto { Name = p.Name, IsConfigured = p.IsConfigured }).ToList();
+    public async Task<List<DeliveryPlatformStatusDto>> GetPlatformStatusesAsync(CancellationToken ct = default)
+    {
+        var configuredPlatforms = await _context.DeliveryPlatformCredentials
+            .Select(c => c.PlatformName)
+            .ToListAsync(ct);
+
+        return _providers
+            .Select(p => new DeliveryPlatformStatusDto { Name = p.Name, IsConfigured = configuredPlatforms.Contains(p.Name) })
+            .ToList();
+    }
+
+    public async Task SetCredentialAsync(SaveDeliveryPlatformCredentialDto dto, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(dto.PlatformName) || string.IsNullOrWhiteSpace(dto.WebhookSecret))
+            throw new ValidationAppException("اسم المنصة وسر التوقيع (webhook secret) مطلوبين.");
+
+        if (!_providers.Any(p => string.Equals(p.Name, dto.PlatformName, StringComparison.OrdinalIgnoreCase)))
+            throw new ValidationAppException($"مزود التوصيل '{dto.PlatformName}' غير معروف.");
+
+        var credential = await _context.DeliveryPlatformCredentials
+            .FirstOrDefaultAsync(c => c.PlatformName == dto.PlatformName, ct);
+
+        if (credential is null)
+        {
+            credential = new DeliveryPlatformCredential { PlatformName = dto.PlatformName };
+            _context.DeliveryPlatformCredentials.Add(credential);
+        }
+
+        credential.WebhookSecret = dto.WebhookSecret.Trim();
+        await _context.SaveChangesAsync(ct);
+    }
 
     public async Task<DeliveryWebhookEventDto> ReceiveWebhookAsync(string platformName, string rawBody, string? signatureHeader, CancellationToken ct = default)
     {
@@ -44,7 +73,13 @@ public class DeliveryOrderIntakeService : IDeliveryOrderIntakeService
         _context.DeliveryWebhookEvents.Add(webhookEvent);
         await _context.SaveChangesAsync(ct);
 
-        var verification = provider.VerifySignature(rawBody, signatureHeader);
+        // Looked up from THIS tenant's own database (already scoped by TenantResolutionMiddleware to the
+        // company code in the webhook URL) — never a global secret, so a payload forged/replayed with a
+        // signature valid for one tenant can't also verify against another tenant's credential.
+        var credential = await _context.DeliveryPlatformCredentials
+            .FirstOrDefaultAsync(c => c.PlatformName == provider.Name, ct);
+
+        var verification = provider.VerifySignature(rawBody, signatureHeader, credential?.WebhookSecret ?? string.Empty);
         if (!verification.IsValid)
         {
             Fail(webhookEvent, verification.FailureReason ?? "توقيع غير صحيح.");

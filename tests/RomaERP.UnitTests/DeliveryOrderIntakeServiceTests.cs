@@ -22,11 +22,10 @@ namespace RomaERP.UnitTests;
 public class FakeDeliveryPlatformProvider : IDeliveryPlatformProvider
 {
     public string Name { get; init; } = "TestPlatform";
-    public bool IsConfigured { get; set; } = true;
     public WebhookVerificationResult VerificationResult { get; set; } = new(true, null);
     public DeliveryOrderPayload? Payload { get; set; }
 
-    public WebhookVerificationResult VerifySignature(string rawBody, string? signatureHeader) => VerificationResult;
+    public WebhookVerificationResult VerifySignature(string rawBody, string? signatureHeader, string secret) => VerificationResult;
 
     public DeliveryOrderPayload ParseOrderPayload(string rawBody) => Payload ?? JsonSerializer.Deserialize<DeliveryOrderPayload>(rawBody)!;
 }
@@ -72,7 +71,7 @@ public class DeliveryOrderIntakeServiceTests
         return new SeedResult(ctx, warehouse, period, water);
     }
 
-    private static DeliveryOrderIntakeService BuildService(ApplicationDbContext ctx, FakeDeliveryPlatformProvider provider)
+    private static DeliveryOrderIntakeService BuildService(ApplicationDbContext ctx, IDeliveryPlatformProvider provider)
     {
         var restaurantService = new RestaurantService(
             ctx,
@@ -213,15 +212,52 @@ public class DeliveryOrderIntakeServiceTests
     }
 
     [Fact]
-    public void GetPlatformStatuses_ReflectsEachProvidersIsConfigured()
+    public async Task GetPlatformStatusesAsync_ReflectsWhetherThisTenantHasACredential()
     {
-        var configured = new FakeDeliveryPlatformProvider { Name = "A", IsConfigured = true };
-        var notConfigured = new FakeDeliveryPlatformProvider { Name = "B", IsConfigured = false };
-        var service = new DeliveryOrderIntakeService(CreateContext(), new IDeliveryPlatformProvider[] { configured, notConfigured }, restaurantService: null!);
+        var ctx = CreateContext();
+        ctx.DeliveryPlatformCredentials.Add(new DeliveryPlatformCredential { PlatformName = "A", WebhookSecret = "secret" });
+        await ctx.SaveChangesAsync();
 
-        var statuses = service.GetPlatformStatuses();
+        var configured = new FakeDeliveryPlatformProvider { Name = "A" };
+        var notConfigured = new FakeDeliveryPlatformProvider { Name = "B" };
+        var service = new DeliveryOrderIntakeService(ctx, new IDeliveryPlatformProvider[] { configured, notConfigured }, restaurantService: null!);
+
+        var statuses = await service.GetPlatformStatusesAsync();
 
         Assert.True(statuses.Single(s => s.Name == "A").IsConfigured);
         Assert.False(statuses.Single(s => s.Name == "B").IsConfigured);
+    }
+
+    [Fact]
+    public async Task SetCredentialAsync_ReceiveWebhookAsync_VerifiesAgainstThisTenantsOwnSecret()
+    {
+        var seed = await SeedAsync();
+        var provider = new RealHmacDeliveryPlatformProvider("TestPlatform");
+        var service = BuildService(seed.Ctx, provider);
+
+        await service.SetCredentialAsync(new SaveDeliveryPlatformCredentialDto { PlatformName = "TestPlatform", WebhookSecret = "tenant-a-secret" });
+
+        var rawBody = JsonSerializer.Serialize(SamplePayload());
+        var wrongSecretSignature = ComputeHmac(rawBody, "some-other-tenants-secret");
+        var wrongResult = await service.ReceiveWebhookAsync("TestPlatform", rawBody, wrongSecretSignature, CancellationToken.None);
+        Assert.False(wrongResult.IsSignatureVerified);
+
+        var correctSignature = ComputeHmac(rawBody, "tenant-a-secret");
+        var correctResult = await service.ReceiveWebhookAsync("TestPlatform", rawBody, correctSignature, CancellationToken.None);
+        Assert.True(correctResult.IsSignatureVerified);
+    }
+
+    private static string ComputeHmac(string rawBody, string secret)
+    {
+        using var hmac = new System.Security.Cryptography.HMACSHA256(System.Text.Encoding.UTF8.GetBytes(secret));
+        return Convert.ToHexString(hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(rawBody))).ToLowerInvariant();
+    }
+
+    /// <summary>Uses the real HMAC verification (unlike FakeDeliveryPlatformProvider) to prove the per-tenant
+    /// secret lookup in DeliveryOrderIntakeService.ReceiveWebhookAsync actually gates signature validity.</summary>
+    private class RealHmacDeliveryPlatformProvider : RomaERP.Infrastructure.Restaurant.DeliveryPlatformProviderBase
+    {
+        public RealHmacDeliveryPlatformProvider(string name) : base(name) { }
+        public override DeliveryOrderPayload ParseOrderPayload(string rawBody) => JsonSerializer.Deserialize<DeliveryOrderPayload>(rawBody)!;
     }
 }

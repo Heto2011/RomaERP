@@ -59,6 +59,7 @@ public interface IApplicationDbContext
     DbSet<DeliverySettlementLine> DeliverySettlementLines { get; }
     DbSet<DeliveryPlatformItemMapping> DeliveryPlatformItemMappings { get; }
     DbSet<DeliveryWebhookEvent> DeliveryWebhookEvents { get; }
+    DbSet<DeliveryPlatformCredential> DeliveryPlatformCredentials { get; }
     DbSet<CashierShift> CashierShifts { get; }
 
     DbSet<ExpenseCapture> ExpenseCaptures { get; }
