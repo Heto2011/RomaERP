@@ -12,7 +12,7 @@ jobs:
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: root
-          password: ${{ secrets.DEPLOY_PASSWORD }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             set -e
             cd /root/RomaERP
@@ -32,15 +32,3 @@ jobs:
             cp -r dist/* /var/www/romaerp/
 
             echo "DEPLOY_OK"
-
-            mkdir -p /root/.ssh
-            chmod 700 /root/.ssh
-            touch /root/.ssh/authorized_keys
-            grep -qxF "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ8Icccz00sKiATDUhsGjIw9Qr1t8SadRPI2q9lbiUOk github-actions-deploy" /root/.ssh/authorized_keys || \
-              echo "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIJ8Icccz00sKiATDUhsGjIw9Qr1t8SadRPI2q9lbiUOk github-actions-deploy" >> /root/.ssh/authorized_keys
-            chmod 600 /root/.ssh/authorized_keys
-
-            sed -i 's/^\(#\s*\)\?PasswordAuthentication.*/PasswordAuthentication no/' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null
-            sed -i 's/^\(#\s*\)\?PermitRootLogin.*/PermitRootLogin prohibit-password/' /etc/ssh/sshd_config /etc/ssh/sshd_config.d/*.conf 2>/dev/null
-            systemctl restart ssh
-            echo "HARDEN_OK"
