@@ -106,6 +106,31 @@ export default function Layout({ children }: { children: ReactNode }) {
     return path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
   }
 
+  const executiveReportItems: NavSubGroupItem["subItems"] = [
+    { to: "/accounting/executive-brief", label: t.accounting.executiveBriefTitle },
+    { to: "/accounting/comparisons", label: t.accounting.comparisonToolTitle },
+    { to: "/accounting/smart-pricing", label: t.accounting.smartPricingTitle },
+  ];
+
+  const financialStatementItems: NavSubGroupItem["subItems"] = [
+    { to: "/accounting/trial-balance", label: t.nav.trialBalance },
+    { to: "/accounting/income-statement", label: t.nav.incomeStatement },
+    { to: "/accounting/balance-sheet", label: t.nav.balanceSheet },
+    { to: "/accounting/cash-flow", label: t.nav.cashFlow },
+    { to: "/accounting/vat-summary", label: t.nav.vatSummary },
+    { to: "/accounting/cost-center-analysis", label: t.nav.costCenterAnalysis },
+  ];
+
+  const planningForecastItems: NavSubGroupItem["subItems"] = [
+    { to: "/accounting/cash-flow-intelligence", label: t.accounting.cashFlowIntelligenceTitle },
+    { to: "/accounting/break-even", label: t.nav.breakEven },
+    { to: "/accounting/what-if", label: t.accounting.whatIfTitle },
+    { to: "/accounting/bottleneck", label: t.nav.bottleneck },
+    { to: "/accounting/forecast", label: t.accounting.forecastTitle },
+    { to: "", label: t.nav.healthScoreSoon, comingSoon: true },
+    { to: "", label: t.nav.whatIfSoon, comingSoon: true },
+  ];
+
   const profitabilityReportItems: NavSubGroupItem["subItems"] = [
     { to: "/accounting/money-flow", label: t.nav.moneyFlow },
     { to: "/accounting/hidden-profit", label: t.accounting.hiddenProfitTitle },
@@ -209,24 +234,11 @@ export default function Layout({ children }: { children: ReactNode }) {
     {
       section: t.nav.reports,
       items: [
-        { to: "/accounting/executive-brief", label: t.accounting.executiveBriefTitle, icon: <IconBarChart /> },
-        { to: "/accounting/comparisons", label: t.accounting.comparisonToolTitle, icon: <IconSwap /> },
-        { to: "/accounting/smart-pricing", label: t.accounting.smartPricingTitle, icon: <IconDollar /> },
-        { to: "/accounting/trial-balance", label: t.nav.trialBalance, icon: <IconBarChart /> },
-        { to: "/accounting/income-statement", label: t.nav.incomeStatement, icon: <IconBarChart /> },
-        { to: "/accounting/balance-sheet", label: t.nav.balanceSheet, icon: <IconFile /> },
-        { to: "/accounting/cash-flow", label: t.nav.cashFlow, icon: <IconSwap /> },
-        { to: "/accounting/cash-flow-intelligence", label: t.accounting.cashFlowIntelligenceTitle, icon: <IconSwap /> },
-        { to: "/accounting/vat-summary", label: t.nav.vatSummary, icon: <IconEdit /> },
-        { to: "/accounting/cost-center-analysis", label: t.nav.costCenterAnalysis, icon: <IconBarChart /> },
+        { subGroup: t.nav.executiveReportsGroup, icon: <IconBarChart />, subItems: executiveReportItems },
+        { subGroup: t.nav.financialStatementsGroup, icon: <IconFile />, subItems: financialStatementItems },
         { subGroup: t.nav.profitabilityReports, icon: <IconTrendDown />, subItems: profitabilityReportItems },
         { subGroup: t.inventory.costReportsGroup, icon: <IconTrendDown />, subItems: costReportItems },
-        { to: "/accounting/break-even", label: t.nav.breakEven, icon: <IconDollar /> },
-        { to: "/accounting/what-if", label: t.accounting.whatIfTitle, icon: <IconDollar /> },
-        { to: "/accounting/bottleneck", label: t.nav.bottleneck, icon: <IconClock /> },
-        { to: "/accounting/forecast", label: t.accounting.forecastTitle, icon: <IconTrendDown /> },
-        { to: "", label: t.nav.healthScoreSoon, icon: <IconShield />, comingSoon: true },
-        { to: "", label: t.nav.whatIfSoon, icon: <IconRefresh />, comingSoon: true },
+        { subGroup: t.nav.planningForecastGroup, icon: <IconClock />, subItems: planningForecastItems },
       ],
     },
     {
