@@ -595,6 +595,7 @@ export const UsersApi = {
   linkEmployee: (id: string, employeeId: string | null) => apiClient.put<AppUser>(`/users/${id}/employee-link`, { employeeId }),
   setPosPin: (id: string, pin: string | null) => apiClient.put<AppUser>(`/users/${id}/pos-pin`, { pin }),
   resetPassword: (id: string, newPassword: string) => apiClient.put(`/users/${id}/password`, { newPassword }),
+  remove: (id: string) => apiClient.delete(`/users/${id}`),
 };
 
 export const AlertsApi = {

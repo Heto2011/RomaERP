@@ -221,6 +221,29 @@ public class UsersController : ControllerBase
         return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
     }
 
+    [HttpDelete("{id:guid}")]
+    public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
+    {
+        if (id.ToString() == _currentUser.UserId)
+            return BadRequest(new { error = "متقدرش تمسح حسابك أنت." });
+
+        var user = await _userManager.FindByIdAsync(id.ToString())
+            ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+
+        if (await _userManager.IsInRoleAsync(user, "Admin"))
+        {
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            if (admins.Count(a => a.Id != id) == 0)
+                return BadRequest(new { error = "لازم يفضل أدمن واحد على الأقل في الشركة — متقدرش تمسح آخر أدمن." });
+        }
+
+        var result = await _userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+            return BadRequest(new { error = string.Join("، ", result.Errors.Select(e => e.Description)) });
+
+        return NoContent();
+    }
+
     /// <summary>Lets an Admin set a new password for ANY user — the only way to recover an account whose
     /// owner forgot their password, since there's no self-service "forgot password" flow. Uses Identity's
     /// reset-token flow instead of touching PasswordHash directly, so the same password-policy validation

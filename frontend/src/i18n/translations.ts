@@ -108,6 +108,8 @@ const ar = {
     resetPassword: "تغيير الباسورد",
     newPasswordPlaceholder: "الباسورد الجديد (8 أحرف على الأقل)",
     passwordResetSuccess: "تم تغيير الباسورد بنجاح.",
+    deleteUser: "مسح المستخدم",
+    confirmDeleteUser: "متأكد إنك عايز تمسح المستخدم ده نهائيًا؟ الإجراء ده مينفعش يترجع.",
   },
   roles: {
     Admin: "مدير",
@@ -1378,6 +1380,8 @@ const en: typeof ar = {
     resetPassword: "Reset Password",
     newPasswordPlaceholder: "New password (8+ characters)",
     passwordResetSuccess: "Password reset successfully.",
+    deleteUser: "Delete User",
+    confirmDeleteUser: "Are you sure you want to permanently delete this user? This cannot be undone.",
   },
   roles: {
     Admin: "Admin",

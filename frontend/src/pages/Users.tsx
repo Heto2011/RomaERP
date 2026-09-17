@@ -103,6 +103,17 @@ export default function Users() {
     }
   }
 
+  async function handleDeleteUser(id: string) {
+    if (!window.confirm(t.users.confirmDeleteUser)) return;
+    setError(null);
+    try {
+      await UsersApi.remove(id);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function handleLinkEmployee(userId: string, employeeId: string) {
     setError(null);
     try {
@@ -343,6 +354,9 @@ export default function Users() {
                       <button className="btn btn-secondary btn-sm" onClick={() => startEditModules(u)}>{t.users.editModules}</button>
                       <button className="btn btn-secondary btn-sm" onClick={() => toggleActive(u)}>
                         {u.isActive ? t.users.deactivate : t.users.activate}
+                      </button>
+                      <button className="btn btn-danger btn-sm" onClick={() => handleDeleteUser(u.id)}>
+                        {t.users.deleteUser}
                       </button>
                     </>
                   )}
