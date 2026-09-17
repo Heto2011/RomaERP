@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SystemApi } from "../../api/services";
-import { Country, ProductScope, type ProvisionTenantRequest, type Tenant } from "../../api/types";
+import { Country, ProductScope, type ProvisionTenantRequest, type Tenant, type TransferUserResult } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 
 const countryLabel: Record<Country, string> = {
@@ -33,6 +33,14 @@ export default function DemoTenantsPage() {
   const [expiryDays, setExpiryDays] = useState(14);
   const [seedDemoData, setSeedDemoData] = useState(true);
   const [productScope, setProductScope] = useState<ProductScope>(ProductScope.Full);
+
+  const [transferSourceCode, setTransferSourceCode] = useState("");
+  const [transferTargetCode, setTransferTargetCode] = useState("");
+  const [transferEmail, setTransferEmail] = useState("");
+  const [transferPassword, setTransferPassword] = useState(randomPassword());
+  const [transferDeactivateSource, setTransferDeactivateSource] = useState(true);
+  const [transferring, setTransferring] = useState(false);
+  const [transferResult, setTransferResult] = useState<TransferUserResult | null>(null);
 
   async function loadTenants() {
     if (!systemKey) {
@@ -82,6 +90,33 @@ export default function DemoTenantsPage() {
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleTransferUser(e: React.FormEvent) {
+    e.preventDefault();
+    if (!systemKey) {
+      setError("Enter the system key first.");
+      return;
+    }
+    setError(null);
+    setTransferring(true);
+    setTransferResult(null);
+    try {
+      const res = await SystemApi.transferUser(systemKey, {
+        sourceCompanyCode: transferSourceCode.trim().toLowerCase(),
+        targetCompanyCode: transferTargetCode.trim().toLowerCase(),
+        email: transferEmail,
+        newPassword: transferPassword,
+        deactivateInSource: transferDeactivateSource,
+      });
+      setTransferResult(res.data);
+      setTransferEmail("");
+      setTransferPassword(randomPassword());
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setTransferring(false);
     }
   }
 
@@ -180,6 +215,56 @@ export default function DemoTenantsPage() {
           </div>
           <button className="btn" type="submit" disabled={loading} style={{ marginTop: 14 }}>
             {loading ? "Creating…" : "Create Demo Company"}
+          </button>
+        </form>
+      </div>
+
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3>Transfer User Between Companies</h3>
+        <p className="text-muted" style={{ marginTop: 0 }}>
+          Recreates the user's account (email, name, roles) in the target company with a new password, and deactivates it in the source. History
+          tied to the old company (attendance, leave, payroll) stays there — only the account moves.
+        </p>
+        {transferResult && (
+          <div className="card" style={{ marginBottom: 14, borderInlineStart: "4px solid var(--color-success)" }}>
+            <strong>Moved — hand these to the user:</strong>
+            <table style={{ marginTop: 10 }}>
+              <tbody>
+                <tr><td>New Company Code</td><td>{transferResult.targetCompanyCode}</td></tr>
+                <tr><td>Email</td><td>{transferResult.email}</td></tr>
+                <tr><td>New Password</td><td>{transferPassword}</td></tr>
+                <tr><td>Roles</td><td>{transferResult.roles.join(", ") || "—"}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+        <form onSubmit={handleTransferUser}>
+          <div className="form-grid">
+            <div className="form-field">
+              <label>Source Company Code</label>
+              <input value={transferSourceCode} onChange={(e) => setTransferSourceCode(e.target.value)} placeholder="the-salad-bar" required />
+            </div>
+            <div className="form-field">
+              <label>Target Company Code</label>
+              <input value={transferTargetCode} onChange={(e) => setTransferTargetCode(e.target.value)} placeholder="acme-restaurant" required />
+            </div>
+            <div className="form-field">
+              <label>User Email</label>
+              <input type="email" value={transferEmail} onChange={(e) => setTransferEmail(e.target.value)} required />
+            </div>
+            <div className="form-field">
+              <label>New Password (for target company)</label>
+              <input value={transferPassword} onChange={(e) => setTransferPassword(e.target.value)} required />
+            </div>
+            <div className="form-field" style={{ justifyContent: "flex-end" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
+                <input type="checkbox" checked={transferDeactivateSource} onChange={(e) => setTransferDeactivateSource(e.target.checked)} />
+                Deactivate in source company
+              </label>
+            </div>
+          </div>
+          <button className="btn" type="submit" disabled={transferring} style={{ marginTop: 14 }}>
+            {transferring ? "Moving…" : "Transfer User"}
           </button>
         </form>
       </div>

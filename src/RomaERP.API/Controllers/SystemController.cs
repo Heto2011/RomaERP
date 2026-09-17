@@ -14,11 +14,13 @@ namespace RomaERP.API.Controllers;
 public class SystemController : ControllerBase
 {
     private readonly ITenantProvisioningService _provisioning;
+    private readonly IUserTransferService _userTransfer;
     private readonly IConfiguration _configuration;
 
-    public SystemController(ITenantProvisioningService provisioning, IConfiguration configuration)
+    public SystemController(ITenantProvisioningService provisioning, IUserTransferService userTransfer, IConfiguration configuration)
     {
         _provisioning = provisioning;
+        _userTransfer = userTransfer;
         _configuration = configuration;
     }
 
@@ -49,6 +51,19 @@ public class SystemController : ControllerBase
 
         var count = await _provisioning.DeactivateExpiredDemoTenantsAsync(ct);
         return Ok(new { deactivatedCount = count });
+    }
+
+    /// <summary>Internal-only tool for moving a user between companies. Each tenant's database is fully
+    /// isolated, so this recreates the person's basic account (email, name, roles) in the target company
+    /// and deactivates it in the source — it never carries over history (attendance, leave, payroll) that
+    /// belongs to the old company, only the account itself.</summary>
+    [HttpPost("users/transfer")]
+    public async Task<ActionResult<TransferUserResult>> TransferUser(TransferUserRequest request, CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        return Ok(await _userTransfer.TransferAsync(request, ct));
     }
 
     private ActionResult? CheckSystemKey()

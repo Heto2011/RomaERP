@@ -73,6 +73,8 @@ import type {
   SaveDeliveryPlatformItemMappingInput,
   SaveDeliveryPlatformCredentialInput,
   ProductScope,
+  TransferUserRequest,
+  TransferUserResult,
   ChatTurnResponse,
   CompanySettingsLookup,
   CostCenterLookup,
@@ -631,6 +633,8 @@ export const SystemApi = {
     systemApiClient.get<Tenant[]>("/system/tenants", { params: { demoOnly }, headers: { "X-System-Key": systemKey } }),
   expireDemoTenants: (systemKey: string) =>
     systemApiClient.post<{ deactivatedCount: number }>("/system/tenants/expire-demo", null, { headers: { "X-System-Key": systemKey } }),
+  transferUser: (systemKey: string, data: TransferUserRequest) =>
+    systemApiClient.post<TransferUserResult>("/system/users/transfer", data, { headers: { "X-System-Key": systemKey } }),
 };
 
 export const SubscriptionsApi = {

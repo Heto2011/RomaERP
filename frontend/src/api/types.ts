@@ -1846,6 +1846,21 @@ export interface Tenant {
   productScope: ProductScope;
 }
 
+export interface TransferUserRequest {
+  sourceCompanyCode: string;
+  targetCompanyCode: string;
+  email: string;
+  newPassword: string;
+  deactivateInSource: boolean;
+}
+
+export interface TransferUserResult {
+  email: string;
+  fullName: string;
+  roles: string[];
+  targetCompanyCode: string;
+}
+
 export const SubscriptionStatus = {
   Trialing: 0,
   Active: 1,
