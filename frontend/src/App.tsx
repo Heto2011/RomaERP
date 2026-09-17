@@ -3,6 +3,7 @@ import { useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
 import PeopleLayout from "./components/PeopleLayout";
 import Login from "./pages/Login";
+import PeopleLogin from "./pages/PeopleLogin";
 import StartTrial from "./pages/StartTrial";
 import PosLogin from "./pages/restaurant/PosLogin";
 import DemoTenantsPage from "./pages/system/DemoTenants";
@@ -94,7 +95,7 @@ function ProtectedRoute({ children, layout = true, loginPath = "/login" }: { chi
 
 function PeopleRoute({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to="/people-login" replace />;
   return <PeopleLayout>{children}</PeopleLayout>;
 }
 
@@ -111,6 +112,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/people-login" element={<PeopleLogin />} />
       <Route path="/start-trial" element={<StartTrial />} />
       <Route path="/pos-login" element={<PosLogin />} />
       <Route path="/system/demo-tenants" element={<DemoTenantsPage />} />
