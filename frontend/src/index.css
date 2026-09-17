@@ -38,6 +38,17 @@
   --color-primary-dark: #2b1a10;
 }
 
+/* ROMA Restaurant portal — same idea as .people-theme, its own tomato-red accent. */
+.restaurant-theme {
+  --color-primary: #c1442d;
+  --color-primary-dark: #7a2418;
+}
+
+:root[data-theme="dark"] .restaurant-theme {
+  --color-primary: #e0654a;
+  --color-primary-dark: #2b1310;
+}
+
 * {
   box-sizing: border-box;
 }

@@ -3,8 +3,10 @@ import { useAuth } from "./context/AuthContext";
 import { ProductScope } from "./api/types";
 import Layout from "./components/Layout";
 import PeopleLayout from "./components/PeopleLayout";
+import RestaurantPortalLayout from "./components/RestaurantPortalLayout";
 import Login from "./pages/Login";
 import PeopleLogin from "./pages/PeopleLogin";
+import RestaurantLogin from "./pages/RestaurantLogin";
 import StartTrial from "./pages/StartTrial";
 import PosLogin from "./pages/restaurant/PosLogin";
 import DemoTenantsPage from "./pages/system/DemoTenants";
@@ -100,6 +102,12 @@ function PeopleRoute({ children }: { children: React.ReactNode }) {
   return <PeopleLayout>{children}</PeopleLayout>;
 }
 
+function RestaurantPortalRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/restaurant-login" replace />;
+  return <RestaurantPortalLayout>{children}</RestaurantPortalLayout>;
+}
+
 // A user whose only role is Employee is a cashier — send them straight to the POS screen instead of
 // the general dashboard, matching the restricted sidebar Layout shows them. A tenant that signed up for
 // ROMA People only (not the full suite) lands straight in the People portal instead of the ERP dashboard.
@@ -116,6 +124,7 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/people-login" element={<PeopleLogin />} />
+      <Route path="/restaurant-login" element={<RestaurantLogin />} />
       <Route path="/start-trial" element={<StartTrial />} />
       <Route path="/pos-login" element={<PosLogin />} />
       <Route path="/system/demo-tenants" element={<DemoTenantsPage />} />
@@ -194,6 +203,13 @@ export default function App() {
       <Route path="/restaurant/delivery-platforms" element={<ProtectedRoute><DeliveryPlatforms /></ProtectedRoute>} />
       <Route path="/restaurant/pos" element={<ProtectedRoute layout={false} loginPath="/pos-login"><RestaurantPOS /></ProtectedRoute>} />
       <Route path="/restaurant/kitchen" element={<ProtectedRoute><KitchenDisplay /></ProtectedRoute>} />
+      <Route path="/restaurant-portal" element={<RestaurantPortalRoute><RestaurantTables /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/tables" element={<RestaurantPortalRoute><RestaurantTables /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/menu" element={<RestaurantPortalRoute><RestaurantMenu /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/kitchen" element={<RestaurantPortalRoute><KitchenDisplay /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/purchase-receiving" element={<RestaurantPortalRoute><PurchaseReceivingPage /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/delivery-reconciliation" element={<RestaurantPortalRoute><DeliveryReconciliationPage /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/delivery-platforms" element={<RestaurantPortalRoute><DeliveryPlatforms /></RestaurantPortalRoute>} />
       <Route path="/inventory/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
       <Route path="/inventory/warehouses" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />
       <Route path="/inventory/manufacturing" element={<ProtectedRoute><Manufacturing /></ProtectedRoute>} />

@@ -6,6 +6,9 @@ const ar = {
   poweredByRomaErp: "من ROMA People — جزء من منظومة RomaERP",
   openPeoplePortal: "افتح ROMA People",
   backToRomaErp: "الرجوع إلى RomaERP",
+  restaurantAppName: "ROMA Restaurant",
+  poweredByRomaErpRestaurant: "من ROMA Restaurant — جزء من منظومة RomaERP",
+  openRestaurantPortal: "افتح ROMA Restaurant",
   logout: "تسجيل الخروج",
   usage: {
     title: "استخدامك",
@@ -1282,6 +1285,9 @@ const en: typeof ar = {
   poweredByRomaErp: "From ROMA People — part of the RomaERP suite",
   openPeoplePortal: "Open ROMA People",
   backToRomaErp: "Back to RomaERP",
+  restaurantAppName: "ROMA Restaurant",
+  poweredByRomaErpRestaurant: "From ROMA Restaurant — part of the RomaERP suite",
+  openRestaurantPortal: "Open ROMA Restaurant",
   logout: "Logout",
   usage: {
     title: "Your Usage",
