@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FinancialReportsApi } from "../../api/services";
 import type { BalanceSheet } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import ReportExportBar from "../../components/ReportExportBar";
 
 export default function BalanceSheetPage() {
   const { t } = useLanguage();
+  const exportRef = useRef<HTMLDivElement>(null);
   const [asOfDate, setAsOfDate] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState<BalanceSheet | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -39,7 +41,9 @@ export default function BalanceSheetPage() {
       {error && <div className="alert-error">{error}</div>}
 
       {report && (
-        <div className="card">
+        <>
+          <ReportExportBar targetRef={exportRef} fileName="balance-sheet" />
+          <div className="card" ref={exportRef}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
             <div>
               <h3 style={{ marginTop: 0 }}>{t.accounting.assets}</h3>
@@ -113,7 +117,8 @@ export default function BalanceSheetPage() {
               </tr>
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

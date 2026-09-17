@@ -1,9 +1,10 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FinancialReportsApi } from "../../api/services";
 import type { CashFlowIntelligence, HiddenProfitReport, IncomeStatement, ItemProfitabilityReport } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import InfoTooltip from "../../components/InfoTooltip";
+import ReportExportBar from "../../components/ReportExportBar";
 
 const COGS_ACCOUNT_CODE = "5500";
 const SALARIES_ACCOUNT_CODE = "5100";
@@ -43,6 +44,7 @@ interface Brief {
 
 export default function ExecutiveBriefPage() {
   const { t } = useLanguage();
+  const exportRef = useRef<HTMLDivElement>(null);
   const [fromDate, setFromDate] = useState(firstDayOfMonth());
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
   const [brief, setBrief] = useState<Brief | null>(null);
@@ -116,6 +118,8 @@ export default function ExecutiveBriefPage() {
             </div>
           )}
 
+          <ReportExportBar targetRef={exportRef} fileName="executive-brief" />
+          <div ref={exportRef}>
           <div className="stat-grid" style={{ marginTop: 16, marginBottom: 16 }}>
             <div className="stat-card">
               <div className="label">{t.accounting.totalRevenue}</div>
@@ -207,6 +211,7 @@ export default function ExecutiveBriefPage() {
                 </table>
               )}
             </div>
+          </div>
           </div>
         </>
       )}

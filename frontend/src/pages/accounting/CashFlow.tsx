@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FinancialReportsApi } from "../../api/services";
 import type { CashFlowStatement } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import ReportExportBar from "../../components/ReportExportBar";
 
 function firstDayOfMonth() {
   const d = new Date();
@@ -11,6 +12,7 @@ function firstDayOfMonth() {
 
 export default function CashFlowPage() {
   const { t } = useLanguage();
+  const exportRef = useRef<HTMLDivElement>(null);
   const [fromDate, setFromDate] = useState(firstDayOfMonth());
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState<CashFlowStatement | null>(null);
@@ -49,7 +51,9 @@ export default function CashFlowPage() {
       {error && <div className="alert-error">{error}</div>}
 
       {report && (
-        <div className="card">
+        <>
+          <ReportExportBar targetRef={exportRef} fileName="cash-flow" />
+          <div className="card" ref={exportRef}>
           <table style={{ maxWidth: 480 }}>
             <tbody>
               <tr><td>{t.accounting.beginningCash}</td><td style={{ textAlign: "end" }}>{report.beginningCash.toLocaleString()}</td></tr>
@@ -104,7 +108,8 @@ export default function CashFlowPage() {
               </tr>
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

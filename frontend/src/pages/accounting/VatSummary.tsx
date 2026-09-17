@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FinancialReportsApi } from "../../api/services";
 import type { VatSummary } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import ReportExportBar from "../../components/ReportExportBar";
 
 function firstDayOfMonth() {
   const d = new Date();
@@ -11,6 +12,7 @@ function firstDayOfMonth() {
 
 export default function VatSummaryPage() {
   const { t } = useLanguage();
+  const exportRef = useRef<HTMLDivElement>(null);
   const [fromDate, setFromDate] = useState(firstDayOfMonth());
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState<VatSummary | null>(null);
@@ -49,7 +51,9 @@ export default function VatSummaryPage() {
       {error && <div className="alert-error">{error}</div>}
 
       {report && (
-        <div className="card">
+        <>
+          <ReportExportBar targetRef={exportRef} fileName="vat-summary" />
+          <div className="card" ref={exportRef}>
           <table style={{ maxWidth: 480 }}>
             <tbody>
               <tr><td>{t.accounting.outputVat}</td><td style={{ textAlign: "end" }}>{report.outputVat.toLocaleString()}</td></tr>
@@ -62,7 +66,8 @@ export default function VatSummaryPage() {
               </tr>
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

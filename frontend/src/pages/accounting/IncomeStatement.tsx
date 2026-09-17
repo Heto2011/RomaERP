@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { FinancialReportsApi } from "../../api/services";
 import type { IncomeStatement } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import ReportExportBar from "../../components/ReportExportBar";
 
 function firstDayOfYear() {
   return `${new Date().getFullYear()}-01-01`;
@@ -10,6 +11,7 @@ function firstDayOfYear() {
 
 export default function IncomeStatementPage() {
   const { t } = useLanguage();
+  const exportRef = useRef<HTMLDivElement>(null);
   const [fromDate, setFromDate] = useState(firstDayOfYear());
   const [toDate, setToDate] = useState(new Date().toISOString().slice(0, 10));
   const [report, setReport] = useState<IncomeStatement | null>(null);
@@ -48,7 +50,9 @@ export default function IncomeStatementPage() {
       {error && <div className="alert-error">{error}</div>}
 
       {report && (
-        <div className="card">
+        <>
+          <ReportExportBar targetRef={exportRef} fileName="income-statement" />
+          <div className="card" ref={exportRef}>
           <h3 style={{ marginTop: 0 }}>{t.accounting.revenues}</h3>
           <table>
             <tbody>
@@ -93,7 +97,8 @@ export default function IncomeStatementPage() {
               </tr>
             </tbody>
           </table>
-        </div>
+          </div>
+        </>
       )}
     </div>
   );

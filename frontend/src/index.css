@@ -1126,3 +1126,30 @@ tr:hover td {
   font-weight: 600;
   text-align: end;
 }
+
+.report-export-bar {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+@media print {
+  body.printing-report * {
+    visibility: hidden;
+  }
+
+  body.printing-report .print-report-target,
+  body.printing-report .print-report-target * {
+    visibility: visible;
+  }
+
+  body.printing-report .print-report-target {
+    position: absolute;
+    inset-inline-start: 0;
+    top: 0;
+    width: 100%;
+    border: none;
+    box-shadow: none;
+    overflow: visible;
+  }
+}

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { JournalEntriesApi } from "../../api/services";
 import { AccountType, type TrialBalanceLine } from "../../api/types";
 import { useLanguage } from "../../i18n/LanguageContext";
+import ReportExportBar from "../../components/ReportExportBar";
 
 export default function TrialBalance() {
   const { t } = useLanguage();
+  const exportRef = useRef<HTMLDivElement>(null);
   const typeLabels: Record<AccountType, string> = {
     [AccountType.Asset]: t.accounting.types.asset,
     [AccountType.Liability]: t.accounting.types.liability,
@@ -44,7 +46,8 @@ export default function TrialBalance() {
         </button>
       </div>
 
-      <div className="card">
+      <ReportExportBar targetRef={exportRef} fileName="trial-balance" />
+      <div className="card" ref={exportRef}>
         <table>
           <thead>
             <tr>
