@@ -4,6 +4,7 @@ import { AppRoles, ModulePermissions, type AppUser, type Employee } from "../api
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 import { bilingualName } from "../i18n/bilingual";
+import PasswordInput from "../components/PasswordInput";
 
 export default function Users() {
   const { t, lang } = useLanguage();
@@ -184,7 +185,7 @@ export default function Users() {
               </div>
               <div className="form-field">
                 <label>{t.users.password}</label>
-                <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+                <PasswordInput value={password} onChange={setPassword} required minLength={8} />
               </div>
             </div>
             <div className="form-field" style={{ marginTop: 14 }}>
@@ -312,11 +313,10 @@ export default function Users() {
                 <td>
                   {passwordEditingId === u.id ? (
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      <input
-                        type="password"
+                      <PasswordInput
                         style={{ width: 160 }}
                         value={newPasswordValue}
-                        onChange={(e) => setNewPasswordValue(e.target.value)}
+                        onChange={setNewPasswordValue}
                         placeholder={t.users.newPasswordPlaceholder}
                         minLength={8}
                       />

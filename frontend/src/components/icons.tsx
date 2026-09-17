@@ -294,6 +294,25 @@ export function IconChevron({ open }: { open: boolean }) {
   );
 }
 
+export function IconEye() {
+  return (
+    <svg {...common}>
+      <path d="M1.5 10S4.5 4 10 4s8.5 6 8.5 6-3 6-8.5 6-8.5-6-8.5-6Z" />
+      <circle cx="10" cy="10" r="2.5" />
+    </svg>
+  );
+}
+
+export function IconEyeOff() {
+  return (
+    <svg {...common}>
+      <path d="M1.5 10S4.5 4 10 4s8.5 6 8.5 6-3 6-8.5 6-8.5-6-8.5-6Z" />
+      <circle cx="10" cy="10" r="2.5" />
+      <line x1="3" y1="17" x2="17" y2="3" />
+    </svg>
+  );
+}
+
 export function IconMenuToggle({ collapsed }: { collapsed: boolean }) {
   return (
     <svg {...common} width="20" height="20">

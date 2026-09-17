@@ -5,6 +5,7 @@ import { TrialApi } from "../api/services";
 import { Country, ProductScope } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
+import PasswordInput from "../components/PasswordInput";
 
 const countryLabel: Record<Country, { ar: string; en: string }> = {
   [Country.Egypt]: { ar: "مصر", en: "Egypt" },
@@ -113,7 +114,7 @@ export default function StartTrial() {
           </div>
           <div className="form-field">
             <label>{t.trial.password}</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} />
+            <PasswordInput value={password} onChange={setPassword} required minLength={8} />
             <span className="text-muted" style={{ fontSize: 12 }}>{t.trial.passwordHint}</span>
           </div>
           <button className="btn" type="submit" disabled={loading}>
