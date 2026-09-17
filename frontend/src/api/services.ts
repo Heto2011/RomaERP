@@ -594,6 +594,7 @@ export const UsersApi = {
   activate: (id: string) => apiClient.post<AppUser>(`/users/${id}/activate`),
   linkEmployee: (id: string, employeeId: string | null) => apiClient.put<AppUser>(`/users/${id}/employee-link`, { employeeId }),
   setPosPin: (id: string, pin: string | null) => apiClient.put<AppUser>(`/users/${id}/pos-pin`, { pin }),
+  resetPassword: (id: string, newPassword: string) => apiClient.put(`/users/${id}/password`, { newPassword }),
 };
 
 export const AlertsApi = {

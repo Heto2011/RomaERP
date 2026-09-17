@@ -221,6 +221,24 @@ public class UsersController : ControllerBase
         return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
     }
 
+    /// <summary>Lets an Admin set a new password for ANY user — the only way to recover an account whose
+    /// owner forgot their password, since there's no self-service "forgot password" flow. Uses Identity's
+    /// reset-token flow instead of touching PasswordHash directly, so the same password-policy validation
+    /// (length, complexity) that applies at signup applies here too.</summary>
+    [HttpPut("{id:guid}/password")]
+    public async Task<IActionResult> ResetPassword(Guid id, ResetPasswordRequest request)
+    {
+        var user = await _userManager.FindByIdAsync(id.ToString())
+            ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+
+        var token = await _userManager.GeneratePasswordResetTokenAsync(user);
+        var result = await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
+        if (!result.Succeeded)
+            return BadRequest(new { error = string.Join("، ", result.Errors.Select(e => e.Description)) });
+
+        return NoContent();
+    }
+
     private async Task<Application.HR.DTOs.EmployeeDto?> GetLinkedEmployeeAsync(Guid userId, CancellationToken ct)
     {
         var employees = await _employeeService.GetAllAsync(ct);

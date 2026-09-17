@@ -26,6 +26,10 @@ export default function Users() {
   const [pinEditingId, setPinEditingId] = useState<string | null>(null);
   const [pinValue, setPinValue] = useState("");
 
+  const [passwordEditingId, setPasswordEditingId] = useState<string | null>(null);
+  const [newPasswordValue, setNewPasswordValue] = useState("");
+  const [passwordResetSuccessId, setPasswordResetSuccessId] = useState<string | null>(null);
+
   async function load() {
     const [usersRes, employeesRes] = await Promise.all([UsersApi.getAll(), EmployeesApi.getAll()]);
     setUsers(usersRes.data);
@@ -131,6 +135,19 @@ export default function Users() {
     }
   }
 
+  async function saveNewPassword(id: string) {
+    setError(null);
+    setPasswordResetSuccessId(null);
+    try {
+      await UsersApi.resetPassword(id, newPasswordValue);
+      setPasswordEditingId(null);
+      setNewPasswordValue("");
+      setPasswordResetSuccessId(id);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -187,6 +204,7 @@ export default function Users() {
               <th>{t.users.modules}</th>
               <th>{t.users.linkedEmployee}</th>
               <th>{t.users.posPin}</th>
+              <th>{t.users.resetPassword}</th>
               <th>{t.common.status}</th>
               <th>{t.common.actions}</th>
             </tr>
@@ -194,7 +212,7 @@ export default function Users() {
           <tbody>
             {users.length === 0 && (
               <tr>
-                <td colSpan={8} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
+                <td colSpan={9} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
                   {t.common.noData}
                 </td>
               </tr>
@@ -277,6 +295,29 @@ export default function Users() {
                       {u.hasPosPin && (
                         <button className="btn btn-secondary btn-sm" onClick={() => clearPin(u.id)}>{t.users.clearPin}</button>
                       )}
+                    </div>
+                  )}
+                </td>
+                <td>
+                  {passwordEditingId === u.id ? (
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <input
+                        type="password"
+                        style={{ width: 160 }}
+                        value={newPasswordValue}
+                        onChange={(e) => setNewPasswordValue(e.target.value)}
+                        placeholder={t.users.newPasswordPlaceholder}
+                        minLength={8}
+                      />
+                      <button className="btn btn-sm" onClick={() => saveNewPassword(u.id)}>{t.common.save}</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => { setPasswordEditingId(null); setNewPasswordValue(""); }}>{t.common.cancel}</button>
+                    </div>
+                  ) : (
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <button className="btn btn-secondary btn-sm" onClick={() => { setPasswordEditingId(u.id); setNewPasswordValue(""); setPasswordResetSuccessId(null); }}>
+                        {t.users.resetPassword}
+                      </button>
+                      {passwordResetSuccessId === u.id && <span className="text-success" style={{ fontSize: 12 }}>{t.users.passwordResetSuccess}</span>}
                     </div>
                   )}
                 </td>

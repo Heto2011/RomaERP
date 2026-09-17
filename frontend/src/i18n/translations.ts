@@ -105,6 +105,9 @@ const ar = {
     clearPin: "إلغاء",
     pinPlaceholder: "4 لـ 6 أرقام",
     pinHint: "يستخدمه المستخدم ده لفتح نقطة البيع بسرعة من غير إيميل وباسورد.",
+    resetPassword: "تغيير الباسورد",
+    newPasswordPlaceholder: "الباسورد الجديد (8 أحرف على الأقل)",
+    passwordResetSuccess: "تم تغيير الباسورد بنجاح.",
   },
   roles: {
     Admin: "مدير",
@@ -1372,6 +1375,9 @@ const en: typeof ar = {
     clearPin: "Clear",
     pinPlaceholder: "4–6 digits",
     pinHint: "Lets this user open the POS quickly without email/password.",
+    resetPassword: "Reset Password",
+    newPasswordPlaceholder: "New password (8+ characters)",
+    passwordResetSuccess: "Password reset successfully.",
   },
   roles: {
     Admin: "Admin",
