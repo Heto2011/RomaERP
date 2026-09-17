@@ -1,7 +1,9 @@
+using System.Security.Claims;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
+using RomaERP.Application.Common;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Tenancy;
@@ -50,7 +52,8 @@ public class TenantProvisioningService : ITenantProvisioningService
             DatabaseName = databaseName,
             IsActive = true,
             IsDemo = request.IsDemo,
-            ExpiresAtUtc = request.IsDemo && request.DemoExpiryDays is { } days ? DateTime.UtcNow.AddDays(days) : null
+            ExpiresAtUtc = request.IsDemo && request.DemoExpiryDays is { } days ? DateTime.UtcNow.AddDays(days) : null,
+            ProductScope = request.ProductScope
         };
 
         _central.Tenants.Add(tenant);
@@ -70,6 +73,13 @@ public class TenantProvisioningService : ITenantProvisioningService
         await DbInitializer.SeedRolesAsync(roleManager);
         await DbInitializer.SeedSingleAdminAsync(userManager, request.AdminEmail, request.AdminPassword);
 
+        if (request.ProductScope == ProductScope.PeopleOnly)
+        {
+            var adminUser = await userManager.FindByEmailAsync(request.AdminEmail);
+            if (adminUser is not null)
+                await userManager.AddClaimAsync(adminUser, new Claim(ModulePermissions.ClaimType, ModulePermissions.HR));
+        }
+
         await TenantBaselineSeeder.SeedChartOfAccountsAsync(db);
         await TenantBaselineSeeder.SeedFiscalYearAsync(db);
         await TenantBaselineSeeder.SeedCostCenterAsync(db);
@@ -80,7 +90,7 @@ public class TenantProvisioningService : ITenantProvisioningService
         if (request.SeedDemoData)
             await TenantDemoDataSeeder.SeedAsync(scope.ServiceProvider, db, ct);
 
-        return new TenantDto(tenant.Id, tenant.CompanyCode, tenant.CompanyNameAr, tenant.CompanyNameEn, tenant.Country, tenant.IsActive, tenant.IsDemo, tenant.ExpiresAtUtc, tenant.CreatedAtUtc);
+        return new TenantDto(tenant.Id, tenant.CompanyCode, tenant.CompanyNameAr, tenant.CompanyNameEn, tenant.Country, tenant.IsActive, tenant.IsDemo, tenant.ExpiresAtUtc, tenant.CreatedAtUtc, tenant.ProductScope);
     }
 
     public async Task<List<TenantDto>> GetTenantsAsync(bool demoOnly, CancellationToken ct = default)
@@ -91,7 +101,7 @@ public class TenantProvisioningService : ITenantProvisioningService
 
         var tenants = await query.OrderByDescending(t => t.CreatedAtUtc).ToListAsync(ct);
         return tenants
-            .Select(t => new TenantDto(t.Id, t.CompanyCode, t.CompanyNameAr, t.CompanyNameEn, t.Country, t.IsActive, t.IsDemo, t.ExpiresAtUtc, t.CreatedAtUtc))
+            .Select(t => new TenantDto(t.Id, t.CompanyCode, t.CompanyNameAr, t.CompanyNameEn, t.Country, t.IsActive, t.IsDemo, t.ExpiresAtUtc, t.CreatedAtUtc, t.ProductScope))
             .ToList();
     }
 

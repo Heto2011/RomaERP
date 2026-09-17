@@ -9,5 +9,6 @@ public interface ITenantContext
     string CompanyCode { get; }
     string ConnectionString { get; }
     Country Country { get; }
+    ProductScope ProductScope { get; }
     bool IsResolved { get; }
 }

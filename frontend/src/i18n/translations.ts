@@ -224,6 +224,11 @@ const ar = {
   trial: {
     title: "ابدأ تجربتك المجانية",
     subtitle: "14 يوم كاملة، كل إمكانيات RomaERP، من غير بطاقة بنكية.",
+    whatDoYouNeed: "عايز تستخدم إيه؟",
+    productFullTitle: "RomaERP كامل",
+    productFullDesc: "محاسبة، مخزون، مبيعات، نقطة بيع، موارد بشرية — النظام بالكامل.",
+    productPeopleTitle: "ROMA People بس",
+    productPeopleDesc: "الموارد البشرية بس — حضور، إجازات، رواتب، عقود.",
     companyNameAr: "اسم الشركة (بالعربي)",
     companyNameEn: "اسم الشركة (بالإنجليزي)",
     country: "الدولة",
@@ -1495,6 +1500,11 @@ const en: typeof ar = {
   trial: {
     title: "Start Your Free Trial",
     subtitle: "14 full days, every RomaERP feature, no credit card.",
+    whatDoYouNeed: "What do you need?",
+    productFullTitle: "Full RomaERP",
+    productFullDesc: "Accounting, inventory, sales, POS, HR — the whole system.",
+    productPeopleTitle: "ROMA People only",
+    productPeopleDesc: "HR only — attendance, leave, payroll, contracts.",
     companyNameAr: "Company Name (Arabic)",
     companyNameEn: "Company Name (English)",
     country: "Country",

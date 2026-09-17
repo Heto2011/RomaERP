@@ -11,6 +11,7 @@ public class TenantContext : ITenantContext
     public string CompanyCode { get; private set; } = string.Empty;
     public string ConnectionString { get; private set; } = string.Empty;
     public Country Country { get; private set; }
+    public ProductScope ProductScope { get; private set; }
     public bool IsResolved { get; private set; }
 
     public void Resolve(Tenant tenant, string connectionString)
@@ -19,6 +20,7 @@ public class TenantContext : ITenantContext
         CompanyCode = tenant.CompanyCode;
         ConnectionString = connectionString;
         Country = tenant.Country;
+        ProductScope = tenant.ProductScope;
         IsResolved = true;
     }
 }

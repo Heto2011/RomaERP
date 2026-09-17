@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SystemApi } from "../../api/services";
-import { Country, type ProvisionTenantRequest, type Tenant } from "../../api/types";
+import { Country, ProductScope, type ProvisionTenantRequest, type Tenant } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 
 const countryLabel: Record<Country, string> = {
@@ -32,6 +32,7 @@ export default function DemoTenantsPage() {
   const [adminPassword, setAdminPassword] = useState(randomPassword());
   const [expiryDays, setExpiryDays] = useState(14);
   const [seedDemoData, setSeedDemoData] = useState(true);
+  const [productScope, setProductScope] = useState<ProductScope>(ProductScope.Full);
 
   async function loadTenants() {
     if (!systemKey) {
@@ -67,6 +68,7 @@ export default function DemoTenantsPage() {
         isDemo: true,
         demoExpiryDays: expiryDays,
         seedDemoData,
+        productScope,
       };
       const res = await SystemApi.createTenant(systemKey, payload);
       setLastCreated({ tenant: res.data, email: adminEmail, password: adminPassword });
@@ -162,6 +164,13 @@ export default function DemoTenantsPage() {
               <label>Expires After (days)</label>
               <input type="number" min={1} value={expiryDays} onChange={(e) => setExpiryDays(Number(e.target.value))} />
             </div>
+            <div className="form-field">
+              <label>Product</label>
+              <select value={productScope} onChange={(e) => setProductScope(Number(e.target.value) as ProductScope)}>
+                <option value={ProductScope.Full}>Full RomaERP</option>
+                <option value={ProductScope.PeopleOnly}>ROMA People only</option>
+              </select>
+            </div>
             <div className="form-field" style={{ justifyContent: "flex-end" }}>
               <label style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
                 <input type="checkbox" checked={seedDemoData} onChange={(e) => setSeedDemoData(e.target.checked)} />
@@ -192,6 +201,7 @@ export default function DemoTenantsPage() {
                 <th>Code</th>
                 <th>Name</th>
                 <th>Country</th>
+                <th>Product</th>
                 <th>Status</th>
                 <th>Expires</th>
                 <th>Created</th>
@@ -203,6 +213,7 @@ export default function DemoTenantsPage() {
                   <td>{t.companyCode}</td>
                   <td>{t.companyNameEn}</td>
                   <td>{countryLabel[t.country]}</td>
+                  <td>{t.productScope === ProductScope.PeopleOnly ? "ROMA People" : "Full"}</td>
                   <td className={t.isActive ? "text-success" : "text-danger"}>{t.isActive ? "Active" : "Deactivated"}</td>
                   <td>{t.expiresAtUtc ? new Date(t.expiresAtUtc).toLocaleDateString() : "—"}</td>
                   <td>{new Date(t.createdAtUtc).toLocaleDateString()}</td>

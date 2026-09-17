@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { TrialApi } from "../api/services";
-import { Country } from "../api/types";
+import { Country, ProductScope } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -21,6 +21,7 @@ export default function StartTrial() {
   const navigate = useNavigate();
   const { t, lang, setLang } = useLanguage();
 
+  const [productScope, setProductScope] = useState<ProductScope>(ProductScope.Full);
   const [companyNameAr, setCompanyNameAr] = useState("");
   const [companyNameEn, setCompanyNameEn] = useState("");
   const [country, setCountry] = useState<Country>(Country.SaudiArabia);
@@ -42,10 +43,11 @@ export default function StartTrial() {
         adminFullName,
         adminEmail: email,
         adminPassword: password,
+        productScope,
       });
       const { data } = res;
-      loginWithToken(data.companyCode, data.token, data.email, data.fullName, data.roles);
-      navigate("/");
+      loginWithToken(data.companyCode, data.token, data.email, data.fullName, data.roles, [], data.productScope);
+      navigate(data.productScope === ProductScope.PeopleOnly ? "/people" : "/");
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -65,6 +67,26 @@ export default function StartTrial() {
         <p>{t.trial.subtitle}</p>
         {error && <div className="alert-error">{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          <div className="form-field">
+            <label>{t.trial.whatDoYouNeed}</label>
+            <div style={{ display: "flex", gap: 10 }}>
+              {[
+                { value: ProductScope.Full, title: t.trial.productFullTitle, desc: t.trial.productFullDesc },
+                { value: ProductScope.PeopleOnly, title: t.trial.productPeopleTitle, desc: t.trial.productPeopleDesc },
+              ].map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setProductScope(option.value)}
+                  className={productScope === option.value ? "btn" : "btn btn-secondary"}
+                  style={{ flex: 1, textAlign: "start", whiteSpace: "normal", padding: "10px 12px", height: "auto" }}
+                >
+                  <div style={{ fontWeight: 700 }}>{option.title}</div>
+                  <div style={{ fontSize: 12, fontWeight: 400, opacity: 0.9 }}>{option.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
           <div className="form-field">
             <label>{t.trial.companyNameAr}</label>
             <input type="text" value={companyNameAr} onChange={(e) => setCompanyNameAr(e.target.value)} required />

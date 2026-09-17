@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
+import { ProductScope } from "./api/types";
 import Layout from "./components/Layout";
 import PeopleLayout from "./components/PeopleLayout";
 import Login from "./pages/Login";
@@ -100,11 +101,13 @@ function PeopleRoute({ children }: { children: React.ReactNode }) {
 }
 
 // A user whose only role is Employee is a cashier — send them straight to the POS screen instead of
-// the general dashboard, matching the restricted sidebar Layout shows them.
+// the general dashboard, matching the restricted sidebar Layout shows them. A tenant that signed up for
+// ROMA People only (not the full suite) lands straight in the People portal instead of the ERP dashboard.
 function HomeRoute() {
   const { user } = useAuth();
   const isCashierOnly = user?.roles.length === 1 && user.roles[0] === "Employee";
   if (isCashierOnly) return <Navigate to="/restaurant/pos" replace />;
+  if (user?.productScope === ProductScope.PeopleOnly) return <Navigate to="/people" replace />;
   return <Dashboard />;
 }
 

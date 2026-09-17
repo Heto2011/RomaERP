@@ -1,6 +1,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { ProductScope } from "../api/types";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import GlobalSearch from "./GlobalSearch";
@@ -300,6 +301,12 @@ export default function Layout({ children }: { children: ReactNode }) {
       : []),
   ];
 
+  // A tenant that signed up for ROMA People only never gets the full ERP sidebar, even for its own
+  // Admin (who would otherwise bypass every module check below) — they only ever land here by typing a
+  // direct URL, since HomeRoute/PeopleLogin already send them straight to /people.
+  const isPeopleOnly = user?.productScope === ProductScope.PeopleOnly;
+  const peopleOnlyAllowedSections = new Set([t.nav.general, t.nav.hr, t.nav.administration]);
+
   // Each of these sections requires either the base role that's always had it, or the matching
   // per-user "module" grant (see ModulePermissions on the backend) — Admin always sees everything.
   const isAdmin = user?.roles.includes("Admin") ?? false;
@@ -313,6 +320,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     [t.nav.restaurant]: { module: "POS", fallbackRoles: ["Accountant", "Employee"] },
   };
   function canSeeSection(section: string) {
+    if (isPeopleOnly && !peopleOnlyAllowedSections.has(section)) return false;
     const access = sectionAccess[section];
     if (!access) return true;
     return isAdmin || access.fallbackRoles.some((r) => user?.roles.includes(r)) || (user?.modules.includes(access.module) ?? false);

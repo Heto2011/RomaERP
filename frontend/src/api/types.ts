@@ -1830,6 +1830,7 @@ export interface ProvisionTenantRequest {
   isDemo?: boolean;
   demoExpiryDays?: number | null;
   seedDemoData?: boolean;
+  productScope?: ProductScope;
 }
 
 export interface Tenant {
@@ -1842,6 +1843,7 @@ export interface Tenant {
   isDemo: boolean;
   expiresAtUtc: string | null;
   createdAtUtc: string;
+  productScope: ProductScope;
 }
 
 export const SubscriptionStatus = {
@@ -1928,6 +1930,11 @@ export interface Usage {
   generatedAtUtc: string;
 }
 
+export enum ProductScope {
+  Full = 1,
+  PeopleOnly = 2,
+}
+
 export interface TrialSignupRequest {
   companyNameAr: string;
   companyNameEn: string;
@@ -1935,6 +1942,7 @@ export interface TrialSignupRequest {
   adminFullName: string;
   adminEmail: string;
   adminPassword: string;
+  productScope: ProductScope;
 }
 
 export interface TrialSignupResponse {
@@ -1944,6 +1952,7 @@ export interface TrialSignupResponse {
   fullName: string;
   roles: string[];
   expiresAtUtc: string | null;
+  productScope: ProductScope;
 }
 
 export interface AuditLogEntry {

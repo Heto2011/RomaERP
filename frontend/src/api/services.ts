@@ -72,6 +72,7 @@ import type {
   DeliveryPlatformItemMapping,
   SaveDeliveryPlatformItemMappingInput,
   SaveDeliveryPlatformCredentialInput,
+  ProductScope,
   ChatTurnResponse,
   CompanySettingsLookup,
   CostCenterLookup,
@@ -144,13 +145,13 @@ import type {
 
 export const AuthApi = {
   login: (companyCode: string, email: string, password: string) =>
-    apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[] }>(
+    apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[]; productScope: ProductScope }>(
       "/auth/login",
       { email, password },
       { headers: { "X-Company-Code": companyCode } }
     ),
   posPinLogin: (companyCode: string, pin: string) =>
-    apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[] }>(
+    apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[]; productScope: ProductScope }>(
       "/auth/pos-pin-login",
       { pin },
       { headers: { "X-Company-Code": companyCode } }

@@ -12,7 +12,8 @@ public record ProvisionTenantRequest(
     string? TaxRegistrationNumber,
     bool IsDemo = false,
     int? DemoExpiryDays = null,
-    bool SeedDemoData = false);
+    bool SeedDemoData = false,
+    ProductScope ProductScope = ProductScope.Full);
 
 public record TenantDto(
     Guid Id,
@@ -23,7 +24,8 @@ public record TenantDto(
     bool IsActive,
     bool IsDemo,
     DateTime? ExpiresAtUtc,
-    DateTime CreatedAtUtc);
+    DateTime CreatedAtUtc,
+    ProductScope ProductScope);
 
 /// <summary>Creates a brand-new, fully isolated tenant: its own database, schema, chart of accounts, and Admin user.</summary>
 public interface ITenantProvisioningService

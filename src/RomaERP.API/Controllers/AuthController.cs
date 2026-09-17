@@ -66,7 +66,7 @@ public class AuthController : ControllerBase
 
         await RecordLoginAsync(user.Id.ToString(), user.Email!, success: true, method: "Password", ct);
 
-        return Ok(new AuthResponse(token, user.Email!, user.FullName, roles, modules));
+        return Ok(new AuthResponse(token, user.Email!, user.FullName, roles, modules, _tenantContext.ProductScope));
     }
 
     /// <summary>Quick POS entry with a short PIN an Admin set for this user, instead of full email/password —
@@ -91,7 +91,7 @@ public class AuthController : ControllerBase
                 var modules = await GetModulesAsync(user);
                 var token = _tokenService.GenerateToken(user.Id, user.UserName!, user.Email!, _tenantContext.CompanyCode, roles, modules);
                 await RecordLoginAsync(user.Id.ToString(), user.Email!, success: true, method: "PosPin", CancellationToken.None);
-                return Ok(new AuthResponse(token, user.Email!, user.FullName, roles, modules));
+                return Ok(new AuthResponse(token, user.Email!, user.FullName, roles, modules, _tenantContext.ProductScope));
             }
         }
 

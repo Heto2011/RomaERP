@@ -8,7 +8,8 @@ public record TrialSignupRequest(
     Country Country,
     string AdminFullName,
     string AdminEmail,
-    string AdminPassword);
+    string AdminPassword,
+    ProductScope ProductScope = ProductScope.Full);
 
 /// <summary>Carries a ready-to-use login token so the new tenant lands straight in the app —
 /// no separate login step right after signing up.</summary>
@@ -18,4 +19,5 @@ public record TrialSignupResponse(
     string Email,
     string FullName,
     List<string> Roles,
-    DateTime? ExpiresAtUtc);
+    DateTime? ExpiresAtUtc,
+    ProductScope ProductScope);
