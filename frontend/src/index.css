@@ -26,6 +26,18 @@
   color-scheme: dark;
 }
 
+/* ROMA People portal — same components/CSS classes as the main app shell, just its own warm accent
+   instead of RomaERP's blue-teal, so it visually reads as its own product. */
+.people-theme {
+  --color-primary: #c2703d;
+  --color-primary-dark: #7c4a29;
+}
+
+:root[data-theme="dark"] .people-theme {
+  --color-primary: #e08a4f;
+  --color-primary-dark: #2b1a10;
+}
+
 * {
   box-sizing: border-box;
 }

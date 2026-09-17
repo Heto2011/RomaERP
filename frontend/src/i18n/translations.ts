@@ -2,6 +2,10 @@ export type Lang = "ar" | "en";
 
 const ar = {
   appName: "RomaERP",
+  peopleAppName: "ROMA People",
+  poweredByRomaErp: "من ROMA People — جزء من منظومة RomaERP",
+  openPeoplePortal: "افتح ROMA People",
+  backToRomaErp: "الرجوع إلى RomaERP",
   logout: "تسجيل الخروج",
   usage: {
     title: "استخدامك",
@@ -1269,6 +1273,10 @@ const ar = {
 
 const en: typeof ar = {
   appName: "RomaERP",
+  peopleAppName: "ROMA People",
+  poweredByRomaErp: "From ROMA People — part of the RomaERP suite",
+  openPeoplePortal: "Open ROMA People",
+  backToRomaErp: "Back to RomaERP",
   logout: "Logout",
   usage: {
     title: "Your Usage",

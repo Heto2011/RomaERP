@@ -169,6 +169,8 @@ export default function Layout({ children }: { children: ReactNode }) {
     },
   ];
 
+  const openPeoplePortalLink: NavLeafItem = { to: "/people", label: t.openPeoplePortal, icon: <IconUsers /> };
+
   const fullLinks: { section: string; items: NavItem[] }[] = [
     {
       section: t.nav.general,
@@ -178,6 +180,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> },
         { to: "/hr/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
         { to: "/hr/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },
+        openPeoplePortalLink,
       ],
     },
     {

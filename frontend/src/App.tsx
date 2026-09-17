@@ -1,6 +1,7 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 import Layout from "./components/Layout";
+import PeopleLayout from "./components/PeopleLayout";
 import Login from "./pages/Login";
 import StartTrial from "./pages/StartTrial";
 import PosLogin from "./pages/restaurant/PosLogin";
@@ -91,6 +92,12 @@ function ProtectedRoute({ children, layout = true, loginPath = "/login" }: { chi
   return layout ? <Layout>{children}</Layout> : <>{children}</>;
 }
 
+function PeopleRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/login" replace />;
+  return <PeopleLayout>{children}</PeopleLayout>;
+}
+
 // A user whose only role is Employee is a cashier — send them straight to the POS screen instead of
 // the general dashboard, matching the restricted sidebar Layout shows them.
 function HomeRoute() {
@@ -162,6 +169,19 @@ export default function App() {
       <Route path="/hr/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
       <Route path="/hr/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
       <Route path="/hr/employee-requests" element={<ProtectedRoute><EmployeeRequestsAdmin /></ProtectedRoute>} />
+      <Route path="/people" element={<PeopleRoute><MyRequests /></PeopleRoute>} />
+      <Route path="/people/attendance" element={<PeopleRoute><Attendance /></PeopleRoute>} />
+      <Route path="/people/my-requests" element={<PeopleRoute><MyRequests /></PeopleRoute>} />
+      <Route path="/people/departments" element={<PeopleRoute><Departments /></PeopleRoute>} />
+      <Route path="/people/positions" element={<PeopleRoute><Positions /></PeopleRoute>} />
+      <Route path="/people/employees" element={<PeopleRoute><Employees /></PeopleRoute>} />
+      <Route path="/people/work-locations" element={<PeopleRoute><WorkLocations /></PeopleRoute>} />
+      <Route path="/people/payroll" element={<PeopleRoute><Payroll /></PeopleRoute>} />
+      <Route path="/people/payroll-settings" element={<PeopleRoute><PayrollSettingsPage /></PeopleRoute>} />
+      <Route path="/people/employee-contracts" element={<PeopleRoute><EmployeeContracts /></PeopleRoute>} />
+      <Route path="/people/salary-components" element={<PeopleRoute><SalaryComponentsPage /></PeopleRoute>} />
+      <Route path="/people/labor-report" element={<PeopleRoute><LaborReportPage /></PeopleRoute>} />
+      <Route path="/people/employee-requests" element={<PeopleRoute><EmployeeRequestsAdmin /></PeopleRoute>} />
       <Route path="/restaurant/tables" element={<ProtectedRoute><RestaurantTables /></ProtectedRoute>} />
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />
       <Route path="/restaurant/purchase-receiving" element={<ProtectedRoute><PurchaseReceivingPage /></ProtectedRoute>} />
