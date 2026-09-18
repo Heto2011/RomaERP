@@ -1,0 +1,16 @@
+{
+  "name": "ROMA People",
+  "short_name": "ROMA People",
+  "description": "Human resources and payroll app powered by RomaERP",
+  "start_url": "/people",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4f6f8",
+  "theme_color": "#c2703d",
+  "icons": [
+    { "src": "/icons/people-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/people-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/people-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
