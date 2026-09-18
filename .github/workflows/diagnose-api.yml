@@ -1,0 +1,27 @@
+name: Diagnose API Service
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check romaerp-api service status and recent logs
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            echo "===== systemctl status ====="
+            systemctl status romaerp-api --no-pager -l || true
+            echo "===== journalctl (last 100 lines) ====="
+            journalctl -u romaerp-api -n 100 --no-pager || true
+            echo "===== local curl test ====="
+            curl -s -o /dev/null -w "local HTTP status: %{http_code}\n" http://localhost:5000/api/health || true
+            curl -s -o /dev/null -w "local HTTP status (5000/): %{http_code}\n" http://localhost:5000/ || true
+            echo "===== nginx status ====="
+            systemctl status nginx --no-pager -l 2>/dev/null || echo "no nginx service found"
+            echo "===== nginx error log tail ====="
+            tail -n 50 /var/log/nginx/error.log 2>/dev/null || echo "no nginx error log found"
