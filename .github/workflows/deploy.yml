@@ -23,12 +23,12 @@ jobs:
 
             NEW_SYSTEM_KEY="${{ secrets.SYSTEM_PROVISIONING_KEY }}"
             if [ -n "$NEW_SYSTEM_KEY" ]; then
-              python3 -c "
-            import json
+              SYSTEM_PROVISIONING_KEY="$NEW_SYSTEM_KEY" python3 -c "
+            import json, os
             path = 'src/RomaERP.API/appsettings.json'
             with open(path) as f:
                 data = json.load(f)
-            data.setdefault('System', {})['ProvisioningKey'] = '$NEW_SYSTEM_KEY'
+            data.setdefault('System', {})['ProvisioningKey'] = os.environ['SYSTEM_PROVISIONING_KEY'].strip()
             with open(path, 'w') as f:
                 json.dump(data, f, indent=2)
             "
