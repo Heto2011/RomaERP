@@ -9,8 +9,8 @@ export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const { t, lang, setLang } = useLanguage();
-  const [companyCode, setCompanyCode] = useState(() => localStorage.getItem("companyCode") ?? "demo");
-  const [email, setEmail] = useState("admin@romaerp.local");
+  const [companyCode, setCompanyCode] = useState(() => localStorage.getItem("companyCode") ?? "");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
