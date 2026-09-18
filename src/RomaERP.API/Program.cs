@@ -46,6 +46,7 @@ builder.Services.AddApplication();
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.ExchangeRateRefreshBackgroundService>();
+builder.Services.AddHostedService<RomaERP.API.BackgroundServices.WhatsAppAlertDigestBackgroundService>();
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
 builder.Services.AddAuthentication(options =>

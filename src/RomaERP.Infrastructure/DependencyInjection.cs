@@ -44,6 +44,7 @@ public static class DependencyInjection
         services.AddScoped<IDeliveryPlatformProvider, RomaERP.Infrastructure.Restaurant.HungerStationDeliveryProvider>();
         services.AddScoped<IDeliveryPlatformProvider, RomaERP.Infrastructure.Restaurant.JahezDeliveryProvider>();
         services.AddScoped<IDeliveryPlatformProvider, RomaERP.Infrastructure.Restaurant.MrsoolDeliveryProvider>();
+        services.AddHttpClient<IWhatsAppSender, RomaERP.Infrastructure.Notifications.MetaWhatsAppSender>();
 
         // Every tenant has its own, fully separate database. The connection string is only known once
         // TenantResolutionMiddleware resolves the request's company code, so it's read lazily here from

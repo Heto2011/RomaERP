@@ -1809,6 +1809,29 @@ export interface AlertsReport {
   alerts: Alert[];
 }
 
+export interface WhatsAppStatus {
+  isConfigured: boolean;
+  isEnabled: boolean;
+  phoneNumberId: string | null;
+  recipientPhoneNumber: string | null;
+  templateName: string;
+  templateLanguageCode: string;
+}
+
+export interface SaveWhatsAppCredentialInput {
+  phoneNumberId: string;
+  accessToken?: string;
+  recipientPhoneNumber: string;
+  templateName: string;
+  templateLanguageCode: string;
+  isEnabled: boolean;
+}
+
+export interface WhatsAppSendResult {
+  success: boolean;
+  failureReason: string | null;
+}
+
 export enum Country {
   Egypt = 1,
   SaudiArabia = 2,

@@ -21,6 +21,9 @@ import type {
   RecipeCostReport,
   WasteAnalysisReport,
   AlertsReport,
+  WhatsAppStatus,
+  SaveWhatsAppCredentialInput,
+  WhatsAppSendResult,
   ProvisionTenantRequest,
   Tenant,
   Usage,
@@ -603,6 +606,13 @@ export const UsersApi = {
 
 export const AlertsApi = {
   getAll: () => apiClient.get<AlertsReport>("/alerts"),
+};
+
+export const WhatsAppApi = {
+  getStatus: () => apiClient.get<WhatsAppStatus>("/whatsapp/status"),
+  saveCredential: (data: SaveWhatsAppCredentialInput) => apiClient.post<WhatsAppStatus>("/whatsapp/credential", data),
+  sendTest: () => apiClient.post<WhatsAppSendResult>("/whatsapp/test"),
+  sendAlertsNow: () => apiClient.post<WhatsAppSendResult>("/whatsapp/send-alerts"),
 };
 
 export const UsageApi = {

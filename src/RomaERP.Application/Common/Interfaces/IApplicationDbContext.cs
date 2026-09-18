@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Assistant;
 using RomaERP.Domain.Audit;
+using RomaERP.Domain.Common;
 using RomaERP.Domain.HR;
 using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Purchasing;
@@ -60,6 +61,7 @@ public interface IApplicationDbContext
     DbSet<DeliveryPlatformItemMapping> DeliveryPlatformItemMappings { get; }
     DbSet<DeliveryWebhookEvent> DeliveryWebhookEvents { get; }
     DbSet<DeliveryPlatformCredential> DeliveryPlatformCredentials { get; }
+    DbSet<WhatsAppCredential> WhatsAppCredentials { get; }
     DbSet<CashierShift> CashierShifts { get; }
 
     DbSet<ExpenseCapture> ExpenseCaptures { get; }

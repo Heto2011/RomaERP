@@ -7,6 +7,7 @@ using RomaERP.Application.EInvoicing.Services.Eta;
 using RomaERP.Application.EInvoicing.Services.Zatca;
 using RomaERP.Application.HR.Services;
 using RomaERP.Application.Inventory.Services;
+using RomaERP.Application.Notifications.Services;
 using RomaERP.Application.Purchasing.Services;
 using RomaERP.Application.Restaurant.Services;
 using RomaERP.Application.Sales.Services;
@@ -23,6 +24,7 @@ public static class DependencyInjection
         services.AddScoped<IBankFeedReconciliationService, BankFeedReconciliationService>();
         services.AddScoped<IJournalEntryService, JournalEntryService>();
         services.AddScoped<IAlertsService, AlertsService>();
+        services.AddScoped<IWhatsAppNotificationService, WhatsAppNotificationService>();
         services.AddScoped<IFinancialReportService, FinancialReportService>();
         services.AddScoped<IManualProfitEntryService, ManualProfitEntryService>();
         services.AddScoped<IFiscalPeriodService, FiscalPeriodService>();

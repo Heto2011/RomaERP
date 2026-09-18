@@ -77,6 +77,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<DeliveryPlatformItemMapping> DeliveryPlatformItemMappings => Set<DeliveryPlatformItemMapping>();
     public DbSet<DeliveryWebhookEvent> DeliveryWebhookEvents => Set<DeliveryWebhookEvent>();
     public DbSet<DeliveryPlatformCredential> DeliveryPlatformCredentials => Set<DeliveryPlatformCredential>();
+    public DbSet<WhatsAppCredential> WhatsAppCredentials => Set<WhatsAppCredential>();
     public DbSet<CashierShift> CashierShifts => Set<CashierShift>();
 
     public DbSet<ExpenseCapture> ExpenseCaptures => Set<ExpenseCapture>();
