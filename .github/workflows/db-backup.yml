@@ -48,4 +48,49 @@ jobs:
             find "$BACKUP_DIR_HOST" -name "*.bak" -mtime +$RETENTION_DAYS -delete
             docker exec sqlserver bash -c "find /var/opt/mssql/backup -name '*.bak' -mtime +$RETENTION_DAYS -delete"
 
+            # Opt-in: ship tonight's backups off-server to Dropbox, so a total loss of this
+            # server (disk failure, droplet deletion) doesn't also take the only backup copy.
+            # No-ops harmlessly if the secret isn't set yet.
+            DROPBOX_TOKEN=$(printf '%s' "${{ secrets.DROPBOX_ACCESS_TOKEN }}" | tr -d '\r\n')
+            if [ -n "$DROPBOX_TOKEN" ]; then
+              echo "Shipping tonight's backups off-server to Dropbox..."
+              for FILE in "$BACKUP_DIR_HOST"/*_${STAMP}.bak; do
+                [ -f "$FILE" ] || continue
+                NAME=$(basename "$FILE")
+                DBX_ARG=$(python3 -c "import json,sys; print(json.dumps({'path': '/RomaERP-backups/' + sys.argv[1], 'mode': 'add', 'autorename': True, 'mute': True}))" "$NAME")
+                curl -s -X POST https://content.dropboxapi.com/2/files/upload \
+                  --header "Authorization: Bearer $DROPBOX_TOKEN" \
+                  --header "Dropbox-API-Arg: $DBX_ARG" \
+                  --header "Content-Type: application/octet-stream" \
+                  --data-binary @"$FILE" -o /dev/null -w "  uploaded %{http_code}: $NAME\n"
+              done
+
+              DROPBOX_ACCESS_TOKEN="$DROPBOX_TOKEN" RETENTION_DAYS="$RETENTION_DAYS" python3 -c "
+            import json, subprocess, datetime, os
+            token = os.environ['DROPBOX_ACCESS_TOKEN']
+            retention_days = int(os.environ['RETENTION_DAYS'])
+            cutoff = datetime.datetime.utcnow() - datetime.timedelta(days=retention_days)
+            resp = subprocess.run(['curl', '-s', '-X', 'POST', 'https://api.dropboxapi.com/2/files/list_folder',
+                '--header', 'Authorization: Bearer ' + token,
+                '--header', 'Content-Type: application/json',
+                '--data', json.dumps({'path': '/RomaERP-backups'})], capture_output=True, text=True)
+            try:
+                data = json.loads(resp.stdout)
+            except Exception:
+                print('list_folder failed:', resp.stdout[:300])
+                data = {}
+            for entry in data.get('entries', []):
+                ts = entry.get('server_modified')
+                if not ts:
+                    continue
+                modified = datetime.datetime.strptime(ts, '%Y-%m-%dT%H:%M:%SZ')
+                if modified < cutoff:
+                    subprocess.run(['curl', '-s', '-X', 'POST', 'https://api.dropboxapi.com/2/files/delete_v2',
+                        '--header', 'Authorization: Bearer ' + token,
+                        '--header', 'Content-Type: application/json',
+                        '--data', json.dumps({'path': entry['path_lower']})], capture_output=True, text=True)
+                    print('pruned', entry['name'])
+            "
+            fi
+
             echo "BACKUP_OK: backed up $COUNT database(s). $(ls -1 "$BACKUP_DIR_HOST" | wc -l) files on disk, $(du -sh "$BACKUP_DIR_HOST" | cut -f1) total."
