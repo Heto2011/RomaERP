@@ -111,6 +111,29 @@
     background: var(--primary); color: #fff;
     font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
   }
+  .tier-badge.is-launch { background: var(--accent); }
+  .tier-old-price {
+    text-decoration: line-through; color: var(--ink-soft); font-size: 15px; font-weight: 700;
+    margin-inline-end: 6px;
+  }
+  .tier-annual-note {
+    background: var(--accent-tint); color: #6b4a19; border-radius: 8px;
+    font-size: 12.5px; font-weight: 700; padding: 6px 10px; margin: -8px 0 16px;
+  }
+  .currency-select {
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+    margin: 0 0 28px;
+  }
+  .currency-select label { font-size: 13.5px; color: var(--ink-soft); font-weight: 700; }
+  .currency-select select {
+    font-family: inherit; font-size: 14px; font-weight: 700; color: var(--ink);
+    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
+    padding: 8px 16px; cursor: pointer;
+  }
+  .currency-note {
+    text-align: center; font-size: 12px; color: var(--ink-soft);
+    max-width: 480px; margin: -16px auto 32px;
+  }
   .tier-emoji { font-size: 22px; margin-bottom: 10px; }
   .tier-name { font-weight: 900; font-size: 19px; margin: 0 0 4px; }
   .tier-desc { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 20px; min-height: 40px; }
@@ -322,6 +345,11 @@
       <h2>نقطة بداية، مش قالب جاهز</h2>
       <p>الأسعار دي بداية معقولة لكل حجم نشاط. استخدم الحاسبة تحت عشان تشوف السعر الفعلي المناسب لك بالظبط.</p>
     </div>
+    <div class="currency-select">
+      <label for="currencyPicker">اعرض الأسعار بعملة:</label>
+      <select id="currencyPicker"></select>
+    </div>
+    <p class="currency-note" id="currencyNote"></p>
     <div class="tiers" id="tiersGrid"></div>
   </div>
 </section>
@@ -364,7 +392,7 @@
         <div>
           <div class="tier-tag" id="resultTier">Essential 🟢</div>
           <div class="price-label">السعر الشهري التقديري</div>
-          <div class="price"><span id="resultPrice">499</span> <small>ريال / شهريًا</small></div>
+          <div class="price"><span id="resultPrice">199</span> <small id="resultCurrency">ريال / شهريًا</small></div>
           <div class="breakdown" id="resultBreakdown"></div>
         </div>
         <a href="/start-trial" class="btn btn-primary">ابدأ بهذا السعر</a>
@@ -395,8 +423,15 @@
 
 <script>
   // ---- Configurable pricing assumptions (placeholders — tune before launch) ----
+  // Base currency is SAR. All other currencies are approximate conversions for display only —
+  // real billing/tax will follow each country's law once we actually land a customer there.
+  const LAUNCH_OFFER_LIMIT = 100;
   const TIERS = [
-    { id: "essential", emoji: "🟢", name: "Essential", desc: "شركة صغيرة أو فرع واحد", base: 499, includedBranches: 1, includedUsers: 2 },
+    {
+      id: "essential", emoji: "🟢", name: "Essential", desc: "شركة صغيرة أو فرع واحد",
+      base: 199, listPrice: 499, annualPrice: 2000,
+      launchOffer: true, includedBranches: 1, includedUsers: 2,
+    },
     { id: "business", emoji: "🔵", name: "Business", desc: "شركات متعددة الفروع", base: 799, includedBranches: 3, includedUsers: 5, recommended: true },
     { id: "professional", emoji: "🟣", name: "Professional", desc: "نشاط أكبر واحتياج موسّع", base: 1299, includedBranches: 7, includedUsers: 10 },
     { id: "enterprise", emoji: "🔴", name: "Enterprise", desc: "الشركات الكبيرة", base: 2499, includedBranches: Infinity, includedUsers: Infinity, custom: true },
@@ -405,6 +440,25 @@
   const EXTRA_USER_PRICE = 40;    // SAR / user / month, beyond tier's included users
   const ADDITIONAL_COMPANY_DISCOUNT = 0.85; // each company after the first billed at 85% of its own computed price
 
+  // rate = units of that currency per 1 SAR. Gulf currencies are pegged to USD, so these are stable;
+  // EGP floats and moves a lot, hence the "تقريبي" note — real EGP pricing is confirmed at signup time.
+  const CURRENCIES = {
+    SAR: { label: "ريال سعودي (SAR)", unit: "ريال", rate: 1, decimals: 0 },
+    AED: { label: "درهم إماراتي (AED)", unit: "درهم", rate: 0.98, decimals: 0 },
+    QAR: { label: "ريال قطري (QAR)", unit: "ريال قطري", rate: 0.97, decimals: 0 },
+    KWD: { label: "دينار كويتي (KWD)", unit: "دينار", rate: 0.082, decimals: 1 },
+    BHD: { label: "دينار بحريني (BHD)", unit: "دينار", rate: 0.1, decimals: 1 },
+    OMR: { label: "ريال عماني (OMR)", unit: "ريال عماني", rate: 0.1025, decimals: 1 },
+    EGP: { label: "جنيه مصري (EGP) — تقريبي", unit: "جنيه", rate: 13, decimals: 0, approx: true },
+  };
+  let currentCurrency = "SAR";
+
+  function convert(sarAmount) {
+    const c = CURRENCIES[currentCurrency];
+    const value = sarAmount * c.rate;
+    return c.decimals > 0 ? value.toFixed(c.decimals) : Math.round(value);
+  }
+
   const INCLUDED_FEATURES = [
     "المحاسبة والقيود", "نقاط البيع POS", "المبيعات والمشتريات", "المخزون والتكاليف",
     "الوصفات والمطاعم", "الموارد البشرية والرواتب", "التقارير المالية", "الذكاء المالي والتنبؤ",
@@ -412,24 +466,27 @@
   ];
 
   function renderTiers() {
+    const unit = CURRENCIES[currentCurrency].unit;
     const grid = document.getElementById("tiersGrid");
     grid.innerHTML = TIERS.map(t => `
       <div class="tier ${t.recommended ? "is-recommended" : ""}">
-        ${t.recommended ? '<div class="tier-badge">الأكثر طلبًا</div>' : ""}
+        ${t.launchOffer ? `<div class="tier-badge is-launch">عرض الإطلاق — أول ${LAUNCH_OFFER_LIMIT} عميل</div>` : t.recommended ? '<div class="tier-badge">الأكثر طلبًا</div>' : ""}
         <div class="tier-emoji">${t.emoji}</div>
         <h3 class="tier-name">${t.name}</h3>
         <p class="tier-desc">${t.desc}</p>
         <div class="tier-price">
-          <span class="amount mono">${t.custom ? "من " + t.base : t.base}</span>
-          <span class="currency">ريال / شهريًا</span>
+          ${t.listPrice ? `<span class="tier-old-price mono">${convert(t.listPrice)}</span>` : ""}
+          <span class="amount mono">${t.custom ? "من " + convert(t.base) : convert(t.base)}</span>
+          <span class="currency">${unit} / شهريًا</span>
         </div>
         <div class="tier-price-note">${t.custom ? "سعر مخصص حسب النشاط" : `يشمل حتى ${t.includedBranches} ${t.includedBranches === 1 ? "فرع" : "فروع"} و ${t.includedUsers} مستخدمين`}</div>
+        ${t.annualPrice ? `<div class="tier-annual-note">أو ${convert(t.annualPrice)} ${unit} سنويًا (وفّر أكتر)</div>` : ""}
         <ul class="tier-includes">
           <li>كل موديولات ROMA بدون استثناء</li>
           <li>دعم فني بالعربي</li>
           <li>${t.custom ? "فروع ومستخدمون بلا حدود عملية" : "زيادة الفروع/المستخدمين بسعر إضافي واضح"}</li>
         </ul>
-        <a href="#calculator" class="btn ${t.recommended ? "btn-primary" : "btn-ghost"}">${t.custom ? "تواصل معنا" : "احسب سعري"}</a>
+        <a href="/start-trial" class="btn ${t.recommended || t.launchOffer ? "btn-primary" : "btn-ghost"}">${t.custom ? "تواصل معنا" : "ابدأ تجربتك"}</a>
       </div>
     `).join("");
   }
@@ -457,6 +514,7 @@
   }
 
   function renderCalculator() {
+    const unit = CURRENCIES[currentCurrency].unit;
     const companies = Number(document.getElementById("companiesRange").value);
     const branches = Number(document.getElementById("branchesRange").value);
     const users = Number(document.getElementById("usersRange").value);
@@ -466,19 +524,47 @@
 
     const r = computePrice(companies, branches, users);
     document.getElementById("resultTier").textContent = `${r.tier.name} ${r.tier.emoji}`;
-    document.getElementById("resultPrice").textContent = r.total.toLocaleString("en-US");
+    document.getElementById("resultPrice").textContent = convert(r.total).toLocaleString("en-US");
+    document.getElementById("resultCurrency").textContent = `${unit} / شهريًا`;
 
-    const lines = [`<div><span>السعر الأساسي (${r.tier.name})</span><span>${r.tier.base} ريال</span></div>`];
-    if (r.extraBranches > 0) lines.push(`<div><span>فروع إضافية × ${r.extraBranches}</span><span>+${r.extraBranches * EXTRA_BRANCH_PRICE} ريال</span></div>`);
-    if (r.extraUsers > 0) lines.push(`<div><span>مستخدمون إضافيون × ${r.extraUsers}</span><span>+${r.extraUsers * EXTRA_USER_PRICE} ريال</span></div>`);
-    if (r.additionalCompanies > 0) lines.push(`<div><span>${r.additionalCompanies} شركة إضافية (خصم 15%)</span><span>+${Math.round(r.additionalCompanies * r.perCompany * ADDITIONAL_COMPANY_DISCOUNT)} ريال</span></div>`);
+    const lines = [`<div><span>السعر الأساسي (${r.tier.name})</span><span>${convert(r.tier.base)} ${unit}</span></div>`];
+    if (r.extraBranches > 0) lines.push(`<div><span>فروع إضافية × ${r.extraBranches}</span><span>+${convert(r.extraBranches * EXTRA_BRANCH_PRICE)} ${unit}</span></div>`);
+    if (r.extraUsers > 0) lines.push(`<div><span>مستخدمون إضافيون × ${r.extraUsers}</span><span>+${convert(r.extraUsers * EXTRA_USER_PRICE)} ${unit}</span></div>`);
+    if (r.additionalCompanies > 0) lines.push(`<div><span>${r.additionalCompanies} شركة إضافية (خصم 15%)</span><span>+${convert(r.additionalCompanies * r.perCompany * ADDITIONAL_COMPANY_DISCOUNT)} ${unit}</span></div>`);
     if (r.tier.custom) lines.push(`<div><span colspan="2">تواصل معنا لعرض دقيق للمؤسسات الكبيرة</span></div>`);
     document.getElementById("resultBreakdown").innerHTML = lines.join("");
   }
 
-  renderTiers();
+  function renderCurrencyPicker() {
+    const select = document.getElementById("currencyPicker");
+    select.innerHTML = Object.entries(CURRENCIES).map(([code, c]) =>
+      `<option value="${code}" ${code === currentCurrency ? "selected" : ""}>${c.label}</option>`
+    ).join("");
+    select.addEventListener("change", () => {
+      currentCurrency = select.value;
+      renderAll();
+    });
+    renderCurrencyNote();
+  }
+
+  function renderCurrencyNote() {
+    const note = document.getElementById("currencyNote");
+    if (currentCurrency === "SAR") { note.textContent = ""; return; }
+    const c = CURRENCIES[currentCurrency];
+    note.textContent = c.approx
+      ? "الأسعار بالجنيه المصري تقريبية لتقلب سعر الصرف — السعر النهائي بيتأكد وقت التفعيل الفعلي."
+      : "أسعار تقريبية محوّلة من الريال السعودي.";
+  }
+
+  function renderAll() {
+    renderTiers();
+    renderCalculator();
+    renderCurrencyNote();
+  }
+
+  renderCurrencyPicker();
+  renderAll();
   renderIncluded();
-  renderCalculator();
   ["companiesRange", "branchesRange", "usersRange"].forEach(id =>
     document.getElementById(id).addEventListener("input", renderCalculator)
   );
