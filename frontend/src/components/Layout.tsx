@@ -60,7 +60,13 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1");
+  const [collapsed, setCollapsed] = useState(() => {
+    const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
+    // No saved preference yet (first visit on this device): default a narrow phone screen to the
+    // icon-only sidebar instead of the full 240px one, which otherwise covers most of the screen.
+    if (stored === null) return window.innerWidth < 768;
+    return stored === "1";
+  });
   const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
     try {
       return JSON.parse(localStorage.getItem(SIDEBAR_OPEN_SECTIONS_KEY) || "{}");

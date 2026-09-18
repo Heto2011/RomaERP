@@ -499,6 +499,8 @@ tr:hover td {
 
   .sidebar:not(.collapsed) {
     position: fixed;
+    inset-inline-start: 0;
+    top: 0;
     z-index: 200;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.35);
   }
