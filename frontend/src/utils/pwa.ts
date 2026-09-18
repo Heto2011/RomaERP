@@ -22,48 +22,64 @@ const PORTAL_CONFIG: Record<"people" | "restaurant", PortalPwaConfig> = {
   },
 };
 
-function upsertLink(rel: string, href: string): HTMLLinkElement {
+// Swaps an attribute on an existing (or newly created) tag, returning a restore function
+// that puts back whatever was there before — an empty string means "remove the tag", since
+// it didn't exist prior to the swap.
+function swapLink(rel: string, href: string): () => void {
   let el = document.head.querySelector<HTMLLinkElement>(`link[rel="${rel}"]`);
+  const existed = !!el;
+  const previousHref = el?.href ?? "";
   if (!el) {
     el = document.createElement("link");
     el.rel = rel;
     document.head.appendChild(el);
   }
   el.href = href;
-  return el;
+  const target = el;
+  return () => {
+    if (existed) target.href = previousHref;
+    else target.remove();
+  };
 }
 
-function upsertMeta(name: string, content: string): HTMLMetaElement {
+function swapMeta(name: string, content: string): () => void {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[name="${name}"]`);
+  const existed = !!el;
+  const previousContent = el?.content ?? "";
   if (!el) {
     el = document.createElement("meta");
     el.name = name;
     document.head.appendChild(el);
   }
   el.content = content;
-  return el;
+  const target = el;
+  return () => {
+    if (existed) target.content = previousContent;
+    else target.remove();
+  };
 }
 
-// Swaps in a portal-specific PWA manifest/icon/theme-color while its layout is mounted,
-// so "Add to Home Screen" installs ROMA People / ROMA Restaurant as their own branded app
-// rather than the main RomaERP one. Removed again on unmount so the main app stays plain.
+// Swaps in a portal-specific PWA manifest/icon/theme-color while its layout is mounted, so
+// "Add to Home Screen" installs ROMA People / ROMA Restaurant as their own branded app rather
+// than the main RomaERP one. Restores whatever the main app's own tags had on unmount, rather
+// than deleting them outright.
 export function usePortalManifest(portal: "people" | "restaurant") {
   useEffect(() => {
     const config = PORTAL_CONFIG[portal];
-    const manifestLink = upsertLink("manifest", config.manifestHref);
-    const appleIconLink = upsertLink("apple-touch-icon", config.appleTouchIcon);
-    const themeMeta = upsertMeta("theme-color", config.themeColor);
-    const capableMeta = upsertMeta("apple-mobile-web-app-capable", "yes");
-    const titleMeta = upsertMeta("apple-mobile-web-app-title", config.appTitle);
+    const restoreManifest = swapLink("manifest", config.manifestHref);
+    const restoreAppleIcon = swapLink("apple-touch-icon", config.appleTouchIcon);
+    const restoreTheme = swapMeta("theme-color", config.themeColor);
+    const restoreCapable = swapMeta("apple-mobile-web-app-capable", "yes");
+    const restoreTitle = swapMeta("apple-mobile-web-app-title", config.appTitle);
     const previousTitle = document.title;
     document.title = config.appTitle;
 
     return () => {
-      manifestLink.remove();
-      appleIconLink.remove();
-      themeMeta.remove();
-      capableMeta.remove();
-      titleMeta.remove();
+      restoreManifest();
+      restoreAppleIcon();
+      restoreTheme();
+      restoreCapable();
+      restoreTitle();
       document.title = previousTitle;
     };
   }, [portal]);
