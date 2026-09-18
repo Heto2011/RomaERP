@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 import { usePortalManifest } from "../utils/pwa";
+import PasswordInput from "../components/PasswordInput";
 
 /// <summary>A distinct front door for customers who only use ROMA People — same login API/tenant as the
 /// main app, but branded and landing straight in the People portal, so an HR-only customer never has to
@@ -55,7 +56,7 @@ export default function PeopleLogin() {
           </div>
           <div className="form-field">
             <label>{t.login.password}</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <PasswordInput value={password} onChange={setPassword} required />
           </div>
           <button className="btn" type="submit" disabled={loading}>
             {loading ? t.login.submitting : t.login.submit}

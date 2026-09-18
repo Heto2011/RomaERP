@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
+import PasswordInput from "../components/PasswordInput";
 
 export default function Login() {
   const { login } = useAuth();
@@ -50,7 +51,7 @@ export default function Login() {
           </div>
           <div className="form-field">
             <label>{t.login.password}</label>
-            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+            <PasswordInput value={password} onChange={setPassword} required />
           </div>
           <button className="btn" type="submit" disabled={loading}>
             {loading ? t.login.submitting : t.login.submit}
