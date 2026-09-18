@@ -21,6 +21,19 @@ jobs:
             git pull origin claude/project-continuation-gjlk3b
             git log -1 --oneline
 
+            NEW_SYSTEM_KEY="${{ secrets.SYSTEM_PROVISIONING_KEY }}"
+            if [ -n "$NEW_SYSTEM_KEY" ]; then
+              python3 - <<PYEOF
+import json
+path = "src/RomaERP.API/appsettings.json"
+with open(path) as f:
+    data = json.load(f)
+data.setdefault("System", {})["ProvisioningKey"] = "$NEW_SYSTEM_KEY"
+with open(path, "w") as f:
+    json.dump(data, f, indent=2)
+PYEOF
+            fi
+
             dotnet publish src/RomaERP.API/RomaERP.API.csproj -c Release -o /var/www/romaerp-api
             systemctl restart romaerp-api
             systemctl is-active romaerp-api
