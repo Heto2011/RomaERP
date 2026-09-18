@@ -42,6 +42,12 @@ export default function DemoTenantsPage() {
   const [transferring, setTransferring] = useState(false);
   const [transferResult, setTransferResult] = useState<TransferUserResult | null>(null);
 
+  const [resetCompanyCode, setResetCompanyCode] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetPassword, setResetPassword] = useState(randomPassword());
+  const [resetting, setResetting] = useState(false);
+  const [resetDone, setResetDone] = useState<{ companyCode: string; email: string; password: string } | null>(null);
+
   async function loadTenants() {
     if (!systemKey) {
       setError("Enter the system key first.");
@@ -117,6 +123,31 @@ export default function DemoTenantsPage() {
       setError(getErrorMessage(err));
     } finally {
       setTransferring(false);
+    }
+  }
+
+  async function handleResetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    if (!systemKey) {
+      setError("Enter the system key first.");
+      return;
+    }
+    setError(null);
+    setResetting(true);
+    setResetDone(null);
+    try {
+      await SystemApi.resetUserPassword(systemKey, {
+        companyCode: resetCompanyCode.trim().toLowerCase(),
+        email: resetEmail,
+        newPassword: resetPassword,
+      });
+      setResetDone({ companyCode: resetCompanyCode.trim().toLowerCase(), email: resetEmail, password: resetPassword });
+      setResetEmail("");
+      setResetPassword(randomPassword());
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setResetting(false);
     }
   }
 
@@ -265,6 +296,45 @@ export default function DemoTenantsPage() {
           </div>
           <button className="btn" type="submit" disabled={transferring} style={{ marginTop: 14 }}>
             {transferring ? "Moving…" : "Transfer User"}
+          </button>
+        </form>
+      </div>
+
+      <div className="card" style={{ marginTop: 16 }}>
+        <h3>Reset a User's Password</h3>
+        <p className="text-muted" style={{ marginTop: 0 }}>
+          Last resort when nobody can log in to a company (e.g. its only Admin is locked out) — sets that
+          user's password directly, bypassing the normal in-app "Admin resets a user's password" flow.
+        </p>
+        {resetDone && (
+          <div className="card" style={{ marginBottom: 14, borderInlineStart: "4px solid var(--color-success)" }}>
+            <strong>Password reset — hand these to the user:</strong>
+            <table style={{ marginTop: 10 }}>
+              <tbody>
+                <tr><td>Company Code</td><td>{resetDone.companyCode}</td></tr>
+                <tr><td>Email</td><td>{resetDone.email}</td></tr>
+                <tr><td>New Password</td><td>{resetDone.password}</td></tr>
+              </tbody>
+            </table>
+          </div>
+        )}
+        <form onSubmit={handleResetPassword}>
+          <div className="form-grid">
+            <div className="form-field">
+              <label>Company Code</label>
+              <input value={resetCompanyCode} onChange={(e) => setResetCompanyCode(e.target.value)} placeholder="the-salad-bar" required />
+            </div>
+            <div className="form-field">
+              <label>User Email</label>
+              <input type="email" value={resetEmail} onChange={(e) => setResetEmail(e.target.value)} required />
+            </div>
+            <div className="form-field">
+              <label>New Password</label>
+              <input value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} required />
+            </div>
+          </div>
+          <button className="btn" type="submit" disabled={resetting} style={{ marginTop: 14 }}>
+            {resetting ? "Resetting…" : "Reset Password"}
           </button>
         </form>
       </div>

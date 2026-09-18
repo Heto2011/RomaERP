@@ -15,12 +15,18 @@ public class SystemController : ControllerBase
 {
     private readonly ITenantProvisioningService _provisioning;
     private readonly IUserTransferService _userTransfer;
+    private readonly ISystemPasswordResetService _passwordReset;
     private readonly IConfiguration _configuration;
 
-    public SystemController(ITenantProvisioningService provisioning, IUserTransferService userTransfer, IConfiguration configuration)
+    public SystemController(
+        ITenantProvisioningService provisioning,
+        IUserTransferService userTransfer,
+        ISystemPasswordResetService passwordReset,
+        IConfiguration configuration)
     {
         _provisioning = provisioning;
         _userTransfer = userTransfer;
+        _passwordReset = passwordReset;
         _configuration = configuration;
     }
 
@@ -64,6 +70,18 @@ public class SystemController : ControllerBase
         if (keyCheck is not null) return keyCheck;
 
         return Ok(await _userTransfer.TransferAsync(request, ct));
+    }
+
+    /// <summary>Last resort when nobody can log in to a tenant (e.g. its only Admin is locked out) — resets
+    /// a user's password directly, bypassing normal auth entirely, gated by the system key alone.</summary>
+    [HttpPost("users/reset-password")]
+    public async Task<IActionResult> ResetUserPassword(ResetSystemUserPasswordRequest request, CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        await _passwordReset.ResetPasswordAsync(request, ct);
+        return NoContent();
     }
 
     private ActionResult? CheckSystemKey()

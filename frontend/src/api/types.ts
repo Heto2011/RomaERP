@@ -1884,6 +1884,12 @@ export interface TransferUserResult {
   targetCompanyCode: string;
 }
 
+export interface ResetSystemUserPasswordRequest {
+  companyCode: string;
+  email: string;
+  newPassword: string;
+}
+
 export const SubscriptionStatus = {
   Trialing: 0,
   Active: 1,

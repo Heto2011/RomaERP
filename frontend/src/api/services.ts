@@ -78,6 +78,7 @@ import type {
   ProductScope,
   TransferUserRequest,
   TransferUserResult,
+  ResetSystemUserPasswordRequest,
   ChatTurnResponse,
   CompanySettingsLookup,
   CostCenterLookup,
@@ -645,6 +646,8 @@ export const SystemApi = {
     systemApiClient.post<{ deactivatedCount: number }>("/system/tenants/expire-demo", null, { headers: { "X-System-Key": systemKey } }),
   transferUser: (systemKey: string, data: TransferUserRequest) =>
     systemApiClient.post<TransferUserResult>("/system/users/transfer", data, { headers: { "X-System-Key": systemKey } }),
+  resetUserPassword: (systemKey: string, data: ResetSystemUserPasswordRequest) =>
+    systemApiClient.post("/system/users/reset-password", data, { headers: { "X-System-Key": systemKey } }),
 };
 
 export const SubscriptionsApi = {
