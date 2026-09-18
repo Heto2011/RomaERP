@@ -1,10 +1,10 @@
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { usePortalManifest } from "../utils/pwa";
-import { IconUser, IconUsers, IconCheck, IconClock, IconBuilding, IconBriefcase, IconFile, IconWallet, IconDollar, IconBarChart, IconGrid, IconSun, IconMoon } from "./icons";
+import { IconUser, IconUsers, IconCheck, IconClock, IconBuilding, IconBriefcase, IconFile, IconWallet, IconDollar, IconBarChart, IconGrid, IconSun, IconMoon, IconMenuToggle } from "./icons";
 
 /// <summary>A distinct-branded shell for the same HR pages the main app already has under /hr/* — same
 /// components, same data, same login, just its own accent color and a simplified nav scoped to HR so it
@@ -14,6 +14,8 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   usePortalManifest("people");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const closeMobileNav = () => setMobileNavOpen(false);
 
   const isAdmin = user?.roles.includes("Admin") ?? false;
   const isHr = isAdmin || user?.roles.includes("HR") || (user?.modules.includes("HR") ?? false);
@@ -39,7 +41,8 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="app-shell people-theme">
-      <aside className="sidebar">
+      {mobileNavOpen && <div className="mobile-nav-backdrop" onClick={closeMobileNav} />}
+      <aside className={"sidebar" + (mobileNavOpen ? " mobile-open" : "")}>
         <div className="sidebar-brand">
           <span className="brand-text">{t.peopleAppName}</span>
           <div style={{ display: "flex", gap: 4 }}>
@@ -58,7 +61,7 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
             <span>{t.nav.general}</span>
           </div>
           {selfServiceLinks.map((item) => (
-            <NavLink key={item.to} to={item.to} className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}>
+            <NavLink key={item.to} to={item.to} onClick={closeMobileNav} className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}>
               <span className="sidebar-icon">{item.icon}</span>
               <span className="link-text">{item.label}</span>
             </NavLink>
@@ -69,7 +72,7 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
                 <span>{t.nav.hr}</span>
               </div>
               {managerLinks.map((item) => (
-                <NavLink key={item.to} to={item.to} className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}>
+                <NavLink key={item.to} to={item.to} onClick={closeMobileNav} className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}>
                   <span className="sidebar-icon">{item.icon}</span>
                   <span className="link-text">{item.label}</span>
                 </NavLink>
@@ -88,6 +91,13 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
         </div>
       </aside>
       <div className="main-column">
+        <button
+          className="btn btn-secondary btn-sm mobile-nav-toggle"
+          style={{ margin: "10px 16px 0" }}
+          onClick={() => setMobileNavOpen((open) => !open)}
+        >
+          <IconMenuToggle collapsed={!mobileNavOpen} />
+        </button>
         <main className="main-content">{children}</main>
         <footer style={{ textAlign: "center", padding: "12px 0", fontSize: 12 }} className="text-muted">
           {t.poweredByRomaErp}

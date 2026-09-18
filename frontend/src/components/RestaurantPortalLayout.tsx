@@ -1,10 +1,10 @@
-import { type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { usePortalManifest } from "../utils/pwa";
-import { IconCart, IconGrid, IconBook, IconTruck, IconSwap, IconRefresh, IconClock, IconSun, IconMoon } from "./icons";
+import { IconCart, IconGrid, IconBook, IconTruck, IconSwap, IconRefresh, IconClock, IconSun, IconMoon, IconMenuToggle } from "./icons";
 
 /// <summary>A distinct-branded shell for the restaurant/POS pages — same components, same data, same
 /// login as the existing /restaurant/* section — just its own accent color and name ("ROMA Restaurant")
@@ -14,6 +14,8 @@ export default function RestaurantPortalLayout({ children }: { children: ReactNo
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   usePortalManifest("restaurant");
+  const [mobileNavOpen, setMobileNavOpen] = useState(false);
+  const closeMobileNav = () => setMobileNavOpen(false);
 
   const links = [
     { to: "/restaurant-portal/tables", label: t.nav.restaurantTables, icon: <IconGrid /> },
@@ -26,7 +28,8 @@ export default function RestaurantPortalLayout({ children }: { children: ReactNo
 
   return (
     <div className="app-shell restaurant-theme">
-      <aside className="sidebar">
+      {mobileNavOpen && <div className="mobile-nav-backdrop" onClick={closeMobileNav} />}
+      <aside className={"sidebar" + (mobileNavOpen ? " mobile-open" : "")}>
         <div className="sidebar-brand">
           <span className="brand-text">{t.restaurantAppName}</span>
           <div style={{ display: "flex", gap: 4 }}>
@@ -42,12 +45,12 @@ export default function RestaurantPortalLayout({ children }: { children: ReactNo
         </div>
         <div className="sidebar-scroll">
           {links.map((item) => (
-            <NavLink key={item.to} to={item.to} className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}>
+            <NavLink key={item.to} to={item.to} onClick={closeMobileNav} className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}>
               <span className="sidebar-icon">{item.icon}</span>
               <span className="link-text">{item.label}</span>
             </NavLink>
           ))}
-          <Link to="/restaurant/pos" className="sidebar-link">
+          <Link to="/restaurant/pos" className="sidebar-link" onClick={closeMobileNav}>
             <span className="sidebar-icon"><IconCart /></span>
             <span className="link-text">{t.nav.restaurantPos}</span>
           </Link>
@@ -63,6 +66,13 @@ export default function RestaurantPortalLayout({ children }: { children: ReactNo
         </div>
       </aside>
       <div className="main-column">
+        <button
+          className="btn btn-secondary btn-sm mobile-nav-toggle"
+          style={{ margin: "10px 16px 0" }}
+          onClick={() => setMobileNavOpen((open) => !open)}
+        >
+          <IconMenuToggle collapsed={!mobileNavOpen} />
+        </button>
         <main className="main-content">{children}</main>
         <footer style={{ textAlign: "center", padding: "12px 0", fontSize: 12 }} className="text-muted">
           {t.poweredByRomaErpRestaurant}

@@ -518,6 +518,40 @@ tr:hover td {
   td {
     padding: 8px 10px;
   }
+
+  /* ROMA People / ROMA Restaurant have no icon-only collapsed mode (unlike the main app's sidebar) —
+     on mobile their sidebar starts fully hidden and opens as an overlay via the hamburger toggle. */
+  .people-theme .sidebar,
+  .restaurant-theme .sidebar {
+    display: none;
+  }
+
+  .people-theme .sidebar.mobile-open,
+  .restaurant-theme .sidebar.mobile-open {
+    display: flex;
+    position: fixed;
+    inset-inline-start: 0;
+    top: 0;
+    height: 100vh;
+    z-index: 210;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.35);
+  }
+
+  .mobile-nav-toggle {
+    display: inline-flex !important;
+  }
+}
+
+.mobile-nav-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 205;
+}
+
+.mobile-nav-toggle {
+  display: none;
+  margin-inline-end: 8px;
 }
 
 .form-field {
