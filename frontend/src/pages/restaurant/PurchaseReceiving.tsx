@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ItemsApi, PurchasingApi, WarehousesApi } from "../../api/services";
 import {
   type InventoryReceipt,
@@ -10,6 +10,7 @@ import {
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
+import { makeSequentialCodeGenerator } from "../../utils/sequentialCode";
 
 const emptyLine = (): ReceiveInventoryPurchaseLineInput => ({ itemId: "", quantity: 1, unitCost: 0, lotNumber: "", expiryDate: "" });
 
@@ -27,6 +28,12 @@ export default function PurchaseReceivingPage() {
   const [receiptDate, setReceiptDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<ReceiveInventoryPurchaseLineInput[]>([emptyLine()]);
+
+  const [showNewVendor, setShowNewVendor] = useState(false);
+  const [newVendorName, setNewVendorName] = useState("");
+  const [newVendorError, setNewVendorError] = useState<string | null>(null);
+  const [savingVendor, setSavingVendor] = useState(false);
+  const vendorCodeGenRef = useRef<() => string>(() => "");
 
   const netTotal = lines.reduce((sum, l) => sum + l.quantity * l.unitCost, 0);
 
@@ -59,6 +66,36 @@ export default function PurchaseReceivingPage() {
 
   function removeLine(idx: number) {
     setLines((prev) => (prev.length > 1 ? prev.filter((_, i) => i !== idx) : prev));
+  }
+
+  function openNewVendor() {
+    vendorCodeGenRef.current = makeSequentialCodeGenerator(vendors.map((v) => v.code));
+    setNewVendorName("");
+    setNewVendorError(null);
+    setShowNewVendor(true);
+  }
+
+  async function handleCreateVendor(e: React.FormEvent) {
+    e.preventDefault();
+    setNewVendorError(null);
+    setSavingVendor(true);
+    try {
+      const res = await PurchasingApi.createVendor({
+        code: vendorCodeGenRef.current(),
+        nameAr: newVendorName,
+        nameEn: newVendorName,
+        phone: null,
+        email: null,
+        taxRegistrationNumber: null,
+      });
+      setVendors((prev) => [...prev, res.data]);
+      setVendorId(res.data.id);
+      setShowNewVendor(false);
+    } catch (err) {
+      setNewVendorError(getErrorMessage(err));
+    } finally {
+      setSavingVendor(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -125,12 +162,17 @@ export default function PurchaseReceivingPage() {
           <div className="form-grid">
             <div className="form-field">
               <label>{t.purchasing.vendor}</label>
-              <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} required>
-                <option value="" disabled>-</option>
-                {vendors.map((v) => (
-                  <option key={v.id} value={v.id}>{v.code} - {bilingualName(v.nameAr, v.nameEn, lang)}</option>
-                ))}
-              </select>
+              <div style={{ display: "flex", gap: 8 }}>
+                <select value={vendorId} onChange={(e) => setVendorId(e.target.value)} required style={{ flex: 1 }}>
+                  <option value="" disabled>-</option>
+                  {vendors.map((v) => (
+                    <option key={v.id} value={v.id}>{v.code} - {bilingualName(v.nameAr, v.nameEn, lang)}</option>
+                  ))}
+                </select>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={openNewVendor}>
+                  + {t.purchasing.newVendor}
+                </button>
+              </div>
             </div>
             <div className="form-field">
               <label>{t.common.date}</label>
@@ -215,6 +257,29 @@ export default function PurchaseReceivingPage() {
           </button>
         </form>
       </div>
+
+      {showNewVendor && (
+        <div className="modal-overlay" onClick={() => setShowNewVendor(false)}>
+          <div className="card" style={{ maxWidth: 420, margin: "10% auto" }} onClick={(e) => e.stopPropagation()}>
+            <h3 style={{ marginTop: 0 }}>{t.purchasing.newVendor}</h3>
+            {newVendorError && <div className="alert-error">{newVendorError}</div>}
+            <form onSubmit={handleCreateVendor}>
+              <div className="form-field">
+                <label>{t.common.nameAr}</label>
+                <input value={newVendorName} onChange={(e) => setNewVendorName(e.target.value)} required autoFocus />
+              </div>
+              <div style={{ display: "flex", gap: 8, marginTop: 14 }}>
+                <button className="btn" type="submit" disabled={savingVendor}>
+                  {savingVendor ? t.common.loading : t.common.save}
+                </button>
+                <button className="btn btn-secondary" type="button" onClick={() => setShowNewVendor(false)}>
+                  {t.common.cancel}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
