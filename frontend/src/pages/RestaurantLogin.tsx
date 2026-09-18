@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
+import { usePortalManifest } from "../utils/pwa";
 
 /// <summary>A distinct front door for restaurant managers/staff — same login API/tenant as the main app,
 /// but branded and landing straight in the ROMA Restaurant portal, the same treatment PeopleLogin gives
@@ -11,6 +12,7 @@ export default function RestaurantLogin() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const { t, lang, setLang } = useLanguage();
+  usePortalManifest("restaurant");
   const [companyCode, setCompanyCode] = useState(() => localStorage.getItem("companyCode") ?? "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
+import { usePortalManifest } from "../utils/pwa";
 
 /// <summary>A distinct front door for customers who only use ROMA People — same login API/tenant as the
 /// main app, but branded and landing straight in the People portal, so an HR-only customer never has to
@@ -11,6 +12,7 @@ export default function PeopleLogin() {
   const { login } = useAuth();
   const navigate = useNavigate();
   const { t, lang, setLang } = useLanguage();
+  usePortalManifest("people");
   const [companyCode, setCompanyCode] = useState(() => localStorage.getItem("companyCode") ?? "");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");

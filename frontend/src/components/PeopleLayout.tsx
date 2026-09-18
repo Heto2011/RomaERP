@@ -3,6 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
+import { usePortalManifest } from "../utils/pwa";
 import { IconUser, IconUsers, IconCheck, IconClock, IconBuilding, IconBriefcase, IconFile, IconWallet, IconDollar, IconBarChart, IconGrid, IconSun, IconMoon } from "./icons";
 
 /// <summary>A distinct-branded shell for the same HR pages the main app already has under /hr/* — same
@@ -12,6 +13,7 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  usePortalManifest("people");
 
   const isAdmin = user?.roles.includes("Admin") ?? false;
   const isHr = isAdmin || user?.roles.includes("HR") || (user?.modules.includes("HR") ?? false);

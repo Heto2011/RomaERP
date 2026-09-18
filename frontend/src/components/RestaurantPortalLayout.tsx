@@ -3,6 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
+import { usePortalManifest } from "../utils/pwa";
 import { IconCart, IconGrid, IconBook, IconTruck, IconSwap, IconRefresh, IconClock, IconSun, IconMoon } from "./icons";
 
 /// <summary>A distinct-branded shell for the restaurant/POS pages — same components, same data, same
@@ -12,6 +13,7 @@ export default function RestaurantPortalLayout({ children }: { children: ReactNo
   const { user, logout } = useAuth();
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
+  usePortalManifest("restaurant");
 
   const links = [
     { to: "/restaurant-portal/tables", label: t.nav.restaurantTables, icon: <IconGrid /> },
