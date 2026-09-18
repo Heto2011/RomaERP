@@ -179,6 +179,10 @@ app.UseRateLimiter();
 
 app.MapControllers();
 
+// Unauthenticated, no tenant/DB dependency — exists purely so an external uptime monitor has
+// something cheap to poll to know the API process itself is up and responding.
+app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+
 app.Run();
 
 // Runs in every environment on every startup: migrates the central database, then migrates every
