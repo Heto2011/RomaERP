@@ -11,7 +11,7 @@ using RomaERP.Infrastructure.Tenancy;
 
 namespace RomaERP.API.Controllers;
 
-/// <summary>Public, self-service 14-day trial signup — no system key, no sales involvement. Reuses the
+/// <summary>Public, self-service 21-day trial signup — no system key, no sales involvement. Reuses the
 /// same real provisioning pipeline as a paid tenant (isolated database, full schema, real chart of
 /// accounts), just tagged as a demo/trial so it auto-expires. Not tenant-scoped (see
 /// TenantResolutionMiddleware's exempt prefixes), since no tenant exists yet when this runs.</summary>
@@ -60,7 +60,7 @@ public class TrialController : ControllerBase
                         request.AdminPassword,
                         TaxRegistrationNumber: null,
                         IsDemo: true,
-                        DemoExpiryDays: 14,
+                        DemoExpiryDays: 21,
                         SeedDemoData: false,
                         ProductScope: request.ProductScope),
                     ct);

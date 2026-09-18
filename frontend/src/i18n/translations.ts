@@ -229,7 +229,7 @@ const ar = {
   },
   trial: {
     title: "ابدأ تجربتك المجانية",
-    subtitle: "14 يوم كاملة، كل إمكانيات RomaERP، من غير بطاقة بنكية.",
+    subtitle: "21 يوم كاملة، كل إمكانيات RomaERP، من غير بطاقة بنكية.",
     whatDoYouNeed: "عايز تستخدم إيه؟",
     productFullTitle: "RomaERP كامل",
     productFullDesc: "محاسبة، مخزون، مبيعات، نقطة بيع، موارد بشرية — النظام بالكامل.",
