@@ -25,9 +25,6 @@ import {
   IconClock,
   IconTruck,
   IconCart,
-  IconBuilding,
-  IconBriefcase,
-  IconDollar,
   IconArchive,
   IconSwap,
   IconEdit,
@@ -202,6 +199,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   ];
 
   const openPeoplePortalLink: NavLeafItem = { to: "/people", label: t.openPeoplePortal, icon: <IconUsers /> };
+  const openRestaurantPortalLink: NavLeafItem = { to: "/restaurant-portal", label: t.openRestaurantPortal, icon: <IconCart /> };
 
   const fullLinks: { section: string; items: NavItem[] }[] = [
     {
@@ -214,6 +212,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/hr/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
         { to: "/hr/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },
         openPeoplePortalLink,
+        openRestaurantPortalLink,
       ],
     },
     {
@@ -266,21 +265,6 @@ export default function Layout({ children }: { children: ReactNode }) {
       ],
     },
     {
-      section: t.nav.hr,
-      items: [
-        { to: "/hr/departments", label: t.nav.departments, icon: <IconBuilding /> },
-        { to: "/hr/positions", label: t.nav.positions, icon: <IconBriefcase /> },
-        { to: "/hr/employees", label: t.nav.employees, icon: <IconUsers /> },
-        { to: "/hr/employee-contracts", label: t.hr.employeeContractsTitle, icon: <IconFile /> },
-        { to: "/hr/salary-components", label: t.hr.salaryComponentsTitle, icon: <IconWallet /> },
-        { to: "/hr/payroll", label: t.nav.payroll, icon: <IconDollar /> },
-        ...(user?.roles.includes("Admin") ? [{ to: "/hr/payroll-settings", label: t.hr.payrollSettingsTitle, icon: <IconWallet /> }] : []),
-        { to: "/hr/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
-        { to: "/hr/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
-        { to: "/hr/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },
-      ],
-    },
-    {
       section: t.nav.inventory,
       items: [
         { to: "/inventory/items", label: t.nav.items, icon: <IconBox /> },
@@ -291,19 +275,6 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/inventory/physical-stock-counts", label: t.inventory.physicalStockCountsTitle, icon: <IconCheck /> },
         { to: "/inventory/waste-entries", label: t.inventory.wasteEntriesTitle, icon: <IconTrendDown /> },
         { subGroup: t.inventory.inventoryReports, icon: <IconBarChart />, subItems: inventoryReportItems },
-      ],
-    },
-    {
-      section: t.nav.restaurant,
-      items: [
-        { to: "/restaurant/pos", label: t.nav.restaurantPos, icon: <IconCart /> },
-        { to: "/restaurant/kitchen", label: t.nav.kitchenDisplay, icon: <IconClock /> },
-        { to: "/restaurant/tables", label: t.nav.restaurantTables, icon: <IconGrid /> },
-        { to: "/restaurant/menu", label: t.nav.restaurantMenu, icon: <IconBook /> },
-        { to: "/restaurant/purchase-receiving", label: t.restaurant.purchaseReceivingTitle, icon: <IconTruck /> },
-        { to: "/restaurant/delivery-reconciliation", label: t.inventory.deliveryReconciliationTitle, icon: <IconSwap /> },
-        { to: "/restaurant/delivery-platforms", label: t.restaurant.deliveryPlatformsTitle, icon: <IconRefresh /> },
-        { to: "/restaurant-portal", label: t.openRestaurantPortal, icon: <IconUsers /> },
       ],
     },
     ...(user?.roles.includes("Admin")
@@ -325,7 +296,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   // Admin (who would otherwise bypass every module check below) — they only ever land here by typing a
   // direct URL, since HomeRoute/PeopleLogin already send them straight to /people.
   const isPeopleOnly = user?.productScope === ProductScope.PeopleOnly;
-  const peopleOnlyAllowedSections = new Set([t.nav.general, t.nav.hr, t.nav.administration]);
+  const peopleOnlyAllowedSections = new Set([t.nav.general, t.nav.administration]);
 
   // Each of these sections requires either the base role that's always had it, or the matching
   // per-user "module" grant (see ModulePermissions on the backend) — Admin always sees everything.
@@ -335,7 +306,6 @@ export default function Layout({ children }: { children: ReactNode }) {
     [t.nav.reports]: { module: "Reports", fallbackRoles: ["Accountant"] },
     [t.nav.sales]: { module: "Sales", fallbackRoles: ["Accountant"] },
     [t.nav.purchasing]: { module: "Purchasing", fallbackRoles: ["Accountant"] },
-    [t.nav.hr]: { module: "HR", fallbackRoles: ["HR"] },
     [t.nav.inventory]: { module: "Inventory", fallbackRoles: ["Accountant"] },
     [t.nav.restaurant]: { module: "POS", fallbackRoles: ["Accountant", "Employee"] },
   };
