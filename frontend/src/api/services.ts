@@ -72,6 +72,9 @@ import type {
   EmployeeContractStatus,
   DeliveryPlatformStatus,
   DeliveryWebhookEvent,
+  SupportTicket,
+  SupportTicketSummary,
+  SupportTicketStatus,
   DeliveryPlatformItemMapping,
   SaveDeliveryPlatformItemMappingInput,
   SaveDeliveryPlatformCredentialInput,
@@ -634,6 +637,61 @@ export const AuditLogApi = {
 export const LoginHistoryApi = {
   getAll: (params: { userId?: string; fromUtc?: string; toUtc?: string; take?: number }) =>
     apiClient.get<LoginHistoryEntry[]>("/login-history", { params }),
+};
+
+function downloadBlob(data: Blob, fileName: string) {
+  const url = URL.createObjectURL(data);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
+
+export const SupportApi = {
+  getMyTickets: () => apiClient.get<SupportTicketSummary[]>("/support/tickets"),
+  getTicket: (id: string) => apiClient.get<SupportTicket>(`/support/tickets/${id}`),
+  createTicket: (subject: string, body: string, files: File[]) => {
+    const form = new FormData();
+    form.append("Subject", subject);
+    form.append("Body", body);
+    files.forEach((f) => form.append("attachments", f));
+    return apiClient.post<SupportTicket>("/support/tickets", form);
+  },
+  addMessage: (id: string, body: string, files: File[]) => {
+    const form = new FormData();
+    form.append("Body", body);
+    files.forEach((f) => form.append("attachments", f));
+    return apiClient.post<SupportTicket>(`/support/tickets/${id}/messages`, form);
+  },
+  downloadAttachment: async (ticketId: string, attachmentId: string, fileName: string) => {
+    const res = await apiClient.get(`/support/tickets/${ticketId}/attachments/${attachmentId}`, { responseType: "blob" });
+    downloadBlob(res.data, fileName);
+  },
+};
+
+/// Not tenant-scoped — the one unified support inbox across every tenant, authenticated by system key.
+export const SystemSupportApi = {
+  getAllTickets: (systemKey: string, status?: string) =>
+    systemApiClient.get<SupportTicketSummary[]>("/system/support/tickets", {
+      params: status ? { status } : undefined,
+      headers: { "X-System-Key": systemKey },
+    }),
+  getTicket: (systemKey: string, id: string) =>
+    systemApiClient.get<SupportTicket>(`/system/support/tickets/${id}`, { headers: { "X-System-Key": systemKey } }),
+  reply: (systemKey: string, id: string, body: string) =>
+    systemApiClient.post<SupportTicket>(`/system/support/tickets/${id}/messages`, { body }, { headers: { "X-System-Key": systemKey } }),
+  updateStatus: (systemKey: string, id: string, status: SupportTicketStatus) =>
+    systemApiClient.patch(`/system/support/tickets/${id}/status`, JSON.stringify(status), {
+      headers: { "X-System-Key": systemKey, "Content-Type": "application/json" },
+    }),
+  downloadAttachment: async (systemKey: string, attachmentId: string, fileName: string) => {
+    const res = await systemApiClient.get(`/system/support/attachments/${attachmentId}`, {
+      responseType: "blob",
+      headers: { "X-System-Key": systemKey },
+    });
+    downloadBlob(res.data, fileName);
+  },
 };
 
 /// Not tenant-scoped — authenticated by a system key passed per call, never stored.

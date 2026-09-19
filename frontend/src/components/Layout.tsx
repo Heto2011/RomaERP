@@ -209,6 +209,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       items: [
         { to: "/", label: t.nav.dashboard, icon: <IconGrid /> },
         { to: "/alerts", label: t.alerts.title, icon: <IconBell /> },
+        { to: "/support", label: t.support.title, icon: <IconChat /> },
         { to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> },
         { to: "/hr/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
         { to: "/hr/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },

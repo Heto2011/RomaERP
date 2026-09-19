@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RomaERP.Domain.Support;
 using RomaERP.Domain.Tenancy;
 
 namespace RomaERP.Infrastructure.Persistence.Central;
@@ -14,6 +15,9 @@ public class CentralDbContext : DbContext
     public DbSet<SubscriptionPlan> SubscriptionPlans => Set<SubscriptionPlan>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<SubscriptionInvoice> SubscriptionInvoices => Set<SubscriptionInvoice>();
+    public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
+    public DbSet<SupportTicketMessage> SupportTicketMessages => Set<SupportTicketMessage>();
+    public DbSet<SupportTicketAttachment> SupportTicketAttachments => Set<SupportTicketAttachment>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -64,6 +68,33 @@ public class CentralDbContext : DbContext
             b.HasOne<Tenant>().WithMany().HasForeignKey(i => i.TenantId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne<Subscription>().WithMany().HasForeignKey(i => i.SubscriptionId).OnDelete(DeleteBehavior.Restrict);
             b.HasQueryFilter(i => !i.IsDeleted);
+        });
+
+        builder.Entity<SupportTicket>(b =>
+        {
+            b.Property(t => t.TicketNumber).UseIdentityColumn(seed: 1000, increment: 1);
+            b.HasIndex(t => t.TicketNumber).IsUnique();
+            b.Property(t => t.CompanyCode).HasMaxLength(50).IsRequired();
+            b.Property(t => t.RequesterEmail).HasMaxLength(200).IsRequired();
+            b.Property(t => t.RequesterName).HasMaxLength(200).IsRequired();
+            b.Property(t => t.Subject).HasMaxLength(300).IsRequired();
+            b.HasMany(t => t.Messages).WithOne().HasForeignKey(m => m.TicketId).OnDelete(DeleteBehavior.Cascade);
+            b.HasQueryFilter(t => !t.IsDeleted);
+        });
+
+        builder.Entity<SupportTicketMessage>(b =>
+        {
+            b.Property(m => m.SenderName).HasMaxLength(200).IsRequired();
+            b.Property(m => m.Body).HasMaxLength(4000).IsRequired();
+            b.HasMany(m => m.Attachments).WithOne().HasForeignKey(a => a.MessageId).OnDelete(DeleteBehavior.Cascade);
+            b.HasQueryFilter(m => !m.IsDeleted);
+        });
+
+        builder.Entity<SupportTicketAttachment>(b =>
+        {
+            b.Property(a => a.FileName).HasMaxLength(260).IsRequired();
+            b.Property(a => a.ContentType).HasMaxLength(100).IsRequired();
+            b.HasQueryFilter(a => !a.IsDeleted);
         });
     }
 }

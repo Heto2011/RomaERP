@@ -2019,3 +2019,45 @@ export interface LoginHistoryEntry {
   method: "Password" | "PosPin";
   occurredAtUtc: string;
 }
+
+export type SupportTicketStatus = "Open" | "AwaitingCustomer" | "InProgress" | "Resolved" | "Closed";
+export type SupportMessageSender = "Customer" | "Support" | "Ai";
+
+export interface SupportTicketAttachment {
+  id: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
+}
+
+export interface SupportTicketMessage {
+  id: string;
+  senderType: SupportMessageSender;
+  senderName: string;
+  body: string;
+  createdAtUtc: string;
+  attachments: SupportTicketAttachment[];
+}
+
+export interface SupportTicket {
+  id: string;
+  ticketNumber: number;
+  companyCode: string;
+  requesterEmail: string;
+  requesterName: string;
+  subject: string;
+  status: SupportTicketStatus;
+  createdAtUtc: string;
+  messages: SupportTicketMessage[];
+}
+
+export interface SupportTicketSummary {
+  id: string;
+  ticketNumber: number;
+  companyCode: string;
+  requesterName: string;
+  subject: string;
+  status: SupportTicketStatus;
+  createdAtUtc: string;
+  updatedAtUtc: string | null;
+}

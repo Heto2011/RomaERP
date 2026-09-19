@@ -11,10 +11,12 @@ import StartTrial from "./pages/StartTrial";
 import PosLogin from "./pages/restaurant/PosLogin";
 import DemoTenantsPage from "./pages/system/DemoTenants";
 import SubscriptionsPage from "./pages/system/Subscriptions";
+import SupportTicketsPage from "./pages/system/SupportTickets";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import MyProfile from "./pages/MyProfile";
 import AlertsPage from "./pages/Alerts";
+import SupportPage from "./pages/Support";
 import AuditLogPage from "./pages/AuditLog";
 import LoginHistoryPage from "./pages/LoginHistory";
 import EInvoicing from "./pages/EInvoicing";
@@ -129,10 +131,12 @@ export default function App() {
       <Route path="/pos-login" element={<PosLogin />} />
       <Route path="/system/demo-tenants" element={<DemoTenantsPage />} />
       <Route path="/system/subscriptions" element={<SubscriptionsPage />} />
+      <Route path="/system/support-tickets" element={<SupportTicketsPage />} />
       <Route path="/" element={<ProtectedRoute><HomeRoute /></ProtectedRoute>} />
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/my-profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
       <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
+      <Route path="/support" element={<ProtectedRoute><SupportPage /></ProtectedRoute>} />
       <Route path="/audit-log" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
       <Route path="/login-history" element={<ProtectedRoute><LoginHistoryPage /></ProtectedRoute>} />
       <Route path="/einvoicing" element={<ProtectedRoute><EInvoicing /></ProtectedRoute>} />
