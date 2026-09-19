@@ -1,4 +1,3 @@
-using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -174,7 +173,7 @@ public class SupportController : ControllerBase
         return result;
     }
 
-    private string CurrentEmail() => User.FindFirstValue(JwtRegisteredClaimNames.Email)
+    private string CurrentEmail() => User.FindFirstValue(ClaimTypes.Email)
         ?? throw new ValidationAppException("تعذر تحديد بريدك الإلكتروني من جلسة الدخول.");
 
     private string CurrentName() => User.FindFirstValue(ClaimTypes.Name) ?? CurrentEmail();
