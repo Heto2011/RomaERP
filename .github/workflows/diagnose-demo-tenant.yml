@@ -1,0 +1,20 @@
+name: Diagnose Demo Tenant Flag
+
+on:
+  workflow_dispatch:
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the 'demo' tenant's IsActive/IsDemo/ExpiresAtUtc in the central DB
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            SQLCMD_BIN=$(docker exec sqlserver bash -c 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi')
+            SA_PASS=$(docker exec sqlserver printenv MSSQL_SA_PASSWORD)
+            echo "===== Tenants row for company code 'demo' ====="
+            docker exec sqlserver "$SQLCMD_BIN" -S localhost -U sa -P "$SA_PASS" -C -d RomaERP_Central -Q "SELECT CompanyCode, IsActive, IsDemo, ExpiresAtUtc, CreatedAtUtc FROM Tenants WHERE CompanyCode = 'demo'"
