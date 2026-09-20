@@ -51,7 +51,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
-  const navRef = useRef<HTMLElement>(null);
+  const navRef = useRef<HTMLDivElement>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   function matchesPath(to: string) {
@@ -288,65 +288,68 @@ export default function Layout({ children }: { children: ReactNode }) {
             </button>
           </div>
         </div>
-        <nav className="topnav-links" ref={navRef}>
-          {links.map((group) => (
-            <div key={group.section} className="topnav-section">
+        <div ref={navRef}>
+          <nav className="topnav-links">
+            {links.map((group) => (
               <button
+                key={group.section}
                 className={"topnav-link" + (activeSection === group.section ? " active" : "")}
                 onClick={() => setOpenDropdown((cur) => (cur === group.section ? null : group.section))}
               >
                 <span>{group.section}</span>
                 <IconChevron open={openDropdown === group.section} />
               </button>
-              {openDropdown === group.section && (
-                <div className="topnav-dropdown">
-                  {group.items.map((item) =>
-                    "subGroup" in item ? (
-                      <div key={item.subGroup} className="topnav-dropdown-column">
-                        <div className="topnav-dropdown-column-title">
-                          {item.icon}
-                          <span>{item.subGroup}</span>
-                        </div>
-                        {item.subItems.map((sub) =>
-                          sub.comingSoon ? (
-                            <span key={sub.label} className="topnav-dropdown-link topnav-dropdown-link-soon">
-                              {sub.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
-                            </span>
-                          ) : (
-                            <NavLink
-                              key={sub.label}
-                              to={sub.to}
-                              className={({ isActive }) => "topnav-dropdown-link" + (isActive ? " active" : "")}
-                            >
-                              {sub.label}
-                            </NavLink>
-                          )
-                        )}
+            ))}
+          </nav>
+          {links
+            .filter((group) => group.section === openDropdown)
+            .map((group) => (
+              <div key={group.section} className="topnav-panel">
+                {group.items.map((item) =>
+                  "subGroup" in item ? (
+                    <div key={item.subGroup} className="topnav-dropdown-column">
+                      <div className="topnav-dropdown-column-title">
+                        {item.icon}
+                        <span>{item.subGroup}</span>
                       </div>
-                    ) : item.comingSoon ? (
-                      <span key={item.label} className="topnav-dropdown-link topnav-dropdown-link-soon">
-                        {item.icon}
-                        <span>
-                          {item.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
-                        </span>
+                      {item.subItems.map((sub) =>
+                        sub.comingSoon ? (
+                          <span key={sub.label} className="topnav-dropdown-link topnav-dropdown-link-soon">
+                            {sub.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
+                          </span>
+                        ) : (
+                          <NavLink
+                            key={sub.label}
+                            to={sub.to}
+                            className={({ isActive }) => "topnav-dropdown-link" + (isActive ? " active" : "")}
+                          >
+                            {sub.label}
+                          </NavLink>
+                        )
+                      )}
+                    </div>
+                  ) : item.comingSoon ? (
+                    <span key={item.label} className="topnav-dropdown-link topnav-dropdown-link-soon">
+                      {item.icon}
+                      <span>
+                        {item.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
                       </span>
-                    ) : (
-                      <NavLink
-                        key={item.to}
-                        to={item.to}
-                        end={item.to === "/"}
-                        className={({ isActive }) => "topnav-dropdown-link" + (isActive ? " active" : "")}
-                      >
-                        {item.icon}
-                        <span>{item.label}</span>
-                      </NavLink>
-                    )
-                  )}
-                </div>
-              )}
-            </div>
-          ))}
-        </nav>
+                    </span>
+                  ) : (
+                    <NavLink
+                      key={item.to}
+                      to={item.to}
+                      end={item.to === "/"}
+                      className={({ isActive }) => "topnav-dropdown-link" + (isActive ? " active" : "")}
+                    >
+                      {item.icon}
+                      <span>{item.label}</span>
+                    </NavLink>
+                  )
+                )}
+              </div>
+            ))}
+        </div>
       </header>
       <main className="topnav-content">{children}</main>
     </div>
