@@ -35,15 +35,18 @@
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
 
   header.hero {
-    padding: 72px 0 56px;
+    padding: 28px 0 56px;
     text-align: center;
     background:
       radial-gradient(60% 100% at 50% 0%, var(--primary-tint) 0%, transparent 70%);
   }
+  .top-row {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 36px;
+  }
   .brand {
     display: inline-flex; align-items: center; gap: 8px;
     font-weight: 900; font-size: 20px; color: var(--primary-dark);
-    margin-bottom: 28px;
   }
   .brand-mark {
     width: 30px; height: 30px; border-radius: 9px;
@@ -51,6 +54,12 @@
     display: flex; align-items: center; justify-content: center;
     color: #fff; font-size: 15px; font-weight: 900;
   }
+  .lang-toggle {
+    background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+    border-radius: 999px; padding: 7px 16px; font-weight: 700; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+  .lang-toggle:hover { border-color: var(--primary); }
   h1 {
     font-size: clamp(30px, 4.5vw, 46px);
     font-weight: 900;
@@ -107,7 +116,7 @@
     box-shadow: 0 1px 2px rgba(28,38,32,.04), 0 20px 40px -18px rgba(15,92,75,.4);
   }
   .tier-badge {
-    position: absolute; top: -13px; right: 22px;
+    position: absolute; top: -13px; inset-inline-end: 22px;
     background: var(--primary); color: #fff;
     font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
   }
@@ -220,7 +229,7 @@
   .trial-steps {
     display: flex; justify-content: center; gap: 24px; margin-top: 28px; flex-wrap: wrap;
   }
-  .trial-steps div { font-size: 13px; opacity: .85; }
+  .trial-steps div { font-size: 13px; opacity: .85; max-width: 220px; }
   .trial-steps strong { display: block; font-size: 15px; margin-bottom: 4px; }
 
   /* Product preview (real screenshot of the app) */
@@ -240,7 +249,7 @@
   .preview-app {
     background: #14181d; color: #e5e9ee;
     font-family: "Tajawal", sans-serif;
-    display: flex; direction: rtl;
+    display: flex;
     min-height: 420px;
   }
   .preview-sidebar {
@@ -280,6 +289,7 @@
   }
   @media (max-width: 540px) {
     .tiers { grid-template-columns: 1fr; }
+    .top-row { flex-wrap: wrap; gap: 12px; justify-content: center; }
   }
 </style>
 </head>
@@ -287,12 +297,15 @@
 
 <header class="hero">
   <div class="wrap">
-    <div class="brand"><span class="brand-mark">R</span> RomaERP</div>
-    <h1>سعر واحد <span>واضح</span>، على قد نشاطك</h1>
-    <p class="hero-sub">مش هنطلب منك تشتري المحاسبة وحدها والـ POS وحده والمخزون والتكاليف كل واحد لوحده. اشتراك واحد، كل الإمكانيات، والسعر بيتغير بس حسب حجمك — عدد الشركات، الفروع، والمستخدمين.</p>
+    <div class="top-row">
+      <div class="brand"><span class="brand-mark">R</span> RomaERP</div>
+      <button class="lang-toggle" id="langToggle" type="button">English</button>
+    </div>
+    <h1 id="heroTitle"></h1>
+    <p class="hero-sub" id="heroSub"></p>
     <div class="hero-cta">
-      <a href="/start-trial" class="btn btn-primary">جرّب مجانًا 21 يوم</a>
-      <a href="#calculator" class="btn btn-ghost">احسب سعرك</a>
+      <a href="/start-trial" class="btn btn-primary" id="heroCtaTrial"></a>
+      <a href="#calculator" class="btn btn-ghost" id="heroCtaCalc"></a>
     </div>
   </div>
 </header>
@@ -301,52 +314,29 @@
   <div class="wrap">
     <div class="preview-frame">
       <div class="preview-chrome"><span></span><span></span><span></span></div>
-      <div class="preview-app">
-        <div class="preview-sidebar">
+      <div class="preview-app" id="previewApp">
+        <div class="preview-sidebar" id="previewSidebar">
           <p class="brand">RomaERP</p>
-          <a>عام</a>
-          <a>المساعد الذكي</a>
-          <a class="active">شجرة الحسابات</a>
-          <a>الأرصدة الافتتاحية</a>
-          <a>القيود اليومية</a>
-          <a>التقارير</a>
-          <a>المبيعات</a>
-          <a>المشتريات</a>
         </div>
         <div class="preview-main">
-          <h2>شجرة الحسابات</h2>
-          <div class="preview-tree">
-            <div class="row l0"><span>الأصول (إجمالي)</span><span class="code">1000</span></div>
-            <div class="row l1"><span>الأصول المتداولة (إجمالي)</span><span class="code">1100</span></div>
-            <div class="row l2"><span>النقدية وما في حكمها (إجمالي)</span><span class="code">1110</span></div>
-            <div class="row l2"><span>الصندوق</span><span class="code">1111</span></div>
-            <div class="row l2"><span>البنك</span><span class="code">1112</span></div>
-            <div class="row l1"><span>العملاء</span><span class="code">1120</span></div>
-            <div class="row l1"><span>المخزون</span><span class="code">1160</span></div>
-            <div class="row l0"><span>الخصوم (إجمالي)</span><span class="code">2000</span></div>
-            <div class="row l1"><span>الموردون</span><span class="code">2120</span></div>
-            <div class="row l0"><span>حقوق الملكية (إجمالي)</span><span class="code">3000</span></div>
-            <div class="row l0"><span>الإيرادات (إجمالي)</span><span class="code">4000</span></div>
-            <div class="row l1"><span>إيرادات المبيعات</span><span class="code">4100</span></div>
-            <div class="row l0"><span>المصروفات (إجمالي)</span><span class="code">5000</span></div>
-            <div class="row l1"><span>تكلفة البضاعة المباعة</span><span class="code">5500</span></div>
-          </div>
+          <h2 id="previewTitle"></h2>
+          <div class="preview-tree" id="previewTree"></div>
         </div>
       </div>
     </div>
-    <p class="preview-caption">شجرة حسابات محاسبية كاملة بمعايير احترافية — جاهزة من أول يوم، مش محتاج تبنيها بنفسك.</p>
+    <p class="preview-caption" id="previewCaption"></p>
   </div>
 </section>
 
 <section id="tiers">
   <div class="wrap">
     <div class="section-head">
-      <span class="eyebrow">الباقات</span>
-      <h2>نقطة بداية، مش قالب جاهز</h2>
-      <p>الأسعار دي بداية معقولة لكل حجم نشاط. استخدم الحاسبة تحت عشان تشوف السعر الفعلي المناسب لك بالظبط.</p>
+      <span class="eyebrow" id="tiersEyebrow"></span>
+      <h2 id="tiersHeading"></h2>
+      <p id="tiersDesc"></p>
     </div>
     <div class="currency-select">
-      <label for="currencyPicker">اعرض الأسعار بعملة:</label>
+      <label for="currencyPicker" id="currencyLabel"></label>
       <select id="currencyPicker"></select>
     </div>
     <p class="currency-note" id="currencyNote"></p>
@@ -357,9 +347,9 @@
 <section>
   <div class="wrap">
     <div class="section-head">
-      <span class="eyebrow">كل الإمكانيات، مفيش استثناءات</span>
-      <h2>كل مستويات الاشتراك تشمل النظام بالكامل</h2>
-      <p>مفيش Modules منفصلة، ومفيش تقارير أو صلاحيات مقفولة على باقة معينة. الفرق بين الباقات هو حجم النشاط بس.</p>
+      <span class="eyebrow" id="includedEyebrow"></span>
+      <h2 id="includedHeading"></h2>
+      <p id="includedDesc"></p>
     </div>
     <div class="included-grid" id="includedGrid"></div>
   </div>
@@ -368,58 +358,52 @@
 <section id="calculator">
   <div class="wrap">
     <div class="section-head">
-      <span class="eyebrow">الحاسبة</span>
-      <h2>احسب السعر المناسب لنشاطك</h2>
-      <p>غيّر عدد الشركات والفروع والمستخدمين وشوف السعر بيتغير على طول.</p>
+      <span class="eyebrow" id="calcEyebrow"></span>
+      <h2 id="calcHeading"></h2>
+      <p id="calcDesc"></p>
     </div>
     <div class="calc-card">
       <div class="calc-controls">
         <div>
-          <div class="field-label"><span>عدد الشركات (كيانات منفصلة)</span><span class="val" id="companiesVal">1</span></div>
+          <div class="field-label"><span id="companiesLabel"></span><span class="val" id="companiesVal">1</span></div>
           <input type="range" id="companiesRange" min="1" max="8" value="1" step="1" />
-          <div class="field-hint">كل شركة = حساب مستقل بالكامل ببياناته الخاصة، وبنجمعهم في فاتورة واحدة بخصم على الشركات الإضافية.</div>
+          <div class="field-hint" id="companiesHint"></div>
         </div>
         <div>
-          <div class="field-label"><span>عدد الفروع (لكل شركة)</span><span class="val" id="branchesVal">1</span></div>
+          <div class="field-label"><span id="branchesLabel"></span><span class="val" id="branchesVal">1</span></div>
           <input type="range" id="branchesRange" min="1" max="20" value="1" step="1" />
         </div>
         <div>
-          <div class="field-label"><span>عدد المستخدمين (لكل شركة)</span><span class="val" id="usersVal">2</span></div>
+          <div class="field-label"><span id="usersLabel"></span><span class="val" id="usersVal">2</span></div>
           <input type="range" id="usersRange" min="1" max="50" value="2" step="1" />
         </div>
       </div>
       <div class="calc-result">
         <div>
           <div class="tier-tag" id="resultTier">Essential 🟢</div>
-          <div class="price-label">السعر الشهري التقديري</div>
-          <div class="price"><span id="resultPrice">149</span> <small id="resultCurrency">ريال / شهريًا</small></div>
+          <div class="price-label" id="priceLabel"></div>
+          <div class="price"><span id="resultPrice">149</span> <small id="resultCurrency"></small></div>
           <div class="breakdown" id="resultBreakdown"></div>
         </div>
-        <a href="/start-trial" class="btn btn-primary">ابدأ بهذا السعر</a>
+        <a href="/start-trial" class="btn btn-primary" id="calcCta"></a>
       </div>
     </div>
-    <div class="assumptions-note">
-      ⚠️ الأرقام دي نقطة بداية للمراجعة الداخلية قبل الإطلاق — مش أسعار نهائية معلنة. لو حابب تعدلها غيّر الثوابت في أول ملف <code class="mono">pricing.html</code>.
-    </div>
+    <div class="assumptions-note" id="assumptionsNote"></div>
   </div>
 </section>
 
 <section id="trial">
   <div class="wrap">
     <div class="trial-band">
-      <h2>لا تصدّقنا. جرّب ROMA بنفسك.</h2>
-      <p>21 يوم مجانًا، بحساب شركة حقيقي ببياناتك، وكل إمكانيات ROMA متاحة — من غير ما تحط بيانات بطاقة بنكية.</p>
-      <a href="/start-trial" class="btn btn-primary" style="background:#fff;color:var(--primary-dark)">ابدأ تجربتك الآن</a>
-      <div class="trial-steps">
-        <div><strong>1. 21 يوم كاملة</strong>كل الإمكانيات من غير قيود</div>
-        <div><strong>2. تحويل مباشر</strong>لو أعجبك، نفس الحساب ونفس البيانات يستمر بدون فقد أي حاجة</div>
-        <div><strong>3. بياناتك في أمان</strong>حتى لو التجربة خلصت، بياناتك محفوظة وميتمسحش حاجة من غير ما تقرر انت</div>
-      </div>
+      <h2 id="trialHeading"></h2>
+      <p id="trialDesc"></p>
+      <a href="/start-trial" class="btn btn-primary" style="background:#fff;color:var(--primary-dark)" id="trialCta"></a>
+      <div class="trial-steps" id="trialSteps"></div>
     </div>
   </div>
 </section>
 
-<footer>© RomaERP — السعودية أولاً. الأسعار قابلة للتغيير حتى الإطلاق الرسمي. <a href="/terms.html" style="color:var(--primary)">الشروط والأحكام</a></footer>
+<footer id="footerText"></footer>
 
 <script>
   // ---- Configurable pricing assumptions (placeholders — tune before launch) ----
@@ -428,30 +412,159 @@
   const LAUNCH_OFFER_LIMIT = 100;
   const TIERS = [
     {
-      id: "essential", emoji: "🟢", name: "Essential", desc: "حتى 3 فروع و10 مستخدمين",
+      id: "essential", emoji: "🟢", name: "Essential",
+      desc: { ar: "حتى 3 فروع و10 مستخدمين", en: "Up to 3 branches and 10 users" },
       base: 149, listPrice: 499, annualPrice: 1500,
       launchOffer: true, includedBranches: 3, includedUsers: 10,
     },
-    { id: "business", emoji: "🔵", name: "Business", desc: "شركات متعددة الفروع", base: 999, includedBranches: 6, includedUsers: 20, recommended: true },
-    { id: "professional", emoji: "🟣", name: "Professional", desc: "نشاط أكبر واحتياج موسّع", base: 1799, includedBranches: 12, includedUsers: 40 },
-    { id: "enterprise", emoji: "🔴", name: "Enterprise", desc: "الشركات الكبيرة", base: 2499, includedBranches: Infinity, includedUsers: Infinity, custom: true },
+    {
+      id: "business", emoji: "🔵", name: "Business",
+      desc: { ar: "شركات متعددة الفروع", en: "Multi-branch businesses" },
+      base: 999, includedBranches: 6, includedUsers: 20, recommended: true,
+    },
+    {
+      id: "professional", emoji: "🟣", name: "Professional",
+      desc: { ar: "نشاط أكبر واحتياج موسّع", en: "Larger operations, wider needs" },
+      base: 1799, includedBranches: 12, includedUsers: 40,
+    },
+    {
+      id: "enterprise", emoji: "🔴", name: "Enterprise",
+      desc: { ar: "الشركات الكبيرة", en: "Large enterprises" },
+      base: 2499, includedBranches: Infinity, includedUsers: Infinity, custom: true,
+    },
   ];
   const EXTRA_BRANCH_PRICE = 150; // SAR / branch / month, beyond tier's included branches
   const EXTRA_USER_PRICE = 40;    // SAR / user / month, beyond tier's included users
   const ADDITIONAL_COMPANY_DISCOUNT = 0.85; // each company after the first billed at 85% of its own computed price
 
   // rate = units of that currency per 1 SAR. Gulf currencies are pegged to USD, so these are stable;
-  // EGP floats and moves a lot, hence the "تقريبي" note — real EGP pricing is confirmed at signup time.
+  // EGP floats and moves a lot, hence the "approximate" note — real EGP pricing is confirmed at signup time.
   const CURRENCIES = {
-    SAR: { label: "ريال سعودي (SAR)", unit: "ريال", rate: 1, decimals: 0 },
-    AED: { label: "درهم إماراتي (AED)", unit: "درهم", rate: 0.98, decimals: 0 },
-    QAR: { label: "ريال قطري (QAR)", unit: "ريال قطري", rate: 0.97, decimals: 0 },
-    KWD: { label: "دينار كويتي (KWD)", unit: "دينار", rate: 0.082, decimals: 1 },
-    BHD: { label: "دينار بحريني (BHD)", unit: "دينار", rate: 0.1, decimals: 1 },
-    OMR: { label: "ريال عماني (OMR)", unit: "ريال عماني", rate: 0.1025, decimals: 1 },
-    EGP: { label: "جنيه مصري (EGP) — تقريبي", unit: "جنيه", rate: 13, decimals: 0, approx: true },
+    SAR: { label: { ar: "ريال سعودي (SAR)", en: "Saudi Riyal (SAR)" }, unit: { ar: "ريال", en: "SAR" }, rate: 1, decimals: 0 },
+    AED: { label: { ar: "درهم إماراتي (AED)", en: "UAE Dirham (AED)" }, unit: { ar: "درهم", en: "AED" }, rate: 0.98, decimals: 0 },
+    QAR: { label: { ar: "ريال قطري (QAR)", en: "Qatari Riyal (QAR)" }, unit: { ar: "ريال قطري", en: "QAR" }, rate: 0.97, decimals: 0 },
+    KWD: { label: { ar: "دينار كويتي (KWD)", en: "Kuwaiti Dinar (KWD)" }, unit: { ar: "دينار", en: "KWD" }, rate: 0.082, decimals: 1 },
+    BHD: { label: { ar: "دينار بحريني (BHD)", en: "Bahraini Dinar (BHD)" }, unit: { ar: "دينار", en: "BHD" }, rate: 0.1, decimals: 1 },
+    OMR: { label: { ar: "ريال عماني (OMR)", en: "Omani Rial (OMR)" }, unit: { ar: "ريال عماني", en: "OMR" }, rate: 0.1025, decimals: 1 },
+    EGP: { label: { ar: "جنيه مصري (EGP) — تقريبي", en: "Egyptian Pound (EGP) — approximate" }, unit: { ar: "جنيه", en: "EGP" }, rate: 13, decimals: 0, approx: true },
   };
   let currentCurrency = "SAR";
+  let currentLang = localStorage.getItem("lang") === "en" ? "en" : "ar";
+
+  const T = {
+    ar: {
+      pageTitle: "الأسعار — RomaERP",
+      heroTitlePrefix: "سعر واحد ", heroTitleHighlight: "واضح", heroTitleSuffix: "، على قد نشاطك",
+      heroSub: "مش هنطلب منك تشتري المحاسبة وحدها والـ POS وحده والمخزون والتكاليف كل واحد لوحده. اشتراك واحد، كل الإمكانيات، والسعر بيتغير بس حسب حجمك — عدد الشركات، الفروع، والمستخدمين.",
+      heroCtaTrial: "جرّب مجانًا 21 يوم", heroCtaCalc: "احسب سعرك",
+      previewNav: ["عام", "المساعد الذكي", "شجرة الحسابات", "الأرصدة الافتتاحية", "القيود اليومية", "التقارير", "المبيعات", "المشتريات"],
+      previewTitle: "شجرة الحسابات",
+      previewTree: [
+        ["الأصول (إجمالي)", "1000", "l0"], ["الأصول المتداولة (إجمالي)", "1100", "l1"],
+        ["النقدية وما في حكمها (إجمالي)", "1110", "l2"], ["الصندوق", "1111", "l2"], ["البنك", "1112", "l2"],
+        ["العملاء", "1120", "l1"], ["المخزون", "1160", "l1"],
+        ["الخصوم (إجمالي)", "2000", "l0"], ["الموردون", "2120", "l1"],
+        ["حقوق الملكية (إجمالي)", "3000", "l0"],
+        ["الإيرادات (إجمالي)", "4000", "l0"], ["إيرادات المبيعات", "4100", "l1"],
+        ["المصروفات (إجمالي)", "5000", "l0"], ["تكلفة البضاعة المباعة", "5500", "l1"],
+      ],
+      previewCaption: "شجرة حسابات محاسبية كاملة بمعايير احترافية — جاهزة من أول يوم، مش محتاج تبنيها بنفسك.",
+      tiersEyebrow: "الباقات", tiersHeading: "نقطة بداية، مش قالب جاهز",
+      tiersDesc: "الأسعار دي بداية معقولة لكل حجم نشاط. استخدم الحاسبة تحت عشان تشوف السعر الفعلي المناسب لك بالظبط.",
+      currencyLabel: "اعرض الأسعار بعملة:",
+      launchBadge: `عرض الإطلاق — أول ${LAUNCH_OFFER_LIMIT} عميل`, recommendedBadge: "الأكثر طلبًا",
+      perMonth: "شهريًا", customPricePrefix: "من ", customPriceNote: "سعر مخصص حسب النشاط",
+      includesUpTo: (branches, users, branchWord) => `يشمل حتى ${branches} ${branchWord} و ${users} مستخدمين`,
+      branchWord1: "فرع", branchWordMany: "فروع",
+      annualNote: (amount, unit) => `أو ${amount} ${unit} سنويًا (وفّر أكتر)`,
+      includeAllModules: "كل موديولات ROMA بدون استثناء", includeSupport: "دعم فني بالعربي",
+      includeUnlimited: "فروع ومستخدمون بلا حدود عملية", includeExtraPricing: "زيادة الفروع/المستخدمين بسعر إضافي واضح",
+      ctaContact: "تواصل معنا", ctaStartTrial: "ابدأ تجربتك",
+      includedEyebrow: "كل الإمكانيات، مفيش استثناءات", includedHeading: "كل مستويات الاشتراك تشمل النظام بالكامل",
+      includedDesc: "مفيش Modules منفصلة، ومفيش تقارير أو صلاحيات مقفولة على باقة معينة. الفرق بين الباقات هو حجم النشاط بس.",
+      includedFeatures: ["المحاسبة والقيود", "نقاط البيع POS", "المبيعات والمشتريات", "المخزون والتكاليف", "الوصفات والمطاعم", "الموارد البشرية والرواتب", "التقارير المالية", "الذكاء المالي والتنبؤ", "تحليل ماذا-لو", "إدارة الفروع", "الصلاحيات", "سجل التدقيق (Audit Trail)"],
+      calcEyebrow: "الحاسبة", calcHeading: "احسب السعر المناسب لنشاطك",
+      calcDesc: "غيّر عدد الشركات والفروع والمستخدمين وشوف السعر بيتغير على طول.",
+      companiesLabel: "عدد الشركات (كيانات منفصلة)",
+      companiesHint: "كل شركة = حساب مستقل بالكامل ببياناته الخاصة، وبنجمعهم في فاتورة واحدة بخصم على الشركات الإضافية.",
+      branchesLabel: "عدد الفروع (لكل شركة)", usersLabel: "عدد المستخدمين (لكل شركة)",
+      priceLabel: "السعر الشهري التقديري", calcCta: "ابدأ بهذا السعر",
+      baseLine: (tierName, amount, unit) => `<div><span>السعر الأساسي (${tierName})</span><span>${amount} ${unit}</span></div>`,
+      extraBranchesLine: (count, amount, unit) => `<div><span>فروع إضافية × ${count}</span><span>+${amount} ${unit}</span></div>`,
+      extraUsersLine: (count, amount, unit) => `<div><span>مستخدمون إضافيون × ${count}</span><span>+${amount} ${unit}</span></div>`,
+      additionalCompanyLine: (count, amount, unit) => `<div><span>${count} شركة إضافية (خصم 15%)</span><span>+${amount} ${unit}</span></div>`,
+      enterpriseContactLine: `<div><span>تواصل معنا لعرض دقيق للمؤسسات الكبيرة</span></div>`,
+      assumptionsNote: `⚠️ الأرقام دي نقطة بداية للمراجعة الداخلية قبل الإطلاق — مش أسعار نهائية معلنة. لو حابب تعدلها غيّر الثوابت في أول ملف <code class="mono">pricing.html</code>.`,
+      trialHeading: "لا تصدّقنا. جرّب ROMA بنفسك.",
+      trialDesc: "21 يوم مجانًا، بحساب شركة حقيقي ببياناتك، وكل إمكانيات ROMA متاحة — من غير ما تحط بيانات بطاقة بنكية.",
+      trialCta: "ابدأ تجربتك الآن",
+      trialSteps: [
+        ["1. 21 يوم كاملة", "كل الإمكانيات من غير قيود"],
+        ["2. تحويل مباشر", "لو أعجبك، نفس الحساب ونفس البيانات يستمر بدون فقد أي حاجة"],
+        ["3. بياناتك في أمان", "حتى لو التجربة خلصت، بياناتك محفوظة وميتمسحش حاجة من غير ما تقرر انت"],
+      ],
+      footer: `© RomaERP — السعودية أولاً. الأسعار قابلة للتغيير حتى الإطلاق الرسمي. <a href="/terms.html" style="color:var(--primary)">الشروط والأحكام</a>`,
+      egpNote: "الأسعار بالجنيه المصري تقريبية لتقلب سعر الصرف — السعر النهائي بيتأكد وقت التفعيل الفعلي.",
+      approxNote: "أسعار تقريبية محوّلة من الريال السعودي.",
+      langToggleLabel: "English",
+    },
+    en: {
+      pageTitle: "Pricing — RomaERP",
+      heroTitlePrefix: "One ", heroTitleHighlight: "clear", heroTitleSuffix: " price, sized to your business",
+      heroSub: "No buying accounting alone, POS alone, and inventory & costing alone. One subscription, every feature, and the price only changes with your size — number of companies, branches, and users.",
+      heroCtaTrial: "Try free for 21 days", heroCtaCalc: "Calculate your price",
+      previewNav: ["General", "AI Assistant", "Chart of Accounts", "Opening Balances", "Journal Entries", "Reports", "Sales", "Purchasing"],
+      previewTitle: "Chart of Accounts",
+      previewTree: [
+        ["Assets (total)", "1000", "l0"], ["Current Assets (total)", "1100", "l1"],
+        ["Cash & Equivalents (total)", "1110", "l2"], ["Cash on Hand", "1111", "l2"], ["Bank", "1112", "l2"],
+        ["Customers", "1120", "l1"], ["Inventory", "1160", "l1"],
+        ["Liabilities (total)", "2000", "l0"], ["Vendors", "2120", "l1"],
+        ["Equity (total)", "3000", "l0"],
+        ["Revenue (total)", "4000", "l0"], ["Sales Revenue", "4100", "l1"],
+        ["Expenses (total)", "5000", "l0"], ["Cost of Goods Sold", "5500", "l1"],
+      ],
+      previewCaption: "A complete, professional-standard chart of accounts — ready from day one, no need to build it yourself.",
+      tiersEyebrow: "Plans", tiersHeading: "A starting point, not a rigid template",
+      tiersDesc: "These prices are a reasonable start for every business size. Use the calculator below to see the exact price that fits you.",
+      currencyLabel: "Show prices in:",
+      launchBadge: `Launch offer — first ${LAUNCH_OFFER_LIMIT} customers`, recommendedBadge: "Most popular",
+      perMonth: "/ month", customPricePrefix: "From ", customPriceNote: "Custom pricing based on your activity",
+      includesUpTo: (branches, users, branchWord) => `Includes up to ${branches} ${branchWord} and ${users} users`,
+      branchWord1: "branch", branchWordMany: "branches",
+      annualNote: (amount, unit) => `or ${amount} ${unit} yearly (save more)`,
+      includeAllModules: "Every ROMA module, no exceptions", includeSupport: "Arabic-language support",
+      includeUnlimited: "Practically unlimited branches and users", includeExtraPricing: "Extra branches/users at a clear add-on price",
+      ctaContact: "Contact us", ctaStartTrial: "Start your trial",
+      includedEyebrow: "Everything included, no exceptions", includedHeading: "Every plan includes the full system",
+      includedDesc: "No separate modules, no reports or permissions locked to a specific plan. The only difference between plans is the size of your activity.",
+      includedFeatures: ["Accounting & journal entries", "POS", "Sales & purchasing", "Inventory & costing", "Recipes & restaurants", "HR & payroll", "Financial reports", "Financial AI & forecasting", "What-if analysis", "Branch management", "Permissions", "Audit trail"],
+      calcEyebrow: "Calculator", calcHeading: "Calculate the right price for your business",
+      calcDesc: "Change the number of companies, branches, and users and watch the price update instantly.",
+      companiesLabel: "Number of companies (separate entities)",
+      companiesHint: "Each company = a fully independent account with its own data, combined into one invoice with a discount on additional companies.",
+      branchesLabel: "Number of branches (per company)", usersLabel: "Number of users (per company)",
+      priceLabel: "Estimated monthly price", calcCta: "Start at this price",
+      baseLine: (tierName, amount, unit) => `<div><span>Base price (${tierName})</span><span>${amount} ${unit}</span></div>`,
+      extraBranchesLine: (count, amount, unit) => `<div><span>Extra branches × ${count}</span><span>+${amount} ${unit}</span></div>`,
+      extraUsersLine: (count, amount, unit) => `<div><span>Extra users × ${count}</span><span>+${amount} ${unit}</span></div>`,
+      additionalCompanyLine: (count, amount, unit) => `<div><span>${count} additional compan${count === 1 ? "y" : "ies"} (15% off)</span><span>+${amount} ${unit}</span></div>`,
+      enterpriseContactLine: `<div><span>Contact us for an exact quote for large organizations</span></div>`,
+      assumptionsNote: `⚠️ These numbers are a starting point for internal review before launch — not final published pricing. To adjust them, change the constants at the top of <code class="mono">pricing.html</code>.`,
+      trialHeading: "Don't take our word for it. Try ROMA yourself.",
+      trialDesc: "21 days free, with a real company account and your own data, and every ROMA feature available — no credit card required.",
+      trialCta: "Start your trial now",
+      trialSteps: [
+        ["1. 21 full days", "Every feature, no restrictions"],
+        ["2. Seamless conversion", "If you like it, the same account and data continue with nothing lost"],
+        ["3. Your data is safe", "Even after the trial ends, your data stays saved — nothing is deleted unless you decide to"],
+      ],
+      footer: `© RomaERP — Saudi Arabia first. Prices subject to change until official launch. <a href="/terms.html" style="color:var(--primary)">Terms &amp; Privacy</a>`,
+      egpNote: "EGP prices are approximate due to exchange-rate fluctuation — the final price is confirmed at activation.",
+      approxNote: "Approximate prices converted from Saudi Riyal.",
+      langToggleLabel: "عربي",
+    },
+  };
 
   function convert(sarAmount) {
     const c = CURRENCIES[currentCurrency];
@@ -459,41 +572,92 @@
     return c.decimals > 0 ? value.toFixed(c.decimals) : Math.round(value);
   }
 
-  const INCLUDED_FEATURES = [
-    "المحاسبة والقيود", "نقاط البيع POS", "المبيعات والمشتريات", "المخزون والتكاليف",
-    "الوصفات والمطاعم", "الموارد البشرية والرواتب", "التقارير المالية", "الذكاء المالي والتنبؤ",
-    "تحليل ماذا-لو", "إدارة الفروع", "الصلاحيات", "سجل التدقيق (Audit Trail)",
-  ];
+  function renderStatic() {
+    const t = T[currentLang];
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
+    document.title = t.pageTitle;
+    document.getElementById("langToggle").textContent = t.langToggleLabel;
+
+    document.getElementById("heroTitle").innerHTML =
+      `${t.heroTitlePrefix}<span>${t.heroTitleHighlight}</span>${t.heroTitleSuffix}`;
+    document.getElementById("heroSub").textContent = t.heroSub;
+    document.getElementById("heroCtaTrial").textContent = t.heroCtaTrial;
+    document.getElementById("heroCtaCalc").textContent = t.heroCtaCalc;
+
+    const sidebar = document.getElementById("previewSidebar");
+    sidebar.innerHTML = `<p class="brand">RomaERP</p>` +
+      t.previewNav.map((label, i) => `<a class="${i === 2 ? "active" : ""}">${label}</a>`).join("");
+    document.getElementById("previewTitle").textContent = t.previewTitle;
+    document.getElementById("previewTree").innerHTML = t.previewTree.map(([label, code, level]) =>
+      `<div class="row ${level}"><span>${label}</span><span class="code">${code}</span></div>`
+    ).join("");
+    document.getElementById("previewCaption").textContent = t.previewCaption;
+
+    document.getElementById("tiersEyebrow").textContent = t.tiersEyebrow;
+    document.getElementById("tiersHeading").textContent = t.tiersHeading;
+    document.getElementById("tiersDesc").textContent = t.tiersDesc;
+    document.getElementById("currencyLabel").textContent = t.currencyLabel;
+
+    document.getElementById("includedEyebrow").textContent = t.includedEyebrow;
+    document.getElementById("includedHeading").textContent = t.includedHeading;
+    document.getElementById("includedDesc").textContent = t.includedDesc;
+
+    document.getElementById("calcEyebrow").textContent = t.calcEyebrow;
+    document.getElementById("calcHeading").textContent = t.calcHeading;
+    document.getElementById("calcDesc").textContent = t.calcDesc;
+    document.getElementById("companiesLabel").textContent = t.companiesLabel;
+    document.getElementById("companiesHint").textContent = t.companiesHint;
+    document.getElementById("branchesLabel").textContent = t.branchesLabel;
+    document.getElementById("usersLabel").textContent = t.usersLabel;
+    document.getElementById("priceLabel").textContent = t.priceLabel;
+    document.getElementById("calcCta").textContent = t.calcCta;
+    document.getElementById("assumptionsNote").innerHTML = t.assumptionsNote;
+
+    document.getElementById("trialHeading").textContent = t.trialHeading;
+    document.getElementById("trialDesc").textContent = t.trialDesc;
+    document.getElementById("trialCta").textContent = t.trialCta;
+    document.getElementById("trialSteps").innerHTML = t.trialSteps.map(([title, desc]) =>
+      `<div><strong>${title}</strong>${desc}</div>`
+    ).join("");
+
+    document.getElementById("footerText").innerHTML = t.footer;
+  }
 
   function renderTiers() {
-    const unit = CURRENCIES[currentCurrency].unit;
+    const t = T[currentLang];
+    const unit = CURRENCIES[currentCurrency].unit[currentLang];
     const grid = document.getElementById("tiersGrid");
-    grid.innerHTML = TIERS.map(t => `
-      <div class="tier ${t.recommended ? "is-recommended" : ""}">
-        ${t.launchOffer ? `<div class="tier-badge is-launch">عرض الإطلاق — أول ${LAUNCH_OFFER_LIMIT} عميل</div>` : t.recommended ? '<div class="tier-badge">الأكثر طلبًا</div>' : ""}
-        <div class="tier-emoji">${t.emoji}</div>
-        <h3 class="tier-name">${t.name}</h3>
-        <p class="tier-desc">${t.desc}</p>
+    grid.innerHTML = TIERS.map(tier => {
+      const branchWord = tier.includedBranches === 1 ? t.branchWord1 : t.branchWordMany;
+      return `
+      <div class="tier ${tier.recommended ? "is-recommended" : ""}">
+        ${tier.launchOffer ? `<div class="tier-badge is-launch">${t.launchBadge}</div>` : tier.recommended ? `<div class="tier-badge">${t.recommendedBadge}</div>` : ""}
+        <div class="tier-emoji">${tier.emoji}</div>
+        <h3 class="tier-name">${tier.name}</h3>
+        <p class="tier-desc">${tier.desc[currentLang]}</p>
         <div class="tier-price">
-          ${t.listPrice ? `<span class="tier-old-price mono">${convert(t.listPrice)}</span>` : ""}
-          <span class="amount mono">${t.custom ? "من " + convert(t.base) : convert(t.base)}</span>
-          <span class="currency">${unit} / شهريًا</span>
+          ${tier.listPrice ? `<span class="tier-old-price mono">${convert(tier.listPrice)}</span>` : ""}
+          <span class="amount mono">${tier.custom ? t.customPricePrefix + convert(tier.base) : convert(tier.base)}</span>
+          <span class="currency">${unit} ${t.perMonth}</span>
         </div>
-        <div class="tier-price-note">${t.custom ? "سعر مخصص حسب النشاط" : `يشمل حتى ${t.includedBranches} ${t.includedBranches === 1 ? "فرع" : "فروع"} و ${t.includedUsers} مستخدمين`}</div>
-        ${t.annualPrice ? `<div class="tier-annual-note">أو ${convert(t.annualPrice)} ${unit} سنويًا (وفّر أكتر)</div>` : ""}
+        <div class="tier-price-note">${tier.custom ? t.customPriceNote : t.includesUpTo(tier.includedBranches, tier.includedUsers, branchWord)}</div>
+        ${tier.annualPrice ? `<div class="tier-annual-note">${t.annualNote(convert(tier.annualPrice), unit)}</div>` : ""}
         <ul class="tier-includes">
-          <li>كل موديولات ROMA بدون استثناء</li>
-          <li>دعم فني بالعربي</li>
-          <li>${t.custom ? "فروع ومستخدمون بلا حدود عملية" : "زيادة الفروع/المستخدمين بسعر إضافي واضح"}</li>
+          <li>${t.includeAllModules}</li>
+          <li>${t.includeSupport}</li>
+          <li>${tier.custom ? t.includeUnlimited : t.includeExtraPricing}</li>
         </ul>
-        <a href="/start-trial" class="btn ${t.recommended || t.launchOffer ? "btn-primary" : "btn-ghost"}">${t.custom ? "تواصل معنا" : "ابدأ تجربتك"}</a>
+        <a href="/start-trial" class="btn ${tier.recommended || tier.launchOffer ? "btn-primary" : "btn-ghost"}">${tier.custom ? t.ctaContact : t.ctaStartTrial}</a>
       </div>
-    `).join("");
+    `;
+    }).join("");
   }
 
   function renderIncluded() {
+    const t = T[currentLang];
     document.getElementById("includedGrid").innerHTML =
-      INCLUDED_FEATURES.map(f => `<span>${f}</span>`).join("");
+      t.includedFeatures.map(f => `<span>${f}</span>`).join("");
   }
 
   function pickTier(branches, users) {
@@ -514,7 +678,8 @@
   }
 
   function renderCalculator() {
-    const unit = CURRENCIES[currentCurrency].unit;
+    const t = T[currentLang];
+    const unit = CURRENCIES[currentCurrency].unit[currentLang];
     const companies = Number(document.getElementById("companiesRange").value);
     const branches = Number(document.getElementById("branchesRange").value);
     const users = Number(document.getElementById("usersRange").value);
@@ -525,46 +690,51 @@
     const r = computePrice(companies, branches, users);
     document.getElementById("resultTier").textContent = `${r.tier.name} ${r.tier.emoji}`;
     document.getElementById("resultPrice").textContent = convert(r.total).toLocaleString("en-US");
-    document.getElementById("resultCurrency").textContent = `${unit} / شهريًا`;
+    document.getElementById("resultCurrency").textContent = `${unit} ${t.perMonth}`;
 
-    const lines = [`<div><span>السعر الأساسي (${r.tier.name})</span><span>${convert(r.tier.base)} ${unit}</span></div>`];
-    if (r.extraBranches > 0) lines.push(`<div><span>فروع إضافية × ${r.extraBranches}</span><span>+${convert(r.extraBranches * EXTRA_BRANCH_PRICE)} ${unit}</span></div>`);
-    if (r.extraUsers > 0) lines.push(`<div><span>مستخدمون إضافيون × ${r.extraUsers}</span><span>+${convert(r.extraUsers * EXTRA_USER_PRICE)} ${unit}</span></div>`);
-    if (r.additionalCompanies > 0) lines.push(`<div><span>${r.additionalCompanies} شركة إضافية (خصم 15%)</span><span>+${convert(r.additionalCompanies * r.perCompany * ADDITIONAL_COMPANY_DISCOUNT)} ${unit}</span></div>`);
-    if (r.tier.custom) lines.push(`<div><span colspan="2">تواصل معنا لعرض دقيق للمؤسسات الكبيرة</span></div>`);
+    const lines = [t.baseLine(r.tier.name, convert(r.tier.base), unit)];
+    if (r.extraBranches > 0) lines.push(t.extraBranchesLine(r.extraBranches, convert(r.extraBranches * EXTRA_BRANCH_PRICE), unit));
+    if (r.extraUsers > 0) lines.push(t.extraUsersLine(r.extraUsers, convert(r.extraUsers * EXTRA_USER_PRICE), unit));
+    if (r.additionalCompanies > 0) lines.push(t.additionalCompanyLine(r.additionalCompanies, convert(r.additionalCompanies * r.perCompany * ADDITIONAL_COMPANY_DISCOUNT), unit));
+    if (r.tier.custom) lines.push(t.enterpriseContactLine);
     document.getElementById("resultBreakdown").innerHTML = lines.join("");
   }
 
   function renderCurrencyPicker() {
     const select = document.getElementById("currencyPicker");
     select.innerHTML = Object.entries(CURRENCIES).map(([code, c]) =>
-      `<option value="${code}" ${code === currentCurrency ? "selected" : ""}>${c.label}</option>`
+      `<option value="${code}" ${code === currentCurrency ? "selected" : ""}>${c.label[currentLang]}</option>`
     ).join("");
-    select.addEventListener("change", () => {
+    select.onchange = () => {
       currentCurrency = select.value;
       renderAll();
-    });
+    };
     renderCurrencyNote();
   }
 
   function renderCurrencyNote() {
+    const t = T[currentLang];
     const note = document.getElementById("currencyNote");
     if (currentCurrency === "SAR") { note.textContent = ""; return; }
     const c = CURRENCIES[currentCurrency];
-    note.textContent = c.approx
-      ? "الأسعار بالجنيه المصري تقريبية لتقلب سعر الصرف — السعر النهائي بيتأكد وقت التفعيل الفعلي."
-      : "أسعار تقريبية محوّلة من الريال السعودي.";
+    note.textContent = c.approx ? t.egpNote : t.approxNote;
   }
 
   function renderAll() {
+    renderStatic();
     renderTiers();
+    renderIncluded();
+    renderCurrencyPicker();
     renderCalculator();
-    renderCurrencyNote();
   }
 
-  renderCurrencyPicker();
+  document.getElementById("langToggle").addEventListener("click", () => {
+    currentLang = currentLang === "ar" ? "en" : "ar";
+    localStorage.setItem("lang", currentLang);
+    renderAll();
+  });
+
   renderAll();
-  renderIncluded();
   ["companiesRange", "branchesRange", "usersRange"].forEach(id =>
     document.getElementById(id).addEventListener("input", renderCalculator)
   );
