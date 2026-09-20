@@ -7,7 +7,7 @@ interface PortalPwaConfig {
   appTitle: string;
 }
 
-const PORTAL_CONFIG: Record<"people" | "restaurant", PortalPwaConfig> = {
+const PORTAL_CONFIG: Record<"people" | "restaurant" | "inventory", PortalPwaConfig> = {
   people: {
     manifestHref: "/manifest-people.json",
     themeColor: "#c2703d",
@@ -19,6 +19,12 @@ const PORTAL_CONFIG: Record<"people" | "restaurant", PortalPwaConfig> = {
     themeColor: "#c1442d",
     appleTouchIcon: "/icons/restaurant-apple-touch.png",
     appTitle: "ROMA Restaurant",
+  },
+  inventory: {
+    manifestHref: "/manifest-inventory.json",
+    themeColor: "#5b4b9e",
+    appleTouchIcon: "/icons/inventory-apple-touch.png",
+    appTitle: "ROMA Inventory",
   },
 };
 
@@ -63,7 +69,7 @@ function swapMeta(name: string, content: string): () => void {
 // "Add to Home Screen" installs ROMA People / ROMA Restaurant as their own branded app rather
 // than the main RomaERP one. Restores whatever the main app's own tags had on unmount, rather
 // than deleting them outright.
-export function usePortalManifest(portal: "people" | "restaurant") {
+export function usePortalManifest(portal: "people" | "restaurant" | "inventory") {
   useEffect(() => {
     const config = PORTAL_CONFIG[portal];
     const restoreManifest = swapLink("manifest", config.manifestHref);

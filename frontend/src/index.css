@@ -49,6 +49,17 @@
   --color-primary-dark: #2b1310;
 }
 
+/* ROMA Inventory portal — same idea as .people-theme, its own indigo accent. */
+.inventory-theme {
+  --color-primary: #5b4b9e;
+  --color-primary-dark: #362d5e;
+}
+
+:root[data-theme="dark"] .inventory-theme {
+  --color-primary: #8b7bd8;
+  --color-primary-dark: #221c3d;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -519,15 +530,18 @@ tr:hover td {
     padding: 8px 10px;
   }
 
-  /* ROMA People / ROMA Restaurant have no icon-only collapsed mode (unlike the main app's sidebar) —
-     on mobile their sidebar starts fully hidden and opens as an overlay via the hamburger toggle. */
+  /* ROMA People / ROMA Restaurant / ROMA Inventory have no icon-only collapsed mode (unlike the main
+     app's sidebar) — on mobile their sidebar starts fully hidden and opens as an overlay via the
+     hamburger toggle. */
   .people-theme .sidebar,
-  .restaurant-theme .sidebar {
+  .restaurant-theme .sidebar,
+  .inventory-theme .sidebar {
     display: none;
   }
 
   .people-theme .sidebar.mobile-open,
-  .restaurant-theme .sidebar.mobile-open {
+  .restaurant-theme .sidebar.mobile-open,
+  .inventory-theme .sidebar.mobile-open {
     display: flex;
     position: fixed;
     inset-inline-start: 0;

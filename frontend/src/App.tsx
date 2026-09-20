@@ -4,9 +4,11 @@ import { ProductScope } from "./api/types";
 import Layout from "./components/Layout";
 import PeopleLayout from "./components/PeopleLayout";
 import RestaurantPortalLayout from "./components/RestaurantPortalLayout";
+import InventoryPortalLayout from "./components/InventoryPortalLayout";
 import Login from "./pages/Login";
 import PeopleLogin from "./pages/PeopleLogin";
 import RestaurantLogin from "./pages/RestaurantLogin";
+import InventoryLogin from "./pages/InventoryLogin";
 import StartTrial from "./pages/StartTrial";
 import PosLogin from "./pages/restaurant/PosLogin";
 import DemoTenantsPage from "./pages/system/DemoTenants";
@@ -110,6 +112,12 @@ function RestaurantPortalRoute({ children }: { children: React.ReactNode }) {
   return <RestaurantPortalLayout>{children}</RestaurantPortalLayout>;
 }
 
+function InventoryPortalRoute({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  if (!user) return <Navigate to="/inventory-login" replace />;
+  return <InventoryPortalLayout>{children}</InventoryPortalLayout>;
+}
+
 // A user whose only role is Employee is a cashier — send them straight to the POS screen instead of
 // the general dashboard, matching the restricted sidebar Layout shows them. A tenant that signed up for
 // ROMA People only (not the full suite) lands straight in the People portal instead of the ERP dashboard.
@@ -127,6 +135,7 @@ export default function App() {
       <Route path="/login" element={<Login />} />
       <Route path="/people-login" element={<PeopleLogin />} />
       <Route path="/restaurant-login" element={<RestaurantLogin />} />
+      <Route path="/inventory-login" element={<InventoryLogin />} />
       <Route path="/start-trial" element={<StartTrial />} />
       <Route path="/pos-login" element={<PosLogin />} />
       <Route path="/system/demo-tenants" element={<DemoTenantsPage />} />
@@ -226,6 +235,19 @@ export default function App() {
       <Route path="/inventory/reports/waste-analysis" element={<ProtectedRoute><WasteAnalysisPage /></ProtectedRoute>} />
       <Route path="/inventory/physical-stock-counts" element={<ProtectedRoute><PhysicalStockCountsPage /></ProtectedRoute>} />
       <Route path="/inventory/waste-entries" element={<ProtectedRoute><WasteEntriesPage /></ProtectedRoute>} />
+      <Route path="/inventory-portal" element={<InventoryPortalRoute><Items /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/items" element={<InventoryPortalRoute><Items /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/warehouses" element={<InventoryPortalRoute><Warehouses /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/manufacturing" element={<InventoryPortalRoute><Manufacturing /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/expiring-stock" element={<InventoryPortalRoute><ExpiringStock /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/movements" element={<InventoryPortalRoute><StockMovements /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/physical-stock-counts" element={<InventoryPortalRoute><PhysicalStockCountsPage /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/waste-entries" element={<InventoryPortalRoute><WasteEntriesPage /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/reports/stock-valuation" element={<InventoryPortalRoute><StockValuationPage /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/reports/movement-analysis" element={<InventoryPortalRoute><InventoryMovementPage /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/reports/purchase-price-variance" element={<InventoryPortalRoute><PurchasePriceVariancePage /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/reports/recipe-cost" element={<InventoryPortalRoute><RecipeCostPage /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/reports/waste-analysis" element={<InventoryPortalRoute><WasteAnalysisPage /></InventoryPortalRoute>} />
       <Route path="/accounting/hidden-profit" element={<ProtectedRoute><HiddenProfitPage /></ProtectedRoute>} />
       <Route path="/accounting/executive-brief" element={<ProtectedRoute><ExecutiveBriefPage /></ProtectedRoute>} />
       <Route path="/accounting/comparisons" element={<ProtectedRoute><ComparisonToolPage /></ProtectedRoute>} />

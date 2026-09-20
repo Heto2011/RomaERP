@@ -9,6 +9,9 @@ const ar = {
   restaurantAppName: "ROMA Restaurant",
   poweredByRomaErpRestaurant: "من ROMA Restaurant — جزء من منظومة RomaERP",
   openRestaurantPortal: "افتح ROMA Restaurant",
+  inventoryAppName: "ROMA Inventory",
+  poweredByRomaErpInventory: "من ROMA Inventory — جزء من منظومة RomaERP",
+  openInventoryPortal: "افتح ROMA Inventory",
   logout: "تسجيل الخروج",
   usage: {
     title: "استخدامك",
@@ -1335,6 +1338,9 @@ const en: typeof ar = {
   restaurantAppName: "ROMA Restaurant",
   poweredByRomaErpRestaurant: "From ROMA Restaurant — part of the RomaERP suite",
   openRestaurantPortal: "Open ROMA Restaurant",
+  inventoryAppName: "ROMA Inventory",
+  poweredByRomaErpInventory: "From ROMA Inventory — part of the RomaERP suite",
+  openInventoryPortal: "Open ROMA Inventory",
   logout: "Logout",
   usage: {
     title: "Your Usage",

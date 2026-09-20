@@ -25,7 +25,6 @@ import {
   IconClock,
   IconTruck,
   IconCart,
-  IconArchive,
   IconSwap,
   IconEdit,
   IconShield,
@@ -162,21 +161,6 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: "", label: t.inventory.navRecipeVsActualUsage, comingSoon: true },
   ];
 
-  const inventoryReportItems: NavSubGroupItem["subItems"] = [
-    { to: "/inventory/reports/stock-valuation", label: t.inventory.stockValuationTitle },
-    { to: "/inventory/reports/movement-analysis#slow", label: t.inventory.navSlowMovingItems },
-    { to: "/inventory/reports/movement-analysis#dead", label: t.inventory.navDeadStock },
-    { to: "/inventory/reports/movement-analysis#fast", label: t.inventory.navFastMovingItems },
-    { to: "/inventory/reports/movement-analysis", label: t.inventory.navInventoryDays },
-    { to: "/inventory/reports/movement-analysis", label: t.inventory.navInventoryTurnover },
-    { to: "/inventory/physical-stock-counts", label: t.inventory.navStockCountVariance },
-    { to: "/inventory/waste-entries", label: t.inventory.navWaste },
-    { to: "/inventory/waste-entries", label: t.inventory.navDamaged },
-    { to: "/inventory/reports/waste-analysis", label: t.inventory.wasteAnalysisTitle },
-    { to: "", label: t.inventory.navAbnormalConsumption, comingSoon: true },
-    { to: "/inventory/reports/movement-analysis#atrisk", label: t.inventory.navAtRiskItems },
-    { to: "/inventory/reports/movement-analysis#excess", label: t.inventory.navExcessStock },
-  ];
 
   // A user whose only role is Employee is a cashier — the sidebar collapses to just what a cashier
   // needs, so they never see accounting/HR/purchasing data even if they bypass the standalone POS
@@ -200,6 +184,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const openPeoplePortalLink: NavLeafItem = { to: "/people", label: t.openPeoplePortal, icon: <IconUsers /> };
   const openRestaurantPortalLink: NavLeafItem = { to: "/restaurant-portal", label: t.openRestaurantPortal, icon: <IconCart /> };
+  const openInventoryPortalLink: NavLeafItem = { to: "/inventory-portal", label: t.openInventoryPortal, icon: <IconBox /> };
 
   const fullLinks: { section: string; items: NavItem[] }[] = [
     {
@@ -213,6 +198,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/hr/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },
         openPeoplePortalLink,
         openRestaurantPortalLink,
+        openInventoryPortalLink,
       ],
     },
     {
@@ -264,19 +250,6 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/purchasing/aging", label: t.nav.apAging, icon: <IconClock /> },
       ],
     },
-    {
-      section: t.nav.inventory,
-      items: [
-        { to: "/inventory/items", label: t.nav.items, icon: <IconBox /> },
-        { to: "/inventory/warehouses", label: t.nav.warehouses, icon: <IconArchive /> },
-        { to: "/inventory/manufacturing", label: t.inventory.manufacturingTitle, icon: <IconRefresh /> },
-        { to: "/inventory/expiring-stock", label: t.inventory.expiringStockTitle, icon: <IconClock /> },
-        { to: "/inventory/movements", label: t.nav.stockMovements, icon: <IconSwap /> },
-        { to: "/inventory/physical-stock-counts", label: t.inventory.physicalStockCountsTitle, icon: <IconCheck /> },
-        { to: "/inventory/waste-entries", label: t.inventory.wasteEntriesTitle, icon: <IconTrendDown /> },
-        { subGroup: t.inventory.inventoryReports, icon: <IconBarChart />, subItems: inventoryReportItems },
-      ],
-    },
     ...(user?.roles.includes("Admin")
       ? [
           {
@@ -306,7 +279,6 @@ export default function Layout({ children }: { children: ReactNode }) {
     [t.nav.reports]: { module: "Reports", fallbackRoles: ["Accountant"] },
     [t.nav.sales]: { module: "Sales", fallbackRoles: ["Accountant"] },
     [t.nav.purchasing]: { module: "Purchasing", fallbackRoles: ["Accountant"] },
-    [t.nav.inventory]: { module: "Inventory", fallbackRoles: ["Accountant"] },
     [t.nav.restaurant]: { module: "POS", fallbackRoles: ["Accountant", "Employee"] },
   };
   function canSeeSection(section: string) {
