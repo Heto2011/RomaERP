@@ -34,6 +34,19 @@ jobs:
             "
             fi
 
+            NEW_CLAUDE_KEY="${{ secrets.CLAUDE_API_KEY }}"
+            if [ -n "$NEW_CLAUDE_KEY" ]; then
+              CLAUDE_API_KEY="$NEW_CLAUDE_KEY" python3 -c "
+            import json, os
+            path = 'src/RomaERP.API/appsettings.json'
+            with open(path) as f:
+                data = json.load(f)
+            data.setdefault('Claude', {})['ApiKey'] = os.environ['CLAUDE_API_KEY'].strip()
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=2)
+            "
+            fi
+
             dotnet publish src/RomaERP.API/RomaERP.API.csproj -c Release -o /var/www/romaerp-api
             systemctl restart romaerp-api
             systemctl is-active romaerp-api
