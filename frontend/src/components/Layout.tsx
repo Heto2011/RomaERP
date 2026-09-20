@@ -303,52 +303,53 @@ export default function Layout({ children }: { children: ReactNode }) {
           </nav>
           {links
             .filter((group) => group.section === openDropdown)
-            .map((group) => (
-              <div key={group.section} className="topnav-panel">
-                {group.items.map((item) =>
-                  "subGroup" in item ? (
-                    <div key={item.subGroup} className="topnav-dropdown-column">
-                      <div className="topnav-dropdown-column-title">
-                        {item.icon}
-                        <span>{item.subGroup}</span>
-                      </div>
-                      {item.subItems.map((sub) =>
-                        sub.comingSoon ? (
-                          <span key={sub.label} className="topnav-dropdown-link topnav-dropdown-link-soon">
-                            {sub.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
+            .map((group) => {
+              const flatItems = group.items.filter((item): item is NavLeafItem => !("subGroup" in item));
+              const subGroups = group.items.filter((item): item is NavSubGroupItem => "subGroup" in item);
+              return (
+                <div key={group.section} className="topnav-panel">
+                  {flatItems.length > 0 && (
+                    <div className="dash-app-grid">
+                      {flatItems.map((item) =>
+                        item.comingSoon ? (
+                          <span key={item.label} className="dash-app-tile topnav-tile-soon">
+                            <span className="dash-app-tile-icon">{item.icon}</span>
+                            <span>{item.label}</span>
+                            <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
                           </span>
                         ) : (
-                          <NavLink
-                            key={sub.label}
-                            to={sub.to}
-                            className={({ isActive }) => "topnav-dropdown-link" + (isActive ? " active" : "")}
-                          >
-                            {sub.label}
+                          <NavLink key={item.to} to={item.to} end={item.to === "/"} className="dash-app-tile">
+                            <span className="dash-app-tile-icon">{item.icon}</span>
+                            <span>{item.label}</span>
                           </NavLink>
                         )
                       )}
                     </div>
-                  ) : item.comingSoon ? (
-                    <span key={item.label} className="topnav-dropdown-link topnav-dropdown-link-soon">
-                      {item.icon}
-                      <span>
-                        {item.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
-                      </span>
-                    </span>
-                  ) : (
-                    <NavLink
-                      key={item.to}
-                      to={item.to}
-                      end={item.to === "/"}
-                      className={({ isActive }) => "topnav-dropdown-link" + (isActive ? " active" : "")}
-                    >
-                      {item.icon}
-                      <span>{item.label}</span>
-                    </NavLink>
-                  )
-                )}
-              </div>
-            ))}
+                  )}
+                  {subGroups.map((group) => (
+                    <div key={group.subGroup} className="topnav-tile-group">
+                      <div className="topnav-tile-group-title">{group.subGroup}</div>
+                      <div className="dash-app-grid">
+                        {group.subItems.map((sub) =>
+                          sub.comingSoon ? (
+                            <span key={sub.label} className="dash-app-tile topnav-tile-soon">
+                              <span className="dash-app-tile-icon">{group.icon}</span>
+                              <span>{sub.label}</span>
+                              <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
+                            </span>
+                          ) : (
+                            <NavLink key={sub.label} to={sub.to} className="dash-app-tile">
+                              <span className="dash-app-tile-icon">{group.icon}</span>
+                              <span>{sub.label}</span>
+                            </NavLink>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
         </div>
       </header>
       <main className="topnav-content">{children}</main>
