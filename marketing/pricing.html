@@ -35,7 +35,7 @@
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
 
   header.hero {
-    padding: 28px 0 56px;
+    padding: 28px 0 40px;
     text-align: center;
     background:
       radial-gradient(60% 100% at 50% 0%, var(--primary-tint) 0%, transparent 70%);
@@ -88,13 +88,152 @@
   .btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--border); }
 
   section { padding: 40px 0; }
-  .section-head { text-align: center; max-width: 560px; margin: 0 auto 40px; }
+  .section-head { text-align: center; max-width: 620px; margin: 0 auto 40px; }
   .section-head .eyebrow {
     color: var(--primary); font-weight: 700; font-size: 13px;
     letter-spacing: .04em; text-transform: uppercase; margin-bottom: 10px; display: block;
   }
   .section-head h2 { font-size: 28px; margin: 0 0 10px; font-weight: 900; }
   .section-head p { color: var(--ink-soft); margin: 0; }
+
+  /* Industries strip */
+  .industries-strip {
+    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
+    margin: 26px auto 0; max-width: 720px;
+  }
+  .industries-strip span {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 999px; padding: 8px 16px; font-size: 13.5px; font-weight: 700;
+    color: var(--ink-soft);
+  }
+
+  /* Product preview (dashboard mockup) */
+  .preview-frame {
+    max-width: 940px; margin: 0 auto;
+    border-radius: 18px; overflow: hidden;
+    box-shadow: 0 1px 2px rgba(28,38,32,.06), 0 30px 60px -24px rgba(28,38,32,.35);
+    border: 1px solid var(--border);
+  }
+  .preview-chrome {
+    background: #e9e5da; padding: 10px 14px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .preview-chrome span {
+    width: 11px; height: 11px; border-radius: 50%; background: #c9c2b2;
+  }
+  .preview-app {
+    background: #14181d; color: #e5e9ee;
+    font-family: "Tajawal", sans-serif;
+    display: flex;
+    min-height: 460px;
+  }
+  .preview-sidebar {
+    width: 190px; flex-shrink: 0;
+    background: #14181d; border-inline-start: 1px solid #2c3540;
+    padding: 16px 0; display: flex; flex-direction: column; gap: 2px;
+  }
+  .preview-sidebar .brand {
+    color: #fff; font-weight: 900; font-size: 15px;
+    padding: 0 18px 16px; margin: 0;
+  }
+  .preview-sidebar a {
+    padding: 9px 18px; font-size: 13.5px; color: #8b96a3;
+  }
+  .preview-sidebar a.active {
+    background: #3aa0c4; color: #fff; font-weight: 700;
+  }
+  .preview-main { flex: 1; padding: 22px 26px; min-width: 0; }
+  .preview-main h2 { font-size: 19px; font-weight: 900; margin: 0 0 18px; color: #fff; }
+  .preview-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    margin-bottom: 22px;
+  }
+  .preview-stat {
+    background: #1c232b; border: 1px solid #2c3540; border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .preview-stat .label { font-size: 11.5px; color: #8b96a3; margin-bottom: 6px; }
+  .preview-stat .value { font-size: 19px; font-weight: 900; color: #fff; font-family: "IBM Plex Mono", monospace; }
+  .preview-stat .value.up { color: #5fd0a1; }
+  .preview-stat .value.warn { color: #e0a94c; }
+  .preview-tree { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
+  .preview-tree .row { display: flex; justify-content: space-between; padding: 4px 0; }
+  .preview-tree .code { color: #6b98a8; font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+  .preview-tree .l0 { font-weight: 700; color: #fff; }
+  .preview-tree .l1 { padding-inline-start: 20px; color: #c7cdd4; }
+  .preview-tree .l2 { padding-inline-start: 40px; color: #8b96a3; }
+  .preview-caption {
+    text-align: center; color: var(--ink-soft); font-size: 13.5px;
+    max-width: 560px; margin: 18px auto 0;
+  }
+
+  /* AI section */
+  .ai-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+  }
+  .ai-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; box-shadow: var(--shadow);
+  }
+  .ai-card .ai-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: var(--primary-tint); color: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-bottom: 14px;
+  }
+  .ai-card h3 { font-size: 16.5px; font-weight: 900; margin: 0 0 8px; }
+  .ai-card p { font-size: 13.5px; color: var(--ink-soft); margin: 0; }
+  .ai-card .ai-note {
+    display: block; margin-top: 10px; font-size: 12px; font-weight: 700;
+    color: var(--primary);
+  }
+
+  /* Data journey */
+  .journey {
+    display: flex; align-items: stretch; gap: 0; flex-wrap: wrap;
+    justify-content: center;
+  }
+  .journey-step {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 16px; width: 220px; text-align: center;
+    box-shadow: var(--shadow);
+  }
+  .journey-step .num {
+    width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12.5px; font-weight: 900; margin: 0 auto 10px;
+  }
+  .journey-step h4 { font-size: 14px; font-weight: 900; margin: 0 0 6px; }
+  .journey-step p { font-size: 12.5px; color: var(--ink-soft); margin: 0; }
+  .journey-arrow {
+    display: flex; align-items: center; justify-content: center;
+    width: 36px; color: var(--border); font-size: 20px; flex-shrink: 0;
+  }
+  @media (max-width: 900px) {
+    .journey { flex-direction: column; align-items: center; }
+    .journey-arrow { transform: rotate(90deg); width: auto; height: 24px; }
+  }
+
+  /* Integrations */
+  .integrations-grid {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+  }
+  .integration-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px; text-align: center; box-shadow: var(--shadow);
+  }
+  .integration-card .name { font-weight: 900; font-size: 15px; margin-bottom: 8px; }
+  .integration-status {
+    display: inline-block; font-size: 11.5px; font-weight: 700; padding: 4px 10px;
+    border-radius: 999px;
+  }
+  .integration-status.live { background: #e2f5ec; color: #0f6b45; }
+  .integration-status.manual { background: var(--accent-tint); color: #6b4a19; }
+  .integrations-note {
+    text-align: center; color: var(--ink-soft); font-size: 13px;
+    max-width: 620px; margin: 20px auto 0;
+  }
 
   /* Tiers */
   .tiers {
@@ -219,6 +358,22 @@
     text-align: center;
   }
 
+  /* FAQ */
+  .faq { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+  .faq details {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 4px 20px;
+  }
+  .faq summary {
+    cursor: pointer; font-weight: 700; font-size: 15px; padding: 16px 0;
+    list-style: none; display: flex; justify-content: space-between; align-items: center;
+    gap: 12px;
+  }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font-size: 20px; color: var(--primary); flex-shrink: 0; }
+  .faq details[open] summary::after { content: "−"; }
+  .faq p { margin: 0 0 18px; color: var(--ink-soft); font-size: 14px; }
+
   /* Trial */
   .trial-band {
     background: var(--primary); color: #fff;
@@ -232,60 +387,15 @@
   .trial-steps div { font-size: 13px; opacity: .85; max-width: 220px; }
   .trial-steps strong { display: block; font-size: 15px; margin-bottom: 4px; }
 
-  /* Product preview (real screenshot of the app) */
-  .preview-frame {
-    max-width: 900px; margin: 0 auto;
-    border-radius: 18px; overflow: hidden;
-    box-shadow: 0 1px 2px rgba(28,38,32,.06), 0 30px 60px -24px rgba(28,38,32,.35);
-    border: 1px solid var(--border);
-  }
-  .preview-chrome {
-    background: #e9e5da; padding: 10px 14px;
-    display: flex; align-items: center; gap: 7px;
-  }
-  .preview-chrome span {
-    width: 11px; height: 11px; border-radius: 50%; background: #c9c2b2;
-  }
-  .preview-app {
-    background: #14181d; color: #e5e9ee;
-    font-family: "Tajawal", sans-serif;
-    display: flex;
-    min-height: 420px;
-  }
-  .preview-sidebar {
-    width: 200px; flex-shrink: 0;
-    background: #14181d; border-inline-start: 1px solid #2c3540;
-    padding: 16px 0; display: flex; flex-direction: column; gap: 2px;
-  }
-  .preview-sidebar .brand {
-    color: #fff; font-weight: 900; font-size: 15px;
-    padding: 0 18px 16px; margin: 0;
-  }
-  .preview-sidebar a {
-    padding: 9px 18px; font-size: 13.5px; color: #8b96a3;
-  }
-  .preview-sidebar a.active {
-    background: #3aa0c4; color: #fff; font-weight: 700;
-  }
-  .preview-main { flex: 1; padding: 22px 26px; min-width: 0; }
-  .preview-main h2 { font-size: 19px; font-weight: 900; margin: 0 0 18px; color: #fff; }
-  .preview-tree { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
-  .preview-tree .row { display: flex; justify-content: space-between; padding: 4px 0; }
-  .preview-tree .code { color: #6b98a8; font-family: "IBM Plex Mono", monospace; font-size: 12px; }
-  .preview-tree .l0 { font-weight: 700; color: #fff; }
-  .preview-tree .l1 { padding-inline-start: 20px; color: #c7cdd4; }
-  .preview-tree .l2 { padding-inline-start: 40px; color: #8b96a3; }
-  .preview-caption {
-    text-align: center; color: var(--ink-soft); font-size: 13.5px;
-    max-width: 520px; margin: 18px auto 0;
-  }
-
   footer { text-align: center; padding: 40px 0 60px; color: var(--ink-soft); font-size: 13px; }
 
   @media (max-width: 860px) {
     .tiers { grid-template-columns: 1fr 1fr; }
     .calc-card { grid-template-columns: 1fr; }
     .included-grid { grid-template-columns: 1fr 1fr; }
+    .ai-grid { grid-template-columns: 1fr; }
+    .integrations-grid { grid-template-columns: 1fr 1fr; }
+    .preview-stats { grid-template-columns: 1fr; }
   }
   @media (max-width: 540px) {
     .tiers { grid-template-columns: 1fr; }
@@ -307,6 +417,7 @@
       <a href="/start-trial" class="btn btn-primary" id="heroCtaTrial"></a>
       <a href="#calculator" class="btn btn-ghost" id="heroCtaCalc"></a>
     </div>
+    <div class="industries-strip" id="industriesStrip"></div>
   </div>
 </header>
 
@@ -320,11 +431,34 @@
         </div>
         <div class="preview-main">
           <h2 id="previewTitle"></h2>
+          <div class="preview-stats" id="previewStats"></div>
           <div class="preview-tree" id="previewTree"></div>
         </div>
       </div>
     </div>
     <p class="preview-caption" id="previewCaption"></p>
+  </div>
+</section>
+
+<section id="ai">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="aiEyebrow"></span>
+      <h2 id="aiHeading"></h2>
+      <p id="aiDesc"></p>
+    </div>
+    <div class="ai-grid" id="aiGrid"></div>
+  </div>
+</section>
+
+<section id="journey">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="journeyEyebrow"></span>
+      <h2 id="journeyHeading"></h2>
+      <p id="journeyDesc"></p>
+    </div>
+    <div class="journey" id="journeySteps"></div>
   </div>
 </section>
 
@@ -389,6 +523,28 @@
       </div>
     </div>
     <div class="assumptions-note" id="assumptionsNote"></div>
+  </div>
+</section>
+
+<section id="integrations">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="integrationsEyebrow"></span>
+      <h2 id="integrationsHeading"></h2>
+      <p id="integrationsDesc"></p>
+    </div>
+    <div class="integrations-grid" id="integrationsGrid"></div>
+    <p class="integrations-note" id="integrationsNote"></p>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="faqEyebrow"></span>
+      <h2 id="faqHeading"></h2>
+    </div>
+    <div class="faq" id="faqList"></div>
   </div>
 </section>
 
@@ -457,8 +613,14 @@
       heroTitlePrefix: "سعر واحد ", heroTitleHighlight: "واضح", heroTitleSuffix: "، على قد نشاطك",
       heroSub: "مش هنطلب منك تشتري المحاسبة وحدها والـ POS وحده والمخزون والتكاليف كل واحد لوحده. اشتراك واحد، كل الإمكانيات، والسعر بيتغير بس حسب حجمك — عدد الشركات، الفروع، والمستخدمين.",
       heroCtaTrial: "جرّب مجانًا 21 يوم", heroCtaCalc: "احسب سعرك",
+      industries: ["🍽️ مطاعم", "🛒 تجزئة", "📦 جملة وتوزيع", "🏗️ مقاولات ومشاريع", "🧰 خدمات"],
       previewNav: ["عام", "المساعد الذكي", "شجرة الحسابات", "الأرصدة الافتتاحية", "القيود اليومية", "التقارير", "المبيعات", "المشتريات"],
       previewTitle: "شجرة الحسابات",
+      previewStats: [
+        ["مبيعات اليوم", "٤٢,٣٠٠ ريال", "up"],
+        ["مصروفات بانتظار الاعتماد", "٣", "warn"],
+        ["فروع متصلة", "٦", ""],
+      ],
       previewTree: [
         ["الأصول (إجمالي)", "1000", "l0"], ["الأصول المتداولة (إجمالي)", "1100", "l1"],
         ["النقدية وما في حكمها (إجمالي)", "1110", "l2"], ["الصندوق", "1111", "l2"], ["البنك", "1112", "l2"],
@@ -468,7 +630,22 @@
         ["الإيرادات (إجمالي)", "4000", "l0"], ["إيرادات المبيعات", "4100", "l1"],
         ["المصروفات (إجمالي)", "5000", "l0"], ["تكلفة البضاعة المباعة", "5500", "l1"],
       ],
-      previewCaption: "شجرة حسابات محاسبية كاملة بمعايير احترافية — جاهزة من أول يوم، مش محتاج تبنيها بنفسك.",
+      previewCaption: "شجرة حسابات محاسبية كاملة بمعايير احترافية، ولوحة أرقام حية على كل شاشة — جاهزة من أول يوم، مش محتاج تبنيها بنفسك.",
+      aiEyebrow: "الذكاء الاصطناعي", aiHeading: "مساعد بيشتغل معاك، مش بس شات بيرد",
+      aiDesc: "الذكاء الاصطناعي في ROMA مبني جوه شغلك اليومي، وأي حاجة بيعملها بتنتظر اعتمادك قبل ما تترحل فعليًا.",
+      aiCards: [
+        { icon: "🧾", title: "تسجيل المصروفات بالكلام أو بالصورة", desc: "قول للمساعد المصروف كام وعلى إيه، أو ابعتله صورة الإيصال، وهو يستخرج المبلغ والوصف وأنسب حساب تلقائيًا. أي مصروف من المساعد بيروح لشاشة الاعتماد، ومفيش حاجة بتترحل للمحاسبة من غير موافقة مسؤول." },
+        { icon: "🏦", title: "المطابقة البنكية الذكية", desc: "ارفع كشف حساب البنك زي ما هو (Excel أو CSV)، والنظام يطابقه تلقائيًا مع مصروفات الكارت اللي سجّلها المساعد، فيوفر عليك المطابقة اليدوية بندًا ببند." },
+        { icon: "💬", title: "رد فوري على تذاكر الدعم", desc: "أي تذكرة دعم جديدة بتاخد أول رد فوري من الذكاء الاصطناعي على الأسئلة العامة عن النظام. أي حاجة تخص حسابك أو فاتورتك أو مشكلة تقنية بتتحول لفريق الدعم البشري على طول من غير ما المساعد يخمّن." },
+      ],
+      journeyEyebrow: "رحلة البيانات", journeyHeading: "من المصدر للتقرير، خطوة بخطوة",
+      journeyDesc: "نفس الرحلة سواء كانت فاتورة مورد، إيصال مصروف، أو طلب بيع — البيانات بتتسجل مرة واحدة وتظهر في كل مكان.",
+      journeySteps: [
+        ["المصدر", "فاتورة، إيصال، طلب بيع، أو حركة مخزون"],
+        ["الإدخال", "المساعد الذكي يقترح القيد، أو إدخال يدوي مباشر"],
+        ["الاعتماد", "المسؤول يراجع ويعتمد قبل الترحيل"],
+        ["النتيجة", "قيد محاسبي وحركة مخزون فوريين، ويظهروا في التقارير على طول"],
+      ],
       tiersEyebrow: "الباقات", tiersHeading: "نقطة بداية، مش قالب جاهز",
       tiersDesc: "الأسعار دي بداية معقولة لكل حجم نشاط. استخدم الحاسبة تحت عشان تشوف السعر الفعلي المناسب لك بالظبط.",
       currencyLabel: "اعرض الأسعار بعملة:",
@@ -481,8 +658,8 @@
       includeUnlimited: "فروع ومستخدمون بلا حدود عملية", includeExtraPricing: "زيادة الفروع/المستخدمين بسعر إضافي واضح",
       ctaContact: "تواصل معنا", ctaStartTrial: "ابدأ تجربتك",
       includedEyebrow: "كل الإمكانيات، مفيش استثناءات", includedHeading: "كل مستويات الاشتراك تشمل النظام بالكامل",
-      includedDesc: "مفيش Modules منفصلة، ومفيش تقارير أو صلاحيات مقفولة على باقة معينة. الفرق بين الباقات هو حجم النشاط بس.",
-      includedFeatures: ["المحاسبة والقيود", "نقاط البيع POS", "المبيعات والمشتريات", "المخزون والتكاليف", "الوصفات والمطاعم", "الموارد البشرية والرواتب", "التقارير المالية", "الذكاء المالي والتنبؤ", "تحليل ماذا-لو", "إدارة الفروع", "الصلاحيات", "سجل التدقيق (Audit Trail)"],
+      includedDesc: "مفيش Modules منفصلة، ومفيش تقارير أو صلاحيات مقفولة على باقة معينة. الفرق بين الباقات هو حجم النشاط بس — سواء كنت مطعم، محل تجزئة، شركة توزيع، أو مقاول.",
+      includedFeatures: ["المحاسبة والقيود", "نقاط البيع POS", "المبيعات والمشتريات", "المخزون والتكاليف", "الوصفات والمطاعم", "الموارد البشرية والرواتب", "التقارير المالية", "توقعات مالية وتحليل ماذا-لو", "إدارة فروع ومواقع متعددة", "الصلاحيات", "سجل التدقيق (Audit Trail)", "تطبيق ويب يتثبت على الموبايل"],
       calcEyebrow: "الحاسبة", calcHeading: "احسب السعر المناسب لنشاطك",
       calcDesc: "غيّر عدد الشركات والفروع والمستخدمين وشوف السعر بيتغير على طول.",
       companiesLabel: "عدد الشركات (كيانات منفصلة)",
@@ -495,6 +672,24 @@
       additionalCompanyLine: (count, amount, unit) => `<div><span>${count} شركة إضافية (خصم 15%)</span><span>+${amount} ${unit}</span></div>`,
       enterpriseContactLine: `<div><span>تواصل معنا لعرض دقيق للمؤسسات الكبيرة</span></div>`,
       assumptionsNote: `⚠️ الأرقام دي نقطة بداية للمراجعة الداخلية قبل الإطلاق — مش أسعار نهائية معلنة. لو حابب تعدلها غيّر الثوابت في أول ملف <code class="mono">pricing.html</code>.`,
+      integrationsEyebrow: "التكاملات", integrationsHeading: "تكاملات حقيقية، ومكتوبة بصراحة",
+      integrationsDesc: "بنقولك بالظبط إيه اللي متكامل مباشر وإيه اللي لسه بيتم بمطابقة يدوية — من غير مبالغة.",
+      integrations: [
+        { name: "جاهز (Jahez)", status: "live" },
+        { name: "هنجرستيشن (HungerStation)", status: "live" },
+        { name: "طلبات (Talabat)", status: "manual" },
+        { name: "كريم (Careem)", status: "manual" },
+      ],
+      integrationLiveLabel: "تكامل مباشر", integrationManualLabel: "مطابقة كشف تسوية",
+      integrationsNote: "التكامل المباشر (Webhook) شغال فعليًا مع جاهز وهنجرستيشن — الطلبات بتوصل أوتوماتيك. طلبات وكريم لسه من غير تكامل مباشر، فبترفع كشف التسوية اللي بتصدّره المنصة والنظام يطابقه تلقائيًا مع مبيعاتك. أي منصة توصيل تانية غير المذكورة دلوقتي مش متكاملة بعد.",
+      faqEyebrow: "أسئلة شائعة", faqHeading: "قبل ما تسأل، جاوبنا هنا",
+      faq: [
+        ["الأسعار دي نهائية؟", "لأ، دي أرقام بداية لمراجعتنا الداخلية قبل الإطلاق الرسمي. ممكن تتغير، وأي عميل حالي هياخد إشعار مسبق لو حصل تغيير يخصه."],
+        ["ينفع أجرب من غير بطاقة بنكية؟", "أيوه، 21 يوم تجربة كاملة من غير أي بيانات دفع، وكل الإمكانيات متاحة زي أي حساب مدفوع بالظبط."],
+        ["لو لغيت في نص الشهر، بترجعوا لي الفلوس؟", "الاشتراك بيتحسب شهر كامل مقدمًا، ومفيش استرداد جزئي لو لغيت في نص المدة — بس تقدر تلغي في أي وقت من غير أي التزام لأكتر من شهر واحد."],
+        ["نشاطي مقاولات مش مطعم، هينفع معايا؟", "أيوه. المحاسبة والمخزون والمشتريات والموارد البشرية والتقارير المالية بتشتغل لأي نشاط عنده فروع أو مواقع ومستخدمين متعددين — مش بس مطاعم. موديول الوصفات مخصص للمطاعم وممكن ببساطة متستخدموش لو نشاطك مختلف."],
+        ["لو طلبت حذف بياناتي، بيحصل إيه فعليًا؟", "بيتم حذف بيانات شركتك فعليًا ونهائيًا من قواعد البيانات — مش مجرد إيقاف الحساب. بنحتفظ بس برقم مرجعي (Confirmation Number) كإثبات إن الطلب اتنفذ، من غير أي بيانات تفصيلية عن نشاطك."],
+      ],
       trialHeading: "لا تصدّقنا. جرّب ROMA بنفسك.",
       trialDesc: "21 يوم مجانًا، بحساب شركة حقيقي ببياناتك، وكل إمكانيات ROMA متاحة — من غير ما تحط بيانات بطاقة بنكية.",
       trialCta: "ابدأ تجربتك الآن",
@@ -513,8 +708,14 @@
       heroTitlePrefix: "One ", heroTitleHighlight: "clear", heroTitleSuffix: " price, sized to your business",
       heroSub: "No buying accounting alone, POS alone, and inventory & costing alone. One subscription, every feature, and the price only changes with your size — number of companies, branches, and users.",
       heroCtaTrial: "Try free for 21 days", heroCtaCalc: "Calculate your price",
+      industries: ["🍽️ Restaurants", "🛒 Retail", "📦 Wholesale & distribution", "🏗️ Contracting & projects", "🧰 Services"],
       previewNav: ["General", "AI Assistant", "Chart of Accounts", "Opening Balances", "Journal Entries", "Reports", "Sales", "Purchasing"],
       previewTitle: "Chart of Accounts",
+      previewStats: [
+        ["Today's sales", "SAR 42,300", "up"],
+        ["Expenses awaiting approval", "3", "warn"],
+        ["Connected branches", "6", ""],
+      ],
       previewTree: [
         ["Assets (total)", "1000", "l0"], ["Current Assets (total)", "1100", "l1"],
         ["Cash & Equivalents (total)", "1110", "l2"], ["Cash on Hand", "1111", "l2"], ["Bank", "1112", "l2"],
@@ -524,7 +725,22 @@
         ["Revenue (total)", "4000", "l0"], ["Sales Revenue", "4100", "l1"],
         ["Expenses (total)", "5000", "l0"], ["Cost of Goods Sold", "5500", "l1"],
       ],
-      previewCaption: "A complete, professional-standard chart of accounts — ready from day one, no need to build it yourself.",
+      previewCaption: "A complete, professional-standard chart of accounts, with a live numbers dashboard on every screen — ready from day one, no need to build it yourself.",
+      aiEyebrow: "AI", aiHeading: "An assistant that works with you, not just a chatbot",
+      aiDesc: "The AI in ROMA is built into your daily work, and anything it does waits for your approval before it actually posts.",
+      aiCards: [
+        { icon: "🧾", title: "Capture expenses by chat or photo", desc: "Tell the assistant what the expense was, or send it a photo of the receipt, and it extracts the amount, description, and the right account automatically. Every expense from the assistant goes to an approval screen — nothing posts to accounting without a manager's approval." },
+        { icon: "🏦", title: "Smart bank reconciliation", desc: "Upload your bank statement exactly as exported (Excel or CSV), and the system automatically matches it against card expenses the assistant already captured, saving you line-by-line manual matching." },
+        { icon: "💬", title: "Instant first response on support tickets", desc: "Every new support ticket gets an immediate first response from the AI for general product questions. Anything account-specific, billing-related, or a technical issue is escalated straight to the human support team instead of the AI guessing." },
+      ],
+      journeyEyebrow: "Data journey", journeyHeading: "From source to report, step by step",
+      journeyDesc: "The same journey whether it's a vendor invoice, an expense receipt, or a sales order — data is entered once and shows up everywhere.",
+      journeySteps: [
+        ["Source", "An invoice, a receipt, a sales order, or a stock movement"],
+        ["Entry", "The AI assistant suggests the entry, or it's entered manually"],
+        ["Approval", "A manager reviews and approves before it posts"],
+        ["Result", "An instant journal entry and stock movement, showing up in reports right away"],
+      ],
       tiersEyebrow: "Plans", tiersHeading: "A starting point, not a rigid template",
       tiersDesc: "These prices are a reasonable start for every business size. Use the calculator below to see the exact price that fits you.",
       currencyLabel: "Show prices in:",
@@ -537,8 +753,8 @@
       includeUnlimited: "Practically unlimited branches and users", includeExtraPricing: "Extra branches/users at a clear add-on price",
       ctaContact: "Contact us", ctaStartTrial: "Start your trial",
       includedEyebrow: "Everything included, no exceptions", includedHeading: "Every plan includes the full system",
-      includedDesc: "No separate modules, no reports or permissions locked to a specific plan. The only difference between plans is the size of your activity.",
-      includedFeatures: ["Accounting & journal entries", "POS", "Sales & purchasing", "Inventory & costing", "Recipes & restaurants", "HR & payroll", "Financial reports", "Financial AI & forecasting", "What-if analysis", "Branch management", "Permissions", "Audit trail"],
+      includedDesc: "No separate modules, no reports or permissions locked to a specific plan. The only difference between plans is the size of your activity — whether you run a restaurant, a retail shop, a distribution business, or a contracting company.",
+      includedFeatures: ["Accounting & journal entries", "POS", "Sales & purchasing", "Inventory & costing", "Recipes & restaurants", "HR & payroll", "Financial reports", "Financial forecasting & what-if analysis", "Multi-branch & multi-site management", "Permissions", "Audit trail", "Installable web app on mobile"],
       calcEyebrow: "Calculator", calcHeading: "Calculate the right price for your business",
       calcDesc: "Change the number of companies, branches, and users and watch the price update instantly.",
       companiesLabel: "Number of companies (separate entities)",
@@ -551,6 +767,24 @@
       additionalCompanyLine: (count, amount, unit) => `<div><span>${count} additional compan${count === 1 ? "y" : "ies"} (15% off)</span><span>+${amount} ${unit}</span></div>`,
       enterpriseContactLine: `<div><span>Contact us for an exact quote for large organizations</span></div>`,
       assumptionsNote: `⚠️ These numbers are a starting point for internal review before launch — not final published pricing. To adjust them, change the constants at the top of <code class="mono">pricing.html</code>.`,
+      integrationsEyebrow: "Integrations", integrationsHeading: "Real integrations, described honestly",
+      integrationsDesc: "We tell you exactly what's directly integrated and what's still handled through manual reconciliation — no overselling.",
+      integrations: [
+        { name: "Jahez", status: "live" },
+        { name: "HungerStation", status: "live" },
+        { name: "Talabat", status: "manual" },
+        { name: "Careem", status: "manual" },
+      ],
+      integrationLiveLabel: "Direct integration", integrationManualLabel: "Settlement-statement matching",
+      integrationsNote: "Direct (webhook) integration is live with Jahez and HungerStation — orders arrive automatically. Talabat and Careem don't have a direct integration yet, so you upload the settlement statement the platform exports and the system matches it automatically against your sales. Any other delivery platform not listed here isn't integrated yet.",
+      faqEyebrow: "FAQ", faqHeading: "Answers before you have to ask",
+      faq: [
+        ["Are these prices final?", "No, these are a starting point for our internal review before official launch. They may change, and any existing customer will get advance notice of any change that affects them."],
+        ["Can I try it without a credit card?", "Yes, a full 21-day trial with no payment details, and every feature available exactly as in a paid account."],
+        ["If I cancel mid-month, do I get a refund?", "The subscription is billed a full month in advance, and there's no partial refund for cancelling mid-period — but you can cancel any time with no commitment beyond a single month."],
+        ["My business is contracting, not a restaurant — will this work for me?", "Yes. Accounting, inventory, purchasing, HR, and financial reports all work for any business with multiple branches or sites and multiple users — not just restaurants. The recipes module is restaurant-specific and you simply won't use it if your business is different."],
+        ["If I request data deletion, what actually happens?", "Your company's data is genuinely and permanently deleted from the databases — not just a deactivated account. We keep only a confirmation number as proof the request was carried out, with no detailed data about your business."],
+      ],
       trialHeading: "Don't take our word for it. Try ROMA yourself.",
       trialDesc: "21 days free, with a real company account and your own data, and every ROMA feature available — no credit card required.",
       trialCta: "Start your trial now",
@@ -584,15 +818,35 @@
     document.getElementById("heroSub").textContent = t.heroSub;
     document.getElementById("heroCtaTrial").textContent = t.heroCtaTrial;
     document.getElementById("heroCtaCalc").textContent = t.heroCtaCalc;
+    document.getElementById("industriesStrip").innerHTML =
+      t.industries.map(i => `<span>${i}</span>`).join("");
 
     const sidebar = document.getElementById("previewSidebar");
     sidebar.innerHTML = `<p class="brand">RomaERP</p>` +
       t.previewNav.map((label, i) => `<a class="${i === 2 ? "active" : ""}">${label}</a>`).join("");
     document.getElementById("previewTitle").textContent = t.previewTitle;
+    document.getElementById("previewStats").innerHTML = t.previewStats.map(([label, value, cls]) =>
+      `<div class="preview-stat"><div class="label">${label}</div><div class="value ${cls}">${value}</div></div>`
+    ).join("");
     document.getElementById("previewTree").innerHTML = t.previewTree.map(([label, code, level]) =>
       `<div class="row ${level}"><span>${label}</span><span class="code">${code}</span></div>`
     ).join("");
     document.getElementById("previewCaption").textContent = t.previewCaption;
+
+    document.getElementById("aiEyebrow").textContent = t.aiEyebrow;
+    document.getElementById("aiHeading").textContent = t.aiHeading;
+    document.getElementById("aiDesc").textContent = t.aiDesc;
+    document.getElementById("aiGrid").innerHTML = t.aiCards.map(c =>
+      `<div class="ai-card"><div class="ai-icon">${c.icon}</div><h3>${c.title}</h3><p>${c.desc}</p></div>`
+    ).join("");
+
+    document.getElementById("journeyEyebrow").textContent = t.journeyEyebrow;
+    document.getElementById("journeyHeading").textContent = t.journeyHeading;
+    document.getElementById("journeyDesc").textContent = t.journeyDesc;
+    document.getElementById("journeySteps").innerHTML = t.journeySteps.map(([title, desc], i) => {
+      const step = `<div class="journey-step"><div class="num">${i + 1}</div><h4>${title}</h4><p>${desc}</p></div>`;
+      return i < t.journeySteps.length - 1 ? step + `<div class="journey-arrow">${currentLang === "ar" ? "←" : "→"}</div>` : step;
+    }).join("");
 
     document.getElementById("tiersEyebrow").textContent = t.tiersEyebrow;
     document.getElementById("tiersHeading").textContent = t.tiersHeading;
@@ -613,6 +867,23 @@
     document.getElementById("priceLabel").textContent = t.priceLabel;
     document.getElementById("calcCta").textContent = t.calcCta;
     document.getElementById("assumptionsNote").innerHTML = t.assumptionsNote;
+
+    document.getElementById("integrationsEyebrow").textContent = t.integrationsEyebrow;
+    document.getElementById("integrationsHeading").textContent = t.integrationsHeading;
+    document.getElementById("integrationsDesc").textContent = t.integrationsDesc;
+    document.getElementById("integrationsGrid").innerHTML = t.integrations.map(i => `
+      <div class="integration-card">
+        <div class="name">${i.name}</div>
+        <span class="integration-status ${i.status}">${i.status === "live" ? t.integrationLiveLabel : t.integrationManualLabel}</span>
+      </div>
+    `).join("");
+    document.getElementById("integrationsNote").textContent = t.integrationsNote;
+
+    document.getElementById("faqEyebrow").textContent = t.faqEyebrow;
+    document.getElementById("faqHeading").textContent = t.faqHeading;
+    document.getElementById("faqList").innerHTML = t.faq.map(([q, a]) =>
+      `<details><summary>${q}</summary><p>${a}</p></details>`
+    ).join("");
 
     document.getElementById("trialHeading").textContent = t.trialHeading;
     document.getElementById("trialDesc").textContent = t.trialDesc;
