@@ -1,27 +1,26 @@
-import { useState, type ReactNode } from "react";
+import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { usePortalManifest } from "../utils/pwa";
-import { IconUser, IconUsers, IconCheck, IconClock, IconBuilding, IconBriefcase, IconFile, IconWallet, IconDollar, IconBarChart, IconGrid, IconCalendar, IconSun, IconMoon, IconMenuToggle } from "./icons";
+import { IconUser, IconUsers, IconCheck, IconClock, IconBuilding, IconBriefcase, IconFile, IconWallet, IconDollar, IconBarChart, IconGrid, IconCalendar, IconSun, IconMoon } from "./icons";
 
 /// <summary>A distinct-branded shell for the same HR pages the main app already has under /hr/* — same
-/// components, same data, same login, just its own accent color and a simplified nav scoped to HR so it
-/// reads as its own product ("ROMA People") rather than a corner of the full ERP.</summary>
+/// components, same data, same login, just its own accent color and a top navigation bar (rather than the
+/// side sidebar the main ERP and other portals use) scoped to HR so it reads as its own product ("ROMA
+/// People") rather than a corner of the full ERP.</summary>
 export default function PeopleLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   usePortalManifest("people");
-  const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const closeMobileNav = () => setMobileNavOpen(false);
 
   const isAdmin = user?.roles.includes("Admin") ?? false;
   const isHr = isAdmin || user?.roles.includes("HR") || (user?.modules.includes("HR") ?? false);
 
   const selfServiceLinks = [
-    { to: "/people", label: t.nav.dashboard, icon: <IconGrid /> },
+    { to: "/people", label: t.nav.dashboard, icon: <IconGrid />, end: true },
     { to: "/people/calendar", label: t.hr.hrCalendarTitle, icon: <IconCalendar /> },
     { to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> },
     { to: "/people/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
@@ -42,75 +41,50 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
   ];
 
   return (
-    <div className="app-shell people-theme">
-      {mobileNavOpen && <div className="mobile-nav-backdrop" onClick={closeMobileNav} />}
-      <aside className={"sidebar" + (mobileNavOpen ? " mobile-open" : "")}>
-        <div className="sidebar-brand">
+    <div className="topnav-shell people-theme">
+      <header className="topnav-header">
+        <div className="topnav-brand-row">
           <span className="brand-text">{t.peopleAppName}</span>
-          <div style={{ display: "flex", gap: 4 }}>
+          <div className="topnav-actions">
+            <span className="topnav-user">{user?.fullName}</span>
             <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>
+            <button className="btn btn-secondary btn-sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")} title={t.language}>
+              {lang === "ar" ? "EN" : "AR"}
+            </button>
+            <Link to="/" className="btn btn-secondary btn-sm">
+              {t.backToRomaErp}
+            </Link>
+            <button className="btn btn-secondary btn-sm" onClick={logout}>
+              {t.logout}
+            </button>
           </div>
         </div>
-        <div style={{ padding: "0 20px 12px" }}>
-          <button className="btn btn-secondary btn-sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")} title={t.language}>
-            {lang === "ar" ? "EN" : "AR"}
-          </button>
-        </div>
-        <div className="sidebar-scroll">
-          <div className="sidebar-section-toggle" style={{ cursor: "default" }}>
-            <span>{t.nav.general}</span>
-          </div>
+        <nav className="topnav-links">
           {selfServiceLinks.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.to === "/people"}
-              onClick={closeMobileNav}
-              className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}
-            >
-              <span className="sidebar-icon">{item.icon}</span>
-              <span className="link-text">{item.label}</span>
+            <NavLink key={item.to} to={item.to} end={item.end} className={({ isActive }) => "topnav-link" + (isActive ? " active" : "")}>
+              {item.icon}
+              <span>{item.label}</span>
             </NavLink>
           ))}
           {isHr && (
             <>
-              <div className="sidebar-section-toggle" style={{ cursor: "default" }}>
-                <span>{t.nav.hr}</span>
-              </div>
+              <span className="topnav-divider" />
               {managerLinks.map((item) => (
-                <NavLink key={item.to} to={item.to} onClick={closeMobileNav} className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}>
-                  <span className="sidebar-icon">{item.icon}</span>
-                  <span className="link-text">{item.label}</span>
+                <NavLink key={item.to} to={item.to} className={({ isActive }) => "topnav-link" + (isActive ? " active" : "")}>
+                  {item.icon}
+                  <span>{item.label}</span>
                 </NavLink>
               ))}
             </>
           )}
-        </div>
-        <div className="sidebar-footer">
-          <div style={{ fontSize: 13, marginBottom: 8 }}>{user?.fullName}</div>
-          <Link to="/" className="btn btn-secondary btn-sm" style={{ display: "block", textAlign: "center", marginBottom: 8, textDecoration: "none" }}>
-            {t.backToRomaErp}
-          </Link>
-          <button className="btn btn-secondary btn-sm" onClick={logout}>
-            {t.logout}
-          </button>
-        </div>
-      </aside>
-      <div className="main-column">
-        <button
-          className="btn btn-secondary btn-sm mobile-nav-toggle"
-          style={{ margin: "10px 16px 0" }}
-          onClick={() => setMobileNavOpen((open) => !open)}
-        >
-          <IconMenuToggle collapsed={!mobileNavOpen} />
-        </button>
-        <main className="main-content">{children}</main>
-        <footer style={{ textAlign: "center", padding: "12px 0", fontSize: 12 }} className="text-muted">
-          {t.poweredByRomaErp}
-        </footer>
-      </div>
+        </nav>
+      </header>
+      <main className="topnav-content">{children}</main>
+      <footer style={{ textAlign: "center", padding: "12px 0", fontSize: 12 }} className="text-muted">
+        {t.poweredByRomaErp}
+      </footer>
     </div>
   );
 }

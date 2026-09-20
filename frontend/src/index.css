@@ -271,6 +271,106 @@ button {
   flex-direction: column;
 }
 
+/* ROMA People — a top navigation bar instead of the side sidebar the main ERP and other portals use. */
+.topnav-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.topnav-header {
+  background: var(--color-primary-dark);
+  color: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.topnav-brand-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 14px 24px;
+}
+
+.topnav-brand-row .brand-text {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.topnav-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.topnav-user {
+  font-size: 13px;
+  opacity: 0.9;
+  margin-inline-end: 4px;
+}
+
+.topnav-links {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 16px 10px;
+  overflow-x: auto;
+}
+
+.topnav-link {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+  font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.topnav-link:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.topnav-link.active {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.topnav-divider {
+  width: 1px;
+  height: 20px;
+  background: rgba(255, 255, 255, 0.25);
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+
+.topnav-content {
+  flex: 1;
+  padding: 24px 32px;
+}
+
+@media (max-width: 768px) {
+  .topnav-brand-row {
+    padding: 12px 16px;
+  }
+
+  .topnav-links {
+    padding: 0 12px 10px;
+  }
+
+  .topnav-content {
+    padding: 16px;
+  }
+}
+
 .topbar {
   display: flex;
   align-items: center;
@@ -530,16 +630,14 @@ tr:hover td {
     padding: 8px 10px;
   }
 
-  /* ROMA People / ROMA Restaurant / ROMA Inventory have no icon-only collapsed mode (unlike the main
-     app's sidebar) — on mobile their sidebar starts fully hidden and opens as an overlay via the
-     hamburger toggle. */
-  .people-theme .sidebar,
+  /* ROMA Restaurant / ROMA Inventory have no icon-only collapsed mode (unlike the main app's sidebar) —
+     on mobile their sidebar starts fully hidden and opens as an overlay via the hamburger toggle. ROMA
+     People uses its own top navigation bar instead (see .topnav-*), so it's not part of this rule. */
   .restaurant-theme .sidebar,
   .inventory-theme .sidebar {
     display: none;
   }
 
-  .people-theme .sidebar.mobile-open,
   .restaurant-theme .sidebar.mobile-open,
   .inventory-theme .sidebar.mobile-open {
     display: flex;
