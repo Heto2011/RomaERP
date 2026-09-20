@@ -38,4 +38,15 @@ public class LeaveBalanceDto
     public int AnnualLeaveDaysPerYear { get; set; }
     public int UsedDays { get; set; }
     public int RemainingDays { get; set; }
+    public int SicknessDaysTaken { get; set; }
+}
+
+/// <summary>One approved Leave/Sickness request overlapping a requested date range, for a company-wide
+/// team calendar — no reason/notes exposed, just who's out and what kind.</summary>
+public class CalendarEntryDto
+{
+    public string EmployeeName { get; set; } = string.Empty;
+    public EmployeeRequestType Type { get; set; }
+    public DateTime DateFrom { get; set; }
+    public DateTime DateTo { get; set; }
 }

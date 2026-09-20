@@ -60,6 +60,8 @@ import Employees from "./pages/hr/Employees";
 import WorkLocations from "./pages/hr/WorkLocations";
 import Attendance from "./pages/hr/Attendance";
 import MyRequests from "./pages/hr/MyRequests";
+import PeopleDashboard from "./pages/hr/PeopleDashboard";
+import PeopleCalendar from "./pages/hr/PeopleCalendar";
 import EmployeeRequestsAdmin from "./pages/hr/EmployeeRequestsAdmin";
 import Payroll from "./pages/hr/Payroll";
 import PayrollSettingsPage from "./pages/hr/PayrollSettings";
@@ -196,7 +198,8 @@ export default function App() {
       <Route path="/hr/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
       <Route path="/hr/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
       <Route path="/hr/employee-requests" element={<ProtectedRoute><EmployeeRequestsAdmin /></ProtectedRoute>} />
-      <Route path="/people" element={<PeopleRoute><MyRequests /></PeopleRoute>} />
+      <Route path="/people" element={<PeopleRoute><PeopleDashboard /></PeopleRoute>} />
+      <Route path="/people/calendar" element={<PeopleRoute><PeopleCalendar /></PeopleRoute>} />
       <Route path="/people/attendance" element={<PeopleRoute><Attendance /></PeopleRoute>} />
       <Route path="/people/my-requests" element={<PeopleRoute><MyRequests /></PeopleRoute>} />
       <Route path="/people/departments" element={<PeopleRoute><Departments /></PeopleRoute>} />

@@ -10,4 +10,5 @@ public interface IEmployeeRequestService
     Task<List<EmployeeRequestDto>> GetAllAsync(CancellationToken ct = default);
     Task<EmployeeRequestDto> DecideAsync(Guid id, Guid decidedByUserId, DecideEmployeeRequestDto dto, CancellationToken ct = default);
     Task<LeaveBalanceDto> GetLeaveBalanceAsync(Guid employeeId, CancellationToken ct = default);
+    Task<List<CalendarEntryDto>> GetCalendarAsync(DateTime from, DateTime to, CancellationToken ct = default);
 }

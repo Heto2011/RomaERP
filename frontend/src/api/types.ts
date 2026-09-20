@@ -893,6 +893,7 @@ export enum EmployeeRequestType {
   Leave = 1,
   Permission = 2,
   Other = 3,
+  Sickness = 4,
 }
 
 export enum EmployeeRequestStatus {
@@ -931,6 +932,14 @@ export interface LeaveBalance {
   annualLeaveDaysPerYear: number;
   usedDays: number;
   remainingDays: number;
+  sicknessDaysTaken: number;
+}
+
+export interface CalendarEntry {
+  employeeName: string;
+  type: EmployeeRequestType;
+  dateFrom: string;
+  dateTo: string;
 }
 
 export enum SalaryComponentType {

@@ -4,7 +4,12 @@ import { EmployeeRequestStatus, EmployeeRequestType, type EmployeeRequest, type 
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 
-const typeLabelKey = { [EmployeeRequestType.Leave]: "leaveType", [EmployeeRequestType.Permission]: "permissionType", [EmployeeRequestType.Other]: "otherType" } as const;
+const typeLabelKey = {
+  [EmployeeRequestType.Leave]: "leaveType",
+  [EmployeeRequestType.Permission]: "permissionType",
+  [EmployeeRequestType.Other]: "otherType",
+  [EmployeeRequestType.Sickness]: "sicknessType",
+} as const;
 const statusLabelKey = { [EmployeeRequestStatus.Pending]: "statusPending", [EmployeeRequestStatus.Approved]: "statusApproved", [EmployeeRequestStatus.Rejected]: "statusRejected" } as const;
 const statusBadgeClass = { [EmployeeRequestStatus.Pending]: "badge-draft", [EmployeeRequestStatus.Approved]: "badge-posted", [EmployeeRequestStatus.Rejected]: "badge-reversed" } as const;
 
@@ -83,6 +88,7 @@ export default function MyRequests() {
                 <label>{t.hr.requestType}</label>
                 <select value={type} onChange={(e) => setType(Number(e.target.value) as EmployeeRequestType)}>
                   <option value={EmployeeRequestType.Leave}>{t.hr.leaveType}</option>
+                  <option value={EmployeeRequestType.Sickness}>{t.hr.sicknessType}</option>
                   <option value={EmployeeRequestType.Permission}>{t.hr.permissionType}</option>
                   <option value={EmployeeRequestType.Other}>{t.hr.otherType}</option>
                 </select>

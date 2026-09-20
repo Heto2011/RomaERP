@@ -1177,6 +1177,129 @@ tr:hover td {
   text-align: end;
 }
 
+/* ROMA People dashboard — a colored greeting hero over the same stat-card grid the rest of the app uses. */
+.hr-dash-hero {
+  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+  border-radius: var(--radius);
+  padding: 24px 24px 48px;
+  color: #fff;
+}
+
+.hr-dash-greeting {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.hr-dash-reminder {
+  margin-top: 14px;
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.hr-dash-stat-card {
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.hr-dash-stat-sub {
+  color: var(--color-muted);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.hr-dash-upcoming-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  background: var(--color-bg);
+  border-radius: var(--radius);
+  font-size: 14px;
+}
+
+/* ROMA People team calendar */
+.hr-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
+}
+
+.hr-calendar-weekday {
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-muted);
+  padding-bottom: 6px;
+}
+
+.hr-calendar-cell {
+  min-height: 90px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hr-calendar-cell-empty {
+  border: none;
+  background: transparent;
+}
+
+.hr-calendar-cell-today {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 1px var(--color-primary) inset;
+}
+
+.hr-calendar-day-number {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--color-muted);
+}
+
+.hr-calendar-badges {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  overflow: hidden;
+}
+
+.hr-calendar-badge {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hr-calendar-badge-leave {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.hr-calendar-badge-sick {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+@media (max-width: 640px) {
+  .hr-calendar-grid {
+    gap: 3px;
+  }
+  .hr-calendar-cell {
+    min-height: 60px;
+    padding: 3px;
+  }
+  .hr-calendar-weekday {
+    font-size: 10px;
+  }
+}
+
 .report-export-bar {
   display: flex;
   gap: 8px;

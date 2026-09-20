@@ -66,6 +66,7 @@ import type {
   CreateEmployeeRequestInput,
   DecideEmployeeRequestInput,
   LeaveBalance,
+  CalendarEntry,
   PayrollSettings,
   EmployeeContract,
   CreateEmployeeContractInput,
@@ -290,6 +291,7 @@ export const EmployeeRequestsApi = {
   getAll: () => apiClient.get<EmployeeRequest[]>("/employee-requests"),
   decide: (id: string, data: DecideEmployeeRequestInput) => apiClient.post<EmployeeRequest>(`/employee-requests/${id}/decide`, data),
   getMyLeaveBalance: () => apiClient.get<LeaveBalance>("/employee-requests/my-leave-balance"),
+  getCalendar: (from: string, to: string) => apiClient.get<CalendarEntry[]>("/employee-requests/calendar", { params: { from, to } }),
 };
 
 export const EmployeeContractsApi = {

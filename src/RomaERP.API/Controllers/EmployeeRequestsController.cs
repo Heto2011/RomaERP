@@ -46,6 +46,10 @@ public class EmployeeRequestsController : ControllerBase
         return Ok(await _requestService.GetLeaveBalanceAsync(employeeId, ct));
     }
 
+    [HttpGet("calendar")]
+    public async Task<ActionResult<List<CalendarEntryDto>>> GetCalendar([FromQuery] DateTime from, [FromQuery] DateTime to, CancellationToken ct)
+        => Ok(await _requestService.GetCalendarAsync(from, to, ct));
+
     [HttpGet("pending")]
     [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<List<EmployeeRequestDto>>> GetPending(CancellationToken ct)

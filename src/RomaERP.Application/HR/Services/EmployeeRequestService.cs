@@ -102,29 +102,56 @@ public class EmployeeRequestService : IEmployeeRequestService
         var yearStart = new DateTime(year, 1, 1);
         var yearEnd = new DateTime(year, 12, 31);
 
-        var approvedLeaves = await _context.EmployeeRequests
+        var approvedInYear = await _context.EmployeeRequests
             .AsNoTracking()
             .Where(r => r.EmployeeId == employeeId
-                        && r.Type == EmployeeRequestType.Leave
+                        && (r.Type == EmployeeRequestType.Leave || r.Type == EmployeeRequestType.Sickness)
                         && r.Status == EmployeeRequestStatus.Approved
                         && r.DateFrom <= yearEnd
                         && (r.DateTo ?? r.DateFrom) >= yearStart)
             .ToListAsync(ct);
 
-        var usedDays = approvedLeaves.Sum(r =>
+        int DaysWithinYear(EmployeeRequest r)
         {
             var from = r.DateFrom < yearStart ? yearStart : r.DateFrom;
             var to = (r.DateTo ?? r.DateFrom) > yearEnd ? yearEnd : (r.DateTo ?? r.DateFrom);
             return (to.Date - from.Date).Days + 1;
-        });
+        }
+
+        var usedDays = approvedInYear.Where(r => r.Type == EmployeeRequestType.Leave).Sum(DaysWithinYear);
+        var sicknessDays = approvedInYear.Where(r => r.Type == EmployeeRequestType.Sickness).Sum(DaysWithinYear);
 
         return new LeaveBalanceDto
         {
             Year = year,
             AnnualLeaveDaysPerYear = employee.AnnualLeaveDaysPerYear,
             UsedDays = usedDays,
-            RemainingDays = employee.AnnualLeaveDaysPerYear - usedDays
+            RemainingDays = employee.AnnualLeaveDaysPerYear - usedDays,
+            SicknessDaysTaken = sicknessDays
         };
+    }
+
+    public async Task<List<CalendarEntryDto>> GetCalendarAsync(DateTime from, DateTime to, CancellationToken ct = default)
+    {
+        var from0 = from.Date;
+        var to0 = to.Date;
+
+        var entries = await _context.EmployeeRequests
+            .AsNoTracking()
+            .Include(r => r.Employee)
+            .Where(r => (r.Type == EmployeeRequestType.Leave || r.Type == EmployeeRequestType.Sickness)
+                        && r.Status == EmployeeRequestStatus.Approved
+                        && r.DateFrom <= to0
+                        && (r.DateTo ?? r.DateFrom) >= from0)
+            .ToListAsync(ct);
+
+        return entries.Select(r => new CalendarEntryDto
+        {
+            EmployeeName = r.Employee?.FullNameAr ?? string.Empty,
+            Type = r.Type,
+            DateFrom = r.DateFrom,
+            DateTo = r.DateTo ?? r.DateFrom
+        }).ToList();
     }
 
     private static EmployeeRequestDto Map(EmployeeRequest r, Employee? employee) => new()

@@ -6,7 +6,8 @@ public enum EmployeeRequestType
 {
     Leave = 1,
     Permission = 2,
-    Other = 3
+    Other = 3,
+    Sickness = 4
 }
 
 public enum EmployeeRequestStatus
