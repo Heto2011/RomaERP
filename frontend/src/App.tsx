@@ -131,6 +131,22 @@ function HomeRoute() {
   return <Dashboard />;
 }
 
+// A logged-out visitor hitting the bare domain sees the public marketing/pricing page (a plain static
+// file, not part of this SPA) instead of being dropped straight on a login form — a real browser
+// navigation, not React Router, since the target lives outside the app's routes entirely.
+function RootRoute() {
+  const { user } = useAuth();
+  if (!user) {
+    window.location.replace("/pricing.html");
+    return null;
+  }
+  return (
+    <ProtectedRoute>
+      <HomeRoute />
+    </ProtectedRoute>
+  );
+}
+
 export default function App() {
   return (
     <Routes>
@@ -143,7 +159,7 @@ export default function App() {
       <Route path="/system/demo-tenants" element={<DemoTenantsPage />} />
       <Route path="/system/subscriptions" element={<SubscriptionsPage />} />
       <Route path="/system/support-tickets" element={<SupportTicketsPage />} />
-      <Route path="/" element={<ProtectedRoute><HomeRoute /></ProtectedRoute>} />
+      <Route path="/" element={<RootRoute />} />
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
       <Route path="/my-profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
       <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />

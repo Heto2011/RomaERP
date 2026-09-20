@@ -56,5 +56,6 @@ jobs:
             npm run build
             rm -rf /var/www/romaerp/*
             cp -r dist/* /var/www/romaerp/
+            cp /root/RomaERP/marketing/pricing.html /var/www/romaerp/pricing.html
 
             echo "DEPLOY_OK"
