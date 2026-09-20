@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { usePortalManifest } from "../utils/pwa";
-import { IconUser, IconUsers, IconCheck, IconClock, IconBuilding, IconBriefcase, IconFile, IconWallet, IconDollar, IconBarChart, IconGrid, IconCalendar, IconSun, IconMoon } from "./icons";
+import { IconUsers, IconCheck, IconClock, IconBuilding, IconBriefcase, IconFile, IconWallet, IconDollar, IconBarChart, IconGrid, IconCalendar, IconSun, IconMoon } from "./icons";
 
 /// <summary>A distinct-branded shell for the same HR pages the main app already has under /hr/* — same
 /// components, same data, same login, just its own accent color and a top navigation bar (rather than the
@@ -22,7 +22,6 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
   const selfServiceLinks = [
     { to: "/people", label: t.nav.dashboard, icon: <IconGrid />, end: true },
     { to: "/people/calendar", label: t.hr.hrCalendarTitle, icon: <IconCalendar /> },
-    { to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> },
     { to: "/people/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
     { to: "/people/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },
   ];
