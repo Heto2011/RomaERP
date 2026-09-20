@@ -18,6 +18,7 @@ public class CentralDbContext : DbContext
     public DbSet<SupportTicket> SupportTickets => Set<SupportTicket>();
     public DbSet<SupportTicketMessage> SupportTicketMessages => Set<SupportTicketMessage>();
     public DbSet<SupportTicketAttachment> SupportTicketAttachments => Set<SupportTicketAttachment>();
+    public DbSet<DataDeletionRecord> DataDeletionRecords => Set<DataDeletionRecord>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -95,6 +96,21 @@ public class CentralDbContext : DbContext
             b.Property(a => a.FileName).HasMaxLength(260).IsRequired();
             b.Property(a => a.ContentType).HasMaxLength(100).IsRequired();
             b.HasQueryFilter(a => !a.IsDeleted);
+        });
+
+        // Deliberately no query filter and no delete endpoint anywhere in the app — this table is the
+        // permanent proof a data-deletion request was honored, and it has to outlive the tenant it's about.
+        builder.Entity<DataDeletionRecord>(b =>
+        {
+            b.Property(r => r.ConfirmationNumber).UseIdentityColumn(seed: 1000, increment: 1);
+            b.HasIndex(r => r.ConfirmationNumber).IsUnique();
+            b.Property(r => r.CompanyCode).HasMaxLength(50).IsRequired();
+            b.Property(r => r.CompanyNameAr).HasMaxLength(200).IsRequired();
+            b.Property(r => r.CompanyNameEn).HasMaxLength(200).IsRequired();
+            b.Property(r => r.RequestedByEmail).HasMaxLength(200).IsRequired();
+            b.Property(r => r.ProcessedByEmail).HasMaxLength(200).IsRequired();
+            b.Property(r => r.Reason).HasMaxLength(1000);
+            b.Property(r => r.FailureReason).HasMaxLength(1000);
         });
     }
 }

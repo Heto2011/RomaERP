@@ -30,4 +30,10 @@ public class Tenant : AuditableEntity
     /// and later deactivated separately from paying tenants.</summary>
     public bool IsDemo { get; set; }
     public DateTime? ExpiresAtUtc { get; set; }
+
+    /// <summary>Set once this tenant's own database has actually been dropped in response to a data
+    /// deletion request (see <see cref="DataDeletionRecord"/>) — distinct from IsActive, which just means
+    /// "suspended" (data still exists, can be reactivated). A tenant with this set can never be
+    /// reactivated; the company code stays reserved so it's never handed to someone else.</summary>
+    public DateTime? DataDeletedAtUtc { get; set; }
 }

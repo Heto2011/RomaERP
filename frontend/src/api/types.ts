@@ -1876,6 +1876,28 @@ export interface Tenant {
   expiresAtUtc: string | null;
   createdAtUtc: string;
   productScope: ProductScope;
+  dataDeletedAtUtc: string | null;
+}
+
+export interface DataDeletionRequest {
+  requestedByEmail: string;
+  reason: string | null;
+  processedByEmail: string;
+}
+
+export interface DataDeletionRecord {
+  id: string;
+  tenantId: string;
+  companyCode: string;
+  companyNameAr: string;
+  companyNameEn: string;
+  confirmationNumber: number;
+  requestedByEmail: string;
+  reason: string | null;
+  requestedAtUtc: string;
+  processedByEmail: string;
+  completedAtUtc: string | null;
+  failureReason: string | null;
 }
 
 export interface TransferUserRequest {

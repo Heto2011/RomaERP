@@ -67,6 +67,27 @@ public class SystemController : ControllerBase
         return Ok(new { deactivatedCount = count });
     }
 
+    /// <summary>Honors an official customer data-deletion request: drops the tenant's database for good
+    /// and permanently records that it happened. Irreversible — the confirmation number in the response
+    /// is the durable proof to hand back to the customer (or a regulator) later.</summary>
+    [HttpPost("tenants/{tenantId:guid}/delete-data")]
+    public async Task<ActionResult<DataDeletionRecordDto>> DeleteTenantData(Guid tenantId, DataDeletionRequest request, CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        return Ok(await _provisioning.ProcessDataDeletionRequestAsync(tenantId, request, ct));
+    }
+
+    [HttpGet("data-deletion-records")]
+    public async Task<ActionResult<List<DataDeletionRecordDto>>> GetDataDeletionRecords(CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        return Ok(await _provisioning.GetDataDeletionRecordsAsync(ct));
+    }
+
     /// <summary>Internal-only tool for moving a user between companies. Each tenant's database is fully
     /// isolated, so this recreates the person's basic account (email, name, roles) in the target company
     /// and deactivates it in the source — it never carries over history (attendance, leave, payroll) that

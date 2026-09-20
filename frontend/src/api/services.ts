@@ -26,6 +26,8 @@ import type {
   WhatsAppSendResult,
   ProvisionTenantRequest,
   Tenant,
+  DataDeletionRequest,
+  DataDeletionRecord,
   Usage,
   SubscriptionPlan,
   TenantSubscription,
@@ -708,6 +710,10 @@ export const SystemApi = {
     systemApiClient.post<TransferUserResult>("/system/users/transfer", data, { headers: { "X-System-Key": systemKey } }),
   resetUserPassword: (systemKey: string, data: ResetSystemUserPasswordRequest) =>
     systemApiClient.post("/system/users/reset-password", data, { headers: { "X-System-Key": systemKey } }),
+  deleteTenantData: (systemKey: string, tenantId: string, data: DataDeletionRequest) =>
+    systemApiClient.post<DataDeletionRecord>(`/system/tenants/${tenantId}/delete-data`, data, { headers: { "X-System-Key": systemKey } }),
+  getDataDeletionRecords: (systemKey: string) =>
+    systemApiClient.get<DataDeletionRecord[]>("/system/data-deletion-records", { headers: { "X-System-Key": systemKey } }),
 };
 
 export const SubscriptionsApi = {
