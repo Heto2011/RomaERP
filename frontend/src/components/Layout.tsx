@@ -1,4 +1,4 @@
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ProductScope } from "../api/types";
@@ -28,15 +28,10 @@ import {
   IconSwap,
   IconEdit,
   IconShield,
-  IconMenuToggle,
   IconChevron,
   IconSun,
   IconMoon,
 } from "./icons";
-
-const SIDEBAR_COLLAPSED_KEY = "romaerp:sidebarCollapsed";
-const SIDEBAR_OPEN_SECTIONS_KEY = "romaerp:sidebarOpenSections";
-const SIDEBAR_OPEN_SUBGROUPS_KEY = "romaerp:sidebarOpenSubgroups";
 
 interface NavLeafItem {
   to: string;
@@ -56,57 +51,27 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(() => {
-    const stored = localStorage.getItem(SIDEBAR_COLLAPSED_KEY);
-    // No saved preference yet (first visit on this device): default a narrow phone screen to the
-    // icon-only sidebar instead of the full 240px one, which otherwise covers most of the screen.
-    if (stored === null) return window.innerWidth < 768;
-    return stored === "1";
-  });
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(SIDEBAR_OPEN_SECTIONS_KEY) || "{}");
-    } catch {
-      return {};
-    }
-  });
-  const [openSubGroups, setOpenSubGroups] = useState<Record<string, boolean>>(() => {
-    try {
-      return JSON.parse(localStorage.getItem(SIDEBAR_OPEN_SUBGROUPS_KEY) || "{}");
-    } catch {
-      return {};
-    }
-  });
-
-  function toggleCollapsed() {
-    setCollapsed((prev) => {
-      const next = !prev;
-      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, next ? "1" : "0");
-      return next;
-    });
-  }
-
-  function toggleSection(section: string) {
-    setOpenSections((prev) => {
-      const next = { ...prev, [section]: !prev[section] };
-      localStorage.setItem(SIDEBAR_OPEN_SECTIONS_KEY, JSON.stringify(next));
-      return next;
-    });
-  }
-
-  function toggleSubGroup(subGroup: string) {
-    setOpenSubGroups((prev) => {
-      const next = { ...prev, [subGroup]: !prev[subGroup] };
-      localStorage.setItem(SIDEBAR_OPEN_SUBGROUPS_KEY, JSON.stringify(next));
-      return next;
-    });
-  }
+  const navRef = useRef<HTMLElement>(null);
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   function matchesPath(to: string) {
     if (!to) return false;
     const path = to.split("#")[0];
     return path === "/" ? location.pathname === "/" : location.pathname.startsWith(path);
   }
+
+  useEffect(() => {
+    setOpenDropdown(null);
+  }, [location.pathname]);
+
+  useEffect(() => {
+    if (!openDropdown) return;
+    function onDocumentClick(e: MouseEvent) {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) setOpenDropdown(null);
+    }
+    document.addEventListener("mousedown", onDocumentClick);
+    return () => document.removeEventListener("mousedown", onDocumentClick);
+  }, [openDropdown]);
 
   const executiveReportItems: NavSubGroupItem["subItems"] = [
     { to: "/accounting/executive-brief", label: t.accounting.executiveBriefTitle },
@@ -161,10 +126,9 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: "", label: t.inventory.navRecipeVsActualUsage, comingSoon: true },
   ];
 
-
-  // A user whose only role is Employee is a cashier — the sidebar collapses to just what a cashier
-  // needs, so they never see accounting/HR/purchasing data even if they bypass the standalone POS
-  // login and land in the regular app shell.
+  // A user whose only role is Employee is a cashier — the nav collapses to just what a cashier needs,
+  // so they never see accounting/HR/purchasing data even if they bypass the standalone POS login and
+  // land in the regular app shell.
   const isCashierOnly = user?.roles.length === 1 && user.roles[0] === "Employee";
 
   const cashierLinks: { section: string; items: NavItem[] }[] = [
@@ -263,8 +227,8 @@ export default function Layout({ children }: { children: ReactNode }) {
       : []),
   ];
 
-  // A tenant that signed up for ROMA People only never gets the full ERP sidebar, even for its own
-  // Admin (who would otherwise bypass every module check below) — they only ever land here by typing a
+  // A tenant that signed up for ROMA People only never gets the full ERP nav, even for its own Admin
+  // (who would otherwise bypass every module check below) — they only ever land here by typing a
   // direct URL, since HomeRoute/PeopleLogin already send them straight to /people.
   const isPeopleOnly = user?.productScope === ProductScope.PeopleOnly;
   const peopleOnlyAllowedSections = new Set([t.nav.general, t.nav.administration]);
@@ -288,147 +252,103 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const links = (isCashierOnly ? cashierLinks : fullLinks).filter((group) => canSeeSection(group.section));
 
-  useEffect(() => {
-    let activeSection: string | null = null;
-    let activeSubGroup: string | null = null;
-    outer: for (const group of links) {
+  const activeSection = useMemo(() => {
+    for (const group of links) {
       for (const item of group.items) {
         if ("subGroup" in item) {
-          if (item.subItems.some((sub) => matchesPath(sub.to))) {
-            activeSection = group.section;
-            activeSubGroup = item.subGroup;
-            break outer;
-          }
+          if (item.subItems.some((sub) => matchesPath(sub.to))) return group.section;
         } else if (matchesPath(item.to)) {
-          activeSection = group.section;
-          break outer;
+          return group.section;
         }
       }
     }
-    if (activeSection && !openSections[activeSection]) {
-      const section = activeSection;
-      setOpenSections((prev) => {
-        const next = { ...prev, [section]: true };
-        localStorage.setItem(SIDEBAR_OPEN_SECTIONS_KEY, JSON.stringify(next));
-        return next;
-      });
-    }
-    if (activeSubGroup && !openSubGroups[activeSubGroup]) {
-      const subGroup = activeSubGroup;
-      setOpenSubGroups((prev) => {
-        const next = { ...prev, [subGroup]: true };
-        localStorage.setItem(SIDEBAR_OPEN_SUBGROUPS_KEY, JSON.stringify(next));
-        return next;
-      });
-    }
+    return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [location.pathname]);
+  }, [links, location.pathname]);
 
   return (
-    <div className="app-shell">
-      <aside className={"sidebar" + (collapsed ? " collapsed" : "")}>
-        <div className="sidebar-brand">
-          {!collapsed && <span className="brand-text">{t.appName}</span>}
-          <div style={{ display: "flex", gap: 4 }}>
+    <div className="topnav-shell">
+      <header className="topnav-header">
+        <div className="topnav-brand-row">
+          <span className="brand-text">{t.appName}</span>
+          <div className="topnav-search-wrap">
+            <GlobalSearch />
+          </div>
+          <div className="topnav-actions">
+            <UsageIndicator />
+            <span className="topnav-user">{user?.fullName}</span>
             <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>
-            <button className="sidebar-toggle" onClick={toggleCollapsed} title={collapsed ? t.expandSidebar : t.collapseSidebar}>
-              <IconMenuToggle collapsed={collapsed} />
-            </button>
-          </div>
-        </div>
-        {!collapsed && (
-          <div style={{ padding: "0 20px 12px" }}>
             <button className="btn btn-secondary btn-sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")} title={t.language}>
               {lang === "ar" ? "EN" : "AR"}
             </button>
+            <button className="btn btn-secondary btn-sm" onClick={logout}>
+              {t.logout}
+            </button>
           </div>
-        )}
-        <div className="sidebar-scroll">
-          {links.map((group) => {
-            const isOpen = collapsed || !!openSections[group.section];
-            return (
-              <div key={group.section}>
-                {!collapsed && (
-                  <button className="sidebar-section-toggle" onClick={() => toggleSection(group.section)}>
-                    <span>{group.section}</span>
-                    <IconChevron open={isOpen} />
-                  </button>
-                )}
-                {isOpen &&
-                  group.items.map((item) => {
-                    if ("subGroup" in item) {
-                      if (collapsed) return null;
-                      const subOpen = !!openSubGroups[item.subGroup];
-                      return (
-                        <div key={item.subGroup}>
-                          <button className="sidebar-subgroup-toggle" onClick={() => toggleSubGroup(item.subGroup)}>
-                            <span className="sidebar-icon">{item.icon}</span>
-                            <span className="link-text">{item.subGroup}</span>
-                            <IconChevron open={subOpen} />
-                          </button>
-                          {subOpen &&
-                            item.subItems.map((sub) =>
-                              sub.comingSoon ? (
-                                <span key={sub.label} className="sidebar-link sidebar-link-soon sidebar-sublink">
-                                  <span className="link-text">
-                                    {sub.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
-                                  </span>
-                                </span>
-                              ) : (
-                                <NavLink
-                                  key={sub.label}
-                                  to={sub.to}
-                                  className={({ isActive }) => "sidebar-link sidebar-sublink" + (isActive ? " active" : "")}
-                                >
-                                  <span className="link-text">{sub.label}</span>
-                                </NavLink>
-                              )
-                            )}
+        </div>
+        <nav className="topnav-links" ref={navRef}>
+          {links.map((group) => (
+            <div key={group.section} className="topnav-section">
+              <button
+                className={"topnav-link" + (activeSection === group.section ? " active" : "")}
+                onClick={() => setOpenDropdown((cur) => (cur === group.section ? null : group.section))}
+              >
+                <span>{group.section}</span>
+                <IconChevron open={openDropdown === group.section} />
+              </button>
+              {openDropdown === group.section && (
+                <div className="topnav-dropdown">
+                  {group.items.map((item) =>
+                    "subGroup" in item ? (
+                      <div key={item.subGroup} className="topnav-dropdown-column">
+                        <div className="topnav-dropdown-column-title">
+                          {item.icon}
+                          <span>{item.subGroup}</span>
                         </div>
-                      );
-                    }
-                    return item.comingSoon ? (
-                      <span key={item.label} className="sidebar-link sidebar-link-soon" title={collapsed ? item.label : undefined}>
-                        <span className="sidebar-icon">{item.icon}</span>
-                        {!collapsed && (
-                          <span className="link-text">
-                            {item.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
-                          </span>
+                        {item.subItems.map((sub) =>
+                          sub.comingSoon ? (
+                            <span key={sub.label} className="topnav-dropdown-link topnav-dropdown-link-soon">
+                              {sub.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
+                            </span>
+                          ) : (
+                            <NavLink
+                              key={sub.label}
+                              to={sub.to}
+                              className={({ isActive }) => "topnav-dropdown-link" + (isActive ? " active" : "")}
+                            >
+                              {sub.label}
+                            </NavLink>
+                          )
                         )}
+                      </div>
+                    ) : item.comingSoon ? (
+                      <span key={item.label} className="topnav-dropdown-link topnav-dropdown-link-soon">
+                        {item.icon}
+                        <span>
+                          {item.label} <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
+                        </span>
                       </span>
                     ) : (
                       <NavLink
                         key={item.to}
                         to={item.to}
                         end={item.to === "/"}
-                        className={({ isActive }) => "sidebar-link" + (isActive ? " active" : "")}
-                        title={collapsed ? item.label : undefined}
+                        className={({ isActive }) => "topnav-dropdown-link" + (isActive ? " active" : "")}
                       >
-                        <span className="sidebar-icon">{item.icon}</span>
-                        {!collapsed && <span className="link-text">{item.label}</span>}
+                        {item.icon}
+                        <span>{item.label}</span>
                       </NavLink>
-                    );
-                  })}
-              </div>
-            );
-          })}
-        </div>
-        <div className="sidebar-footer">
-          {!collapsed && <div style={{ fontSize: 13, marginBottom: 8 }}>{user?.fullName}</div>}
-          <button className="btn btn-secondary btn-sm" onClick={logout} title={collapsed ? t.logout : undefined}>
-            {collapsed ? "⏻" : t.logout}
-          </button>
-        </div>
-      </aside>
-      <div className="main-column">
-        <header className="topbar">
-          <GlobalSearch />
-          <UsageIndicator />
-        </header>
-        <main className="main-content">{children}</main>
-      </div>
+                    )
+                  )}
+                </div>
+              )}
+            </div>
+          ))}
+        </nav>
+      </header>
+      <main className="topnav-content">{children}</main>
     </div>
   );
 }

@@ -271,7 +271,7 @@ button {
   flex-direction: column;
 }
 
-/* ROMA People — a top navigation bar instead of the side sidebar the main ERP and other portals use. */
+/* A top navigation bar shell, used by the main ERP app and ROMA People instead of a side sidebar. */
 .topnav-shell {
   min-height: 100vh;
   display: flex;
@@ -295,6 +295,17 @@ button {
   padding: 14px 24px;
 }
 
+.topnav-search-wrap {
+  flex: 1;
+  max-width: 400px;
+  margin: 0 12px;
+  min-width: 0;
+}
+
+.topnav-search-wrap .global-search {
+  width: 100%;
+}
+
 .topnav-brand-row .brand-text {
   font-size: 20px;
   font-weight: 700;
@@ -316,9 +327,9 @@ button {
 .topnav-links {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 4px;
   padding: 0 16px 10px;
-  overflow-x: auto;
 }
 
 .topnav-link {
@@ -327,11 +338,15 @@ button {
   gap: 6px;
   padding: 8px 14px;
   border-radius: 999px;
+  border: none;
+  background: transparent;
   color: rgba(255, 255, 255, 0.85);
   text-decoration: none;
   font-size: 13px;
+  font-family: inherit;
   white-space: nowrap;
   flex-shrink: 0;
+  cursor: pointer;
 }
 
 .topnav-link:hover {
@@ -352,6 +367,74 @@ button {
   flex-shrink: 0;
 }
 
+/* Main app's top-nav dropdowns — a section's items (or, for Reports, a mega-menu of subgroup columns). */
+.topnav-section {
+  position: relative;
+}
+
+.topnav-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  inset-inline-start: 0;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  width: max-content;
+  min-width: 220px;
+  max-width: min(720px, calc(100vw - 32px));
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  z-index: 150;
+}
+
+.topnav-dropdown-column {
+  display: flex;
+  flex-direction: column;
+  min-width: 200px;
+}
+
+.topnav-dropdown-column-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--color-muted);
+  text-transform: uppercase;
+  padding: 6px 10px 4px;
+}
+
+.topnav-dropdown-link {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  color: var(--color-text);
+  text-decoration: none;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.topnav-dropdown-link:hover {
+  background: var(--color-bg);
+}
+
+.topnav-dropdown-link.active {
+  background: var(--color-primary);
+  color: #fff;
+  font-weight: 600;
+}
+
+.topnav-dropdown-link-soon {
+  opacity: 0.55;
+  cursor: default;
+}
+
 .topnav-content {
   flex: 1;
   padding: 24px 32px;
@@ -362,8 +445,45 @@ button {
     padding: 12px 16px;
   }
 
+  .topnav-search-wrap {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+    margin: 8px 0 0;
+  }
+
+  .topnav-user {
+    display: none;
+  }
+
   .topnav-links {
     padding: 0 12px 10px;
+  }
+
+  /* Below desktop width the floating mega-menu has nowhere safe to float, so each section becomes a
+     full-width row and its dropdown expands inline underneath it instead, like an accordion. */
+  .topnav-section {
+    flex: 1 1 100%;
+  }
+
+  .topnav-link {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .topnav-dropdown {
+    position: static;
+    width: 100%;
+    max-width: none;
+    margin-top: 4px;
+    box-shadow: none;
+    flex-wrap: nowrap;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .topnav-dropdown-column {
+    min-width: 0;
   }
 
   .topnav-content {
