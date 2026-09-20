@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>الشروط والأحكام وسياسة الخصوصية — RomaERP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f4ee;
+    --surface: #ffffff;
+    --ink: #1c2620;
+    --ink-soft: #5b6a60;
+    --border: #e2ddd0;
+    --primary: #0f5c4b;
+    --primary-dark: #0a4438;
+    --primary-tint: #e6f0ec;
+    --accent: #c8862e;
+    --accent-tint: #faf1e2;
+    --danger: #b3452f;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(28,38,32,.04), 0 12px 32px -16px rgba(28,38,32,.18);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Tajawal", "Segoe UI", sans-serif;
+    line-height: 1.75;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+  header.hero {
+    padding: 56px 0 40px;
+    text-align: center;
+    background: radial-gradient(60% 100% at 50% 0%, var(--primary-tint) 0%, transparent 70%);
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 900; font-size: 20px; color: var(--primary-dark);
+    margin-bottom: 24px; text-decoration: none;
+  }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 15px; font-weight: 900;
+  }
+  h1 { font-size: clamp(26px, 4vw, 38px); font-weight: 900; margin: 0 0 12px; text-wrap: balance; }
+  .hero-sub { max-width: 560px; margin: 0 auto; color: var(--ink-soft); font-size: 16px; }
+  .updated-note { margin-top: 18px; font-size: 13px; color: var(--ink-soft); }
+
+  .disclaimer {
+    background: var(--accent-tint); border: 1px dashed var(--accent);
+    border-radius: 12px; padding: 16px 20px; margin: 0 0 36px;
+    font-size: 14px; color: #6b4a19;
+  }
+
+  nav.toc {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px; margin-bottom: 40px;
+    box-shadow: var(--shadow);
+  }
+  nav.toc h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .03em; color: var(--primary); margin: 0 0 12px; }
+  nav.toc ol { margin: 0; padding-inline-start: 20px; columns: 2; gap: 24px; font-size: 14px; }
+  nav.toc li { margin-bottom: 6px; break-inside: avoid; }
+  nav.toc a { color: var(--ink); text-decoration: none; }
+  nav.toc a:hover { color: var(--primary); text-decoration: underline; }
+
+  section.card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 30px 32px; margin-bottom: 20px;
+    box-shadow: var(--shadow); scroll-margin-top: 20px;
+  }
+  section.card h2 {
+    font-size: 20px; font-weight: 900; margin: 0 0 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  section.card h2 .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--primary-tint); color: var(--primary);
+    font-size: 14px; font-weight: 900; flex-shrink: 0;
+  }
+  section.card p, section.card li { color: var(--ink); font-size: 15px; }
+  section.card p { margin: 0 0 12px; }
+  section.card ul { margin: 0 0 12px; padding-inline-start: 22px; display: flex; flex-direction: column; gap: 6px; }
+  section.card strong { color: var(--primary-dark); }
+  .note {
+    background: var(--primary-tint); border-radius: 10px; padding: 12px 16px;
+    font-size: 13.5px; color: var(--primary-dark); margin-top: 10px;
+  }
+
+  footer { text-align: center; padding: 40px 0 60px; color: var(--ink-soft); font-size: 13px; }
+  footer a { color: var(--primary); text-decoration: none; }
+
+  @media (max-width: 640px) {
+    nav.toc ol { columns: 1; }
+    section.card { padding: 22px 20px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <a href="/pricing.html" class="brand"><span class="brand-mark">R</span> RomaERP</a>
+    <h1>الشروط والأحكام وسياسة الخصوصية</h1>
+    <p class="hero-sub">اتفاقية واحدة واضحة بينك وبين RomaERP — من غير كلام غامض أو شروط مخبأة في هوامش صغيرة.</p>
+    <p class="updated-note">آخر تحديث: سبتمبر 2026</p>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="disclaimer">
+    ⚠️ ده نص عملي وواضح مكتوب عشان يشرح فعليًا إزاي الخدمة شغالة — مش بديل عن مراجعة محامي متخصص، خصوصًا إن الخدمة بتوصل لعملاء في أكتر من دولة (مصر والسعودية ودول الخليج)، ولكل دولة قوانين حماية بيانات مختلفة. راجعه مع مستشار قانوني قبل الإطلاق الرسمي الكامل.
+  </div>
+
+  <nav class="toc" id="toc">
+    <h2>المحتويات</h2>
+    <ol>
+      <li><a href="#service">الخدمة إيه بالظبط</a></li>
+      <li><a href="#trial">الفترة التجريبية</a></li>
+      <li><a href="#billing">الاشتراك والدفع</a></li>
+      <li><a href="#refunds">سياسة الاسترجاع</a></li>
+      <li><a href="#ownership">بياناتك وملكيتها</a></li>
+      <li><a href="#retention">الاحتفاظ بالبيانات وحذفها</a></li>
+      <li><a href="#sensitive">البيانات الحساسة (الموقع والبصمة)</a></li>
+      <li><a href="#sharing">مشاركة البيانات مع أطراف تانية</a></li>
+      <li><a href="#security">أمان حسابك</a></li>
+      <li><a href="#liability">حدود المسؤولية</a></li>
+      <li><a href="#changes">تعديل الشروط</a></li>
+      <li><a href="#law">القانون الحاكم</a></li>
+      <li><a href="#contact">التواصل معانا</a></li>
+    </ol>
+  </nav>
+
+  <section class="card" id="service">
+    <h2><span class="num">1</span> الخدمة إيه بالظبط</h2>
+    <p>RomaERP نظام إدارة موارد شامل (ERP) بيقدَّم كخدمة (SaaS) — محاسبة، نقاط بيع، مخزون وتكاليف، موارد بشرية ورواتب، وتقارير مالية، مع مساعد ذكاء اصطناعي مدمج. بمجرد ما تشترك، بتستخدم النظام عن طريق المتصفح من غير ما تحتاج تركّب أي برنامج على أجهزتك.</p>
+    <p>الخدمة بتشمل كل الموديولات لكل الباقات — مفيش موديول مقفول على باقة معينة، الفرق بس في حجم النشاط (عدد الفروع والمستخدمين).</p>
+  </section>
+
+  <section class="card" id="trial">
+    <h2><span class="num">2</span> الفترة التجريبية</h2>
+    <ul>
+      <li><strong>21 يوم مجانًا بالكامل</strong> — كل الإمكانيات متاحة من غير قيود.</li>
+      <li>من غير ما تحط بيانات بطاقة بنكية أو أي وسيلة دفع عشان تبدأ.</li>
+      <li>لو حبيت تكمل بعد التجربة، بتستمر بنفس الحساب ونفس البيانات من غير ما تفقد حاجة.</li>
+      <li>لو التجربة خلصت ومقررتش تكمل، بياناتك بتفضل محفوظة (شوف قسم <a href="#retention">الاحتفاظ بالبيانات</a>) وحسابك بيتقفل مؤقتًا لحد ما تقرر.</li>
+    </ul>
+  </section>
+
+  <section class="card" id="billing">
+    <h2><span class="num">3</span> الاشتراك والدفع</h2>
+    <ul>
+      <li>الاشتراك شهري، وبيتجدد تلقائيًا من ناحية توليد فاتورة جديدة — لكن <strong>من غير خصم تلقائي من حسابك</strong> إلا لو فعّلت وسيلة دفع إلكتروني بنفسك.</li>
+      <li>افتراضيًا، الدفع بيتم بتحويل بنكي مباشر — بتوصلك فاتورتك، تحوّل المبلغ، وتأكد لينا إنك حولت، ونراجعها ونفعّل اشتراكك.</li>
+      <li>لو اتأخر السداد، بيديك النظام مهلة <strong>7 أيام</strong> بعد تاريخ الاستحقاق قبل ما يوقف حسابك مؤقتًا — مفيش إيقاف مفاجئ من غير سابق إنذار.</li>
+      <li>الأسعار المعلنة وقت اشتراكك بتفضل ثابتة طول مدة اشتراكك المستمر، وأي تغيير في الأسعار مستقبلًا بيتطبق بس على المشتركين الجدد أو بعد إشعار مسبق.</li>
+    </ul>
+  </section>
+
+  <section class="card" id="refunds">
+    <h2><span class="num">4</span> سياسة الاسترجاع</h2>
+    <p>مفيش استرجاع جزئي لأي شهر مدفوع بالفعل — يعني لو دفعت شهر واستخدمته 10 أيام بس وقررت تلغي، مش هنرجعلك جزء من المبلغ عن الأيام الباقية. تقدر تلغي الاشتراك في أي وقت وهيفضل شغال لحد آخر يوم في الفترة المدفوعة.</p>
+  </section>
+
+  <section class="card" id="ownership">
+    <h2><span class="num">5</span> بياناتك وملكيتها</h2>
+    <p><strong>بياناتك بتاعتك بالكامل.</strong> RomaERP بيخزّنها وبيديرها نيابة عنك، لكن ملكيتها ليك إنت — مش لينا. تقدر تطلب نسخة كاملة من بياناتك (تصدير) في أي وقت عن طريق الدعم الفني.</p>
+  </section>
+
+  <section class="card" id="retention">
+    <h2><span class="num">6</span> الاحتفاظ بالبيانات وحذفها</h2>
+    <ul>
+      <li>لو حسابك اتوقف (انتهاء تجربة، تأخر سداد، إلغاء)، بياناتك <strong>مبتتمسحش تلقائيًا أو نهائيًا</strong> — الحساب بيتقفل بس (soft-lock)، وتقدر تكلمنا في أي وقت تفعّله تاني ببياناته زي ما هي.</li>
+      <li>لو عايز حذف بياناتك نهائيًا (Right to be forgotten)، تقدر تطلب ده رسميًا عن طريق الدعم الفني، وهنعمله خلال مدة معقولة بعد التأكد من هويتك.</li>
+      <li>النسخ الاحتياطي بيتاخد يوميًا وبيتخزن بشكل مشفّر خارج السيرفر الأساسي.</li>
+    </ul>
+  </section>
+
+  <section class="card" id="sensitive">
+    <h2><span class="num">7</span> البيانات الحساسة (الموقع الجغرافي وصورة التحقق)</h2>
+    <p>نظام الحضور والانصراف بيستخدم نوعين من البيانات الحساسة، وبيتفعّلوا اختياريًا حسب إعدادات كل شركة:</p>
+    <ul>
+      <li><strong>الموقع الجغرافي (GPS):</strong> بيتسجل وقت تسجيل الحضور/الانصراف بس، عشان نتأكد إن الموظف فعلاً في موقع العمل. مش بيتتبّع أي وقت تاني.</li>
+      <li><strong>صورة التحقق من الوجه:</strong> صورة مرجعية بتتاخد مرة واحدة وتتقارن بصورة وقت تسجيل الحضور، للتأكد من هوية الموظف. الصور دي بتتخزن بشكل آمن ومحدود الوصول.</li>
+    </ul>
+    <p class="note">صاحب الشركة (المشترك) هو المسؤول عن إبلاغ موظفيه واستئذانهم قبل تفعيل الميزتين دول، بما يتوافق مع قوانين العمل وحماية البيانات في بلده.</p>
+  </section>
+
+  <section class="card" id="sharing">
+    <h2><span class="num">8</span> مشاركة البيانات مع أطراف تانية</h2>
+    <p>بياناتك مش بتتباع أو تتأجر لأي حد. بنشارك جزء محدود منها بس مع الخدمات دي عشان تشتغل الميزات المرتبطة بيها:</p>
+    <ul>
+      <li><strong>Anthropic (Claude AI):</strong> النصوص اللي بترسلها للمساعد المالي الذكي أو لتذاكر الدعم بتتبعت لمعالجتها بالذكاء الاصطناعي، وترجع الإجابة على طول — مفيش تخزين دائم من طرفهم لبياناتك.</li>
+      <li><strong>Dropbox:</strong> بنستخدمه لتخزين نسخة احتياطية مشفّرة يوميًا من قاعدة بياناتك، خارج سيرفرنا الأساسي، احتياطًا لأي عطل.</li>
+      <li><strong>بوابة الدفع الإلكتروني (لو فعّلتها):</strong> بيانات بطاقتك بتتعامل معاها بوابة الدفع مباشرة، وإحنا مش بنشوف أو بنخزن رقم بطاقتك خالص.</li>
+    </ul>
+  </section>
+
+  <section class="card" id="security">
+    <h2><span class="num">9</span> أمان حسابك</h2>
+    <p>إنت المسؤول عن الحفاظ على سرية كلمة مرور حسابك وحسابات المستخدمين اللي بتضيفهم في شركتك. لو حسيت إن فيه اختراق أو استخدام غير مصرح به، بلّغنا فورًا عن طريق الدعم الفني.</p>
+  </section>
+
+  <section class="card" id="liability">
+    <h2><span class="num">10</span> حدود المسؤولية</h2>
+    <p>بنبذل أقصى جهد إن الخدمة تكون متاحة ودقيقة باستمرار، لكن RomaERP مش مسؤول عن أي خسائر غير مباشرة ناتجة عن انقطاع مؤقت في الخدمة، أو قرارات مبنية على تقارير أو اقتراحات المساعد الذكي من غير مراجعة بشرية — التقارير المالية والقرارات المحاسبية الجوهرية لازم تتراجع مع محاسبك أو مستشارك المالي.</p>
+  </section>
+
+  <section class="card" id="changes">
+    <h2><span class="num">11</span> تعديل الشروط</h2>
+    <p>ممكن نعدّل الشروط دي مع الوقت. أي تعديل جوهري هنبلغك بيه قبل ما يتطبق، واستمرارك في استخدام الخدمة بعد الإشعار معناه موافقتك على النسخة الجديدة.</p>
+  </section>
+
+  <section class="card" id="law">
+    <h2><span class="num">12</span> القانون الحاكم</h2>
+    <p>هذه الاتفاقية تخضع لقوانين جمهورية مصر العربية. <em>(بند مبدئي — يُراجَع ويُحدَّد بدقة مع محامي حسب مكان تسجيل الشركة الفعلي.)</em></p>
+  </section>
+
+  <section class="card" id="contact">
+    <h2><span class="num">13</span> التواصل معانا</h2>
+    <p>لأي سؤال عن الشروط دي، أو طلب تصدير/حذف بياناتك، تقدر تفتح تذكرة دعم من داخل حسابك مباشرة، وهنرد عليك في أقرب وقت.</p>
+  </section>
+</div>
+
+<footer>© RomaERP — <a href="/pricing.html">الأسعار</a> · <a href="/start-trial">ابدأ تجربتك</a></footer>
+
+</body>
+</html>

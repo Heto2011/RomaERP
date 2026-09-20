@@ -233,6 +233,8 @@ const ar = {
   trial: {
     title: "ابدأ تجربتك المجانية",
     subtitle: "21 يوم كاملة، كل إمكانيات RomaERP، من غير بطاقة بنكية.",
+    agreeToTermsPrefix: "أوافق على",
+    agreeToTermsLink: "الشروط والأحكام وسياسة الخصوصية",
     whatDoYouNeed: "عايز تستخدم إيه؟",
     productFullTitle: "RomaERP كامل",
     productFullDesc: "محاسبة، مخزون، مبيعات، نقطة بيع، موارد بشرية — النظام بالكامل.",
@@ -1580,7 +1582,9 @@ const en: typeof ar = {
   },
   trial: {
     title: "Start Your Free Trial",
-    subtitle: "14 full days, every RomaERP feature, no credit card.",
+    subtitle: "21 full days, every RomaERP feature, no credit card.",
+    agreeToTermsPrefix: "I agree to the",
+    agreeToTermsLink: "Terms & Privacy Policy",
     whatDoYouNeed: "What do you need?",
     productFullTitle: "Full RomaERP",
     productFullDesc: "Accounting, inventory, sales, POS, HR — the whole system.",

@@ -29,6 +29,7 @@ export default function StartTrial() {
   const [adminFullName, setAdminFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
@@ -117,7 +118,16 @@ export default function StartTrial() {
             <PasswordInput value={password} onChange={setPassword} required minLength={8} />
             <span className="text-muted" style={{ fontSize: 12 }}>{t.trial.passwordHint}</span>
           </div>
-          <button className="btn" type="submit" disabled={loading}>
+          <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 13 }}>
+            <input type="checkbox" checked={agreedToTerms} onChange={(e) => setAgreedToTerms(e.target.checked)} required />
+            <span>
+              {t.trial.agreeToTermsPrefix}{" "}
+              <a href="/terms.html" target="_blank" rel="noopener noreferrer">
+                {t.trial.agreeToTermsLink}
+              </a>
+            </span>
+          </label>
+          <button className="btn" type="submit" disabled={loading || !agreedToTerms}>
             {loading ? t.trial.submitting : t.trial.submit}
           </button>
         </form>
