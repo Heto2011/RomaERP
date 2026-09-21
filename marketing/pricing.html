@@ -311,6 +311,10 @@
   .trial-perks { display: flex; justify-content: center; gap: 28px; margin-top: 30px; flex-wrap: wrap; font-size: 13px; font-weight: 700; }
   .trial-perks span { display: inline-flex; align-items: center; gap: 8px; }
 
+  .qr-block { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+  .qr-block img { border-radius: 12px; border: 1px solid var(--border); padding: 8px; background: #fff; }
+  .qr-block p { font-size: 13px; color: var(--ink-soft); max-width: 320px; margin: 0; }
+
   footer { text-align: center; padding: 40px 0 60px; color: var(--ink-soft); font-size: 13px; }
 
   /* Sticky mobile CTA */
@@ -563,6 +567,15 @@
   </div>
 </section>
 
+<section id="qr">
+  <div class="wrap">
+    <div class="qr-block">
+      <img id="qrImage" alt="QR code" width="120" height="120" loading="lazy" />
+      <p id="qrCaption"></p>
+    </div>
+  </div>
+</section>
+
 <footer id="footerText"></footer>
 
 <div class="sticky-cta">
@@ -743,6 +756,7 @@
       trialDesc: "21 يوم مجانًا، بحساب شركة حقيقي ببياناتك، وكل إمكانيات ROMA متاحة — من غير ما تحط بيانات بطاقة بنكية.",
       trialCta: "ابدأ تجربتك الآن",
       trialPerks: ["⚡ إعداد سريع", "🎧 دعم فني بالعربي", "🔒 بياناتك محفوظة ومؤمّنة"],
+      qrCaption: "امسح الكود عشان تفتح الصفحة على موبايلك، أو تشاركها مع حد واقف قدامك.",
       footer: `© RomaERP — السعودية أولاً. الأسعار قابلة للتغيير حتى الإطلاق الرسمي. <a href="/terms.html" style="color:var(--primary)">الشروط والأحكام</a>`,
       floatingNote: "الأسعار دي تقريبية لتقلب سعر الصرف — السعر النهائي بيتأكد وقت التفعيل الفعلي.",
       approxNote: "أسعار تقريبية محوّلة من الريال السعودي.",
@@ -860,6 +874,7 @@
       trialDesc: "21 days free, with a real company account and your own data, and every ROMA feature available — no credit card required.",
       trialCta: "Start your trial now",
       trialPerks: ["⚡ Fast setup", "🎧 Arabic-language support", "🔒 Your data is safe and secured"],
+      qrCaption: "Scan the code to open the page on your phone, or share it with someone standing in front of you.",
       footer: `© RomaERP — Saudi Arabia first. Prices subject to change until official launch. <a href="/terms.html" style="color:var(--primary)">Terms &amp; Privacy</a>`,
       floatingNote: "These prices are approximate due to exchange-rate fluctuation — the final price is confirmed at activation.",
       approxNote: "Approximate prices converted from Saudi Riyal.",
@@ -1013,6 +1028,10 @@
     document.getElementById("trialCta").textContent = t.trialCta;
     document.getElementById("trialPerks").innerHTML = t.trialPerks.map(x => `<span>${x}</span>`).join("");
 
+    const pageUrl = window.location.href.split("#")[0].split("?")[0];
+    document.getElementById("qrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(pageUrl)}`;
+    document.getElementById("qrCaption").textContent = t.qrCaption;
+
     document.getElementById("footerText").innerHTML = t.footer;
 
     renderLineChart();
@@ -1086,6 +1105,7 @@
     document.getElementById("companiesVal").value = companies;
     document.getElementById("branchesVal").value = branches;
     document.getElementById("usersVal").value = users;
+    try { localStorage.setItem(CALC_STORAGE_KEY, JSON.stringify({ companies, branches, users })); } catch { /* private mode etc. */ }
 
     const r = computePrice(companies, branches, users);
     document.getElementById("resultTier").textContent = `${r.tier.name} ${r.tier.emoji}`;
@@ -1137,6 +1157,19 @@
     localStorage.setItem("lang", currentLang);
     renderAll();
   });
+
+  // Restore the visitor's last calculator inputs, if any, so returning to the page doesn't reset to defaults.
+  const CALC_STORAGE_KEY = "romaerp_calc_state";
+  try {
+    const saved = JSON.parse(localStorage.getItem(CALC_STORAGE_KEY) || "null");
+    if (saved) {
+      ["companiesRange", "branchesRange", "usersRange"].forEach(id => {
+        const el = document.getElementById(id);
+        const key = id.replace("Range", "");
+        if (saved[key] != null) el.value = Math.min(Number(el.max), Math.max(Number(el.min), saved[key]));
+      });
+    }
+  } catch { /* corrupt/unavailable storage — ignore and use defaults */ }
 
   renderAll();
   [["companiesRange", "companiesVal"], ["branchesRange", "branchesVal"], ["usersRange", "usersVal"]].forEach(([rangeId, valId]) => {
