@@ -474,11 +474,11 @@
         </div>
         <div>
           <div class="field-label"><span id="branchesLabel"></span><span class="val" id="branchesVal">1</span></div>
-          <input type="range" id="branchesRange" min="1" max="20" value="1" step="1" />
+          <input type="range" id="branchesRange" min="1" max="25" value="1" step="1" />
         </div>
         <div>
           <div class="field-label"><span id="usersLabel"></span><span class="val" id="usersVal">2</span></div>
-          <input type="range" id="usersRange" min="1" max="50" value="2" step="1" />
+          <input type="range" id="usersRange" min="1" max="70" value="2" step="1" />
         </div>
       </div>
       <div class="calc-result">
@@ -541,19 +541,16 @@
       desc: { ar: "حتى 3 فروع و10 مستخدمين", en: "Up to 3 branches and 10 users" },
       base: 149, listPrice: 499, annualPrice: 1500,
       launchOffer: true, includedBranches: 3, includedUsers: 10,
-      maxExtraBranches: 3, maxExtraUsers: 10, // hard cap on paid overage before a real upgrade is required
     },
     {
       id: "business", emoji: "🔵", name: "Business",
       desc: { ar: "شركات متعددة الفروع", en: "Multi-branch businesses" },
       base: 349, includedBranches: 7, includedUsers: 25, recommended: true,
-      maxExtraBranches: 5, maxExtraUsers: 15,
     },
     {
       id: "professional", emoji: "🟣", name: "Professional",
       desc: { ar: "نشاط أكبر واحتياج موسّع", en: "Larger operations, wider needs" },
       base: 649, includedBranches: 15, includedUsers: 50,
-      maxExtraBranches: 5, maxExtraUsers: 0, // already at the calculator's own slider ceiling
     },
     {
       id: "enterprise", emoji: "🔴", name: "Enterprise",
@@ -561,8 +558,11 @@
       base: 2499, includedBranches: Infinity, includedUsers: Infinity, custom: true,
     },
   ];
-  const EXTRA_BRANCH_PRICE = 15; // SAR / branch / month, beyond tier's included branches (capped by maxExtraBranches)
-  const EXTRA_USER_PRICE = 20;   // SAR / user / month, beyond tier's included users (capped by maxExtraUsers)
+  const EXTRA_BRANCH_PRICE = 15; // SAR / branch / month, beyond tier's included branches (capped below)
+  const EXTRA_USER_PRICE = 20;   // SAR / user / month, beyond tier's included users (capped below)
+  // The paid-overage cap is a FLAT PERCENTAGE of each tier's own included branches/users, not a fixed
+  // number — so the ratio feels consistent across tiers instead of an arbitrary gap between them.
+  const OVERAGE_CAP_PCT = 0.4;
   const ADDITIONAL_COMPANY_DISCOUNT = 0.85; // each company after the first billed at 85% of its own computed price
 
   // rate = units of that currency per 1 SAR. Gulf currencies are pegged to USD, so these are stable;
@@ -1006,9 +1006,11 @@
     let best = null;
     for (const t of TIERS) {
       if (t.custom) continue;
+      const maxExtraBranches = Math.round(t.includedBranches * OVERAGE_CAP_PCT);
+      const maxExtraUsers = Math.round(t.includedUsers * OVERAGE_CAP_PCT);
       const extraBranches = Math.max(0, branches - t.includedBranches);
       const extraUsers = Math.max(0, users - t.includedUsers);
-      if (extraBranches > t.maxExtraBranches || extraUsers > t.maxExtraUsers) continue;
+      if (extraBranches > maxExtraBranches || extraUsers > maxExtraUsers) continue;
       const perCompany = t.base + extraBranches * EXTRA_BRANCH_PRICE + extraUsers * EXTRA_USER_PRICE;
       if (!best || perCompany < best.perCompany) best = { tier: t, extraBranches, extraUsers, perCompany };
     }
