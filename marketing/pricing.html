@@ -292,6 +292,7 @@
   .calc-result .breakdown { margin-top: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; opacity: .85; }
   .calc-result .breakdown div { display: flex; justify-content: space-between; }
   .calc-result .btn-primary { margin-top: 20px; background: #fff; color: var(--primary-dark); box-shadow: none; }
+  .btn-whatsapp { margin-top: 10px; background: #25d366; color: #05320f; width: 100%; justify-content: center; }
   .assumptions-note { margin-top: 18px; padding: 14px 18px; background: var(--accent-tint); border: 1px dashed var(--accent); border-radius: 12px; font-size: 13px; color: #6b4a19; }
 
   /* FAQ */
@@ -522,6 +523,7 @@
           <div class="breakdown" id="resultBreakdown"></div>
         </div>
         <a href="/start-trial" class="btn btn-primary" id="calcCta"></a>
+        <a href="#" target="_blank" rel="noopener" class="btn btn-whatsapp" id="calcShare"></a>
       </div>
     </div>
     <div class="assumptions-note" id="assumptionsNote"></div>
@@ -710,6 +712,9 @@
       companiesHint: "كل شركة = حساب مستقل بالكامل ببياناته الخاصة، وبنجمعهم في فاتورة واحدة بخصم على الشركات الإضافية.",
       branchesLabel: "عدد الفروع (لكل شركة)", usersLabel: "عدد المستخدمين (لكل شركة)",
       priceLabel: "السعر الشهري التقديري", calcCta: "ابدأ بهذا السعر",
+      calcShare: "📤 شارك على واتساب",
+      shareMessage: (tierName, price, unit, branches, users, url) =>
+        `جربت حاسبة أسعار RomaERP: باقة ${tierName} تناسب ${branches} فرع و${users} مستخدم بسعر ${price} ${unit} شهريًا. جربها بنفسك: ${url}`,
       baseLine: (tierName, amount, unit) => `<div><span>السعر الأساسي (${tierName})</span><span>${amount} ${unit}</span></div>`,
       extraBranchesLine: (count, amount, unit) => `<div><span>فروع إضافية × ${count}</span><span>+${amount} ${unit}</span></div>`,
       extraUsersLine: (count, amount, unit) => `<div><span>مستخدمون إضافيون × ${count}</span><span>+${amount} ${unit}</span></div>`,
@@ -824,6 +829,9 @@
       companiesHint: "Each company = a fully independent account with its own data, combined into one invoice with a discount on additional companies.",
       branchesLabel: "Number of branches (per company)", usersLabel: "Number of users (per company)",
       priceLabel: "Estimated monthly price", calcCta: "Start at this price",
+      calcShare: "📤 Share on WhatsApp",
+      shareMessage: (tierName, price, unit, branches, users, url) =>
+        `I tried the RomaERP pricing calculator: the ${tierName} plan fits ${branches} branches and ${users} users at ${price} ${unit}/month. Try it yourself: ${url}`,
       baseLine: (tierName, amount, unit) => `<div><span>Base price (${tierName})</span><span>${amount} ${unit}</span></div>`,
       extraBranchesLine: (count, amount, unit) => `<div><span>Extra branches × ${count}</span><span>+${amount} ${unit}</span></div>`,
       extraUsersLine: (count, amount, unit) => `<div><span>Extra users × ${count}</span><span>+${amount} ${unit}</span></div>`,
@@ -1090,6 +1098,11 @@
     if (r.additionalCompanies > 0) lines.push(t.additionalCompanyLine(r.additionalCompanies, convert(r.additionalCompanies * r.perCompany * ADDITIONAL_COMPANY_DISCOUNT), unit));
     if (r.tier.custom) lines.push(t.enterpriseContactLine);
     document.getElementById("resultBreakdown").innerHTML = lines.join("");
+
+    const shareBtn = document.getElementById("calcShare");
+    shareBtn.textContent = t.calcShare;
+    const shareText = t.shareMessage(r.tier.name, convert(r.total).toLocaleString("en-US"), unit, branches, users, window.location.href.split("#")[0]);
+    shareBtn.href = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
   }
 
   function renderCurrencyPicker() {
