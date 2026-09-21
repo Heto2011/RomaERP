@@ -572,6 +572,7 @@
     BHD: { label: { ar: "دينار بحريني (BHD)", en: "Bahraini Dinar (BHD)" }, unit: { ar: "دينار", en: "BHD" }, rate: 0.1, decimals: 1 },
     OMR: { label: { ar: "ريال عماني (OMR)", en: "Omani Rial (OMR)" }, unit: { ar: "ريال عماني", en: "OMR" }, rate: 0.1025, decimals: 1 },
     EGP: { label: { ar: "جنيه مصري (EGP) — تقريبي", en: "Egyptian Pound (EGP) — approximate" }, unit: { ar: "جنيه", en: "EGP" }, rate: 13, decimals: 0, approx: true },
+    GBP: { label: { ar: "جنيه إسترليني (GBP) — تقريبي", en: "British Pound (GBP) — approximate" }, unit: { ar: "جنيه إسترليني", en: "GBP" }, rate: 0.206, decimals: 0, approx: true },
   };
   let currentCurrency = "SAR";
   let currentLang = localStorage.getItem("lang") === "en" ? "en" : "ar";
@@ -696,7 +697,7 @@
       trialCta: "ابدأ تجربتك الآن",
       trialPerks: ["⚡ إعداد سريع", "🎧 دعم فني بالعربي", "🔒 بياناتك محفوظة ومؤمّنة"],
       footer: `© RomaERP — السعودية أولاً. الأسعار قابلة للتغيير حتى الإطلاق الرسمي. <a href="/terms.html" style="color:var(--primary)">الشروط والأحكام</a>`,
-      egpNote: "الأسعار بالجنيه المصري تقريبية لتقلب سعر الصرف — السعر النهائي بيتأكد وقت التفعيل الفعلي.",
+      floatingNote: "الأسعار دي تقريبية لتقلب سعر الصرف — السعر النهائي بيتأكد وقت التفعيل الفعلي.",
       approxNote: "أسعار تقريبية محوّلة من الريال السعودي.",
       langToggleLabel: "English",
     },
@@ -809,7 +810,7 @@
       trialCta: "Start your trial now",
       trialPerks: ["⚡ Fast setup", "🎧 Arabic-language support", "🔒 Your data is safe and secured"],
       footer: `© RomaERP — Saudi Arabia first. Prices subject to change until official launch. <a href="/terms.html" style="color:var(--primary)">Terms &amp; Privacy</a>`,
-      egpNote: "EGP prices are approximate due to exchange-rate fluctuation — the final price is confirmed at activation.",
+      floatingNote: "These prices are approximate due to exchange-rate fluctuation — the final price is confirmed at activation.",
       approxNote: "Approximate prices converted from Saudi Riyal.",
       langToggleLabel: "عربي",
     },
@@ -1052,7 +1053,7 @@
     const note = document.getElementById("currencyNote");
     if (currentCurrency === "SAR") { note.textContent = ""; return; }
     const c = CURRENCIES[currentCurrency];
-    note.textContent = c.approx ? t.egpNote : t.approxNote;
+    note.textContent = c.approx ? t.floatingNote : t.approxNote;
   }
 
   function renderAll() {
