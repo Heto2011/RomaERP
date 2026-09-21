@@ -541,16 +541,19 @@
       desc: { ar: "حتى 3 فروع و10 مستخدمين", en: "Up to 3 branches and 10 users" },
       base: 149, listPrice: 499, annualPrice: 1500,
       launchOffer: true, includedBranches: 3, includedUsers: 10,
+      maxExtraBranches: 3, maxExtraUsers: 10, // hard cap on paid overage before a real upgrade is required
     },
     {
       id: "business", emoji: "🔵", name: "Business",
       desc: { ar: "شركات متعددة الفروع", en: "Multi-branch businesses" },
       base: 349, includedBranches: 7, includedUsers: 25, recommended: true,
+      maxExtraBranches: 5, maxExtraUsers: 15,
     },
     {
       id: "professional", emoji: "🟣", name: "Professional",
       desc: { ar: "نشاط أكبر واحتياج موسّع", en: "Larger operations, wider needs" },
       base: 649, includedBranches: 15, includedUsers: 50,
+      maxExtraBranches: 5, maxExtraUsers: 0, // already at the calculator's own slider ceiling
     },
     {
       id: "enterprise", emoji: "🔴", name: "Enterprise",
@@ -558,8 +561,8 @@
       base: 2499, includedBranches: Infinity, includedUsers: Infinity, custom: true,
     },
   ];
-  const EXTRA_BRANCH_PRICE = 150; // SAR / branch / month, beyond tier's included branches
-  const EXTRA_USER_PRICE = 40;    // SAR / user / month, beyond tier's included users
+  const EXTRA_BRANCH_PRICE = 15; // SAR / branch / month, beyond tier's included branches (capped by maxExtraBranches)
+  const EXTRA_USER_PRICE = 20;   // SAR / user / month, beyond tier's included users (capped by maxExtraUsers)
   const ADDITIONAL_COMPANY_DISCOUNT = 0.85; // each company after the first billed at 85% of its own computed price
 
   // rate = units of that currency per 1 SAR. Gulf currencies are pegged to USD, so these are stable;
@@ -996,18 +999,26 @@
     }).join("");
   }
 
-  function pickTier(branches, users) {
+  // Picks the CHEAPEST tier that can actually cover the requested branches/users, staying within
+  // that tier's paid-overage cap (maxExtraBranches/maxExtraUsers) — never just the first tier that
+  // happens to fit, so a small overage never forces an unnecessarily expensive tier jump.
+  function bestFit(branches, users) {
+    let best = null;
     for (const t of TIERS) {
-      if (branches <= t.includedBranches && users <= t.includedUsers) return t;
+      if (t.custom) continue;
+      const extraBranches = Math.max(0, branches - t.includedBranches);
+      const extraUsers = Math.max(0, users - t.includedUsers);
+      if (extraBranches > t.maxExtraBranches || extraUsers > t.maxExtraUsers) continue;
+      const perCompany = t.base + extraBranches * EXTRA_BRANCH_PRICE + extraUsers * EXTRA_USER_PRICE;
+      if (!best || perCompany < best.perCompany) best = { tier: t, extraBranches, extraUsers, perCompany };
     }
-    return TIERS[TIERS.length - 1];
+    if (best) return best;
+    const enterprise = TIERS[TIERS.length - 1];
+    return { tier: enterprise, extraBranches: 0, extraUsers: 0, perCompany: enterprise.base };
   }
 
   function computePrice(companies, branches, users) {
-    const tier = pickTier(branches, users);
-    const extraBranches = tier.custom ? 0 : Math.max(0, branches - tier.includedBranches);
-    const extraUsers = tier.custom ? 0 : Math.max(0, users - tier.includedUsers);
-    const perCompany = tier.base + extraBranches * EXTRA_BRANCH_PRICE + extraUsers * EXTRA_USER_PRICE;
+    const { tier, extraBranches, extraUsers, perCompany } = bestFit(branches, users);
     const additionalCompanies = Math.max(0, companies - 1);
     const total = perCompany + additionalCompanies * perCompany * ADDITIONAL_COMPANY_DISCOUNT;
     return { tier, perCompany, extraBranches, extraUsers, additionalCompanies, total: Math.round(total) };
