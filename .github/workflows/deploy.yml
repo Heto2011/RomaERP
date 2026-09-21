@@ -58,5 +58,7 @@ jobs:
             cp -r dist/* /var/www/romaerp/
             cp /root/RomaERP/marketing/pricing.html /var/www/romaerp/pricing.html
             cp /root/RomaERP/marketing/terms.html /var/www/romaerp/terms.html
+            cp /root/RomaERP/marketing/favicon.svg /var/www/romaerp/favicon.svg
+            cp /root/RomaERP/marketing/og-image.png /var/www/romaerp/og-image.png
 
             echo "DEPLOY_OK"

@@ -4,6 +4,16 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>الأسعار — RomaERP</title>
+<meta name="description" content="نظام إدارة أعمال متكامل — محاسبة، نقاط بيع، مخزون، وموارد بشرية في اشتراك واحد مدعوم بالذكاء الاصطناعي. تجربة مجانية 21 يوم من غير بطاقة بنكية.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RomaERP">
+<meta property="og:title" content="RomaERP — إدارة أعمالك بشكل أذكى">
+<meta property="og:description" content="نظام إدارة أعمال متكامل — محاسبة، نقاط بيع، مخزون، وموارد بشرية في اشتراك واحد مدعوم بالذكاء الاصطناعي. تجربة مجانية 21 يوم من غير بطاقة بنكية.">
+<meta property="og:image" content="/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
@@ -302,6 +312,21 @@
 
   footer { text-align: center; padding: 40px 0 60px; color: var(--ink-soft); font-size: 13px; }
 
+  /* Sticky mobile CTA */
+  .sticky-cta {
+    display: none; position: fixed; bottom: 0; inset-inline: 0; z-index: 40;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 12px 16px; box-shadow: 0 -8px 24px -12px rgba(28,38,32,.25);
+    align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .sticky-cta .txt { font-size: 12.5px; font-weight: 700; color: var(--ink); min-width: 0; }
+  .sticky-cta .txt small { display: block; font-weight: 500; color: var(--ink-soft); font-size: 11px; }
+  .sticky-cta .btn { padding: 10px 18px; font-size: 13.5px; flex-shrink: 0; }
+  @media (max-width: 640px) {
+    .sticky-cta { display: flex; }
+    body { padding-bottom: 66px; }
+  }
+
   @media (max-width: 900px) {
     .hero-grid { grid-template-columns: 1fr; }
     .hero-copy { text-align: center; }
@@ -538,6 +563,11 @@
 
 <footer id="footerText"></footer>
 
+<div class="sticky-cta">
+  <div class="txt"><span id="stickyCtaTitle"></span><small id="stickyCtaSub"></small></div>
+  <a href="/start-trial" class="btn btn-primary" id="stickyCtaBtn"></a>
+</div>
+
 <script>
   // ---- Configurable pricing assumptions (placeholders — tune before launch) ----
   // Base currency is SAR. All other currencies are approximate conversions for display only —
@@ -606,6 +636,7 @@
       heroTitlePrefix: "إدارة أعمالك ", heroTitleHighlight: "بشكل أذكى", heroTitleSuffix: "",
       heroSub: "نظام متكامل واحد بدل ما تشتري المحاسبة وحدها والـ POS وحده والمخزون والتكاليف كل واحد لوحده. اشتراك واحد، كل الإمكانيات، مدعوم بالذكاء الاصطناعي.",
       heroCtaTrial: "ابدأ تجربتك المجانية", heroCtaCalc: "شوف الأسعار",
+      stickyCtaTitle: "جرّب ROMA مجانًا", stickyCtaSub: "21 يوم، من غير بطاقة بنكية", stickyCtaBtn: "ابدأ الآن",
       heroTrust: ["⚡ إعداد سريع من غير برامج إضافية", "🔒 بياناتك آمنة ومحفوظة", "📅 تجربة 21 يوم من غير بطاقة بنكية"],
       industries: ["🍽️ مطاعم", "🛒 تجزئة", "📦 جملة وتوزيع", "🏗️ مقاولات ومشاريع", "🧰 خدمات"],
       previewNav: ["الرئيسية", "المساعد الذكي", "المبيعات", "المشتريات", "المخزون", "المحاسبة", "التقارير"],
@@ -719,6 +750,7 @@
       heroTitlePrefix: "Manage your business, ", heroTitleHighlight: "smarter", heroTitleSuffix: "",
       heroSub: "One integrated system instead of buying accounting alone, POS alone, and inventory & costing alone. One subscription, every feature, powered by AI.",
       heroCtaTrial: "Start your free trial", heroCtaCalc: "See pricing",
+      stickyCtaTitle: "Try ROMA free", stickyCtaSub: "21 days, no credit card", stickyCtaBtn: "Start now",
       heroTrust: ["⚡ Fast setup, no extra software", "🔒 Your data is safe", "📅 21-day trial, no credit card"],
       industries: ["🍽️ Restaurants", "🛒 Retail", "📦 Wholesale & distribution", "🏗️ Contracting & projects", "🧰 Services"],
       previewNav: ["Home", "AI Assistant", "Sales", "Purchasing", "Inventory", "Accounting", "Reports"],
@@ -889,6 +921,9 @@
     document.getElementById("heroSub").textContent = t.heroSub;
     document.getElementById("heroCtaTrial").textContent = t.heroCtaTrial;
     document.getElementById("heroCtaCalc").textContent = t.heroCtaCalc;
+    document.getElementById("stickyCtaTitle").textContent = t.stickyCtaTitle;
+    document.getElementById("stickyCtaSub").textContent = t.stickyCtaSub;
+    document.getElementById("stickyCtaBtn").textContent = t.stickyCtaBtn;
     document.getElementById("heroTrust").innerHTML = t.heroTrust.map(x => `<span>${x}</span>`).join("");
     document.getElementById("industriesStrip").innerHTML = t.industries.map(i => `<span>${i}</span>`).join("");
 
