@@ -22,6 +22,11 @@
     --danger: #b3452f;
     --radius: 16px;
     --shadow: 0 1px 2px rgba(28,38,32,.04), 0 12px 32px -16px rgba(28,38,32,.18);
+    --hero-bg: #0a0f13;
+    --hero-ink: #f4f6f5;
+    --hero-ink-soft: rgba(244,246,245,.66);
+    --mint: #5fd0a1;
+    --sky: #3aa0c4;
   }
   * { box-sizing: border-box; }
   body {
@@ -32,50 +37,51 @@
     line-height: 1.6;
   }
   .mono { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 24px; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
 
-  header.hero {
-    padding: 28px 0 40px;
-    text-align: center;
-    background:
-      radial-gradient(60% 100% at 50% 0%, var(--primary-tint) 0%, transparent 70%);
+  /* ---- Dark hero ---- */
+  header.hero-dark {
+    background: radial-gradient(120% 90% at 15% -10%, #16222a 0%, var(--hero-bg) 62%);
+    color: var(--hero-ink);
+    padding: 24px 0 60px;
   }
-  .top-row {
+  .dark-nav {
     display: flex; align-items: center; justify-content: space-between;
-    margin-bottom: 36px;
+    flex-wrap: wrap; gap: 14px; margin-bottom: 52px;
   }
   .brand {
     display: inline-flex; align-items: center; gap: 8px;
     font-weight: 900; font-size: 20px; color: var(--primary-dark);
   }
+  .dark-nav .brand { color: #fff; }
   .brand-mark {
     width: 30px; height: 30px; border-radius: 9px;
     background: var(--primary);
     display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 15px; font-weight: 900;
+    color: #fff; font-size: 15px; font-weight: 900; flex-shrink: 0;
   }
+  .nav-links { display: flex; gap: 22px; font-size: 14px; font-weight: 700; flex-wrap: wrap; }
+  .nav-links a { color: var(--hero-ink-soft); text-decoration: none; }
+  .nav-links a:hover { color: #fff; }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
   .lang-toggle {
-    background: var(--surface); color: var(--ink); border: 1px solid var(--border);
+    background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.18);
     border-radius: 999px; padding: 7px 16px; font-weight: 700; font-size: 13px;
     cursor: pointer; font-family: inherit;
   }
-  .lang-toggle:hover { border-color: var(--primary); }
+  .lang-toggle:hover { border-color: rgba(255,255,255,.4); }
+
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 44px; align-items: center; }
   h1 {
-    font-size: clamp(30px, 4.5vw, 46px);
+    font-size: clamp(28px, 3.6vw, 42px);
     font-weight: 900;
     margin: 0 0 16px;
     text-wrap: balance;
-    color: var(--ink);
+    color: #fff;
   }
-  h1 span { color: var(--primary); }
-  .hero-sub {
-    max-width: 620px; margin: 0 auto;
-    color: var(--ink-soft); font-size: 18px;
-  }
-  .hero-cta {
-    margin-top: 32px;
-    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
-  }
+  h1 span { color: var(--mint); }
+  .hero-sub { max-width: 480px; color: var(--hero-ink-soft); font-size: 16.5px; margin: 0 0 8px; }
+  .hero-cta { margin-top: 26px; display: flex; gap: 12px; flex-wrap: wrap; }
   .btn {
     display: inline-flex; align-items: center; gap: 8px;
     padding: 13px 26px; border-radius: 999px;
@@ -85,7 +91,54 @@
   }
   .btn:hover { transform: translateY(-1px); }
   .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 10px 24px -10px rgba(15,92,75,.55); }
+  .btn-accent { background: var(--accent); color: #2c1c04; box-shadow: 0 10px 24px -10px rgba(200,134,46,.55); }
   .btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--border); }
+  .btn-ghost-dark { background: rgba(255,255,255,.06); color: #fff; border: 1px solid rgba(255,255,255,.2); }
+
+  .hero-trust { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 22px; font-size: 12.5px; color: var(--hero-ink-soft); }
+  .hero-trust span { display: inline-flex; align-items: center; gap: 6px; }
+
+  .industries-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+  .industries-strip span {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+    border-radius: 999px; padding: 7px 14px; font-size: 12.5px; font-weight: 700;
+    color: var(--hero-ink-soft);
+  }
+
+  /* Device mockup */
+  .device-stack { display: flex; align-items: flex-end; justify-content: center; gap: 14px; }
+  .laptop { flex: 1; max-width: 480px; background: #1a232c; border-radius: 14px; padding: 10px; box-shadow: 0 40px 90px -30px rgba(0,0,0,.65); }
+  .laptop-base { height: 8px; width: 60%; margin: 8px auto 0; background: #232e38; border-radius: 0 0 10px 10px; }
+  .laptop-screen { background: #0d1319; border-radius: 8px; overflow: hidden; display: flex; min-height: 340px; }
+  .preview-sidebar { width: 160px; flex-shrink: 0; border-inline-end: 1px solid #202a33; padding: 14px 0; display: flex; flex-direction: column; gap: 2px; }
+  .preview-sidebar .brand { color: #fff; font-weight: 900; font-size: 14px; padding: 0 16px 14px; margin: 0; }
+  .preview-sidebar a { padding: 8px 16px; font-size: 12.5px; color: #8b96a3; }
+  .preview-sidebar a.active { background: var(--sky); color: #fff; font-weight: 700; }
+  .preview-main { flex: 1; padding: 18px 20px; min-width: 0; color: #e5e9ee; }
+  .preview-main h2 { font-size: 16.5px; font-weight: 900; margin: 0 0 14px; color: #fff; }
+  .preview-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .preview-stat { background: #161e26; border: 1px solid #232e38; border-radius: 10px; padding: 10px 12px; }
+  .preview-stat .label { font-size: 10.5px; color: #8b96a3; margin-bottom: 5px; }
+  .preview-stat .value { font-size: 16px; font-weight: 900; color: #fff; font-family: "IBM Plex Mono", monospace; }
+  .preview-stat .value.up { color: var(--mint); }
+  .preview-stat .value.warn { color: #e0a94c; }
+  .chart-row { display: flex; align-items: center; gap: 16px; background: #161e26; border: 1px solid #232e38; border-radius: 10px; padding: 12px 14px; }
+  .line-chart-block { flex: 1.4; min-width: 0; }
+  .line-chart-block .caption { font-size: 10.5px; color: #8b96a3; margin-top: 4px; }
+  .donut-block { display: flex; align-items: center; gap: 10px; flex: 1; }
+  .donut { width: 78px; height: 78px; border-radius: 50%; flex-shrink: 0; position: relative; }
+  .donut::after { content: ""; position: absolute; inset: 14px; border-radius: 50%; background: #161e26; }
+  .donut-legend { display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: #c7cdd4; }
+  .donut-legend .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-inline-end: 5px; }
+
+  .phone { width: 96px; flex-shrink: 0; background: #1a232c; border-radius: 18px; padding: 8px 6px; box-shadow: 0 30px 70px -28px rgba(0,0,0,.6); }
+  .phone-screen { background: #0d1319; border-radius: 12px; padding: 12px 8px; min-height: 190px; }
+  .phone-screen .brand { color: #fff; font-weight: 900; font-size: 10px; text-align: center; margin: 0 0 10px; }
+  .phone-stat { background: #161e26; border-radius: 8px; padding: 7px 8px; margin-bottom: 6px; }
+  .phone-stat .label { font-size: 7.5px; color: #8b96a3; }
+  .phone-stat .value { font-size: 11px; font-weight: 900; color: var(--mint); font-family: "IBM Plex Mono", monospace; }
+  @media (max-width: 700px) { .phone { display: none; } }
 
   section { padding: 40px 0; }
   .section-head { text-align: center; max-width: 620px; margin: 0 auto 40px; }
@@ -95,193 +148,97 @@
   }
   .section-head h2 { font-size: 28px; margin: 0 0 10px; font-weight: 900; }
   .section-head p { color: var(--ink-soft); margin: 0; }
+  .section-head.on-dark h2, .section-head.on-dark .eyebrow { color: #fff; }
+  .section-head.on-dark .eyebrow { color: var(--mint); }
+  .section-head.on-dark p { color: rgba(255,255,255,.68); }
 
-  /* Industries strip */
-  .industries-strip {
-    display: flex; flex-wrap: wrap; justify-content: center; gap: 10px;
-    margin: 26px auto 0; max-width: 720px;
+  /* Feature icon grid */
+  .icon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .icon-tile {
+    display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 10px;
   }
-  .industries-strip span {
-    display: inline-flex; align-items: center; gap: 7px;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 999px; padding: 8px 16px; font-size: 13.5px; font-weight: 700;
-    color: var(--ink-soft);
+  .icon-tile .icon {
+    width: 40px; height: 40px; border-radius: 11px; background: var(--primary-tint); color: var(--primary);
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
   }
+  .icon-tile span.label { font-size: 12.5px; font-weight: 700; }
 
-  /* Product preview (dashboard mockup) */
-  .preview-frame {
-    max-width: 940px; margin: 0 auto;
-    border-radius: 18px; overflow: hidden;
-    box-shadow: 0 1px 2px rgba(28,38,32,.06), 0 30px 60px -24px rgba(28,38,32,.35);
-    border: 1px solid var(--border);
+  /* Audiences */
+  .audience-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .audience-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px 14px; text-align: center; box-shadow: var(--shadow);
   }
-  .preview-chrome {
-    background: #e9e5da; padding: 10px 14px;
-    display: flex; align-items: center; gap: 7px;
-  }
-  .preview-chrome span {
-    width: 11px; height: 11px; border-radius: 50%; background: #c9c2b2;
-  }
-  .preview-app {
-    background: #14181d; color: #e5e9ee;
-    font-family: "Tajawal", sans-serif;
-    display: flex;
-    min-height: 460px;
-  }
-  .preview-sidebar {
-    width: 190px; flex-shrink: 0;
-    background: #14181d; border-inline-start: 1px solid #2c3540;
-    padding: 16px 0; display: flex; flex-direction: column; gap: 2px;
-  }
-  .preview-sidebar .brand {
-    color: #fff; font-weight: 900; font-size: 15px;
-    padding: 0 18px 16px; margin: 0;
-  }
-  .preview-sidebar a {
-    padding: 9px 18px; font-size: 13.5px; color: #8b96a3;
-  }
-  .preview-sidebar a.active {
-    background: #3aa0c4; color: #fff; font-weight: 700;
-  }
-  .preview-main { flex: 1; padding: 22px 26px; min-width: 0; }
-  .preview-main h2 { font-size: 19px; font-weight: 900; margin: 0 0 18px; color: #fff; }
-  .preview-stats {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-    margin-bottom: 22px;
-  }
-  .preview-stat {
-    background: #1c232b; border: 1px solid #2c3540; border-radius: 10px;
-    padding: 12px 14px;
-  }
-  .preview-stat .label { font-size: 11.5px; color: #8b96a3; margin-bottom: 6px; }
-  .preview-stat .value { font-size: 19px; font-weight: 900; color: #fff; font-family: "IBM Plex Mono", monospace; }
-  .preview-stat .value.up { color: #5fd0a1; }
-  .preview-stat .value.warn { color: #e0a94c; }
-  .preview-tree { display: flex; flex-direction: column; gap: 3px; font-size: 13px; }
-  .preview-tree .row { display: flex; justify-content: space-between; padding: 4px 0; }
-  .preview-tree .code { color: #6b98a8; font-family: "IBM Plex Mono", monospace; font-size: 12px; }
-  .preview-tree .l0 { font-weight: 700; color: #fff; }
-  .preview-tree .l1 { padding-inline-start: 20px; color: #c7cdd4; }
-  .preview-tree .l2 { padding-inline-start: 40px; color: #8b96a3; }
-  .preview-caption {
-    text-align: center; color: var(--ink-soft); font-size: 13.5px;
-    max-width: 560px; margin: 18px auto 0;
-  }
+  .audience-card .icon { font-size: 26px; margin-bottom: 10px; }
+  .audience-card h4 { font-size: 14px; font-weight: 900; margin: 0 0 6px; }
+  .audience-card p { font-size: 12px; color: var(--ink-soft); margin: 0; }
 
-  /* AI section */
-  .ai-grid {
-    display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px;
+  /* AI showcase (dark green) */
+  .ai-showcase {
+    background: linear-gradient(160deg, #0e2b22 0%, #0a1f19 100%);
+    color: #fff; border-radius: 24px; padding: 44px;
   }
-  .ai-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 24px; box-shadow: var(--shadow);
-  }
+  .ai-showcase-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .ai-checklist { list-style: none; padding: 0; margin: 20px 0 0; display: flex; flex-direction: column; gap: 12px; }
+  .ai-checklist li { display: flex; gap: 10px; align-items: flex-start; color: rgba(255,255,255,.88); font-size: 14px; }
+  .ai-checklist li::before { content: "✓"; color: var(--mint); font-weight: 900; flex-shrink: 0; }
+  .chat-mock { background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .chat-bubble { max-width: 82%; padding: 9px 13px; border-radius: 14px; font-size: 13px; line-height: 1.5; }
+  .chat-bubble.user { margin-inline-start: auto; background: rgba(255,255,255,.12); color: #fff; }
+  .chat-bubble.bot { margin-inline-end: auto; background: var(--mint); color: #08251a; font-weight: 600; }
+  .forecast-card { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 16px; margin-top: 14px; }
+  .forecast-card .title { font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.8); margin-bottom: 10px; }
+  .forecast-bars { display: flex; align-items: flex-end; gap: 10px; height: 60px; }
+  .forecast-bars .bar { flex: 1; background: linear-gradient(to top, var(--mint), rgba(95,208,161,.3)); border-radius: 6px 6px 2px 2px; }
+  .forecast-labels { display: flex; justify-content: space-between; font-size: 10.5px; color: rgba(255,255,255,.5); margin-top: 6px; }
+  .forecast-caption { font-size: 11.5px; color: rgba(255,255,255,.5); margin-top: 8px; }
+
+  .ai-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 36px; }
+  .ai-card { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius); padding: 22px; }
   .ai-card .ai-icon {
-    width: 42px; height: 42px; border-radius: 12px;
-    background: var(--primary-tint); color: var(--primary);
-    display: flex; align-items: center; justify-content: center;
-    font-size: 20px; margin-bottom: 14px;
+    width: 40px; height: 40px; border-radius: 11px; background: rgba(255,255,255,.08); color: var(--mint);
+    display: flex; align-items: center; justify-content: center; font-size: 19px; margin-bottom: 12px;
   }
-  .ai-card h3 { font-size: 16.5px; font-weight: 900; margin: 0 0 8px; }
-  .ai-card p { font-size: 13.5px; color: var(--ink-soft); margin: 0; }
-  .ai-card .ai-note {
-    display: block; margin-top: 10px; font-size: 12px; font-weight: 700;
-    color: var(--primary);
-  }
+  .ai-card h3 { font-size: 15.5px; font-weight: 900; margin: 0 0 8px; color: #fff; }
+  .ai-card p { font-size: 13px; color: rgba(255,255,255,.68); margin: 0; }
 
   /* Data journey */
-  .journey {
-    display: flex; align-items: stretch; gap: 0; flex-wrap: wrap;
-    justify-content: center;
-  }
-  .journey-step {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-    padding: 18px 16px; width: 220px; text-align: center;
-    box-shadow: var(--shadow);
-  }
-  .journey-step .num {
-    width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 12.5px; font-weight: 900; margin: 0 auto 10px;
+  .journey { display: flex; align-items: flex-start; gap: 0; flex-wrap: wrap; justify-content: center; }
+  .journey-step { width: 180px; text-align: center; }
+  .journey-step .icon {
+    width: 54px; height: 54px; border-radius: 50%; background: var(--primary-tint); color: var(--primary);
+    display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 12px;
   }
   .journey-step h4 { font-size: 14px; font-weight: 900; margin: 0 0 6px; }
-  .journey-step p { font-size: 12.5px; color: var(--ink-soft); margin: 0; }
-  .journey-arrow {
-    display: flex; align-items: center; justify-content: center;
-    width: 36px; color: var(--border); font-size: 20px; flex-shrink: 0;
-  }
+  .journey-step p { font-size: 12px; color: var(--ink-soft); margin: 0; }
+  .journey-arrow { display: flex; align-items: center; justify-content: center; width: 30px; height: 54px; color: var(--border); font-size: 20px; flex-shrink: 0; }
   @media (max-width: 900px) {
     .journey { flex-direction: column; align-items: center; }
     .journey-arrow { transform: rotate(90deg); width: auto; height: 24px; }
   }
 
   /* Integrations */
-  .integrations-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
-  }
-  .integration-card {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
-    padding: 18px; text-align: center; box-shadow: var(--shadow);
-  }
+  .integrations-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .integration-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; text-align: center; box-shadow: var(--shadow); }
   .integration-card .name { font-weight: 900; font-size: 15px; margin-bottom: 8px; }
-  .integration-status {
-    display: inline-block; font-size: 11.5px; font-weight: 700; padding: 4px 10px;
-    border-radius: 999px;
-  }
+  .integration-status { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
   .integration-status.live { background: #e2f5ec; color: #0f6b45; }
   .integration-status.manual { background: var(--accent-tint); color: #6b4a19; }
-  .integrations-note {
-    text-align: center; color: var(--ink-soft); font-size: 13px;
-    max-width: 620px; margin: 20px auto 0;
-  }
+  .integrations-note { text-align: center; color: var(--ink-soft); font-size: 13px; max-width: 620px; margin: 20px auto 0; }
 
   /* Tiers */
-  .tiers {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 18px;
-  }
-  .tier {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 26px 22px;
-    box-shadow: var(--shadow);
-    display: flex; flex-direction: column;
-    position: relative;
-  }
-  .tier.is-recommended {
-    border-color: var(--primary);
-    box-shadow: 0 1px 2px rgba(28,38,32,.04), 0 20px 40px -18px rgba(15,92,75,.4);
-  }
-  .tier-badge {
-    position: absolute; top: -13px; inset-inline-end: 22px;
-    background: var(--primary); color: #fff;
-    font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
-  }
+  .tiers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .tier { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; position: relative; }
+  .tier.is-recommended { border-color: var(--primary); box-shadow: 0 1px 2px rgba(28,38,32,.04), 0 20px 40px -18px rgba(15,92,75,.4); }
+  .tier-badge { position: absolute; top: -13px; inset-inline-end: 22px; background: var(--primary); color: #fff; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px; }
   .tier-badge.is-launch { background: var(--accent); }
-  .tier-old-price {
-    text-decoration: line-through; color: var(--ink-soft); font-size: 15px; font-weight: 700;
-    margin-inline-end: 6px;
-  }
-  .tier-annual-note {
-    background: var(--accent-tint); color: #6b4a19; border-radius: 8px;
-    font-size: 12.5px; font-weight: 700; padding: 6px 10px; margin: -8px 0 16px;
-  }
-  .currency-select {
-    display: flex; align-items: center; justify-content: center; gap: 10px;
-    margin: 0 0 28px;
-  }
+  .tier-old-price { text-decoration: line-through; color: var(--ink-soft); font-size: 15px; font-weight: 700; margin-inline-end: 6px; }
+  .tier-annual-note { background: var(--accent-tint); color: #6b4a19; border-radius: 8px; font-size: 12.5px; font-weight: 700; padding: 6px 10px; margin: -8px 0 16px; }
+  .currency-select { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 0 28px; }
   .currency-select label { font-size: 13.5px; color: var(--ink-soft); font-weight: 700; }
-  .currency-select select {
-    font-family: inherit; font-size: 14px; font-weight: 700; color: var(--ink);
-    background: var(--surface); border: 1px solid var(--border); border-radius: 999px;
-    padding: 8px 16px; cursor: pointer;
-  }
-  .currency-note {
-    text-align: center; font-size: 12px; color: var(--ink-soft);
-    max-width: 480px; margin: -16px auto 32px;
-  }
+  .currency-select select { font-family: inherit; font-size: 14px; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+  .currency-note { text-align: center; font-size: 12px; color: var(--ink-soft); max-width: 480px; margin: -16px auto 32px; }
   .tier-emoji { font-size: 22px; margin-bottom: 10px; }
   .tier-name { font-weight: 900; font-size: 19px; margin: 0 0 4px; }
   .tier-desc { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 20px; min-height: 40px; }
@@ -295,159 +252,172 @@
   .tier .btn { justify-content: center; width: 100%; }
 
   /* Calculator */
-  .calc-card {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    box-shadow: var(--shadow);
-    padding: 36px;
-    display: grid;
-    grid-template-columns: 1fr 320px;
-    gap: 36px;
-  }
+  .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow); padding: 36px; display: grid; grid-template-columns: 1fr 320px; gap: 36px; }
   .calc-controls { display: flex; flex-direction: column; gap: 26px; }
   .field-label { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; margin-bottom: 10px; }
   .field-label .val { color: var(--primary); font-family: "IBM Plex Mono", monospace; }
-  input[type=range] {
-    width: 100%; height: 6px; border-radius: 999px;
-    background: var(--border); appearance: none; -webkit-appearance: none;
-  }
-  input[type=range]::-webkit-slider-thumb {
-    appearance: none; -webkit-appearance: none;
-    width: 20px; height: 20px; border-radius: 50%;
-    background: var(--primary); border: 3px solid #fff;
-    box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer;
-  }
+  input[type=range] { width: 100%; height: 6px; border-radius: 999px; background: var(--border); appearance: none; -webkit-appearance: none; }
+  input[type=range]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer; }
   .field-hint { color: var(--ink-soft); font-size: 12.5px; margin-top: 8px; }
-
-  .calc-result {
-    background: var(--primary-dark);
-    color: #fff;
-    border-radius: 16px;
-    padding: 26px;
-    display: flex; flex-direction: column;
-    justify-content: space-between;
-  }
-  .calc-result .tier-tag {
-    align-self: flex-start;
-    background: rgba(255,255,255,.14);
-    font-size: 12.5px; font-weight: 700;
-    padding: 5px 12px; border-radius: 999px;
-    margin-bottom: 18px;
-  }
+  .calc-result { background: var(--primary-dark); color: #fff; border-radius: 16px; padding: 26px; display: flex; flex-direction: column; justify-content: space-between; }
+  .calc-result .tier-tag { align-self: flex-start; background: rgba(255,255,255,.14); font-size: 12.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; margin-bottom: 18px; }
   .calc-result .price-label { font-size: 13px; opacity: .75; margin-bottom: 6px; }
   .calc-result .price { font-size: 42px; font-weight: 900; font-family: "IBM Plex Mono", monospace; }
   .calc-result .price small { font-size: 15px; opacity: .8; font-family: "Tajawal", sans-serif; font-weight: 700; }
   .calc-result .breakdown { margin-top: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; opacity: .85; }
   .calc-result .breakdown div { display: flex; justify-content: space-between; }
   .calc-result .btn-primary { margin-top: 20px; background: #fff; color: var(--primary-dark); box-shadow: none; }
-
-  .assumptions-note {
-    margin-top: 18px; padding: 14px 18px;
-    background: var(--accent-tint); border: 1px dashed var(--accent);
-    border-radius: 12px; font-size: 13px; color: #6b4a19;
-  }
-
-  /* Everything included */
-  .included-grid {
-    display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;
-  }
-  .included-grid span {
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 10px; padding: 12px 14px; font-size: 13.5px; font-weight: 500;
-    text-align: center;
-  }
+  .assumptions-note { margin-top: 18px; padding: 14px 18px; background: var(--accent-tint); border: 1px dashed var(--accent); border-radius: 12px; font-size: 13px; color: #6b4a19; }
 
   /* FAQ */
   .faq { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
-  .faq details {
-    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
-    padding: 4px 20px;
-  }
-  .faq summary {
-    cursor: pointer; font-weight: 700; font-size: 15px; padding: 16px 0;
-    list-style: none; display: flex; justify-content: space-between; align-items: center;
-    gap: 12px;
-  }
+  .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px 20px; }
+  .faq summary { cursor: pointer; font-weight: 700; font-size: 15px; padding: 16px 0; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
   .faq summary::-webkit-details-marker { display: none; }
   .faq summary::after { content: "+"; font-size: 20px; color: var(--primary); flex-shrink: 0; }
   .faq details[open] summary::after { content: "−"; }
   .faq p { margin: 0 0 18px; color: var(--ink-soft); font-size: 14px; }
 
   /* Trial */
-  .trial-band {
-    background: var(--primary); color: #fff;
-    border-radius: 20px; padding: 44px; text-align: center;
-  }
+  .trial-band { background: var(--primary); color: #fff; border-radius: 20px; padding: 44px; text-align: center; }
   .trial-band h2 { font-size: 26px; margin: 0 0 10px; font-weight: 900; }
   .trial-band p { opacity: .9; max-width: 560px; margin: 0 auto 24px; }
-  .trial-steps {
-    display: flex; justify-content: center; gap: 24px; margin-top: 28px; flex-wrap: wrap;
-  }
-  .trial-steps div { font-size: 13px; opacity: .85; max-width: 220px; }
-  .trial-steps strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  .trial-perks { display: flex; justify-content: center; gap: 28px; margin-top: 30px; flex-wrap: wrap; font-size: 13px; font-weight: 700; }
+  .trial-perks span { display: inline-flex; align-items: center; gap: 8px; }
 
   footer { text-align: center; padding: 40px 0 60px; color: var(--ink-soft); font-size: 13px; }
 
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .hero-copy { text-align: center; }
+    .hero-sub { margin-inline: auto; }
+    .hero-cta, .hero-trust, .industries-strip { justify-content: center; }
+    .ai-showcase-grid { grid-template-columns: 1fr; }
+  }
   @media (max-width: 860px) {
     .tiers { grid-template-columns: 1fr 1fr; }
     .calc-card { grid-template-columns: 1fr; }
-    .included-grid { grid-template-columns: 1fr 1fr; }
+    .icon-grid { grid-template-columns: 1fr 1fr; }
     .ai-grid { grid-template-columns: 1fr; }
     .integrations-grid { grid-template-columns: 1fr 1fr; }
     .preview-stats { grid-template-columns: 1fr; }
+    .chart-row { flex-direction: column; align-items: stretch; }
+    .audience-grid { grid-template-columns: 1fr 1fr; }
+    .laptop-screen { flex-direction: column; }
+    .preview-sidebar { display: none; }
   }
   @media (max-width: 540px) {
     .tiers { grid-template-columns: 1fr; }
-    .top-row { flex-wrap: wrap; gap: 12px; justify-content: center; }
+    .dark-nav { justify-content: center; text-align: center; }
+    .nav-links { display: none; }
   }
 </style>
 </head>
 <body>
 
-<header class="hero">
+<header class="hero-dark">
   <div class="wrap">
-    <div class="top-row">
+    <nav class="dark-nav">
       <div class="brand"><span class="brand-mark">R</span> RomaERP</div>
-      <button class="lang-toggle" id="langToggle" type="button">English</button>
-    </div>
-    <h1 id="heroTitle"></h1>
-    <p class="hero-sub" id="heroSub"></p>
-    <div class="hero-cta">
-      <a href="/start-trial" class="btn btn-primary" id="heroCtaTrial"></a>
-      <a href="#calculator" class="btn btn-ghost" id="heroCtaCalc"></a>
-    </div>
-    <div class="industries-strip" id="industriesStrip"></div>
-  </div>
-</header>
-
-<section id="preview">
-  <div class="wrap">
-    <div class="preview-frame">
-      <div class="preview-chrome"><span></span><span></span><span></span></div>
-      <div class="preview-app" id="previewApp">
-        <div class="preview-sidebar" id="previewSidebar">
-          <p class="brand">RomaERP</p>
+      <div class="nav-links" id="navLinks"></div>
+      <div class="nav-right">
+        <button class="lang-toggle" id="langToggle" type="button">English</button>
+        <a href="/start-trial" class="btn btn-accent" id="navCta"></a>
+      </div>
+    </nav>
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <h1 id="heroTitle"></h1>
+        <p class="hero-sub" id="heroSub"></p>
+        <div class="hero-cta">
+          <a href="/start-trial" class="btn btn-accent" id="heroCtaTrial"></a>
+          <a href="#tiers" class="btn btn-ghost-dark" id="heroCtaCalc"></a>
         </div>
-        <div class="preview-main">
-          <h2 id="previewTitle"></h2>
-          <div class="preview-stats" id="previewStats"></div>
-          <div class="preview-tree" id="previewTree"></div>
+        <div class="hero-trust" id="heroTrust"></div>
+        <div class="industries-strip" id="industriesStrip"></div>
+      </div>
+      <div class="hero-visual">
+        <div class="device-stack">
+          <div class="laptop">
+            <div class="laptop-screen">
+              <div class="preview-sidebar" id="previewSidebar">
+                <p class="brand">RomaERP</p>
+              </div>
+              <div class="preview-main">
+                <h2 id="previewTitle"></h2>
+                <div class="preview-stats" id="previewStats"></div>
+                <div class="chart-row">
+                  <div class="line-chart-block">
+                    <div id="lineChart"></div>
+                    <div class="caption" id="lineChartCaption"></div>
+                  </div>
+                  <div class="donut-block">
+                    <div class="donut" id="donut"></div>
+                    <div class="donut-legend" id="donutLegend"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="laptop-base"></div>
+          </div>
+          <div class="phone">
+            <div class="phone-screen">
+              <p class="brand">ROMA</p>
+              <div id="phoneStats"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    <p class="preview-caption" id="previewCaption"></p>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="includedEyebrow"></span>
+      <h2 id="includedHeading"></h2>
+      <p id="includedDesc"></p>
+    </div>
+    <div class="icon-grid" id="includedGrid"></div>
+  </div>
+</section>
+
+<section id="audiences">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="audiencesEyebrow"></span>
+      <h2 id="audiencesHeading"></h2>
+      <p id="audiencesDesc"></p>
+    </div>
+    <div class="audience-grid" id="audienceGrid"></div>
   </div>
 </section>
 
 <section id="ai">
   <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow" id="aiEyebrow"></span>
-      <h2 id="aiHeading"></h2>
-      <p id="aiDesc"></p>
+    <div class="ai-showcase">
+      <div class="section-head on-dark">
+        <span class="eyebrow" id="aiEyebrow"></span>
+        <h2 id="aiHeading"></h2>
+        <p id="aiDesc"></p>
+      </div>
+      <div class="ai-showcase-grid">
+        <div>
+          <ul class="ai-checklist" id="aiChecklist"></ul>
+        </div>
+        <div>
+          <div class="chat-mock" id="chatMock"></div>
+          <div class="forecast-card">
+            <div class="title" id="forecastTitle"></div>
+            <div class="forecast-bars" id="forecastBars"></div>
+            <div class="forecast-labels" id="forecastLabels"></div>
+            <div class="forecast-caption" id="forecastCaption"></div>
+          </div>
+        </div>
+      </div>
+      <div class="ai-grid" id="aiGrid"></div>
     </div>
-    <div class="ai-grid" id="aiGrid"></div>
   </div>
 </section>
 
@@ -475,17 +445,6 @@
     </div>
     <p class="currency-note" id="currencyNote"></p>
     <div class="tiers" id="tiersGrid"></div>
-  </div>
-</section>
-
-<section>
-  <div class="wrap">
-    <div class="section-head">
-      <span class="eyebrow" id="includedEyebrow"></span>
-      <h2 id="includedHeading"></h2>
-      <p id="includedDesc"></p>
-    </div>
-    <div class="included-grid" id="includedGrid"></div>
   </div>
 </section>
 
@@ -554,7 +513,7 @@
       <h2 id="trialHeading"></h2>
       <p id="trialDesc"></p>
       <a href="/start-trial" class="btn btn-primary" style="background:#fff;color:var(--primary-dark)" id="trialCta"></a>
-      <div class="trial-steps" id="trialSteps"></div>
+      <div class="trial-perks" id="trialPerks"></div>
     </div>
   </div>
 </section>
@@ -607,32 +566,67 @@
   let currentCurrency = "SAR";
   let currentLang = localStorage.getItem("lang") === "en" ? "en" : "ar";
 
+  // Illustrative dashboard-mockup data only — not a live data feed.
+  const REVENUE_TREND = [30, 34, 32, 38, 42, 40, 46, 50, 48, 55, 60, 64];
+  const EXPENSE_BREAKDOWN = [
+    { pct: 35, color: "#0f5c4b" },
+    { pct: 28, color: "#c8862e" },
+    { pct: 20, color: "#3aa0c4" },
+    { pct: 17, color: "#8b96a3" },
+  ];
+  const FORECAST_FACTORS = [1, 1.08, 1.16];
+
   const T = {
     ar: {
       pageTitle: "الأسعار — RomaERP",
-      heroTitlePrefix: "سعر واحد ", heroTitleHighlight: "واضح", heroTitleSuffix: "، على قد نشاطك",
-      heroSub: "مش هنطلب منك تشتري المحاسبة وحدها والـ POS وحده والمخزون والتكاليف كل واحد لوحده. اشتراك واحد، كل الإمكانيات، والسعر بيتغير بس حسب حجمك — عدد الشركات، الفروع، والمستخدمين.",
-      heroCtaTrial: "جرّب مجانًا 21 يوم", heroCtaCalc: "احسب سعرك",
+      navLinks: [["المميزات", "#features"], ["الذكاء الاصطناعي", "#ai"], ["الأسعار", "#tiers"], ["الأسئلة الشائعة", "#faq"]],
+      navCta: "ابدأ الآن",
+      heroTitlePrefix: "إدارة أعمالك ", heroTitleHighlight: "بشكل أذكى", heroTitleSuffix: "",
+      heroSub: "نظام متكامل واحد بدل ما تشتري المحاسبة وحدها والـ POS وحده والمخزون والتكاليف كل واحد لوحده. اشتراك واحد، كل الإمكانيات، مدعوم بالذكاء الاصطناعي.",
+      heroCtaTrial: "ابدأ تجربتك المجانية", heroCtaCalc: "شوف الأسعار",
+      heroTrust: ["⚡ إعداد سريع من غير برامج إضافية", "🔒 بياناتك آمنة ومحفوظة", "📅 تجربة 21 يوم من غير بطاقة بنكية"],
       industries: ["🍽️ مطاعم", "🛒 تجزئة", "📦 جملة وتوزيع", "🏗️ مقاولات ومشاريع", "🧰 خدمات"],
-      previewNav: ["عام", "المساعد الذكي", "شجرة الحسابات", "الأرصدة الافتتاحية", "القيود اليومية", "التقارير", "المبيعات", "المشتريات"],
-      previewTitle: "شجرة الحسابات",
+      previewNav: ["الرئيسية", "المساعد الذكي", "المبيعات", "المشتريات", "المخزون", "المحاسبة", "التقارير"],
+      previewTitle: "الرئيسية",
       previewStats: [
-        ["مبيعات اليوم", "٤٢,٣٠٠ ريال", "up"],
-        ["مصروفات بانتظار الاعتماد", "٣", "warn"],
+        ["الإيرادات هذا الشهر", "٦٤,٢٠٠ ريال", "up"],
+        ["مصروفات بانتظار اعتماد AI", "٣", "warn"],
         ["فروع متصلة", "٦", ""],
       ],
-      previewTree: [
-        ["الأصول (إجمالي)", "1000", "l0"], ["الأصول المتداولة (إجمالي)", "1100", "l1"],
-        ["النقدية وما في حكمها (إجمالي)", "1110", "l2"], ["الصندوق", "1111", "l2"], ["البنك", "1112", "l2"],
-        ["العملاء", "1120", "l1"], ["المخزون", "1160", "l1"],
-        ["الخصوم (إجمالي)", "2000", "l0"], ["الموردون", "2120", "l1"],
-        ["حقوق الملكية (إجمالي)", "3000", "l0"],
-        ["الإيرادات (إجمالي)", "4000", "l0"], ["إيرادات المبيعات", "4100", "l1"],
-        ["المصروفات (إجمالي)", "5000", "l0"], ["تكلفة البضاعة المباعة", "5500", "l1"],
+      lineChartCaption: "الإيرادات آخر 12 شهر",
+      expenseBreakdown: ["مشتريات ومخزون", "رواتب", "إيجارات ومرافق", "أخرى"],
+      previewCaption: "شكل تقريبي للوحة التحكم اللي هتشتغل عليها من أول يوم.",
+      includedEyebrow: "كل الإمكانيات، مفيش استثناءات", includedHeading: "كل مستويات الاشتراك تشمل النظام بالكامل",
+      includedDesc: "مفيش Modules منفصلة، ومفيش تقارير أو صلاحيات مقفولة على باقة معينة. الفرق بين الباقات هو حجم النشاط بس — سواء كنت مطعم، محل تجزئة، شركة توزيع، أو مقاول.",
+      includedFeatures: [
+        ["📒", "المحاسبة والقيود"], ["🖥️", "نقاط البيع POS"], ["🛒", "المبيعات والمشتريات"], ["📦", "المخزون والتكاليف"],
+        ["🍳", "الوصفات والمطاعم"], ["👥", "الموارد البشرية والرواتب"], ["📊", "التقارير المالية"], ["🔮", "توقعات مالية وتحليل ماذا-لو"],
+        ["🏬", "إدارة فروع ومواقع متعددة"], ["🔐", "الصلاحيات"], ["🕵️", "سجل التدقيق (Audit Trail)"], ["📱", "تطبيق ويب يتثبت على الموبايل"],
       ],
-      previewCaption: "شجرة حسابات محاسبية كاملة بمعايير احترافية، ولوحة أرقام حية على كل شاشة — جاهزة من أول يوم، مش محتاج تبنيها بنفسك.",
+      audiencesEyebrow: "يناسب أي نشاط", audiencesHeading: "بيشتغل مع شكل شغلك إزاي ما كان",
+      audiencesDesc: "من فرع واحد لعشرات الفروع، ومن نشاط واحد لعدة شركات — نفس النظام بيكبر معاك.",
+      audiences: [
+        ["🏢", "فروع متعددة", "تدير كل فروعك من مكان واحد بصلاحيات مختلفة لكل فرع"],
+        ["🏭", "أكتر من شركة", "شركات منفصلة تحت إدارة واحدة، كل واحدة ببياناتها المستقلة"],
+        ["🔗", "سلاسل وامتيازات", "نفس الإعداد بينتشر على كل فروع السلسلة بسهولة"],
+        ["🧰", "خدمات ومقاولات", "محاسبة ومخزون ومشتريات وموارد بشرية تناسب أي نشاط، مش بس مطاعم"],
+        ["🏪", "نشاط مستقل بفرع واحد", "تبدأ بسيط وتكبر من غير ما تغيّر نظامك"],
+      ],
       aiEyebrow: "الذكاء الاصطناعي", aiHeading: "مساعد بيشتغل معاك، مش بس شات بيرد",
       aiDesc: "الذكاء الاصطناعي في ROMA مبني جوه شغلك اليومي، وأي حاجة بيعملها بتنتظر اعتمادك قبل ما تترحل فعليًا.",
+      aiChecklist: [
+        "تسجيل المصروفات بالكلام أو بصورة الإيصال",
+        "المطابقة البنكية التلقائية مع مصروفات الكارت",
+        "رد فوري وذكي على تذاكر الدعم للأسئلة العامة",
+        "توقعات مالية مبنية على تاريخ حساباتك الفعلي",
+      ],
+      chat: [
+        { role: "user", text: "صرفت النهاردة 480 ريال قطع غيار" },
+        { role: "bot", text: "تم تسجيل مصروف 480 ريال تحت حساب (قطع غيار وصيانة) — هينتظر اعتماد المسؤول قبل الترحيل. ✅" },
+      ],
+      forecastTitle: "التوقع المالي للأشهر الجاية",
+      forecastLabels: ["الشهر ده", "الجاي", "بعده"],
+      forecastCaption: "توقعات مبنية على تاريخ حساباتك الفعلي، مش تخمين عام.",
       aiCards: [
         { icon: "🧾", title: "تسجيل المصروفات بالكلام أو بالصورة", desc: "قول للمساعد المصروف كام وعلى إيه، أو ابعتله صورة الإيصال، وهو يستخرج المبلغ والوصف وأنسب حساب تلقائيًا. أي مصروف من المساعد بيروح لشاشة الاعتماد، ومفيش حاجة بتترحل للمحاسبة من غير موافقة مسؤول." },
         { icon: "🏦", title: "المطابقة البنكية الذكية", desc: "ارفع كشف حساب البنك زي ما هو (Excel أو CSV)، والنظام يطابقه تلقائيًا مع مصروفات الكارت اللي سجّلها المساعد، فيوفر عليك المطابقة اليدوية بندًا ببند." },
@@ -641,10 +635,10 @@
       journeyEyebrow: "رحلة البيانات", journeyHeading: "من المصدر للتقرير، خطوة بخطوة",
       journeyDesc: "نفس الرحلة سواء كانت فاتورة مورد، إيصال مصروف، أو طلب بيع — البيانات بتتسجل مرة واحدة وتظهر في كل مكان.",
       journeySteps: [
-        ["المصدر", "فاتورة، إيصال، طلب بيع، أو حركة مخزون"],
-        ["الإدخال", "المساعد الذكي يقترح القيد، أو إدخال يدوي مباشر"],
-        ["الاعتماد", "المسؤول يراجع ويعتمد قبل الترحيل"],
-        ["النتيجة", "قيد محاسبي وحركة مخزون فوريين، ويظهروا في التقارير على طول"],
+        ["📥", "المصدر", "فاتورة، إيصال، طلب بيع، أو حركة مخزون"],
+        ["✍️", "الإدخال", "المساعد الذكي يقترح القيد، أو إدخال يدوي مباشر"],
+        ["✅", "الاعتماد", "المسؤول يراجع ويعتمد قبل الترحيل"],
+        ["📊", "النتيجة", "قيد محاسبي وحركة مخزون فوريين، ويظهروا في التقارير على طول"],
       ],
       tiersEyebrow: "الباقات", tiersHeading: "نقطة بداية، مش قالب جاهز",
       tiersDesc: "الأسعار دي بداية معقولة لكل حجم نشاط. استخدم الحاسبة تحت عشان تشوف السعر الفعلي المناسب لك بالظبط.",
@@ -657,9 +651,6 @@
       includeAllModules: "كل موديولات ROMA بدون استثناء", includeSupport: "دعم فني بالعربي",
       includeUnlimited: "فروع ومستخدمون بلا حدود عملية", includeExtraPricing: "زيادة الفروع/المستخدمين بسعر إضافي واضح",
       ctaContact: "تواصل معنا", ctaStartTrial: "ابدأ تجربتك",
-      includedEyebrow: "كل الإمكانيات، مفيش استثناءات", includedHeading: "كل مستويات الاشتراك تشمل النظام بالكامل",
-      includedDesc: "مفيش Modules منفصلة، ومفيش تقارير أو صلاحيات مقفولة على باقة معينة. الفرق بين الباقات هو حجم النشاط بس — سواء كنت مطعم، محل تجزئة، شركة توزيع، أو مقاول.",
-      includedFeatures: ["المحاسبة والقيود", "نقاط البيع POS", "المبيعات والمشتريات", "المخزون والتكاليف", "الوصفات والمطاعم", "الموارد البشرية والرواتب", "التقارير المالية", "توقعات مالية وتحليل ماذا-لو", "إدارة فروع ومواقع متعددة", "الصلاحيات", "سجل التدقيق (Audit Trail)", "تطبيق ويب يتثبت على الموبايل"],
       calcEyebrow: "الحاسبة", calcHeading: "احسب السعر المناسب لنشاطك",
       calcDesc: "غيّر عدد الشركات والفروع والمستخدمين وشوف السعر بيتغير على طول.",
       companiesLabel: "عدد الشركات (كيانات منفصلة)",
@@ -693,11 +684,7 @@
       trialHeading: "لا تصدّقنا. جرّب ROMA بنفسك.",
       trialDesc: "21 يوم مجانًا، بحساب شركة حقيقي ببياناتك، وكل إمكانيات ROMA متاحة — من غير ما تحط بيانات بطاقة بنكية.",
       trialCta: "ابدأ تجربتك الآن",
-      trialSteps: [
-        ["1. 21 يوم كاملة", "كل الإمكانيات من غير قيود"],
-        ["2. تحويل مباشر", "لو أعجبك، نفس الحساب ونفس البيانات يستمر بدون فقد أي حاجة"],
-        ["3. بياناتك في أمان", "حتى لو التجربة خلصت، بياناتك محفوظة وميتمسحش حاجة من غير ما تقرر انت"],
-      ],
+      trialPerks: ["⚡ إعداد سريع", "🎧 دعم فني بالعربي", "🔒 بياناتك محفوظة ومؤمّنة"],
       footer: `© RomaERP — السعودية أولاً. الأسعار قابلة للتغيير حتى الإطلاق الرسمي. <a href="/terms.html" style="color:var(--primary)">الشروط والأحكام</a>`,
       egpNote: "الأسعار بالجنيه المصري تقريبية لتقلب سعر الصرف — السعر النهائي بيتأكد وقت التفعيل الفعلي.",
       approxNote: "أسعار تقريبية محوّلة من الريال السعودي.",
@@ -705,29 +692,54 @@
     },
     en: {
       pageTitle: "Pricing — RomaERP",
-      heroTitlePrefix: "One ", heroTitleHighlight: "clear", heroTitleSuffix: " price, sized to your business",
-      heroSub: "No buying accounting alone, POS alone, and inventory & costing alone. One subscription, every feature, and the price only changes with your size — number of companies, branches, and users.",
-      heroCtaTrial: "Try free for 21 days", heroCtaCalc: "Calculate your price",
+      navLinks: [["Features", "#features"], ["AI", "#ai"], ["Pricing", "#tiers"], ["FAQ", "#faq"]],
+      navCta: "Start now",
+      heroTitlePrefix: "Manage your business, ", heroTitleHighlight: "smarter", heroTitleSuffix: "",
+      heroSub: "One integrated system instead of buying accounting alone, POS alone, and inventory & costing alone. One subscription, every feature, powered by AI.",
+      heroCtaTrial: "Start your free trial", heroCtaCalc: "See pricing",
+      heroTrust: ["⚡ Fast setup, no extra software", "🔒 Your data is safe", "📅 21-day trial, no credit card"],
       industries: ["🍽️ Restaurants", "🛒 Retail", "📦 Wholesale & distribution", "🏗️ Contracting & projects", "🧰 Services"],
-      previewNav: ["General", "AI Assistant", "Chart of Accounts", "Opening Balances", "Journal Entries", "Reports", "Sales", "Purchasing"],
-      previewTitle: "Chart of Accounts",
+      previewNav: ["Home", "AI Assistant", "Sales", "Purchasing", "Inventory", "Accounting", "Reports"],
+      previewTitle: "Home",
       previewStats: [
-        ["Today's sales", "SAR 42,300", "up"],
-        ["Expenses awaiting approval", "3", "warn"],
+        ["Revenue this month", "SAR 64,200", "up"],
+        ["Expenses awaiting AI approval", "3", "warn"],
         ["Connected branches", "6", ""],
       ],
-      previewTree: [
-        ["Assets (total)", "1000", "l0"], ["Current Assets (total)", "1100", "l1"],
-        ["Cash & Equivalents (total)", "1110", "l2"], ["Cash on Hand", "1111", "l2"], ["Bank", "1112", "l2"],
-        ["Customers", "1120", "l1"], ["Inventory", "1160", "l1"],
-        ["Liabilities (total)", "2000", "l0"], ["Vendors", "2120", "l1"],
-        ["Equity (total)", "3000", "l0"],
-        ["Revenue (total)", "4000", "l0"], ["Sales Revenue", "4100", "l1"],
-        ["Expenses (total)", "5000", "l0"], ["Cost of Goods Sold", "5500", "l1"],
+      lineChartCaption: "Revenue over the last 12 months",
+      expenseBreakdown: ["Purchases & inventory", "Payroll", "Rent & utilities", "Other"],
+      previewCaption: "An approximate look at the dashboard you'll work on from day one.",
+      includedEyebrow: "Everything included, no exceptions", includedHeading: "Every plan includes the full system",
+      includedDesc: "No separate modules, no reports or permissions locked to a specific plan. The only difference between plans is the size of your activity — whether you run a restaurant, a retail shop, a distribution business, or a contracting company.",
+      includedFeatures: [
+        ["📒", "Accounting & journal entries"], ["🖥️", "POS"], ["🛒", "Sales & purchasing"], ["📦", "Inventory & costing"],
+        ["🍳", "Recipes & restaurants"], ["👥", "HR & payroll"], ["📊", "Financial reports"], ["🔮", "Financial forecasting & what-if analysis"],
+        ["🏬", "Multi-branch & multi-site management"], ["🔐", "Permissions"], ["🕵️", "Audit trail"], ["📱", "Installable web app on mobile"],
       ],
-      previewCaption: "A complete, professional-standard chart of accounts, with a live numbers dashboard on every screen — ready from day one, no need to build it yourself.",
+      audiencesEyebrow: "Fits any business", audiencesHeading: "Works with your business, whatever shape it takes",
+      audiencesDesc: "From a single branch to dozens, from one business to several companies — the same system grows with you.",
+      audiences: [
+        ["🏢", "Multi-branch operations", "Manage every branch from one place, with different permissions per branch"],
+        ["🏭", "Multiple companies", "Separate companies under one roof, each with its own independent data"],
+        ["🔗", "Chains & franchises", "The same setup rolls out to every branch in the chain with ease"],
+        ["🧰", "Services & contracting", "Accounting, inventory, purchasing, and HR that fit any business, not just restaurants"],
+        ["🏪", "A single-location business", "Start simple and grow without switching systems"],
+      ],
       aiEyebrow: "AI", aiHeading: "An assistant that works with you, not just a chatbot",
       aiDesc: "The AI in ROMA is built into your daily work, and anything it does waits for your approval before it actually posts.",
+      aiChecklist: [
+        "Capture expenses by chat or a photo of the receipt",
+        "Automatic bank reconciliation against card expenses",
+        "Instant, smart replies to support tickets on general questions",
+        "Financial forecasts based on your actual account history",
+      ],
+      chat: [
+        { role: "user", text: "I spent 480 SAR on spare parts today" },
+        { role: "bot", text: "Logged a 480 SAR expense under (Spare parts & maintenance) — it'll wait for manager approval before posting. ✅" },
+      ],
+      forecastTitle: "Financial forecast for the coming months",
+      forecastLabels: ["This month", "Next", "After"],
+      forecastCaption: "Forecasts based on your own account history, not a generic guess.",
       aiCards: [
         { icon: "🧾", title: "Capture expenses by chat or photo", desc: "Tell the assistant what the expense was, or send it a photo of the receipt, and it extracts the amount, description, and the right account automatically. Every expense from the assistant goes to an approval screen — nothing posts to accounting without a manager's approval." },
         { icon: "🏦", title: "Smart bank reconciliation", desc: "Upload your bank statement exactly as exported (Excel or CSV), and the system automatically matches it against card expenses the assistant already captured, saving you line-by-line manual matching." },
@@ -736,10 +748,10 @@
       journeyEyebrow: "Data journey", journeyHeading: "From source to report, step by step",
       journeyDesc: "The same journey whether it's a vendor invoice, an expense receipt, or a sales order — data is entered once and shows up everywhere.",
       journeySteps: [
-        ["Source", "An invoice, a receipt, a sales order, or a stock movement"],
-        ["Entry", "The AI assistant suggests the entry, or it's entered manually"],
-        ["Approval", "A manager reviews and approves before it posts"],
-        ["Result", "An instant journal entry and stock movement, showing up in reports right away"],
+        ["📥", "Source", "An invoice, a receipt, a sales order, or a stock movement"],
+        ["✍️", "Entry", "The AI assistant suggests the entry, or it's entered manually"],
+        ["✅", "Approval", "A manager reviews and approves before it posts"],
+        ["📊", "Result", "An instant journal entry and stock movement, showing up in reports right away"],
       ],
       tiersEyebrow: "Plans", tiersHeading: "A starting point, not a rigid template",
       tiersDesc: "These prices are a reasonable start for every business size. Use the calculator below to see the exact price that fits you.",
@@ -752,9 +764,6 @@
       includeAllModules: "Every ROMA module, no exceptions", includeSupport: "Arabic-language support",
       includeUnlimited: "Practically unlimited branches and users", includeExtraPricing: "Extra branches/users at a clear add-on price",
       ctaContact: "Contact us", ctaStartTrial: "Start your trial",
-      includedEyebrow: "Everything included, no exceptions", includedHeading: "Every plan includes the full system",
-      includedDesc: "No separate modules, no reports or permissions locked to a specific plan. The only difference between plans is the size of your activity — whether you run a restaurant, a retail shop, a distribution business, or a contracting company.",
-      includedFeatures: ["Accounting & journal entries", "POS", "Sales & purchasing", "Inventory & costing", "Recipes & restaurants", "HR & payroll", "Financial reports", "Financial forecasting & what-if analysis", "Multi-branch & multi-site management", "Permissions", "Audit trail", "Installable web app on mobile"],
       calcEyebrow: "Calculator", calcHeading: "Calculate the right price for your business",
       calcDesc: "Change the number of companies, branches, and users and watch the price update instantly.",
       companiesLabel: "Number of companies (separate entities)",
@@ -788,11 +797,7 @@
       trialHeading: "Don't take our word for it. Try ROMA yourself.",
       trialDesc: "21 days free, with a real company account and your own data, and every ROMA feature available — no credit card required.",
       trialCta: "Start your trial now",
-      trialSteps: [
-        ["1. 21 full days", "Every feature, no restrictions"],
-        ["2. Seamless conversion", "If you like it, the same account and data continue with nothing lost"],
-        ["3. Your data is safe", "Even after the trial ends, your data stays saved — nothing is deleted unless you decide to"],
-      ],
+      trialPerks: ["⚡ Fast setup", "🎧 Arabic-language support", "🔒 Your data is safe and secured"],
       footer: `© RomaERP — Saudi Arabia first. Prices subject to change until official launch. <a href="/terms.html" style="color:var(--primary)">Terms &amp; Privacy</a>`,
       egpNote: "EGP prices are approximate due to exchange-rate fluctuation — the final price is confirmed at activation.",
       approxNote: "Approximate prices converted from Saudi Riyal.",
@@ -806,6 +811,47 @@
     return c.decimals > 0 ? value.toFixed(c.decimals) : Math.round(value);
   }
 
+  function renderLineChart() {
+    const w = 200, h = 56, pad = 4;
+    const max = Math.max(...REVENUE_TREND), min = Math.min(...REVENUE_TREND);
+    const points = REVENUE_TREND.map((v, i) => {
+      const x = pad + i * ((w - 2 * pad) / (REVENUE_TREND.length - 1));
+      const y = h - pad - ((v - min) / (max - min || 1)) * (h - 2 * pad);
+      return [x.toFixed(1), y.toFixed(1)];
+    });
+    const linePoints = points.map(p => p.join(",")).join(" ");
+    const areaPoints = `${pad},${h - pad} ` + linePoints + ` ${w - pad},${h - pad}`;
+    document.getElementById("lineChart").innerHTML = `
+      <svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none">
+        <polygon points="${areaPoints}" fill="rgba(95,208,161,.18)"></polygon>
+        <polyline points="${linePoints}" fill="none" stroke="#5fd0a1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+      </svg>`;
+  }
+
+  function renderDonut() {
+    let cum = 0;
+    const stops = EXPENSE_BREAKDOWN.map(seg => {
+      const start = cum; cum += seg.pct;
+      return `${seg.color} ${start}% ${cum}%`;
+    }).join(", ");
+    document.getElementById("donut").style.background = `conic-gradient(${stops})`;
+    const t = T[currentLang];
+    document.getElementById("donutLegend").innerHTML = EXPENSE_BREAKDOWN.map((seg, i) =>
+      `<div><span class="dot" style="background:${seg.color}"></span>${t.expenseBreakdown[i]}</div>`
+    ).join("");
+  }
+
+  function renderForecast() {
+    const t = T[currentLang];
+    const max = Math.max(...FORECAST_FACTORS);
+    document.getElementById("forecastTitle").textContent = t.forecastTitle;
+    document.getElementById("forecastBars").innerHTML = FORECAST_FACTORS.map(f =>
+      `<div class="bar" style="height:${Math.round((f / max) * 100)}%"></div>`
+    ).join("");
+    document.getElementById("forecastLabels").innerHTML = t.forecastLabels.map(l => `<span>${l}</span>`).join("");
+    document.getElementById("forecastCaption").textContent = t.forecastCaption;
+  }
+
   function renderStatic() {
     const t = T[currentLang];
     document.documentElement.lang = currentLang;
@@ -813,29 +859,45 @@
     document.title = t.pageTitle;
     document.getElementById("langToggle").textContent = t.langToggleLabel;
 
+    document.getElementById("navLinks").innerHTML = t.navLinks.map(([label, href]) => `<a href="${href}">${label}</a>`).join("");
+    document.getElementById("navCta").textContent = t.navCta;
+
     document.getElementById("heroTitle").innerHTML =
       `${t.heroTitlePrefix}<span>${t.heroTitleHighlight}</span>${t.heroTitleSuffix}`;
     document.getElementById("heroSub").textContent = t.heroSub;
     document.getElementById("heroCtaTrial").textContent = t.heroCtaTrial;
     document.getElementById("heroCtaCalc").textContent = t.heroCtaCalc;
-    document.getElementById("industriesStrip").innerHTML =
-      t.industries.map(i => `<span>${i}</span>`).join("");
+    document.getElementById("heroTrust").innerHTML = t.heroTrust.map(x => `<span>${x}</span>`).join("");
+    document.getElementById("industriesStrip").innerHTML = t.industries.map(i => `<span>${i}</span>`).join("");
 
     const sidebar = document.getElementById("previewSidebar");
     sidebar.innerHTML = `<p class="brand">RomaERP</p>` +
-      t.previewNav.map((label, i) => `<a class="${i === 2 ? "active" : ""}">${label}</a>`).join("");
+      t.previewNav.map((label, i) => `<a class="${i === 0 ? "active" : ""}">${label}</a>`).join("");
     document.getElementById("previewTitle").textContent = t.previewTitle;
     document.getElementById("previewStats").innerHTML = t.previewStats.map(([label, value, cls]) =>
       `<div class="preview-stat"><div class="label">${label}</div><div class="value ${cls}">${value}</div></div>`
     ).join("");
-    document.getElementById("previewTree").innerHTML = t.previewTree.map(([label, code, level]) =>
-      `<div class="row ${level}"><span>${label}</span><span class="code">${code}</span></div>`
+    document.getElementById("lineChartCaption").textContent = t.lineChartCaption;
+
+    document.getElementById("includedEyebrow").textContent = t.includedEyebrow;
+    document.getElementById("includedHeading").textContent = t.includedHeading;
+    document.getElementById("includedDesc").textContent = t.includedDesc;
+    document.getElementById("includedGrid").innerHTML = t.includedFeatures.map(([icon, label]) =>
+      `<div class="icon-tile"><div class="icon">${icon}</div><span class="label">${label}</span></div>`
     ).join("");
-    document.getElementById("previewCaption").textContent = t.previewCaption;
+
+    document.getElementById("audiencesEyebrow").textContent = t.audiencesEyebrow;
+    document.getElementById("audiencesHeading").textContent = t.audiencesHeading;
+    document.getElementById("audiencesDesc").textContent = t.audiencesDesc;
+    document.getElementById("audienceGrid").innerHTML = t.audiences.map(([icon, title, desc]) =>
+      `<div class="audience-card"><div class="icon">${icon}</div><h4>${title}</h4><p>${desc}</p></div>`
+    ).join("");
 
     document.getElementById("aiEyebrow").textContent = t.aiEyebrow;
     document.getElementById("aiHeading").textContent = t.aiHeading;
     document.getElementById("aiDesc").textContent = t.aiDesc;
+    document.getElementById("aiChecklist").innerHTML = t.aiChecklist.map(x => `<li>${x}</li>`).join("");
+    document.getElementById("chatMock").innerHTML = t.chat.map(m => `<div class="chat-bubble ${m.role}">${m.text}</div>`).join("");
     document.getElementById("aiGrid").innerHTML = t.aiCards.map(c =>
       `<div class="ai-card"><div class="ai-icon">${c.icon}</div><h3>${c.title}</h3><p>${c.desc}</p></div>`
     ).join("");
@@ -843,8 +905,8 @@
     document.getElementById("journeyEyebrow").textContent = t.journeyEyebrow;
     document.getElementById("journeyHeading").textContent = t.journeyHeading;
     document.getElementById("journeyDesc").textContent = t.journeyDesc;
-    document.getElementById("journeySteps").innerHTML = t.journeySteps.map(([title, desc], i) => {
-      const step = `<div class="journey-step"><div class="num">${i + 1}</div><h4>${title}</h4><p>${desc}</p></div>`;
+    document.getElementById("journeySteps").innerHTML = t.journeySteps.map(([icon, title, desc], i) => {
+      const step = `<div class="journey-step"><div class="icon">${icon}</div><h4>${title}</h4><p>${desc}</p></div>`;
       return i < t.journeySteps.length - 1 ? step + `<div class="journey-arrow">${currentLang === "ar" ? "←" : "→"}</div>` : step;
     }).join("");
 
@@ -852,10 +914,6 @@
     document.getElementById("tiersHeading").textContent = t.tiersHeading;
     document.getElementById("tiersDesc").textContent = t.tiersDesc;
     document.getElementById("currencyLabel").textContent = t.currencyLabel;
-
-    document.getElementById("includedEyebrow").textContent = t.includedEyebrow;
-    document.getElementById("includedHeading").textContent = t.includedHeading;
-    document.getElementById("includedDesc").textContent = t.includedDesc;
 
     document.getElementById("calcEyebrow").textContent = t.calcEyebrow;
     document.getElementById("calcHeading").textContent = t.calcHeading;
@@ -888,11 +946,13 @@
     document.getElementById("trialHeading").textContent = t.trialHeading;
     document.getElementById("trialDesc").textContent = t.trialDesc;
     document.getElementById("trialCta").textContent = t.trialCta;
-    document.getElementById("trialSteps").innerHTML = t.trialSteps.map(([title, desc]) =>
-      `<div><strong>${title}</strong>${desc}</div>`
-    ).join("");
+    document.getElementById("trialPerks").innerHTML = t.trialPerks.map(x => `<span>${x}</span>`).join("");
 
     document.getElementById("footerText").innerHTML = t.footer;
+
+    renderLineChart();
+    renderDonut();
+    renderForecast();
   }
 
   function renderTiers() {
@@ -923,12 +983,6 @@
       </div>
     `;
     }).join("");
-  }
-
-  function renderIncluded() {
-    const t = T[currentLang];
-    document.getElementById("includedGrid").innerHTML =
-      t.includedFeatures.map(f => `<span>${f}</span>`).join("");
   }
 
   function pickTier(branches, users) {
@@ -994,7 +1048,6 @@
   function renderAll() {
     renderStatic();
     renderTiers();
-    renderIncluded();
     renderCurrencyPicker();
     renderCalculator();
   }
