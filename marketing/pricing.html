@@ -116,13 +116,20 @@
   .preview-sidebar a { padding: 8px 16px; font-size: 12.5px; color: #8b96a3; }
   .preview-sidebar a.active { background: var(--sky); color: #fff; font-weight: 700; }
   .preview-main { flex: 1; padding: 18px 20px; min-width: 0; color: #e5e9ee; }
+  .preview-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .preview-topbar .greeting { font-size: 15px; font-weight: 900; color: #fff; }
+  .preview-topbar .bell { width: 26px; height: 26px; border-radius: 50%; background: #161e26; border: 1px solid #232e38; display: flex; align-items: center; justify-content: center; font-size: 12px; }
   .preview-main h2 { font-size: 16.5px; font-weight: 900; margin: 0 0 14px; color: #fff; }
   .preview-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
   .preview-stat { background: #161e26; border: 1px solid #232e38; border-radius: 10px; padding: 10px 12px; }
   .preview-stat .label { font-size: 10.5px; color: #8b96a3; margin-bottom: 5px; }
+  .preview-stat .value-row { display: flex; align-items: baseline; gap: 6px; }
   .preview-stat .value { font-size: 16px; font-weight: 900; color: #fff; font-family: "IBM Plex Mono", monospace; }
   .preview-stat .value.up { color: var(--mint); }
   .preview-stat .value.warn { color: #e0a94c; }
+  .preview-stat .delta { font-size: 10.5px; font-weight: 700; font-family: "IBM Plex Mono", monospace; }
+  .preview-stat .delta.up { color: var(--mint); }
+  .preview-stat .delta.down { color: #e0725f; }
   .chart-row { display: flex; align-items: center; gap: 16px; background: #161e26; border: 1px solid #232e38; border-radius: 10px; padding: 12px 14px; }
   .line-chart-block { flex: 1.4; min-width: 0; }
   .line-chart-block .caption { font-size: 10.5px; color: #8b96a3; margin-top: 4px; }
@@ -344,7 +351,10 @@
                 <p class="brand">RomaERP</p>
               </div>
               <div class="preview-main">
-                <h2 id="previewTitle"></h2>
+                <div class="preview-topbar">
+                  <span class="greeting" id="previewGreeting"></span>
+                  <span class="bell">🔔</span>
+                </div>
                 <div class="preview-stats" id="previewStats"></div>
                 <div class="chart-row">
                   <div class="line-chart-block">
@@ -587,11 +597,11 @@
       heroTrust: ["⚡ إعداد سريع من غير برامج إضافية", "🔒 بياناتك آمنة ومحفوظة", "📅 تجربة 21 يوم من غير بطاقة بنكية"],
       industries: ["🍽️ مطاعم", "🛒 تجزئة", "📦 جملة وتوزيع", "🏗️ مقاولات ومشاريع", "🧰 خدمات"],
       previewNav: ["الرئيسية", "المساعد الذكي", "المبيعات", "المشتريات", "المخزون", "المحاسبة", "التقارير"],
-      previewTitle: "الرئيسية",
+      previewGreeting: "مرحبًا بك 👋",
       previewStats: [
-        ["الإيرادات هذا الشهر", "٦٤,٢٠٠ ريال", "up"],
-        ["مصروفات بانتظار اعتماد AI", "٣", "warn"],
-        ["فروع متصلة", "٦", ""],
+        ["الإيرادات هذا الشهر", "٦٤,٢٠٠ ريال", "up", "+12%", "up"],
+        ["مصروفات بانتظار اعتماد AI", "٣", "warn", "-4%", "down"],
+        ["فروع متصلة", "٦", "", "", ""],
       ],
       lineChartCaption: "الإيرادات آخر 12 شهر",
       expenseBreakdown: ["مشتريات ومخزون", "رواتب", "إيجارات ومرافق", "أخرى"],
@@ -668,11 +678,11 @@
       integrations: [
         { name: "جاهز (Jahez)", status: "live" },
         { name: "هنجرستيشن (HungerStation)", status: "live" },
-        { name: "طلبات (Talabat)", status: "manual" },
-        { name: "كريم (Careem)", status: "manual" },
+        { name: "مرسول (Mrsool)", status: "live" },
+        { name: "أي منصة توصيل تانية", status: "manual" },
       ],
       integrationLiveLabel: "تكامل مباشر", integrationManualLabel: "مطابقة كشف تسوية",
-      integrationsNote: "التكامل المباشر (Webhook) شغال فعليًا مع جاهز وهنجرستيشن — الطلبات بتوصل أوتوماتيك. طلبات وكريم لسه من غير تكامل مباشر، فبترفع كشف التسوية اللي بتصدّره المنصة والنظام يطابقه تلقائيًا مع مبيعاتك. أي منصة توصيل تانية غير المذكورة دلوقتي مش متكاملة بعد.",
+      integrationsNote: "التكامل المباشر (Webhook) شغال فعليًا مع جاهز وهنجرستيشن ومرسول — الطلبات بتوصل أوتوماتيك من غير أي تدخل. أي منصة توصيل تانية (زي طلبات أو كريم أو غيرهم) بترفع كشف التسوية اللي بتصدّره المنصة (Excel أو CSV) والنظام يطابقه تلقائيًا مع مبيعاتك — مش مربوط باسم منصة معينة، فبيشتغل مع أي منصة تصدّر كشف حساب.",
       faqEyebrow: "أسئلة شائعة", faqHeading: "قبل ما تسأل، جاوبنا هنا",
       faq: [
         ["الأسعار دي نهائية؟", "لأ، دي أرقام بداية لمراجعتنا الداخلية قبل الإطلاق الرسمي. ممكن تتغير، وأي عميل حالي هياخد إشعار مسبق لو حصل تغيير يخصه."],
@@ -700,11 +710,11 @@
       heroTrust: ["⚡ Fast setup, no extra software", "🔒 Your data is safe", "📅 21-day trial, no credit card"],
       industries: ["🍽️ Restaurants", "🛒 Retail", "📦 Wholesale & distribution", "🏗️ Contracting & projects", "🧰 Services"],
       previewNav: ["Home", "AI Assistant", "Sales", "Purchasing", "Inventory", "Accounting", "Reports"],
-      previewTitle: "Home",
+      previewGreeting: "Welcome back 👋",
       previewStats: [
-        ["Revenue this month", "SAR 64,200", "up"],
-        ["Expenses awaiting AI approval", "3", "warn"],
-        ["Connected branches", "6", ""],
+        ["Revenue this month", "SAR 64,200", "up", "+12%", "up"],
+        ["Expenses awaiting AI approval", "3", "warn", "-4%", "down"],
+        ["Connected branches", "6", "", "", ""],
       ],
       lineChartCaption: "Revenue over the last 12 months",
       expenseBreakdown: ["Purchases & inventory", "Payroll", "Rent & utilities", "Other"],
@@ -781,11 +791,11 @@
       integrations: [
         { name: "Jahez", status: "live" },
         { name: "HungerStation", status: "live" },
-        { name: "Talabat", status: "manual" },
-        { name: "Careem", status: "manual" },
+        { name: "Mrsool", status: "live" },
+        { name: "Any other delivery platform", status: "manual" },
       ],
       integrationLiveLabel: "Direct integration", integrationManualLabel: "Settlement-statement matching",
-      integrationsNote: "Direct (webhook) integration is live with Jahez and HungerStation — orders arrive automatically. Talabat and Careem don't have a direct integration yet, so you upload the settlement statement the platform exports and the system matches it automatically against your sales. Any other delivery platform not listed here isn't integrated yet.",
+      integrationsNote: "Direct (webhook) integration is live with Jahez, HungerStation, and Mrsool — orders arrive automatically with no manual work. Any other delivery platform (Talabat, Careem, or others) works by uploading the settlement statement it exports (Excel or CSV), which the system automatically matches against your sales — it isn't tied to a specific platform's name, so it works with any platform that exports a statement.",
       faqEyebrow: "FAQ", faqHeading: "Answers before you have to ask",
       faq: [
         ["Are these prices final?", "No, these are a starting point for our internal review before official launch. They may change, and any existing customer will get advance notice of any change that affects them."],
@@ -873,9 +883,9 @@
     const sidebar = document.getElementById("previewSidebar");
     sidebar.innerHTML = `<p class="brand">RomaERP</p>` +
       t.previewNav.map((label, i) => `<a class="${i === 0 ? "active" : ""}">${label}</a>`).join("");
-    document.getElementById("previewTitle").textContent = t.previewTitle;
-    document.getElementById("previewStats").innerHTML = t.previewStats.map(([label, value, cls]) =>
-      `<div class="preview-stat"><div class="label">${label}</div><div class="value ${cls}">${value}</div></div>`
+    document.getElementById("previewGreeting").textContent = t.previewGreeting;
+    document.getElementById("previewStats").innerHTML = t.previewStats.map(([label, value, cls, delta, deltaCls]) =>
+      `<div class="preview-stat"><div class="label">${label}</div><div class="value-row"><span class="value ${cls}">${value}</span>${delta ? `<span class="delta ${deltaCls}">${delta}</span>` : ""}</div></div>`
     ).join("");
     document.getElementById("lineChartCaption").textContent = t.lineChartCaption;
 
