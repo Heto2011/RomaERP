@@ -263,6 +263,14 @@
   .calc-controls { display: flex; flex-direction: column; gap: 26px; }
   .field-label { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; margin-bottom: 10px; }
   .field-label .val { color: var(--primary); font-family: "IBM Plex Mono", monospace; }
+  .val-input {
+    width: 56px; text-align: center; font: inherit;
+    color: var(--primary); font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    border: 1px solid var(--border); border-radius: 6px; padding: 3px 4px;
+    background: var(--surface); -moz-appearance: textfield;
+  }
+  .val-input::-webkit-outer-spin-button, .val-input::-webkit-inner-spin-button { margin: 0; }
+  .val-input:focus { outline: none; border-color: var(--primary); }
   input[type=range] { width: 100%; height: 6px; border-radius: 999px; background: var(--border); appearance: none; -webkit-appearance: none; }
   input[type=range]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer; }
   .field-hint { color: var(--ink-soft); font-size: 12.5px; margin-top: 8px; }
@@ -468,16 +476,16 @@
     <div class="calc-card">
       <div class="calc-controls">
         <div>
-          <div class="field-label"><span id="companiesLabel"></span><span class="val" id="companiesVal">1</span></div>
+          <div class="field-label"><span id="companiesLabel"></span><input type="number" class="val-input" id="companiesVal" value="1" min="1" max="8" /></div>
           <input type="range" id="companiesRange" min="1" max="8" value="1" step="1" />
           <div class="field-hint" id="companiesHint"></div>
         </div>
         <div>
-          <div class="field-label"><span id="branchesLabel"></span><span class="val" id="branchesVal">1</span></div>
+          <div class="field-label"><span id="branchesLabel"></span><input type="number" class="val-input" id="branchesVal" value="1" min="1" max="25" /></div>
           <input type="range" id="branchesRange" min="1" max="25" value="1" step="1" />
         </div>
         <div>
-          <div class="field-label"><span id="usersLabel"></span><span class="val" id="usersVal">2</span></div>
+          <div class="field-label"><span id="usersLabel"></span><input type="number" class="val-input" id="usersVal" value="2" min="1" max="70" /></div>
           <input type="range" id="usersRange" min="1" max="70" value="2" step="1" />
         </div>
       </div>
@@ -1032,9 +1040,9 @@
     const companies = Number(document.getElementById("companiesRange").value);
     const branches = Number(document.getElementById("branchesRange").value);
     const users = Number(document.getElementById("usersRange").value);
-    document.getElementById("companiesVal").textContent = companies;
-    document.getElementById("branchesVal").textContent = branches;
-    document.getElementById("usersVal").textContent = users;
+    document.getElementById("companiesVal").value = companies;
+    document.getElementById("branchesVal").value = branches;
+    document.getElementById("usersVal").value = users;
 
     const r = computePrice(companies, branches, users);
     document.getElementById("resultTier").textContent = `${r.tier.name} ${r.tier.emoji}`;
@@ -1083,9 +1091,16 @@
   });
 
   renderAll();
-  ["companiesRange", "branchesRange", "usersRange"].forEach(id =>
-    document.getElementById(id).addEventListener("input", renderCalculator)
-  );
+  [["companiesRange", "companiesVal"], ["branchesRange", "branchesVal"], ["usersRange", "usersVal"]].forEach(([rangeId, valId]) => {
+    const range = document.getElementById(rangeId);
+    const val = document.getElementById(valId);
+    range.addEventListener("input", renderCalculator);
+    val.addEventListener("input", () => {
+      const clamped = Math.min(Number(val.max), Math.max(Number(val.min), Number(val.value) || Number(val.min)));
+      range.value = clamped;
+      renderCalculator();
+    });
+  });
 </script>
 </body>
 </html>
