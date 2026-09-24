@@ -18,7 +18,11 @@ jobs:
             cd /root/RomaERP
             git fetch origin
             git checkout claude/project-continuation-gjlk3b
-            git pull origin claude/project-continuation-gjlk3b
+            # The secret-patch steps below edit a tracked file (appsettings.json) directly on the
+            # server, which leaves it locally modified after every deploy — reset to match the
+            # remote branch exactly before pulling so that never blocks the next deploy's pull.
+            # Nothing is lost: the values it discards are re-applied fresh from GitHub secrets below.
+            git reset --hard origin/claude/project-continuation-gjlk3b
             git log -1 --oneline
 
             NEW_SYSTEM_KEY="${{ secrets.SYSTEM_PROVISIONING_KEY }}"
