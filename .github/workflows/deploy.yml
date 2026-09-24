@@ -47,6 +47,26 @@ jobs:
             "
             fi
 
+            NEW_BANK_ACCOUNT_NAME="${{ secrets.BANK_ACCOUNT_NAME }}"
+            NEW_BANK_IBAN="${{ secrets.BANK_IBAN }}"
+            NEW_BANK_SWIFT="${{ secrets.BANK_SWIFT }}"
+            NEW_BANK_NAME="${{ secrets.BANK_NAME }}"
+            if [ -n "$NEW_BANK_IBAN" ]; then
+              BANK_ACCOUNT_NAME="$NEW_BANK_ACCOUNT_NAME" BANK_IBAN="$NEW_BANK_IBAN" BANK_SWIFT="$NEW_BANK_SWIFT" BANK_NAME="$NEW_BANK_NAME" python3 -c "
+            import json, os
+            path = 'src/RomaERP.API/appsettings.json'
+            with open(path) as f:
+                data = json.load(f)
+            bank = data.setdefault('BankTransfer', {})
+            bank['AccountName'] = os.environ['BANK_ACCOUNT_NAME'].strip()
+            bank['Iban'] = os.environ['BANK_IBAN'].strip()
+            bank['Swift'] = os.environ['BANK_SWIFT'].strip()
+            bank['BankName'] = os.environ['BANK_NAME'].strip()
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=2)
+            "
+            fi
+
             dotnet publish src/RomaERP.API/RomaERP.API.csproj -c Release -o /var/www/romaerp-api
             systemctl restart romaerp-api
             systemctl is-active romaerp-api
