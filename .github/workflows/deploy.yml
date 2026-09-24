@@ -25,6 +25,14 @@ jobs:
             git reset --hard origin/claude/project-continuation-gjlk3b
             git log -1 --oneline
 
+            echo "---- SQL Server investigation (diagnosing sa login failure) ----"
+            systemctl list-units --type=service --all 2>/dev/null | grep -i -E "sql|mssql" || echo "no matching systemd service found"
+            echo "-- docker containers --"
+            docker ps -a 2>/dev/null || echo "docker not available or no permission"
+            echo "-- /opt/mssql --"
+            ls -la /opt/mssql/bin 2>/dev/null || echo "/opt/mssql/bin not found"
+            echo "---- end SQL Server investigation ----"
+
             NEW_SYSTEM_KEY="${{ secrets.SYSTEM_PROVISIONING_KEY }}"
             if [ -n "$NEW_SYSTEM_KEY" ]; then
               SYSTEM_PROVISIONING_KEY="$NEW_SYSTEM_KEY" python3 -c "
