@@ -49,15 +49,20 @@ public class MySubscriptionController : ControllerBase
     public ActionResult<BankTransferInfoDto> GetBankTransferInfo()
     {
         var iban = _configuration["BankTransfer:Iban"];
-        if (string.IsNullOrWhiteSpace(iban))
-            return Ok(new BankTransferInfoDto(false, null, null, null, null));
+        var instaPayMobile = _configuration["InstaPay:Mobile"];
+        var hasBankTransfer = !string.IsNullOrWhiteSpace(iban);
+        var hasInstaPay = !string.IsNullOrWhiteSpace(instaPayMobile);
+
+        if (!hasBankTransfer && !hasInstaPay)
+            return Ok(new BankTransferInfoDto(false, null, null, null, null, null));
 
         return Ok(new BankTransferInfoDto(
             true,
-            _configuration["BankTransfer:AccountName"],
-            iban,
-            _configuration["BankTransfer:Swift"],
-            _configuration["BankTransfer:BankName"]));
+            hasBankTransfer ? _configuration["BankTransfer:AccountName"] : null,
+            hasBankTransfer ? iban : null,
+            hasBankTransfer ? _configuration["BankTransfer:Swift"] : null,
+            hasBankTransfer ? _configuration["BankTransfer:BankName"] : null,
+            hasInstaPay ? instaPayMobile : null));
     }
 
     /// <summary>The customer declares they've wired an invoice's amount — this never marks the invoice paid

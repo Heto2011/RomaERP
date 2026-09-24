@@ -1927,6 +1927,7 @@ export interface BankTransferInfo {
   iban: string | null;
   swift: string | null;
   bankName: string | null;
+  instaPayMobile: string | null;
 }
 
 export interface TransferUserRequest {

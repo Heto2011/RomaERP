@@ -241,6 +241,24 @@ export default function MySubscriptionPage() {
             </tbody>
           </table>
         )}
+        {bankInfo?.instaPayMobile && (
+          <>
+            <h4>{t.mySubscription.instaPayTitle}</h4>
+            <table>
+              <tbody>
+                <tr>
+                  <td>{t.mySubscription.instaPayMobile}</td>
+                  <td className="mono">{bankInfo.instaPayMobile}</td>
+                  <td>
+                    <button className="btn btn-secondary btn-sm" type="button" onClick={() => copy("instaPayMobile", bankInfo.instaPayMobile!)}>
+                      {copiedField === "instaPayMobile" ? t.mySubscription.copied : t.mySubscription.copy}
+                    </button>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </>
+        )}
       </div>
     </div>
   );
