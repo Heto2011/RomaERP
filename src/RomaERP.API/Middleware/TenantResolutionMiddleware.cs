@@ -10,7 +10,7 @@ namespace RomaERP.API.Middleware;
 /// up users.</summary>
 public class TenantResolutionMiddleware
 {
-    private static readonly string[] ExemptPrefixes = { "/api/system", "/api/trial", "/api/health", "/swagger" };
+    private static readonly string[] ExemptPrefixes = { "/api/system", "/api/trial", "/api/health", "/swagger", "/api/marketing" };
     private const string DeliveryWebhooksPrefix = "/api/delivery-webhooks/";
 
     private readonly RequestDelegate _next;

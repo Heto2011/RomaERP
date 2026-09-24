@@ -19,6 +19,7 @@ public class CentralDbContext : DbContext
     public DbSet<SupportTicketMessage> SupportTicketMessages => Set<SupportTicketMessage>();
     public DbSet<SupportTicketAttachment> SupportTicketAttachments => Set<SupportTicketAttachment>();
     public DbSet<DataDeletionRecord> DataDeletionRecords => Set<DataDeletionRecord>();
+    public DbSet<MarketingPageView> MarketingPageViews => Set<MarketingPageView>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -111,6 +112,14 @@ public class CentralDbContext : DbContext
             b.Property(r => r.ProcessedByEmail).HasMaxLength(200).IsRequired();
             b.Property(r => r.Reason).HasMaxLength(1000);
             b.Property(r => r.FailureReason).HasMaxLength(1000);
+        });
+
+        builder.Entity<MarketingPageView>(b =>
+        {
+            b.Property(v => v.Path).HasMaxLength(200).IsRequired();
+            b.Property(v => v.Referrer).HasMaxLength(300);
+            b.Property(v => v.UserAgent).HasMaxLength(300);
+            b.HasIndex(v => v.ViewedAtUtc);
         });
     }
 }

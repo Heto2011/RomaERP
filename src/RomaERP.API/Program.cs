@@ -120,6 +120,17 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0,
         }));
 
+    // The marketing page-view endpoint is open to any anonymous visitor by design, so this just
+    // blunts a script hammering it — a real visitor loading a few pages a minute never hits it.
+    options.AddPolicy("marketing-pageview", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions
+        {
+            PermitLimit = 30,
+            Window = TimeSpan.FromMinutes(1),
+            QueueLimit = 0,
+        }));
+
     // Guards the platform-wide system-key endpoints (tenant provisioning, billing console) against
     // brute-forcing the key — a full compromise of these is a cross-tenant compromise.
     options.AddPolicy("system-key", httpContext => RateLimitPartition.GetFixedWindowLimiter(

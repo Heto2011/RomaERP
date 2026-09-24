@@ -1900,6 +1900,27 @@ export interface DataDeletionRecord {
   failureReason: string | null;
 }
 
+export interface MarketingPageView {
+  id: string;
+  viewedAtUtc: string;
+  path: string;
+  referrer: string | null;
+  userAgent: string | null;
+}
+
+export interface CountByLabel {
+  label: string;
+  count: number;
+}
+
+export interface MarketingPageViewStats {
+  totalViews: number;
+  last7Days: number;
+  last30Days: number;
+  topPaths: CountByLabel[];
+  topReferrers: CountByLabel[];
+}
+
 export interface TransferUserRequest {
   sourceCompanyCode: string;
   targetCompanyCode: string;

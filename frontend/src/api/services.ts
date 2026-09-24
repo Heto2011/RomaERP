@@ -28,6 +28,8 @@ import type {
   Tenant,
   DataDeletionRequest,
   DataDeletionRecord,
+  MarketingPageView,
+  MarketingPageViewStats,
   Usage,
   SubscriptionPlan,
   TenantSubscription,
@@ -714,6 +716,14 @@ export const SystemApi = {
     systemApiClient.post<DataDeletionRecord>(`/system/tenants/${tenantId}/delete-data`, data, { headers: { "X-System-Key": systemKey } }),
   getDataDeletionRecords: (systemKey: string) =>
     systemApiClient.get<DataDeletionRecord[]>("/system/data-deletion-records", { headers: { "X-System-Key": systemKey } }),
+};
+
+/// Not tenant-scoped — reads are authenticated by a system key passed per call, never stored.
+export const MarketingApi = {
+  getPageViews: (systemKey: string) =>
+    systemApiClient.get<MarketingPageView[]>("/marketing/pageviews", { headers: { "X-System-Key": systemKey } }),
+  getStats: (systemKey: string) =>
+    systemApiClient.get<MarketingPageViewStats>("/marketing/pageviews/stats", { headers: { "X-System-Key": systemKey } }),
 };
 
 export const SubscriptionsApi = {

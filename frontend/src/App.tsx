@@ -13,6 +13,7 @@ import StartTrial from "./pages/StartTrial";
 import PosLogin from "./pages/restaurant/PosLogin";
 import DemoTenantsPage from "./pages/system/DemoTenants";
 import DataDeletionPage from "./pages/system/DataDeletion";
+import MarketingViewsPage from "./pages/system/MarketingViews";
 import SubscriptionsPage from "./pages/system/Subscriptions";
 import SupportTicketsPage from "./pages/system/SupportTickets";
 import Dashboard from "./pages/Dashboard";
@@ -159,6 +160,7 @@ export default function App() {
       <Route path="/pos-login" element={<PosLogin />} />
       <Route path="/system/demo-tenants" element={<DemoTenantsPage />} />
       <Route path="/system/data-deletion" element={<DataDeletionPage />} />
+      <Route path="/system/marketing-views" element={<MarketingViewsPage />} />
       <Route path="/system/subscriptions" element={<SubscriptionsPage />} />
       <Route path="/system/support-tickets" element={<SupportTicketsPage />} />
       <Route path="/" element={<RootRoute />} />

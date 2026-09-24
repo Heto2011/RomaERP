@@ -1182,6 +1182,14 @@
       renderCalculator();
     });
   });
+
+  // Anonymous, cookie-free page-view ping — no visitor identity, just volume/path/referrer.
+  // Fire-and-forget: never blocks or affects the page if it fails (e.g. no backend reachable locally).
+  fetch("/api/marketing/pageview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null }),
+  }).catch(() => {});
 </script>
 </body>
 </html>
