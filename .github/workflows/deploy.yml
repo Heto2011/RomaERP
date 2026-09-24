@@ -86,7 +86,17 @@ jobs:
 
             dotnet publish src/RomaERP.API/RomaERP.API.csproj -c Release -o /var/www/romaerp-api
             systemctl restart romaerp-api
-            systemctl is-active romaerp-api
+            sleep 5
+            API_STATUS=$(systemctl is-active romaerp-api || true)
+            echo "romaerp-api status: $API_STATUS"
+            echo "---- romaerp-api status details ----"
+            systemctl status romaerp-api --no-pager -l || true
+            echo "---- romaerp-api recent logs ----"
+            journalctl -u romaerp-api -n 80 --no-pager || true
+            if [ "$API_STATUS" != "active" ]; then
+              echo "romaerp-api is not active — see logs above for the crash reason"
+              exit 1
+            fi
 
             cd frontend
             npm ci
