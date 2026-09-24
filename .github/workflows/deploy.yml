@@ -25,13 +25,37 @@ jobs:
             git reset --hard origin/claude/project-continuation-gjlk3b
             git log -1 --oneline
 
-            echo "---- SQL Server investigation (diagnosing sa login failure) ----"
-            systemctl list-units --type=service --all 2>/dev/null | grep -i -E "sql|mssql" || echo "no matching systemd service found"
-            echo "-- docker containers --"
-            docker ps -a 2>/dev/null || echo "docker not available or no permission"
-            echo "-- /opt/mssql --"
-            ls -la /opt/mssql/bin 2>/dev/null || echo "/opt/mssql/bin not found"
-            echo "---- end SQL Server investigation ----"
+            # SQL Server runs in the "sqlserver" Docker container (confirmed via `docker ps`), not as a
+            # native service — its sa password was never covered by any secret-patch step, so an earlier
+            # `git reset --hard` here wiped the server's only copy of it (an uncommitted local edit) and
+            # broke every DB connection. Recovery: prefer an explicit DB_SA_PASSWORD secret if one is ever
+            # set; otherwise recover it straight from the container's own launch config, which still has
+            # it (the container itself was never touched, only the app's config file was). The password
+            # itself is never echoed anywhere in these logs.
+            NEW_DB_PASSWORD="${{ secrets.DB_SA_PASSWORD }}"
+            if [ -z "$NEW_DB_PASSWORD" ]; then
+              NEW_DB_PASSWORD=$(docker inspect sqlserver --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | grep '^MSSQL_SA_PASSWORD=' | cut -d= -f2- || true)
+              if [ -n "$NEW_DB_PASSWORD" ]; then
+                echo "DB password recovered from the sqlserver container's own launch config"
+              fi
+            else
+              echo "DB password supplied via DB_SA_PASSWORD secret"
+            fi
+            if [ -n "$NEW_DB_PASSWORD" ]; then
+              DB_SA_PASSWORD="$NEW_DB_PASSWORD" python3 -c "
+            import json, os
+            path = 'src/RomaERP.API/appsettings.json'
+            with open(path) as f:
+                data = json.load(f)
+            pwd = os.environ['DB_SA_PASSWORD']
+            data['ConnectionStrings']['Central'] = f'Server=localhost;Database=RomaERP_Central;User Id=sa;Password={pwd};TrustServerCertificate=True;'
+            data['ConnectionStrings']['TenantServer'] = f'Server=localhost;User Id=sa;Password={pwd};TrustServerCertificate=True;'
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=2)
+            "
+            else
+              echo "WARNING: could not determine the DB sa password (no DB_SA_PASSWORD secret, and docker inspect found nothing) — the API will fail to connect to SQL Server"
+            fi
 
             NEW_SYSTEM_KEY="${{ secrets.SYSTEM_PROVISIONING_KEY }}"
             if [ -n "$NEW_SYSTEM_KEY" ]; then
