@@ -31,6 +31,7 @@ import {
   IconChevron,
   IconSun,
   IconMoon,
+  IconDollar,
 } from "./icons";
 
 interface NavLeafItem {
@@ -157,6 +158,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/", label: t.nav.dashboard, icon: <IconGrid /> },
         { to: "/alerts", label: t.alerts.title, icon: <IconBell /> },
         { to: "/support", label: t.support.title, icon: <IconChat /> },
+        ...(user?.roles.includes("Admin") ? [{ to: "/my-subscription", label: t.mySubscription.title, icon: <IconDollar /> }] : []),
         { to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> },
         { to: "/hr/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
         { to: "/hr/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },

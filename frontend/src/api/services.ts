@@ -30,6 +30,7 @@ import type {
   DataDeletionRecord,
   MarketingPageView,
   MarketingPageViewStats,
+  BankTransferInfo,
   Usage,
   SubscriptionPlan,
   TenantSubscription,
@@ -724,6 +725,18 @@ export const MarketingApi = {
     systemApiClient.get<MarketingPageView[]>("/marketing/pageviews", { headers: { "X-System-Key": systemKey } }),
   getStats: (systemKey: string) =>
     systemApiClient.get<MarketingPageViewStats>("/marketing/pageviews/stats", { headers: { "X-System-Key": systemKey } }),
+};
+
+/// Customer-facing (JWT-authenticated, Admin role) view of the tenant's own subscription/invoices.
+export const MySubscriptionApi = {
+  get: () => apiClient.get<TenantSubscription>("/my-subscription"),
+  getInvoices: () => apiClient.get<SubscriptionInvoice[]>("/my-subscription/invoices"),
+  getBankTransferInfo: () => apiClient.get<BankTransferInfo>("/my-subscription/bank-transfer"),
+  reportPayment: (invoiceId: string, paymentReference: string | null, note: string | null) =>
+    apiClient.post<{ ticketId: string; ticketNumber: number }>(
+      `/my-subscription/invoices/${invoiceId}/report-payment`,
+      { paymentReference, note }
+    ),
 };
 
 export const SubscriptionsApi = {

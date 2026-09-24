@@ -1921,6 +1921,14 @@ export interface MarketingPageViewStats {
   topReferrers: CountByLabel[];
 }
 
+export interface BankTransferInfo {
+  configured: boolean;
+  accountName: string | null;
+  iban: string | null;
+  swift: string | null;
+  bankName: string | null;
+}
+
 export interface TransferUserRequest {
   sourceCompanyCode: string;
   targetCompanyCode: string;
