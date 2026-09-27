@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Roma HR — حضور وانصراف ورواتب من غير فوضى</title>
+<meta name="description" content="Roma HR بيدير موظفينك بالكامل — تسجيل حضور بالموقع الجغرافي، رواتب تتحسب لوحدها، وطلبات إجازة توافق عليها بضغطة واحدة. تجربة مجانية 14 يوم.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Roma HR">
+<meta property="og:title" content="Roma HR — حضور وانصراف ورواتب من غير فوضى">
+<meta property="og:description" content="حضور بالموقع الجغرافي، رواتب تلقائية، وطلبات وموافقات — لأي شركة. جزء من Roma Group.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f6f4ee; --surface:#ffffff; --ink:#1c2620; --border:#e2ddd0;
+    --primary:#0f5c4b; --hr:#c8862e; --hr-tint:#fbf0dd; --mint:#5fd0a1;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Tajawal","Segoe UI",sans-serif; color:var(--ink); background:var(--bg);}
+  a{text-decoration:none; color:inherit;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
+  .mono{font-family:"IBM Plex Mono",monospace; font-variant-numeric:tabular-nums;}
+
+  header{display:flex; align-items:center; justify-content:space-between; padding:20px 0; border-bottom:1px solid var(--border);}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:32px; height:32px; border-radius:9px; background:var(--hr); display:flex; align-items:center; justify-content:center; font-weight:900; color:#2c1c04; font-size:13px;}
+  .brand-name{font-weight:900; font-size:18px;}
+  .brand-sub{font-size:11.5px; color:#8a8a86; font-weight:700; border-inline-start:1px solid var(--border); padding-inline-start:10px; margin-inline-start:2px;}
+  .nav-right{display:flex; align-items:center; gap:22px; font-size:14px; font-weight:600; color:#4a5750;}
+  .nav-right a.muted{color:#8a8a86;}
+  .btn{display:inline-block; padding:12px 22px; border-radius:10px; font-weight:800; font-size:14.5px; cursor:pointer; border:none;}
+  .btn-primary{background:var(--hr); color:#2c1c04; box-shadow:0 10px 24px -10px rgba(200,134,46,.5);}
+  .btn-ghost{background:var(--surface); border:1px solid var(--border); color:var(--ink);}
+  .btn-nav{background:var(--hr); color:#2c1c04; padding:9px 20px; border-radius:999px; font-weight:700; font-size:13.5px;}
+  @media (max-width:640px){ .nav-right span, .nav-right a.muted{display:none;} }
+
+  .hero{display:flex; flex-direction:column; align-items:center; text-align:center; gap:16px; padding:64px 24px 40px;}
+  .eyebrow{display:inline-flex; background:var(--hr-tint); color:var(--hr); border-radius:999px; padding:6px 16px; font-size:12.5px; font-weight:800;}
+  h1{font-size:clamp(28px,4.5vw,42px); font-weight:900; line-height:1.35; max-width:680px;}
+  .lede{font-size:16px; color:#5b665f; max-width:560px; line-height:1.8;}
+  .hero-ctas{display:flex; gap:12px; margin-top:8px; flex-wrap:wrap; justify-content:center;}
+
+  .stats-wrap{padding:20px 24px;}
+  .stats{background:#161e26; border-radius:18px; padding:22px; display:flex; gap:16px; max-width:1000px; margin:0 auto; flex-wrap:wrap;}
+  .stat{flex:1; min-width:160px; background:#1c262f; border-radius:12px; padding:16px;}
+  .stat-label{font-size:12px; color:rgba(255,255,255,.5); font-weight:700;}
+  .stat-value{font-size:26px; font-weight:900; color:#fff; margin-top:6px;}
+  .stat-value.good{color:var(--mint);}
+
+  .features{padding:56px 24px 20px;}
+  .section-title{text-align:center; font-weight:900; font-size:24px; margin-bottom:28px;}
+  .feature-grid{display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:16px; max-width:1100px; margin:0 auto;}
+  @media (max-width:900px){ .feature-grid{grid-template-columns:repeat(2,minmax(0,1fr));} }
+  .feature{background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px;}
+  .feature-icon{width:38px; height:38px; border-radius:10px; background:var(--hr-tint); color:var(--hr); display:flex; align-items:center; justify-content:center; margin-bottom:10px;}
+  .feature-icon svg{width:19px; height:19px;}
+  .feature-title{font-weight:800; font-size:14.5px; margin-bottom:6px;}
+  .feature-desc{font-size:12.5px; color:#6b756e; line-height:1.7;}
+
+  .pricing{padding:50px 24px 60px; display:flex; justify-content:center;}
+  .price-card{background:var(--surface); border:2px solid var(--hr); border-radius:20px; padding:34px 44px; max-width:420px; width:100%; text-align:center;}
+  .price-tag{font-size:13px; font-weight:800; color:var(--hr);}
+  .price-num{display:flex; align-items:baseline; justify-content:center; gap:6px; margin:14px 0;}
+  .price-num .n{font-size:40px; font-weight:900;}
+  .price-num .u{font-size:14px; color:#6b756e;}
+  .price-note{font-size:13px; color:#6b756e; margin-bottom:20px;}
+
+  footer{border-top:1px solid var(--border); padding:22px 24px; text-align:center; font-size:12.5px; color:#8a8a86;}
+  footer a{color:var(--hr); font-weight:700;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="brand-mark">R</div>
+      <div class="brand-name">Roma HR</div>
+      <div class="brand-sub">جزء من Roma Group</div>
+    </div>
+    <div class="nav-right">
+      <span>المميزات</span>
+      <a href="#pricing">الأسعار</a>
+      <a href="roma-group.html" class="muted">← Roma Group</a>
+      <a href="/people-login" class="btn-nav">دخول</a>
+    </div>
+  </header>
+
+  <div class="hero">
+    <div class="eyebrow">إدارة الموارد البشرية</div>
+    <h1>حضور وانصراف ورواتب، من غير ورق ولا فوضى</h1>
+    <div class="lede">روما إتش آر بيدير موظفينك بالكامل — تسجيل حضور بالموقع الجغرافي، رواتب تتحسب لوحدها، وطلبات إجازة توافق عليها بضغطة واحدة</div>
+    <div class="hero-ctas">
+      <a href="/start-trial?product=hr" class="btn btn-primary">ابدأ تجربتك المجانية</a>
+      <a href="#pricing" class="btn btn-ghost">شوف السعر</a>
+    </div>
+  </div>
+</div>
+
+<div class="stats-wrap">
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">موظف حاضر النهاردة</div>
+      <div class="stat-value mono">42 / 48</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">طلبات إجازة مفتوحة</div>
+      <div class="stat-value mono">3</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">رواتب الشهر ده</div>
+      <div class="stat-value good">جاهزة ✓</div>
+    </div>
+  </div>
+</div>
+
+<div class="features">
+  <div class="section-title">كل حاجة محتاجها لإدارة فريقك</div>
+  <div class="feature-grid">
+    <div class="feature">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.7 7-12.2A7 7 0 1 0 5 8.8C5 14.3 12 21 12 21z"/><circle cx="12" cy="8.5" r="3.3"/></svg></div>
+      <div class="feature-title">حضور وانصراف بالـ GPS</div>
+      <div class="feature-desc">الموظف يسجل من موبايله، والنظام يتأكد إنه في موقع الشغل فعلاً</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div>
+      <div class="feature-title">رواتب تلقائية</div>
+      <div class="feature-desc">تحسب الرواتب والخصومات من ساعات الحضور الفعلية أوتوماتيك</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
+      <div class="feature-title">طلبات وموافقات</div>
+      <div class="feature-desc">إجازات وسُلف وطلبات الموظفين، توافق عليها من الموبايل</div>
+    </div>
+    <div class="feature">
+      <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21V14"/><path d="M11.5 21V9"/><path d="M17 21V5"/></svg></div>
+      <div class="feature-title">تقارير جاهزة</div>
+      <div class="feature-desc">تقرير غياب، إضافي، ومصاريف الرواتب في أي وقت</div>
+    </div>
+  </div>
+</div>
+
+<div class="pricing" id="pricing">
+  <div class="price-card">
+    <div class="price-tag">باقة روما إتش آر</div>
+    <div class="price-num">
+      <span class="n mono">99</span>
+      <span class="u">ريال / شهريًا</span>
+    </div>
+    <div class="price-note">حتى 25 موظف — بدون حد أقصى للفروع</div>
+    <a href="/start-trial?product=hr" class="btn btn-primary" style="display:block;">ابدأ تجربة مجانية 14 يوم</a>
+  </div>
+</div>
+
+<footer>
+  Roma HR — جزء من <a href="roma-group.html">Roma Group</a> · <a href="/terms.html">الشروط والأحكام</a>
+</footer>
+
+<script>
+  fetch("/api/marketing/pageview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null }),
+  }).catch(() => {});
+</script>
+</body>
+</html>
