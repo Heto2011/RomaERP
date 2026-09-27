@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { TrialApi } from "../api/services";
 import { Country, ProductScope } from "../api/types";
@@ -21,8 +21,11 @@ export default function StartTrial() {
   const { loginWithToken } = useAuth();
   const navigate = useNavigate();
   const { t, lang, setLang } = useLanguage();
+  const [searchParams] = useSearchParams();
 
-  const [productScope, setProductScope] = useState<ProductScope>(ProductScope.Full);
+  const [productScope, setProductScope] = useState<ProductScope>(
+    searchParams.get("product") === "hr" ? ProductScope.PeopleOnly : ProductScope.Full
+  );
   const [companyNameAr, setCompanyNameAr] = useState("");
   const [companyNameEn, setCompanyNameEn] = useState("");
   const [country, setCountry] = useState<Country>(Country.SaudiArabia);
