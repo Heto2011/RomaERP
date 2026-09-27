@@ -116,6 +116,47 @@ jobs:
             "
             fi
 
+            # appsettings.json ships a literal placeholder JWT signing key (repo is public, so that
+            # placeholder is public too) — every login token is signed with it until this replaces it.
+            # Without a real secret here, anyone could forge a valid auth token for any tenant.
+            NEW_JWT_KEY="${{ secrets.JWT_SIGNING_KEY }}"
+            if [ -n "$NEW_JWT_KEY" ]; then
+              JWT_SIGNING_KEY="$NEW_JWT_KEY" python3 -c "
+            import json, os
+            path = 'src/RomaERP.API/appsettings.json'
+            with open(path) as f:
+                data = json.load(f)
+            data.setdefault('Jwt', {})['Key'] = os.environ['JWT_SIGNING_KEY'].strip()
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=2)
+            "
+            else
+              echo "WARNING: JWT_SIGNING_KEY secret not set — the API is signing login tokens with the public placeholder key from the repo. Add the secret to fix this."
+            fi
+
+            # Config-completeness check — never prints a value, only whether each key was patched in.
+            # Answers "what's configured on the real server right now" without needing to SSH in by hand.
+            echo "---- config completeness (values never shown) ----"
+            python3 -c "
+            import json
+            with open('src/RomaERP.API/appsettings.json') as f:
+                data = json.load(f)
+            def check(label, *path):
+                node = data
+                for p in path:
+                    node = node.get(p, {}) if isinstance(node, dict) else {}
+                ok = bool(node) if not isinstance(node, dict) else False
+                status = 'SET' if ok else 'MISSING'
+                print(status + ': ' + label)
+            check('System:ProvisioningKey', 'System', 'ProvisioningKey')
+            check('Claude:ApiKey', 'Claude', 'ApiKey')
+            check('BankTransfer:Iban', 'BankTransfer', 'Iban')
+            check('InstaPay:Mobile', 'InstaPay', 'Mobile')
+            jwt_key = data.get('Jwt', {}).get('Key', '')
+            is_placeholder = jwt_key == 'CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_KEY_IN_PRODUCTION_ENV'
+            print(('MISSING (still the public placeholder!)' if is_placeholder else 'SET') + ': Jwt:Key')
+            "
+
             dotnet publish src/RomaERP.API/RomaERP.API.csproj -c Release -o /var/www/romaerp-api
             systemctl restart romaerp-api
             sleep 5
@@ -128,6 +169,15 @@ jobs:
             if [ "$API_STATUS" != "active" ]; then
               echo "romaerp-api is not active — see logs above for the crash reason"
               exit 1
+            fi
+
+            echo "---- live smoke test (localhost) ----"
+            LISTEN_URL=$(journalctl -u romaerp-api -n 200 --no-pager | grep -o 'Now listening on: http://[^ ]*' | tail -1 | sed 's/Now listening on: //')
+            if [ -n "$LISTEN_URL" ]; then
+              echo "Detected listen URL: $LISTEN_URL"
+              curl -s -o /dev/null -w "GET /api/health -> %{http_code}\n" "$LISTEN_URL/api/health" || echo "health check request failed"
+            else
+              echo "Could not detect the API's listen URL from recent logs — skipping the localhost smoke test (nginx-proxied requests still work externally regardless)."
             fi
 
             cd frontend
