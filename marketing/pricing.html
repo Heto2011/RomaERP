@@ -588,38 +588,46 @@
   // Base currency is SAR. All other currencies are approximate conversions for display only —
   // real billing/tax will follow each country's law once we actually land a customer there.
   const LAUNCH_OFFER_LIMIT = 100;
+  // egpBase/egpListPrice/egpAnnualPrice are a SEPARATE, independent EGP price list — NOT a currency
+  // conversion of the SAR numbers (Egypt pricing is set on its own, same as any local pricing decision).
   const TIERS = [
     {
       id: "essential", emoji: "🟢", name: "Essential",
       desc: { ar: "حتى 3 فروع و10 مستخدمين", en: "Up to 3 branches and 10 users" },
       base: 149, listPrice: 499, annualPrice: 1500,
+      egpBase: 2200, egpListPrice: 7500, egpAnnualPrice: 22000,
       launchOffer: true, includedBranches: 3, includedUsers: 10,
     },
     {
       id: "business", emoji: "🔵", name: "Business",
       desc: { ar: "شركات متعددة الفروع", en: "Multi-branch businesses" },
-      base: 349, includedBranches: 7, includedUsers: 25, recommended: true,
+      base: 349, egpBase: 5200, includedBranches: 7, includedUsers: 25, recommended: true,
     },
     {
       id: "professional", emoji: "🟣", name: "Professional",
       desc: { ar: "نشاط أكبر واحتياج موسّع", en: "Larger operations, wider needs" },
-      base: 649, includedBranches: 15, includedUsers: 50,
+      base: 649, egpBase: 9600, includedBranches: 15, includedUsers: 50,
     },
     {
       id: "enterprise", emoji: "🔴", name: "Enterprise",
       desc: { ar: "الشركات الكبيرة", en: "Large enterprises" },
-      base: 2499, includedBranches: Infinity, includedUsers: Infinity, custom: true,
+      base: 2499, egpBase: 35000, includedBranches: Infinity, includedUsers: Infinity, custom: true,
     },
   ];
   const EXTRA_BRANCH_PRICE = 15; // SAR / branch / month, beyond tier's included branches (capped below)
   const EXTRA_USER_PRICE = 20;   // SAR / user / month, beyond tier's included users (capped below)
+  const EGP_EXTRA_BRANCH_PRICE = 220; // independent EGP equivalents of the two constants above
+  const EGP_EXTRA_USER_PRICE = 300;
   // The paid-overage cap is a FLAT PERCENTAGE of each tier's own included branches/users, not a fixed
   // number — so the ratio feels consistent across tiers instead of an arbitrary gap between them.
   const OVERAGE_CAP_PCT = 0.4;
   const ADDITIONAL_COMPANY_DISCOUNT = 0.85; // each company after the first billed at 85% of its own computed price
 
-  // rate = units of that currency per 1 SAR. Gulf currencies are pegged to USD, so these are stable;
-  // EGP floats and moves a lot, hence the "approximate" note — real EGP pricing is confirmed at signup time.
+  // rate = units of that currency per 1 SAR, used by convert() for every currency EXCEPT EGP. Gulf
+  // currencies are pegged to USD, so these are stable; GBP floats, hence its "approximate" note.
+  // EGP is NOT a conversion at all — it has its own independent price list (TIERS[].egpBase etc.,
+  // EGP_EXTRA_BRANCH_PRICE/EGP_EXTRA_USER_PRICE), set directly in Egyptian pounds. Its `rate` here is
+  // unused by pricing and kept only so EGP still sorts/displays like any other entry in this table.
   const CURRENCIES = {
     SAR: { label: { ar: "ريال سعودي (SAR)", en: "Saudi Riyal (SAR)" }, unit: { ar: "ريال", en: "SAR" }, rate: 1, decimals: 0 },
     AED: { label: { ar: "درهم إماراتي (AED)", en: "UAE Dirham (AED)" }, unit: { ar: "درهم", en: "AED" }, rate: 0.98, decimals: 0 },
@@ -627,7 +635,7 @@
     KWD: { label: { ar: "دينار كويتي (KWD)", en: "Kuwaiti Dinar (KWD)" }, unit: { ar: "دينار", en: "KWD" }, rate: 0.082, decimals: 1 },
     BHD: { label: { ar: "دينار بحريني (BHD)", en: "Bahraini Dinar (BHD)" }, unit: { ar: "دينار", en: "BHD" }, rate: 0.1, decimals: 1 },
     OMR: { label: { ar: "ريال عماني (OMR)", en: "Omani Rial (OMR)" }, unit: { ar: "ريال عماني", en: "OMR" }, rate: 0.1025, decimals: 1 },
-    EGP: { label: { ar: "جنيه مصري (EGP) — تقريبي", en: "Egyptian Pound (EGP) — approximate" }, unit: { ar: "جنيه", en: "EGP" }, rate: 13, decimals: 0, approx: true },
+    EGP: { label: { ar: "جنيه مصري (EGP)", en: "Egyptian Pound (EGP)" }, unit: { ar: "جنيه", en: "EGP" }, rate: 13, decimals: 0, independent: true },
     GBP: { label: { ar: "جنيه إسترليني (GBP) — تقريبي", en: "British Pound (GBP) — approximate" }, unit: { ar: "جنيه إسترليني", en: "GBP" }, rate: 0.206, decimals: 0, approx: true },
   };
   let currentCurrency = "SAR";
@@ -760,6 +768,7 @@
       footer: `© RomaERP — السعودية أولاً. الأسعار قابلة للتغيير حتى الإطلاق الرسمي. <a href="/terms.html" style="color:var(--primary)">الشروط والأحكام</a>`,
       floatingNote: "الأسعار دي تقريبية لتقلب سعر الصرف — السعر النهائي بيتأكد وقت التفعيل الفعلي.",
       approxNote: "أسعار تقريبية محوّلة من الريال السعودي.",
+      independentPriceNote: "أسعار مصر مستقلة بالجنيه المصري، مش تحويل من الريال السعودي.",
       langToggleLabel: "English",
     },
     en: {
@@ -878,6 +887,7 @@
       footer: `© RomaERP — Saudi Arabia first. Prices subject to change until official launch. <a href="/terms.html" style="color:var(--primary)">Terms &amp; Privacy</a>`,
       floatingNote: "These prices are approximate due to exchange-rate fluctuation — the final price is confirmed at activation.",
       approxNote: "Approximate prices converted from Saudi Riyal.",
+      independentPriceNote: "Egypt pricing is set independently in EGP, not converted from Saudi Riyal.",
       langToggleLabel: "عربي",
     },
   };
@@ -886,6 +896,26 @@
     const c = CURRENCIES[currentCurrency];
     const value = sarAmount * c.rate;
     return c.decimals > 0 ? value.toFixed(c.decimals) : Math.round(value);
+  }
+
+  // EGP has its own independent numbers (see TIERS[].egpBase etc.) — no rate multiplication, just
+  // formatting. Every other currency still goes through convert() (SAR * that currency's rate).
+  function formatEgp(amount) {
+    const c = CURRENCIES.EGP;
+    return c.decimals > 0 ? Number(amount).toFixed(c.decimals) : Math.round(amount);
+  }
+  function displayAmount(amount) {
+    return currentCurrency === "EGP" ? formatEgp(amount) : convert(amount);
+  }
+  // Picks the tier field to read (egpBase/egpListPrice/egpAnnualPrice vs base/listPrice/annualPrice)
+  // and pairs it with displayAmount so the caller never has to branch on currency itself.
+  function tierAmount(tier, sarKey, egpKey) {
+    return displayAmount(currentCurrency === "EGP" ? tier[egpKey] : tier[sarKey]);
+  }
+  function activePriceSet() {
+    return currentCurrency === "EGP"
+      ? { baseKey: "egpBase", extraBranch: EGP_EXTRA_BRANCH_PRICE, extraUser: EGP_EXTRA_USER_PRICE }
+      : { baseKey: "base", extraBranch: EXTRA_BRANCH_PRICE, extraUser: EXTRA_USER_PRICE };
   }
 
   function renderLineChart() {
@@ -1052,12 +1082,12 @@
         <h3 class="tier-name">${tier.name}</h3>
         <p class="tier-desc">${tier.desc[currentLang]}</p>
         <div class="tier-price">
-          ${tier.listPrice ? `<span class="tier-old-price mono">${convert(tier.listPrice)}</span>` : ""}
-          <span class="amount mono">${tier.custom ? t.customPricePrefix + convert(tier.base) : convert(tier.base)}</span>
+          ${tier.listPrice ? `<span class="tier-old-price mono">${tierAmount(tier, "listPrice", "egpListPrice")}</span>` : ""}
+          <span class="amount mono">${tier.custom ? t.customPricePrefix + tierAmount(tier, "base", "egpBase") : tierAmount(tier, "base", "egpBase")}</span>
           <span class="currency">${unit} ${t.perMonth}</span>
         </div>
         <div class="tier-price-note">${tier.custom ? t.customPriceNote : t.includesUpTo(tier.includedBranches, tier.includedUsers, branchWord)}</div>
-        ${tier.annualPrice ? `<div class="tier-annual-note">${t.annualNote(convert(tier.annualPrice), unit)}</div>` : ""}
+        ${tier.annualPrice ? `<div class="tier-annual-note">${t.annualNote(tierAmount(tier, "annualPrice", "egpAnnualPrice"), unit)}</div>` : ""}
         <ul class="tier-includes">
           <li>${t.includeAllModules}</li>
           <li>${t.includeSupport}</li>
@@ -1072,7 +1102,7 @@
   // Picks the CHEAPEST tier that can actually cover the requested branches/users, staying within
   // that tier's paid-overage cap (maxExtraBranches/maxExtraUsers) — never just the first tier that
   // happens to fit, so a small overage never forces an unnecessarily expensive tier jump.
-  function bestFit(branches, users) {
+  function bestFit(branches, users, priceSet) {
     let best = null;
     for (const t of TIERS) {
       if (t.custom) continue;
@@ -1081,16 +1111,16 @@
       const extraBranches = Math.max(0, branches - t.includedBranches);
       const extraUsers = Math.max(0, users - t.includedUsers);
       if (extraBranches > maxExtraBranches || extraUsers > maxExtraUsers) continue;
-      const perCompany = t.base + extraBranches * EXTRA_BRANCH_PRICE + extraUsers * EXTRA_USER_PRICE;
+      const perCompany = t[priceSet.baseKey] + extraBranches * priceSet.extraBranch + extraUsers * priceSet.extraUser;
       if (!best || perCompany < best.perCompany) best = { tier: t, extraBranches, extraUsers, perCompany };
     }
     if (best) return best;
     const enterprise = TIERS[TIERS.length - 1];
-    return { tier: enterprise, extraBranches: 0, extraUsers: 0, perCompany: enterprise.base };
+    return { tier: enterprise, extraBranches: 0, extraUsers: 0, perCompany: enterprise[priceSet.baseKey] };
   }
 
-  function computePrice(companies, branches, users) {
-    const { tier, extraBranches, extraUsers, perCompany } = bestFit(branches, users);
+  function computePrice(companies, branches, users, priceSet) {
+    const { tier, extraBranches, extraUsers, perCompany } = bestFit(branches, users, priceSet);
     const additionalCompanies = Math.max(0, companies - 1);
     const total = perCompany + additionalCompanies * perCompany * ADDITIONAL_COMPANY_DISCOUNT;
     return { tier, perCompany, extraBranches, extraUsers, additionalCompanies, total: Math.round(total) };
@@ -1107,21 +1137,22 @@
     document.getElementById("usersVal").value = users;
     try { localStorage.setItem(CALC_STORAGE_KEY, JSON.stringify({ companies, branches, users })); } catch { /* private mode etc. */ }
 
-    const r = computePrice(companies, branches, users);
+    const priceSet = activePriceSet();
+    const r = computePrice(companies, branches, users, priceSet);
     document.getElementById("resultTier").textContent = `${r.tier.name} ${r.tier.emoji}`;
-    document.getElementById("resultPrice").textContent = convert(r.total).toLocaleString("en-US");
+    document.getElementById("resultPrice").textContent = Number(displayAmount(r.total)).toLocaleString("en-US");
     document.getElementById("resultCurrency").textContent = `${unit} ${t.perMonth}`;
 
-    const lines = [t.baseLine(r.tier.name, convert(r.tier.base), unit)];
-    if (r.extraBranches > 0) lines.push(t.extraBranchesLine(r.extraBranches, convert(r.extraBranches * EXTRA_BRANCH_PRICE), unit));
-    if (r.extraUsers > 0) lines.push(t.extraUsersLine(r.extraUsers, convert(r.extraUsers * EXTRA_USER_PRICE), unit));
-    if (r.additionalCompanies > 0) lines.push(t.additionalCompanyLine(r.additionalCompanies, convert(r.additionalCompanies * r.perCompany * ADDITIONAL_COMPANY_DISCOUNT), unit));
+    const lines = [t.baseLine(r.tier.name, tierAmount(r.tier, "base", "egpBase"), unit)];
+    if (r.extraBranches > 0) lines.push(t.extraBranchesLine(r.extraBranches, displayAmount(r.extraBranches * priceSet.extraBranch), unit));
+    if (r.extraUsers > 0) lines.push(t.extraUsersLine(r.extraUsers, displayAmount(r.extraUsers * priceSet.extraUser), unit));
+    if (r.additionalCompanies > 0) lines.push(t.additionalCompanyLine(r.additionalCompanies, displayAmount(r.additionalCompanies * r.perCompany * ADDITIONAL_COMPANY_DISCOUNT), unit));
     if (r.tier.custom) lines.push(t.enterpriseContactLine);
     document.getElementById("resultBreakdown").innerHTML = lines.join("");
 
     const shareBtn = document.getElementById("calcShare");
     shareBtn.textContent = t.calcShare;
-    const shareText = t.shareMessage(r.tier.name, convert(r.total).toLocaleString("en-US"), unit, branches, users, window.location.href.split("#")[0]);
+    const shareText = t.shareMessage(r.tier.name, Number(displayAmount(r.total)).toLocaleString("en-US"), unit, branches, users, window.location.href.split("#")[0]);
     shareBtn.href = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
   }
 
@@ -1142,7 +1173,7 @@
     const note = document.getElementById("currencyNote");
     if (currentCurrency === "SAR") { note.textContent = ""; return; }
     const c = CURRENCIES[currentCurrency];
-    note.textContent = c.approx ? t.floatingNote : t.approxNote;
+    note.textContent = c.independent ? t.independentPriceNote : c.approx ? t.floatingNote : t.approxNote;
   }
 
   function renderAll() {
