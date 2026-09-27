@@ -10,6 +10,7 @@ import {
   PurchasingApi,
   SalesApi,
 } from "../api/services";
+import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 import {
   IconChat,
@@ -44,6 +45,10 @@ interface Alert {
 
 export default function Dashboard() {
   const { t } = useLanguage();
+  const [qaQuestion, setQaQuestion] = useState("");
+  const [qaAnswer, setQaAnswer] = useState<string | null>(null);
+  const [qaError, setQaError] = useState<string | null>(null);
+  const [qaLoading, setQaLoading] = useState(false);
   const [accountsCount, setAccountsCount] = useState(0);
   const [employeesCount, setEmployeesCount] = useState(0);
   const [totalDebit, setTotalDebit] = useState(0);
@@ -178,6 +183,22 @@ export default function Dashboard() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  async function handleAskQuestion(e: React.FormEvent) {
+    e.preventDefault();
+    if (!qaQuestion.trim()) return;
+    setQaLoading(true);
+    setQaError(null);
+    setQaAnswer(null);
+    try {
+      const res = await AiAssistantApi.ask(qaQuestion);
+      setQaAnswer(res.data.answer);
+    } catch (err) {
+      setQaError(getErrorMessage(err));
+    } finally {
+      setQaLoading(false);
+    }
+  }
+
   const quickLinks = [
     { to: "/assistant/chat", label: t.nav.assistantChat, icon: <IconChat /> },
     { to: "/accounting/journal-entries", label: t.nav.journalEntries, icon: <IconBook /> },
@@ -198,6 +219,25 @@ export default function Dashboard() {
     <div>
       <div className="page-header">
         <h1>{t.dashboard.title}</h1>
+      </div>
+
+      <div className="card" style={{ marginBottom: 20 }}>
+        <div style={{ fontWeight: 700, marginBottom: 8 }}>💬 {t.dashboard.askQuestionTitle}</div>
+        <form onSubmit={handleAskQuestion} style={{ display: "flex", gap: 8 }}>
+          <input
+            type="text"
+            value={qaQuestion}
+            onChange={(e) => setQaQuestion(e.target.value)}
+            placeholder={t.dashboard.askQuestionPlaceholder}
+            style={{ flex: 1 }}
+            disabled={qaLoading}
+          />
+          <button className="btn btn-primary" type="submit" disabled={qaLoading || !qaQuestion.trim()}>
+            {qaLoading ? t.common.loading : t.dashboard.askQuestionSubmit}
+          </button>
+        </form>
+        {qaError && <div className="alert-error" style={{ marginTop: 10 }}>{qaError}</div>}
+        {qaAnswer && <div style={{ marginTop: 10, padding: 12, background: "var(--color-bg-subtle, #f6f4ee)", borderRadius: 8, lineHeight: 1.8 }}>{qaAnswer}</div>}
       </div>
 
       <div className="dash-app-grid">

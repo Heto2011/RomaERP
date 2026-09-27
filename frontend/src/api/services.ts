@@ -355,6 +355,7 @@ export const AiAssistantApi = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+  ask: (question: string) => apiClient.post<{ answer: string }>("/aiassistant/ask", { question }),
 };
 
 export const BankReconciliationApi = {

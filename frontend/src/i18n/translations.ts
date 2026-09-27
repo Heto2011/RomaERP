@@ -55,6 +55,9 @@ const ar = {
   },
   dashboard: {
     title: "لوحة التحكم",
+    askQuestionTitle: "اسأل عن بياناتك",
+    askQuestionPlaceholder: "مثلاً: هل أنا رابح الشهر ده؟",
+    askQuestionSubmit: "اسأل",
     accountsCount: "عدد الحسابات",
     employeesCount: "عدد الموظفين",
     totalDebit: "إجمالي المدين (القيود المرحلة)",
@@ -1452,6 +1455,9 @@ const en: typeof ar = {
   lightMode: "Light mode",
   dashboard: {
     title: "Dashboard",
+    askQuestionTitle: "Ask about your data",
+    askQuestionPlaceholder: "e.g. Am I profitable this month?",
+    askQuestionSubmit: "Ask",
     accountsCount: "Accounts",
     employeesCount: "Employees",
     totalDebit: "Total Debit (Posted Entries)",

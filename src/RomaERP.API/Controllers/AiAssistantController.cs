@@ -13,12 +13,23 @@ namespace RomaERP.API.Controllers;
 public class AiAssistantController : ControllerBase
 {
     private readonly IExpenseAssistantService _assistantService;
+    private readonly IBusinessQaService _qaService;
     private readonly IWebHostEnvironment _environment;
 
-    public AiAssistantController(IExpenseAssistantService assistantService, IWebHostEnvironment environment)
+    public AiAssistantController(IExpenseAssistantService assistantService, IBusinessQaService qaService, IWebHostEnvironment environment)
     {
         _assistantService = assistantService;
+        _qaService = qaService;
         _environment = environment;
+    }
+
+    /// <summary>Free-form question about the tenant's own financial data (e.g. "هل أنا رابح الشهر ده؟") —
+    /// answered from real report numbers, see IBusinessQaService.</summary>
+    [HttpPost("ask")]
+    public async Task<ActionResult<AskQuestionResponseDto>> Ask(AskQuestionRequestDto request, CancellationToken ct)
+    {
+        var answer = await _qaService.AskAsync(request.Question, ct);
+        return Ok(new AskQuestionResponseDto(answer));
     }
 
     [HttpPost("messages")]
