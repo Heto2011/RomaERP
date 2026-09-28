@@ -177,12 +177,19 @@ jobs:
               echo "Detected listen URL: $LISTEN_URL"
               HEALTH_CODE=000
               for attempt in 1 2 3 4 5; do
-                # curl's -w already prints "000" itself when the connection fails (before exiting
-                # non-zero) — an earlier version of this also had "|| echo 000" here, which appended a
-                # second "000" on failure ("000000"), which (a) never equals the literal "000" the retry
-                # check compares against, so it broke out after one attempt instead of retrying, and
-                # (b) made a real connection failure look like a malformed response instead.
-                HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$LISTEN_URL/api/health" 2>/dev/null)
+                # Two failure modes to avoid here, both hit in earlier versions of this block:
+                # 1) curl's -w already prints "000" itself on a connection failure, before exiting
+                #    non-zero — appending "|| echo 000" on top of that produced "000000", which never
+                #    equals the "000" the retry check compares against, so it broke out after one
+                #    attempt instead of retrying.
+                # 2) Removing that fallback entirely (to fix #1) left curl's own non-zero exit code
+                #    live on a bare assignment. Under `set -e` (active for this whole script), that
+                #    aborted the ENTIRE deploy — including the frontend build/copy steps after this
+                #    block — the moment curl hit the API before it was ready, exactly the transient
+                #    condition this retry loop exists to tolerate.
+                # `|| true` fixes both: it only changes the pipeline's exit status (never adds output),
+                # so curl's own "000" (or nothing, on a lower-level failure) is captured cleanly.
+                HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$LISTEN_URL/api/health" 2>/dev/null || true)
                 HEALTH_CODE=${HEALTH_CODE:-000}
                 if [ "$HEALTH_CODE" != "000" ]; then break; fi
                 sleep 2
