@@ -36,7 +36,11 @@ jobs:
             echo "nginx: $(systemctl is-active nginx 2>/dev/null || echo unknown)"
             echo "sqlserver container: $(docker ps --filter name=sqlserver --format '{{.Status}}' 2>/dev/null || echo unknown)"
             echo "unhandled exceptions in the last 24h:"
-            journalctl -u romaerp-api --since "24 hours ago" --no-pager 2>/dev/null | grep -iE "unhandled exception|System\.[A-Za-z]+Exception" | tail -20 || echo "  none found"
+            # `grep | tail` as a pipeline always exits via tail's own status (0, even on empty input),
+            # so "grep ... | tail -20 || echo none" never actually falls back — capture the text first
+            # and branch on whether it's empty instead.
+            RECENT_EXCEPTIONS=$(journalctl -u romaerp-api --since "24 hours ago" --no-pager 2>/dev/null | grep -iE "unhandled exception|System\.[A-Za-z]+Exception" | tail -20)
+            if [ -n "$RECENT_EXCEPTIONS" ]; then echo "$RECENT_EXCEPTIONS"; else echo "  none found"; fi
 
             # SQL Server runs in the "sqlserver" Docker container (confirmed via `docker ps`), not as a
             # native service — its sa password was never covered by any secret-patch step, so an earlier
