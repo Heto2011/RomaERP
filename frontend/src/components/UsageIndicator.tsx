@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { UsageApi } from "../api/services";
+import { getErrorMessage } from "../api/client";
 import { useAuth } from "../context/AuthContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import type { Usage } from "../api/types";
@@ -9,6 +10,7 @@ export default function UsageIndicator() {
   const { t, lang } = useLanguage();
   const [open, setOpen] = useState(false);
   const [usage, setUsage] = useState<Usage | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -22,7 +24,12 @@ export default function UsageIndicator() {
   if (!user?.roles.includes("Admin")) return null;
 
   function toggle() {
-    if (!open) UsageApi.get().then((r) => setUsage(r.data));
+    if (!open) {
+      setError(null);
+      UsageApi.get()
+        .then((r) => setUsage(r.data))
+        .catch((err) => setError(getErrorMessage(err)));
+    }
     setOpen(!open);
   }
 
@@ -33,7 +40,8 @@ export default function UsageIndicator() {
       </button>
       {open && (
         <div className="global-search-dropdown" style={{ width: 240, insetInlineEnd: 0, insetInlineStart: "auto" }}>
-          {!usage && <div className="global-search-empty">…</div>}
+          {error && <div className="global-search-empty text-danger">{error}</div>}
+          {!error && !usage && <div className="global-search-empty">…</div>}
           {usage && (
             <div style={{ padding: "10px 12px", display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ display: "flex", justifyContent: "space-between" }}>

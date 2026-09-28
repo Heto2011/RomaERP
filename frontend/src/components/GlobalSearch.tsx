@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ItemsApi, PurchasingApi, SalesApi } from "../api/services";
+import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 
 interface SearchRow {
@@ -18,21 +19,23 @@ export default function GlobalSearch() {
   const [customers, setCustomers] = useState<SearchRow[]>([]);
   const [vendors, setVendors] = useState<SearchRow[]>([]);
   const [items, setItems] = useState<SearchRow[]>([]);
+  const [error, setError] = useState<string | null>(null);
   const loadedRef = useRef(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
   function loadOnce() {
     if (loadedRef.current) return;
     loadedRef.current = true;
-    SalesApi.getCustomers().then((r) =>
-      setCustomers(r.data.map((c) => ({ id: c.id, code: c.code, name: lang === "ar" ? c.nameAr : c.nameEn, to: "/sales/customers" })))
-    );
-    PurchasingApi.getVendors().then((r) =>
-      setVendors(r.data.map((v) => ({ id: v.id, code: v.code, name: lang === "ar" ? v.nameAr : v.nameEn, to: "/purchasing/vendors" })))
-    );
-    ItemsApi.getAll().then((r) =>
-      setItems(r.data.map((i) => ({ id: i.id, code: i.code, name: lang === "ar" ? i.nameAr : i.nameEn, to: "/inventory/items" })))
-    );
+    setError(null);
+    SalesApi.getCustomers()
+      .then((r) => setCustomers(r.data.map((c) => ({ id: c.id, code: c.code, name: lang === "ar" ? c.nameAr : c.nameEn, to: "/sales/customers" }))))
+      .catch((err) => setError(getErrorMessage(err)));
+    PurchasingApi.getVendors()
+      .then((r) => setVendors(r.data.map((v) => ({ id: v.id, code: v.code, name: lang === "ar" ? v.nameAr : v.nameEn, to: "/purchasing/vendors" }))))
+      .catch((err) => setError(getErrorMessage(err)));
+    ItemsApi.getAll()
+      .then((r) => setItems(r.data.map((i) => ({ id: i.id, code: i.code, name: lang === "ar" ? i.nameAr : i.nameEn, to: "/inventory/items" }))))
+      .catch((err) => setError(getErrorMessage(err)));
   }
 
   useEffect(() => {
@@ -83,7 +86,8 @@ export default function GlobalSearch() {
       />
       {open && q && (
         <div className="global-search-dropdown">
-          {groups.length === 0 && <div className="global-search-empty">{t.common.noData}</div>}
+          {error && <div className="global-search-empty text-danger">{error}</div>}
+          {!error && groups.length === 0 && <div className="global-search-empty">{t.common.noData}</div>}
           {groups.map((g) => (
             <div key={g.label}>
               <div className="global-search-group-label">{g.label}</div>
