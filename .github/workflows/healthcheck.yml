@@ -1,0 +1,55 @@
+name: Production Health Check
+
+on:
+  workflow_dispatch:
+
+jobs:
+  healthcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Inspect production server (read-only, no restarts, no deploys)
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            echo "==== disk space ===="
+            df -h / | tail -1
+
+            echo "==== memory ===="
+            free -h | head -2
+
+            echo "==== deployed commit vs latest on branch ===="
+            cd /root/RomaERP
+            git log -1 --oneline
+            git status --short | head -5
+
+            echo "==== romaerp-api service ===="
+            systemctl is-active romaerp-api || true
+            systemctl show romaerp-api --property=NRestarts,ActiveEnterTimestamp | tr '\n' ' '
+            echo ""
+
+            echo "==== nginx ===="
+            systemctl is-active nginx || true
+
+            echo "==== sqlserver container ===="
+            docker ps --filter name=sqlserver --format '{{.Status}}' || true
+
+            echo "==== romaerp-api process CPU/mem snapshot ===="
+            ps -o pid,%cpu,%mem,etimes,cmd -C dotnet --sort=-%cpu | head -5 || true
+
+            echo "==== unhandled exceptions in last 24h ===="
+            journalctl -u romaerp-api --since "24 hours ago" --no-pager | grep -iE "unhandled exception|fail:|System\.[A-Za-z]*Exception" | tail -40 || echo "none found"
+
+            echo "==== 5xx-looking API errors in last 24h ===="
+            journalctl -u romaerp-api --since "24 hours ago" --no-pager | grep -E " 5[0-9]{2} " | tail -20 || echo "none found"
+
+            echo "==== live health endpoint ===="
+            LISTEN_URL=$(journalctl -u romaerp-api -n 200 --no-pager | grep -o 'Now listening on: http://[^ ]*' | tail -1 | sed 's/Now listening on: //')
+            curl -s -o /dev/null -w "GET /api/health -> %{http_code}\n" "$LISTEN_URL/api/health" || echo "health check failed"
+
+            echo "==== nginx-proxied local check ===="
+            curl -s -o /dev/null -w "GET http://localhost/api/health (via nginx) -> %{http_code}\n" -m 8 "http://localhost/api/health" || echo "nginx-proxied check failed"
+
+            echo "HEALTHCHECK_DONE"
