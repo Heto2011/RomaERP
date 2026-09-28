@@ -175,7 +175,13 @@ jobs:
             LISTEN_URL=$(journalctl -u romaerp-api -n 200 --no-pager | grep -o 'Now listening on: http://[^ ]*' | tail -1 | sed 's/Now listening on: //')
             if [ -n "$LISTEN_URL" ]; then
               echo "Detected listen URL: $LISTEN_URL"
-              curl -s -o /dev/null -w "GET /api/health -> %{http_code}\n" "$LISTEN_URL/api/health" || echo "health check request failed"
+              HEALTH_CODE=000
+              for attempt in 1 2 3 4 5; do
+                HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$LISTEN_URL/api/health" || echo 000)
+                if [ "$HEALTH_CODE" != "000" ]; then break; fi
+                sleep 2
+              done
+              echo "GET /api/health -> $HEALTH_CODE"
             else
               echo "Could not detect the API's listen URL from recent logs — skipping the localhost smoke test (nginx-proxied requests still work externally regardless)."
             fi

@@ -4,8 +4,10 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RomaERP.Application.Assistant.Services;
 using RomaERP.Application.Common.Interfaces;
+using RomaERP.Application.EInvoicing.Services.Eta;
 using RomaERP.Application.EInvoicing.Services.Zatca;
 using RomaERP.Infrastructure.Assistant;
+using RomaERP.Infrastructure.EInvoicing.Eta;
 using RomaERP.Infrastructure.EInvoicing.Zatca;
 using RomaERP.Infrastructure.Identity;
 using RomaERP.Infrastructure.Pdf;
@@ -27,6 +29,8 @@ public static class DependencyInjection
         services.AddScoped<IZatcaDocumentSigner, ZatcaXadesDocumentSigner>();
         services.AddHttpClient<IZatcaApiClient, ZatcaHttpApiClient>();
         services.AddScoped<IZatcaOnboardingService, ZatcaOnboardingService>();
+        services.AddScoped<IEtaDocumentSigner, EtaCertificateDocumentSigner>();
+        services.AddHttpClient<IEtaApiClient, EtaHttpApiClient>();
 
         services.AddDbContext<CentralDbContext>(options =>
             options.UseSqlServer(configuration.GetConnectionString("Central")));

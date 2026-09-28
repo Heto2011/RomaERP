@@ -62,15 +62,16 @@ public static class DependencyInjection
         services.AddScoped<IDeliveryOrderIntakeService, DeliveryOrderIntakeService>();
         services.AddScoped<ICashierShiftService, CashierShiftService>();
 
-        // E-invoicing: ZATCA's document signer AND API client are real (see Infrastructure.AddInfrastructure —
-        // ZatcaXadesDocumentSigner / ZatcaHttpApiClient). The ETA side is still mock — the ETA signer needs a
-        // physical USB signing token that can't run server-side, and its government API client has nowhere
-        // real to call yet — swap for a real implementation once a customer's credentials are available.
+        // E-invoicing: both providers' document signer AND API client are real (see
+        // Infrastructure.AddInfrastructure — ZatcaXadesDocumentSigner/ZatcaHttpApiClient and
+        // EtaCertificateDocumentSigner/EtaHttpApiClient). Neither has been exercised against a live government
+        // endpoint from this sandbox (no network access to zatca.gov.sa or eta.gov.eg) — see those classes'
+        // doc comments for what remains to verify once a customer has real credentials. The ETA signer also
+        // only covers taxpayers on ETA's API-based certificate registration path, not the hardware-USB-token
+        // manual-portal path, which cannot be automated from a server at all.
         services.AddScoped<IEInvoicingService, EInvoicingService>();
         services.AddScoped<IEInvoicingProvider, EtaEInvoicingProvider>();
         services.AddScoped<IEInvoicingProvider, ZatcaEInvoicingProvider>();
-        services.AddScoped<IEtaDocumentSigner, MockEtaDocumentSigner>();
-        services.AddScoped<IEtaApiClient, MockEtaApiClient>();
 
         return services;
     }
