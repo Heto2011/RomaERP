@@ -177,7 +177,13 @@ jobs:
               echo "Detected listen URL: $LISTEN_URL"
               HEALTH_CODE=000
               for attempt in 1 2 3 4 5; do
-                HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$LISTEN_URL/api/health" || echo 000)
+                # curl's -w already prints "000" itself when the connection fails (before exiting
+                # non-zero) — an earlier version of this also had "|| echo 000" here, which appended a
+                # second "000" on failure ("000000"), which (a) never equals the literal "000" the retry
+                # check compares against, so it broke out after one attempt instead of retrying, and
+                # (b) made a real connection failure look like a malformed response instead.
+                HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$LISTEN_URL/api/health" 2>/dev/null)
+                HEALTH_CODE=${HEALTH_CODE:-000}
                 if [ "$HEALTH_CODE" != "000" ]; then break; fi
                 sleep 2
               done
