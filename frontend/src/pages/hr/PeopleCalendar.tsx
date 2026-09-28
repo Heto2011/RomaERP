@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { EmployeeRequestsApi } from "../../api/services";
 import { EmployeeRequestType, type CalendarEntry } from "../../api/types";
+import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 
 function toIsoDate(d: Date) {
@@ -14,11 +15,15 @@ export default function PeopleCalendar() {
     return new Date(d.getFullYear(), d.getMonth(), 1);
   });
   const [entries, setEntries] = useState<CalendarEntry[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   const monthEnd = useMemo(() => new Date(monthStart.getFullYear(), monthStart.getMonth() + 1, 0), [monthStart]);
 
   useEffect(() => {
-    EmployeeRequestsApi.getCalendar(toIsoDate(monthStart), toIsoDate(monthEnd)).then((r) => setEntries(r.data));
+    setError(null);
+    EmployeeRequestsApi.getCalendar(toIsoDate(monthStart), toIsoDate(monthEnd))
+      .then((r) => setEntries(r.data))
+      .catch((err) => setError(getErrorMessage(err)));
   }, [monthStart, monthEnd]);
 
   const weekDayLabels = useMemo(() => {
@@ -60,6 +65,8 @@ export default function PeopleCalendar() {
         <h1>{t.hr.hrCalendarTitle}</h1>
       </div>
       <p className="text-muted">{t.hr.hrCalendarIntro}</p>
+
+      {error && <div className="alert-error">{error}</div>}
 
       <div className="card">
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 16 }}>

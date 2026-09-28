@@ -1,14 +1,18 @@
 import { useEffect, useState } from "react";
 import { PurchasingApi } from "../../api/services";
 import type { VendorAging } from "../../api/types";
+import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function ApAging() {
   const { t } = useLanguage();
   const [rows, setRows] = useState<VendorAging[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    PurchasingApi.getAging().then((r) => setRows(r.data));
+    PurchasingApi.getAging()
+      .then((r) => setRows(r.data))
+      .catch((err) => setError(getErrorMessage(err)));
   }, []);
 
   const totals = rows.reduce(
@@ -27,6 +31,8 @@ export default function ApAging() {
       <div className="page-header">
         <h1>{t.purchasing.agingTitle}</h1>
       </div>
+
+      {error && <div className="alert-error">{error}</div>}
 
       <div className="card">
         <table>

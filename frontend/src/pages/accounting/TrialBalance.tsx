@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { JournalEntriesApi } from "../../api/services";
 import { AccountType, type TrialBalanceLine } from "../../api/types";
+import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import ReportExportBar from "../../components/ReportExportBar";
 
@@ -16,10 +17,16 @@ export default function TrialBalance() {
   };
   const [lines, setLines] = useState<TrialBalanceLine[]>([]);
   const [asOfDate, setAsOfDate] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
   async function load() {
-    const res = await JournalEntriesApi.trialBalance(asOfDate || undefined);
-    setLines(res.data);
+    setError(null);
+    try {
+      const res = await JournalEntriesApi.trialBalance(asOfDate || undefined);
+      setLines(res.data);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
   }
 
   useEffect(() => {
@@ -45,6 +52,8 @@ export default function TrialBalance() {
           {t.common.refresh}
         </button>
       </div>
+
+      {error && <div className="alert-error">{error}</div>}
 
       <ReportExportBar targetRef={exportRef} fileName="trial-balance" />
       <div className="card" ref={exportRef}>

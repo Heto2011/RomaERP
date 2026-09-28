@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 import { EmployeeRequestsApi } from "../../api/services";
 import { EmployeeRequestStatus, EmployeeRequestType, type EmployeeRequest, type LeaveBalance } from "../../api/types";
+import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { IconCalendar, IconCheck } from "../../components/icons";
 
@@ -11,22 +12,27 @@ export default function PeopleDashboard() {
   const { t } = useLanguage();
   const [leaveBalance, setLeaveBalance] = useState<LeaveBalance | null>(null);
   const [upcomingLeave, setUpcomingLeave] = useState<EmployeeRequest[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    Promise.all([EmployeeRequestsApi.getMine(), EmployeeRequestsApi.getMyLeaveBalance()]).then(([requestsRes, balanceRes]) => {
-      const today = new Date().toISOString().slice(0, 10);
-      const upcoming = requestsRes.data
-        .filter((r) => r.type === EmployeeRequestType.Leave && r.status === EmployeeRequestStatus.Approved && r.dateFrom >= today)
-        .sort((a, b) => a.dateFrom.localeCompare(b.dateFrom));
-      setUpcomingLeave(upcoming);
-      setLeaveBalance(balanceRes.data);
-    });
+    Promise.all([EmployeeRequestsApi.getMine(), EmployeeRequestsApi.getMyLeaveBalance()])
+      .then(([requestsRes, balanceRes]) => {
+        const today = new Date().toISOString().slice(0, 10);
+        const upcoming = requestsRes.data
+          .filter((r) => r.type === EmployeeRequestType.Leave && r.status === EmployeeRequestStatus.Approved && r.dateFrom >= today)
+          .sort((a, b) => a.dateFrom.localeCompare(b.dateFrom));
+        setUpcomingLeave(upcoming);
+        setLeaveBalance(balanceRes.data);
+      })
+      .catch((err) => setError(getErrorMessage(err)));
   }, []);
 
   const nextLeave = upcomingLeave[0];
 
   return (
     <div>
+      {error && <div className="alert-error">{error}</div>}
+
       <div className="hr-dash-hero">
         <div className="hr-dash-greeting">
           {t.hr.goodDay}, {user?.fullName} 👋

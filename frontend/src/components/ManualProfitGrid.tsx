@@ -26,8 +26,12 @@ export default function ManualProfitGrid({ dimension, nameLabel }: { dimension: 
   const [editRow, setEditRow] = useState<DraftRow>({ name: "", periodMonth: currentMonth(), revenue: 0, cost: 0 });
 
   async function load() {
-    const res = await ManualProfitEntriesApi.getAll(dimension);
-    setEntries(res.data);
+    try {
+      const res = await ManualProfitEntriesApi.getAll(dimension);
+      setEntries(res.data);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
   }
 
   useEffect(() => {
