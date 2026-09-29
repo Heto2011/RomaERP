@@ -277,6 +277,15 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             prices.Base, plan.IncludedBranches, plan.IncludedUsers, plan.IsCustomPricing, branches, users, isAdditionalCompany,
             prices.ExtraBranch, prices.ExtraUser);
 
+        // Overage in the pegged Gulf currencies is a fraction (e.g. 14.7 AED per branch), so round every line to the
+        // currency's own decimals and add the rounded lines up — the invoice always sums exactly.
+        var decimals = SubscriptionPriceList.DecimalsFor(prices.Currency);
+        decimal Round(decimal amount) => Math.Round(amount, decimals, MidpointRounding.AwayFromZero);
+        var baseAmount = Round(pricing.BaseAmount);
+        var extraBranchesAmount = Round(pricing.ExtraBranchesAmount);
+        var extraUsersAmount = Round(pricing.ExtraUsersAmount);
+        var discount = Round(pricing.MultiCompanyDiscountAmount);
+
         return new SubscriptionInvoice
         {
             TenantId = subscription.TenantId,
@@ -285,13 +294,13 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             PlanNameAr = plan.NameAr,
             PeriodStart = subscription.CurrentPeriodStart,
             PeriodEnd = subscription.CurrentPeriodEnd,
-            BaseAmount = pricing.BaseAmount,
+            BaseAmount = baseAmount,
             ExtraBranches = pricing.ExtraBranches,
-            ExtraBranchesAmount = pricing.ExtraBranchesAmount,
+            ExtraBranchesAmount = extraBranchesAmount,
             ExtraUsers = pricing.ExtraUsers,
-            ExtraUsersAmount = pricing.ExtraUsersAmount,
-            MultiCompanyDiscountAmount = pricing.MultiCompanyDiscountAmount,
-            TotalAmount = pricing.TotalAmount,
+            ExtraUsersAmount = extraUsersAmount,
+            MultiCompanyDiscountAmount = discount,
+            TotalAmount = baseAmount + extraBranchesAmount + extraUsersAmount - discount,
             Currency = prices.Currency,
             Status = SubscriptionInvoiceStatus.Pending,
             DueDateUtc = subscription.CurrentPeriodEnd,

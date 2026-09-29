@@ -9,5 +9,6 @@ public enum Country
     Oman = 5,
     Qatar = 6,
     Kuwait = 7,
-    UnitedKingdom = 8
+    UnitedKingdom = 8,
+    Guernsey = 9
 }

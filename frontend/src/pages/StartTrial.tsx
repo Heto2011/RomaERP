@@ -16,6 +16,7 @@ const countryLabel: Record<Country, { ar: string; en: string }> = {
   [Country.Qatar]: { ar: "قطر", en: "Qatar" },
   [Country.Kuwait]: { ar: "الكويت", en: "Kuwait" },
   [Country.UnitedKingdom]: { ar: "بريطانيا", en: "United Kingdom" },
+  [Country.Guernsey]: { ar: "جيرنزي", en: "Guernsey" },
 };
 
 export default function StartTrial() {

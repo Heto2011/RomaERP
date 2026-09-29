@@ -1850,6 +1850,7 @@ export enum Country {
   Qatar = 6,
   Kuwait = 7,
   UnitedKingdom = 8,
+  Guernsey = 9,
 }
 
 export interface ProvisionTenantRequest {

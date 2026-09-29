@@ -41,14 +41,55 @@ public class SubscriptionPriceListTests
         }
     }
 
-    [Fact]
-    public void CurrencyFollowsTheTenantsCountry()
+    [Theory]
+    [InlineData(Country.Egypt, "EGP")]
+    [InlineData(Country.SaudiArabia, "SAR")]
+    [InlineData(Country.UAE, "AED")]
+    [InlineData(Country.Bahrain, "BHD")]
+    [InlineData(Country.Oman, "OMR")]
+    [InlineData(Country.Qatar, "QAR")]
+    [InlineData(Country.Kuwait, "KWD")]
+    [InlineData(Country.UnitedKingdom, "GBP")]
+    [InlineData(Country.Guernsey, "GBP")]
+    public void EveryCountryIsBilledInItsOwnCurrency(Country country, string currency)
     {
-        Assert.Equal("EGP", SubscriptionPriceList.CurrencyFor(Country.Egypt));
-        Assert.Equal("SAR", SubscriptionPriceList.CurrencyFor(Country.SaudiArabia));
-        Assert.Equal("SAR", SubscriptionPriceList.CurrencyFor(Country.UAE));
-        Assert.Equal("GBP", SubscriptionPriceList.CurrencyFor(Country.UnitedKingdom));
+        Assert.Equal(currency, SubscriptionPriceList.CurrencyFor(country));
+        // ...and that currency has a price for every plan, so no country can fall through to a missing price.
+        foreach (var plan in new[] { "essential", "business", "professional", "enterprise" })
+            Assert.NotNull(SubscriptionPriceList.Find(plan, currency));
     }
+
+    /// <summary>The pegged Gulf currencies must equal what the public page displays (SAR list x rate, rounded).</summary>
+    [Theory]
+    [InlineData("AED", "essential", 146)]
+    [InlineData("AED", "business", 342)]
+    [InlineData("AED", "professional", 636)]
+    [InlineData("QAR", "essential", 145)]
+    [InlineData("QAR", "business", 339)]
+    [InlineData("QAR", "professional", 630)]
+    [InlineData("KWD", "essential", 12.2)]
+    [InlineData("KWD", "business", 28.6)]
+    [InlineData("KWD", "professional", 53.2)]
+    [InlineData("BHD", "essential", 14.9)]
+    [InlineData("BHD", "business", 34.9)]
+    [InlineData("BHD", "professional", 64.9)]
+    [InlineData("OMR", "essential", 15.3)]
+    [InlineData("OMR", "business", 35.8)]
+    [InlineData("OMR", "professional", 66.5)]
+    public void GulfPricesMatchThePublicPage(string currency, string plan, double expected)
+        => Assert.Equal((decimal)expected, SubscriptionPriceList.Find(plan, currency)!.Base);
+
+    [Theory]
+    [InlineData("SAR", 0)]
+    [InlineData("EGP", 0)]
+    [InlineData("GBP", 0)]
+    [InlineData("AED", 0)]
+    [InlineData("QAR", 0)]
+    [InlineData("KWD", 1)]
+    [InlineData("BHD", 1)]
+    [InlineData("OMR", 1)]
+    public void InvoiceDecimalsPerCurrency(string currency, int decimals)
+        => Assert.Equal(decimals, SubscriptionPriceList.DecimalsFor(currency));
 
     [Fact]
     public void UnknownPlanHasNoPrice() => Assert.Null(SubscriptionPriceList.Find("nope", "SAR"));

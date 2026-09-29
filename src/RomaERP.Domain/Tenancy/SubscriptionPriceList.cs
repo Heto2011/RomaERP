@@ -17,6 +17,13 @@ public static class SubscriptionPriceList
     public const string Egp = "EGP";
     public const string Gbp = "GBP";
 
+    /// <summary>The other Gulf currencies are pegged to the USD, so (exactly as on the public page) each is the SAR
+    /// list at a fixed rate, rounded to that currency's displayed decimals: units of currency per 1 SAR.</summary>
+    private static readonly (string Currency, decimal Rate, int Decimals)[] GulfCurrencies =
+    {
+        ("AED", 0.98m, 0), ("QAR", 0.97m, 0), ("KWD", 0.082m, 1), ("BHD", 0.1m, 1), ("OMR", 0.1025m, 1),
+    };
+
     private static readonly Dictionary<(string Plan, string Currency), PlanPriceSet> Prices = new()
     {
         [("essential", Sar)] = new(Sar, 149, 0, 15, 20),
@@ -36,14 +43,37 @@ public static class SubscriptionPriceList
         [("enterprise", Gbp)] = new(Gbp, 599, 0, 5, 3),
     };
 
-    /// <summary>Egypt bills in EGP and the UK in GBP (each its own independent list); every other country
-    /// (Saudi Arabia and the rest of the Gulf) is billed on the SAR list.</summary>
+    static SubscriptionPriceList()
+    {
+        foreach (var (currency, rate, decimals) in GulfCurrencies)
+        {
+            foreach (var plan in new[] { "essential", "business", "professional", "enterprise" })
+            {
+                var sar = Prices[(plan, Sar)];
+                Prices[(plan, currency)] = new PlanPriceSet(currency,
+                    Math.Round(sar.Base * rate, decimals, MidpointRounding.AwayFromZero), 0,
+                    sar.ExtraBranch * rate, sar.ExtraUser * rate);
+            }
+        }
+    }
+
+    /// <summary>Every country is billed in its own currency (Guernsey and the UK both in sterling).</summary>
     public static string CurrencyFor(Country country) => country switch
     {
         Country.Egypt => Egp,
-        Country.UnitedKingdom => Gbp,
+        Country.SaudiArabia => Sar,
+        Country.UAE => "AED",
+        Country.Bahrain => "BHD",
+        Country.Oman => "OMR",
+        Country.Qatar => "QAR",
+        Country.Kuwait => "KWD",
+        Country.UnitedKingdom or Country.Guernsey => Gbp,
         _ => Sar,
     };
+
+    /// <summary>How many decimals an invoice amount in this currency is rounded to (matches the public page).</summary>
+    public static int DecimalsFor(string currency)
+        => GulfCurrencies.FirstOrDefault(c => c.Currency == currency.ToUpperInvariant()) is { Currency: not null } g ? g.Decimals : 0;
 
     public static PlanPriceSet? Find(string planCode, string currency)
         => Prices.GetValueOrDefault((planCode.ToLowerInvariant(), currency.ToUpperInvariant()));

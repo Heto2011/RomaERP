@@ -87,6 +87,7 @@ public class TenancyTests
     [InlineData(Country.Qatar, 0.0, "QAR")]
     [InlineData(Country.Kuwait, 0.0, "KWD")]
     [InlineData(Country.UnitedKingdom, 0.20, "GBP")]
+    [InlineData(Country.Guernsey, 0.0, "GBP")]
     public void CountryTaxDefaults_ReturnsExpectedRateAndCurrency(Country country, double expectedRate, string expectedCurrency)
     {
         var result = CountryTaxDefaults.Get(country);
