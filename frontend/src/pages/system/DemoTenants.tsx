@@ -11,6 +11,7 @@ const countryLabel: Record<Country, string> = {
   [Country.Oman]: "Oman",
   [Country.Qatar]: "Qatar",
   [Country.Kuwait]: "Kuwait",
+  [Country.UnitedKingdom]: "United Kingdom",
 };
 
 function randomPassword() {

@@ -8,5 +8,6 @@ public enum Country
     Bahrain = 4,
     Oman = 5,
     Qatar = 6,
-    Kuwait = 7
+    Kuwait = 7,
+    UnitedKingdom = 8
 }

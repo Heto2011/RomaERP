@@ -36,8 +36,14 @@ public static class SubscriptionPriceList
         [("enterprise", Gbp)] = new(Gbp, 599, 0, 5, 3),
     };
 
-    /// <summary>Egypt bills in EGP; every other country signs up today on the Gulf (SAR) list.</summary>
-    public static string CurrencyFor(Country country) => country == Country.Egypt ? Egp : Sar;
+    /// <summary>Egypt bills in EGP and the UK in GBP (each its own independent list); every other country
+    /// (Saudi Arabia and the rest of the Gulf) is billed on the SAR list.</summary>
+    public static string CurrencyFor(Country country) => country switch
+    {
+        Country.Egypt => Egp,
+        Country.UnitedKingdom => Gbp,
+        _ => Sar,
+    };
 
     public static PlanPriceSet? Find(string planCode, string currency)
         => Prices.GetValueOrDefault((planCode.ToLowerInvariant(), currency.ToUpperInvariant()));

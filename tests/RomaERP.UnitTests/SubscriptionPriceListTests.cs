@@ -46,6 +46,8 @@ public class SubscriptionPriceListTests
     {
         Assert.Equal("EGP", SubscriptionPriceList.CurrencyFor(Country.Egypt));
         Assert.Equal("SAR", SubscriptionPriceList.CurrencyFor(Country.SaudiArabia));
+        Assert.Equal("SAR", SubscriptionPriceList.CurrencyFor(Country.UAE));
+        Assert.Equal("GBP", SubscriptionPriceList.CurrencyFor(Country.UnitedKingdom));
     }
 
     [Fact]
