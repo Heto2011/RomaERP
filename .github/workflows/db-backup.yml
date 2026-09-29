@@ -35,7 +35,10 @@ jobs:
             # The token is stored root-only and never printed (this repo's logs are public).
             if [ "${DROPBOX_SETUP:-false}" = true ]; then
               if [ -z "$DROPBOX_APP_KEY" ] || [ -z "$DROPBOX_APP_SECRET" ] || [ -z "$DROPBOX_AUTH_CODE" ]; then
-                echo "DROPBOX_SETUP_FAILED: the DROPBOX_APP_KEY, DROPBOX_APP_SECRET and DROPBOX_AUTH_CODE secrets must all be set"
+                echo "DROPBOX_SETUP_FAILED: one or more secrets are missing or empty:"
+                [ -n "$DROPBOX_APP_KEY" ] && echo "  DROPBOX_APP_KEY: set" || echo "  DROPBOX_APP_KEY: MISSING"
+                [ -n "$DROPBOX_APP_SECRET" ] && echo "  DROPBOX_APP_SECRET: set" || echo "  DROPBOX_APP_SECRET: MISSING"
+                [ -n "$DROPBOX_AUTH_CODE" ] && echo "  DROPBOX_AUTH_CODE: set" || echo "  DROPBOX_AUTH_CODE: MISSING"
                 exit 1
               fi
               RESP=$(curl -s -X POST https://api.dropboxapi.com/oauth2/token -u "$DROPBOX_APP_KEY:$DROPBOX_APP_SECRET" \
