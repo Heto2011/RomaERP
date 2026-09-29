@@ -218,7 +218,10 @@ jobs:
 
             cd frontend
             npm ci
-            npm run build
+            # Same-origin API base: identical behavior from the raw IP and from the romagroup.app domain
+            # over HTTPS (an absolute http://IP/api base would be blocked as mixed content there).
+            # A shell-provided value takes priority over any untracked frontend/.env on the server.
+            VITE_API_URL=/api npm run build
             rm -rf /var/www/romaerp/*
             cp -r dist/* /var/www/romaerp/
             cp /root/RomaERP/marketing/pricing.html /var/www/romaerp/pricing.html
@@ -230,3 +233,138 @@ jobs:
             cp /root/RomaERP/marketing/roma-erp.html /var/www/romaerp/roma-erp.html
 
             echo "DEPLOY_OK"
+
+      # Its own step with continue-on-error so a domain/HTTPS problem can never fail or block a product
+      # deploy. Idempotent: only ever ADDS one nginx site file for romagroup.app (never edits the existing
+      # site's config), validates with `nginx -t` before every reload, and rolls back on failure.
+      - name: Configure romagroup.app domain + free HTTPS (Let's Encrypt)
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            DOMAIN=romagroup.app
+            ACME_ROOT=/var/www/letsencrypt
+
+            echo "---- domain setup: $DOMAIN ----"
+            if ! getent hosts "$DOMAIN" >/dev/null 2>&1; then
+              echo "DNS for $DOMAIN does not resolve from the server yet - skipping until it does."
+              exit 0
+            fi
+
+            # Debian/Ubuntu nginx loads sites-enabled/*; fall back to conf.d/ if this server doesn't.
+            if grep -qE 'include[[:space:]]+/etc/nginx/sites-enabled' /etc/nginx/nginx.conf 2>/dev/null; then
+              CONF=/etc/nginx/sites-available/$DOMAIN.conf
+              LINK=/etc/nginx/sites-enabled/$DOMAIN.conf
+            else
+              CONF=/etc/nginx/conf.d/$DOMAIN.conf
+              LINK=""
+            fi
+            mkdir -p "$(dirname "$CONF")"
+
+            if ! command -v certbot >/dev/null 2>&1; then
+              echo "installing certbot"
+              apt-get update -qq
+              DEBIAN_FRONTEND=noninteractive apt-get install -y -qq certbot
+            fi
+            mkdir -p "$ACME_ROOT"
+
+            # Names to certify: always the bare domain; www only once its DNS record resolves.
+            CERT_NAMES="-d $DOMAIN"
+            if getent hosts "www.$DOMAIN" >/dev/null 2>&1; then CERT_NAMES="$CERT_NAMES -d www.$DOMAIN"; fi
+
+            http_only_site() {
+              cat <<'NGINX'
+            server {
+                listen 80;
+                server_name romagroup.app www.romagroup.app;
+                location /.well-known/acme-challenge/ { root /var/www/letsencrypt; }
+                location / { return 301 https://$host$request_uri; }
+            }
+            NGINX
+            }
+
+            full_site() {
+              cat <<'NGINX'
+            server {
+                listen 80;
+                server_name romagroup.app www.romagroup.app;
+                location /.well-known/acme-challenge/ { root /var/www/letsencrypt; }
+                location / { return 301 https://$host$request_uri; }
+            }
+            server {
+                listen 443 ssl http2;
+                server_name romagroup.app www.romagroup.app;
+                ssl_certificate /etc/letsencrypt/live/romagroup.app/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/romagroup.app/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                root /var/www/romaerp;
+                index index.html;
+                client_max_body_size 25m;
+                location /api/ {
+                    proxy_pass http://127.0.0.1:5000;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $remote_addr;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                    proxy_read_timeout 120s;
+                }
+                location / { try_files $uri $uri/ /index.html; }
+            }
+            NGINX
+            }
+
+            # Installs a candidate site file: skip if unchanged, otherwise validate with nginx -t,
+            # reload, and roll back to the previous file (or remove ours) if validation fails.
+            apply_site() {
+              "$1" > "$CONF.new"
+              if [ -f "$CONF" ] && cmp -s "$CONF" "$CONF.new"; then
+                rm -f "$CONF.new"
+                return 0
+              fi
+              if [ -f "$CONF" ]; then cp "$CONF" "$CONF.bak"; fi
+              mv "$CONF.new" "$CONF"
+              if [ -n "$LINK" ]; then ln -sf "$CONF" "$LINK"; fi
+              if nginx -t 2>&1; then
+                systemctl reload nginx
+              else
+                echo "nginx -t FAILED - rolling back"
+                if [ -f "$CONF.bak" ]; then
+                  mv "$CONF.bak" "$CONF"
+                else
+                  rm -f "$CONF"
+                  if [ -n "$LINK" ]; then rm -f "$LINK"; fi
+                fi
+                nginx -t
+                exit 1
+              fi
+            }
+
+            NEED_CERT=0
+            if [ ! -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
+              NEED_CERT=1
+            elif getent hosts "www.$DOMAIN" >/dev/null 2>&1 && ! openssl x509 -in "/etc/letsencrypt/live/$DOMAIN/cert.pem" -noout -text | grep -q "DNS:www.$DOMAIN"; then
+              NEED_CERT=1
+            fi
+
+            if [ "$NEED_CERT" = "1" ]; then
+              # Port-80 site first so Let's Encrypt can fetch the challenge file.
+              apply_site http_only_site
+              certbot certonly --webroot -w "$ACME_ROOT" $CERT_NAMES --expand \
+                --non-interactive --agree-tos --register-unsafely-without-email \
+                --deploy-hook "systemctl reload nginx"
+            fi
+
+            apply_site full_site
+            systemctl enable --now certbot.timer >/dev/null 2>&1 || true
+
+            echo "---- domain smoke test (from the server itself) ----"
+            for path in / /roma-group.html /api/health; do
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN$path" || true)
+              echo "GET https://$DOMAIN$path -> ${CODE:-000}"
+            done
+            echo "DOMAIN_SETUP_OK"
