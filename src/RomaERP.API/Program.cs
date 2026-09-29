@@ -1,6 +1,7 @@
 using System.Text;
 using System.Threading.RateLimiting;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -171,6 +172,14 @@ if (app.Environment.IsDevelopment())
 {
     await SeedDemoTenantAsync(app.Services);
 }
+
+// The API only listens on loopback behind nginx, so without this every request's RemoteIpAddress is
+// 127.0.0.1 and the per-IP rate limiters below (trial signup, login, PIN login...) would share ONE
+// bucket across all real visitors. Defaults trust forwarded headers only from loopback proxies.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto,
+});
 
 app.UseMiddleware<ExceptionHandlingMiddleware>();
 
