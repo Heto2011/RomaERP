@@ -11,10 +11,6 @@ namespace RomaERP.Infrastructure.Assistant;
 public class ClaudeExpenseParser : IClaudeExpenseParser
 {
     private const string AnthropicVersion = "2023-06-01";
-    // Real-money guardrail: caps how many Claude calls one tenant can rack up in a day. Higher than the
-    // Q&A assistant's cap since this is core operational flow (every expense goes through it, possibly across
-    // several clarification turns), not a free-form chat box.
-    private const int DailyLimit = 200;
 
     private readonly HttpClient _httpClient;
     private readonly ClaudeSettings _settings;
@@ -97,7 +93,7 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
                 "المساعد الذكي مش مفعّل لسه — لازم تضيف مفتاح Claude API في إعدادات السيرفر (Claude:ApiKey) عشان يشتغل.");
         }
 
-        await _usageLimiter.EnsureWithinDailyLimitAsync("ExpenseCapture", DailyLimit, ct);
+        await _usageLimiter.EnsureWithinDailyLimitAsync("ExpenseCapture", ct);
 
         var properties = new JsonObject
         {
