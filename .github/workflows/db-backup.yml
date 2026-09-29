@@ -4,6 +4,11 @@ on:
   schedule:
     - cron: '0 23 * * *'
   workflow_dispatch:
+    inputs:
+      dropbox_setup:
+        description: "One-time: exchange the DROPBOX_AUTH_CODE secret for a long-lived Dropbox refresh token, saved (never printed) on the server. Leave off for a normal backup."
+        type: boolean
+        default: false
 
 jobs:
   backup:
@@ -11,12 +16,41 @@ jobs:
     steps:
       - name: Back up every tenant + central database on the production server
         uses: appleboy/ssh-action@v1.0.3
+        env:
+          DROPBOX_SETUP: ${{ inputs.dropbox_setup }}
+          DROPBOX_APP_KEY: ${{ secrets.DROPBOX_APP_KEY }}
+          DROPBOX_APP_SECRET: ${{ secrets.DROPBOX_APP_SECRET }}
+          DROPBOX_AUTH_CODE: ${{ secrets.DROPBOX_AUTH_CODE }}
         with:
           host: ${{ secrets.DEPLOY_HOST }}
           username: root
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: DROPBOX_SETUP,DROPBOX_APP_KEY,DROPBOX_APP_SECRET,DROPBOX_AUTH_CODE
           script: |
             set -e
+
+            # One-time setup: Dropbox no longer issues long-lived access tokens, only short ones that expire
+            # after a few hours (which is why off-server uploads were being refused). Instead we keep a
+            # refresh token, which does not expire, on the server and mint a fresh access token each night.
+            # The token is stored root-only and never printed (this repo's logs are public).
+            if [ "${DROPBOX_SETUP:-false}" = true ]; then
+              if [ -z "$DROPBOX_APP_KEY" ] || [ -z "$DROPBOX_APP_SECRET" ] || [ -z "$DROPBOX_AUTH_CODE" ]; then
+                echo "DROPBOX_SETUP_FAILED: the DROPBOX_APP_KEY, DROPBOX_APP_SECRET and DROPBOX_AUTH_CODE secrets must all be set"
+                exit 1
+              fi
+              RESP=$(curl -s -X POST https://api.dropboxapi.com/oauth2/token -u "$DROPBOX_APP_KEY:$DROPBOX_APP_SECRET" \
+                -d grant_type=authorization_code --data-urlencode "code=$DROPBOX_AUTH_CODE")
+              RT=$(printf '%s' "$RESP" | python3 -c "import json,sys; print(json.load(sys.stdin).get('refresh_token',''))" 2>/dev/null || true)
+              if [ -z "$RT" ]; then
+                echo "DROPBOX_SETUP_FAILED: Dropbox refused the code: $(printf '%s' "$RESP" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('error_description') or d.get('error') or 'unknown')" 2>/dev/null || echo 'unreadable answer')"
+                echo "(the code is single-use and expires within minutes; make a new one and update the DROPBOX_AUTH_CODE secret)"
+                exit 1
+              fi
+              ( umask 077; printf '%s' "$RT" > /root/.dropbox-refresh-token )
+              echo "DROPBOX_SETUP_OK: refresh token saved on the server (not shown). Run a normal backup to test the upload."
+              exit 0
+            fi
+
             BACKUP_DIR_HOST=/root/db-backups
             RETENTION_DAYS=7
             mkdir -p "$BACKUP_DIR_HOST"
@@ -51,18 +85,34 @@ jobs:
             # Opt-in: ship tonight's backups off-server to Dropbox, so a total loss of this
             # server (disk failure, droplet deletion) doesn't also take the only backup copy.
             # No-ops harmlessly if the secret isn't set yet.
-            DROPBOX_TOKEN=$(printf '%s' "${{ secrets.DROPBOX_ACCESS_TOKEN }}" | tr -d '\r\n')
+            OFFSITE_FAILED=0
+            DROPBOX_TOKEN=""
+            if [ -s /root/.dropbox-refresh-token ] && [ -n "$DROPBOX_APP_KEY" ] && [ -n "$DROPBOX_APP_SECRET" ]; then
+              DROPBOX_TOKEN=$(curl -s -X POST https://api.dropboxapi.com/oauth2/token -u "$DROPBOX_APP_KEY:$DROPBOX_APP_SECRET" \
+                -d grant_type=refresh_token --data-urlencode "refresh_token=$(cat /root/.dropbox-refresh-token)" \
+                | python3 -c "import json,sys; print(json.load(sys.stdin).get('access_token',''))" 2>/dev/null || true)
+              if [ -z "$DROPBOX_TOKEN" ]; then
+                echo "OFFSITE_FAILED: Dropbox would not issue an access token (refresh token revoked, or app key/secret wrong)"
+                OFFSITE_FAILED=1
+              fi
+            else
+              # Legacy: a plain access token secret (these expire after a few hours, so it is only a fallback).
+              DROPBOX_TOKEN=$(printf '%s' "${{ secrets.DROPBOX_ACCESS_TOKEN }}" | tr -d '\r\n')
+              [ -n "$DROPBOX_TOKEN" ] || echo "Off-server upload is not configured (no Dropbox refresh token on the server)."
+            fi
             if [ -n "$DROPBOX_TOKEN" ]; then
               echo "Shipping tonight's backups off-server to Dropbox..."
               for FILE in "$BACKUP_DIR_HOST"/*_${STAMP}.bak; do
                 [ -f "$FILE" ] || continue
                 NAME=$(basename "$FILE")
                 DBX_ARG=$(python3 -c "import json,sys; print(json.dumps({'path': '/RomaERP-backups/' + sys.argv[1], 'mode': 'add', 'autorename': True, 'mute': True}))" "$NAME")
-                curl -s -X POST https://content.dropboxapi.com/2/files/upload \
+                CODE=$(curl -s -X POST https://content.dropboxapi.com/2/files/upload \
                   --header "Authorization: Bearer $DROPBOX_TOKEN" \
                   --header "Dropbox-API-Arg: $DBX_ARG" \
                   --header "Content-Type: application/octet-stream" \
-                  --data-binary @"$FILE" -o /dev/null -w "  uploaded %{http_code}: $NAME\n"
+                  --data-binary @"$FILE" -o /dev/null -w "%{http_code}")
+                echo "  uploaded $CODE: $NAME"
+                if [ "$CODE" != "200" ]; then OFFSITE_FAILED=1; fi
               done
 
               DROPBOX_ACCESS_TOKEN="$DROPBOX_TOKEN" RETENTION_DAYS="$RETENTION_DAYS" python3 -c "
@@ -93,4 +143,8 @@ jobs:
             "
             fi
 
+            if [ "$OFFSITE_FAILED" = 1 ]; then
+              echo "OFFSITE_FAILED: the backups are safe on this server but were NOT copied to Dropbox — fix the Dropbox connection."
+              exit 1
+            fi
             echo "BACKUP_OK: backed up $COUNT database(s). $(ls -1 "$BACKUP_DIR_HOST" | wc -l) files on disk, $(du -sh "$BACKUP_DIR_HOST" | cut -f1) total."
