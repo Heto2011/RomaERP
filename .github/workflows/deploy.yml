@@ -10,6 +10,7 @@ on:
           - none
           - inspect
           - apply
+          - recover
         default: none
 
 jobs:
@@ -445,6 +446,33 @@ jobs:
             APP_STOPPED=0
 
             echo "mode: $MODE"
+
+            # recover: put production back into its normal state after an interrupted switch — drop any
+            # leftover temporary Express container, make sure the original "sqlserver" container exists and
+            # runs, then start the app and check it is healthy. Never touches data.
+            if [ "$MODE" = recover ]; then
+              docker rm -f "$NEW_TMP" >/dev/null 2>&1 || true
+              if ! docker ps -a --format '{{.Names}}' | grep -qx "$OLD" && docker ps -a --format '{{.Names}}' | grep -qx "$OLD_KEEP"; then
+                docker rename "$OLD_KEEP" "$OLD"
+              fi
+              docker start "$OLD" >/dev/null 2>&1 || true
+              for i in $(seq 1 40); do
+                if [ "$(docker inspect -f '{{.State.Running}}' "$OLD" 2>/dev/null)" = true ]; then break; fi
+                sleep 3
+              done
+              sleep 15
+              systemctl start romaerp-api || true
+              OK=0
+              for i in $(seq 1 30); do
+                if curl -fsS -m 10 https://romagroup.app/api/health >/dev/null 2>&1; then OK=1; break; fi
+                sleep 3
+              done
+              echo "containers:"; docker ps -a --format '  {{.Names}}: {{.Status}}' | grep -i sql || true
+              echo "romaerp-api: $(systemctl is-active romaerp-api || true)"
+              if [ "$OK" = 1 ]; then echo "RECOVER_OK: app healthy"; else echo "RECOVER_FAILED: API health check did not pass"; exit 1; fi
+              exit 0
+            fi
+
             docker inspect "$OLD" > "$SPEC"
             chmod 600 "$SPEC"
             ORIG_RESTART=$(python3 -c "import json; print(json.load(open('$SPEC'))[0]['HostConfig']['RestartPolicy']['Name'] or 'no')")
@@ -555,7 +583,7 @@ jobs:
             fi
 
             rollback() {
-              trap - ERR
+              trap - ERR EXIT
               echo "!! FAILED at stage '$STAGE' — rolling back to the original Developer container"
               docker rm -f "$NEW_TMP" >/dev/null 2>&1 || true
               if [ "$SWAPPED" = 1 ]; then
@@ -569,6 +597,7 @@ jobs:
               exit 1
             }
             trap rollback ERR
+            trap 'rc=$?; if [ "$rc" -ne 0 ]; then rollback; fi' EXIT
 
             STAGE=stop-app
             systemctl stop romaerp-api
@@ -589,6 +618,13 @@ jobs:
             echo "backed up and verified $COUNT database(s) into $BACKUP_DIR"
 
             STAGE=start-express-temp
+            docker rm -f "$NEW_TMP" >/dev/null 2>&1 || true
+            if docker volume inspect "$NEW_VOL" >/dev/null 2>&1; then
+              if docker ps -a --filter volume="$NEW_VOL" --format '{{.Names}}' | grep -qx "$OLD"; then
+                echo "the current $OLD container already uses $NEW_VOL; nothing to switch"; false
+              fi
+              docker volume rm "$NEW_VOL" >/dev/null   # leftover of an earlier failed attempt (only ever holds a partial copy)
+            fi
             docker volume create "$NEW_VOL" >/dev/null
             python3 /tmp/sql-plan.py run "$NEW_TMP" "$NEW_VOL" temp >/dev/null
             wait_ready "$NEW_TMP"
@@ -601,7 +637,11 @@ jobs:
             for DB in $DBS; do
               echo "restoring $DB"
               docker cp "$BACKUP_DIR/${DB}_${STAMP}.bak" "$NEW_TMP:/var/opt/mssql/backup/"
-              q "$NEW_TMP" -Q "RESTORE DATABASE [$DB] FROM DISK = N'/var/opt/mssql/backup/${DB}_${STAMP}.bak' WITH REPLACE, CHECKSUM" >/dev/null
+              docker exec -u 0 "$NEW_TMP" chown mssql:root "/var/opt/mssql/backup/${DB}_${STAMP}.bak"
+              docker exec -u 0 "$NEW_TMP" chmod 640 "/var/opt/mssql/backup/${DB}_${STAMP}.bak"
+              if ! RESTORE_OUT=$(q "$NEW_TMP" -Q "RESTORE DATABASE [$DB] FROM DISK = N'/var/opt/mssql/backup/${DB}_${STAMP}.bak' WITH REPLACE, CHECKSUM" 2>&1); then
+                echo "restore of $DB failed:"; echo "$RESTORE_OUT" | tail -15; false
+              fi
             done
             ONLINE=$(q "$NEW_TMP" -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE database_id > 4 AND state = 0" | tr -d '\r ' )
             echo "databases online in Express: $ONLINE (expected $COUNT)"
@@ -630,6 +670,6 @@ jobs:
             done
             [ "$OK" = 1 ] || { echo "API health check failed after the switch"; false; }
 
-            trap - ERR
+            trap - ERR EXIT
             echo "SWITCH_OK: SQL Server is now '$EDITION' with $ONLINE databases online; the app is healthy."
             echo "The old Developer container is kept stopped as '$OLD_KEEP' (remove it after a few days: docker rm $OLD_KEEP; docker volume ls shows its old data volume)."
