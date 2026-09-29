@@ -64,6 +64,11 @@
 
   footer{text-align:center; padding:24px; font-size:12.5px; color:rgba(255,255,255,.4);}
 </style>
+<script src="/site-lang.js"></script>
+<style>
+.lang-btn{background:transparent; border:1px solid rgba(255,255,255,.22); color:rgba(255,255,255,.85); border-radius:999px; padding:7px 14px; font:inherit; font-size:13px; font-weight:700; cursor:pointer;}
+.lang-btn:hover{border-color:rgba(255,255,255,.5); color:#fff;}
+</style>
 </head>
 <body>
 
@@ -75,20 +80,21 @@
         <div class="brand-name">Roma Group</div>
       </div>
       <div class="nav-links">
-        <span>المنتجات</span>
-        <span>من نحن</span>
-        <span>تواصل معنا</span>
+        <span data-i18n="navProducts">المنتجات</span>
+        <span data-i18n="navAbout">من نحن</span>
+        <span data-i18n="navContact">تواصل معنا</span>
       </div>
       <div class="nav-login">
-        <a href="/login">دخول ERP</a>
-        <a href="/people-login">دخول HR</a>
+        <button id="langToggle" class="lang-btn" type="button">English</button>
+        <a href="/login" data-i18n="loginErp">دخول ERP</a>
+        <a href="/people-login" data-i18n="loginHr">دخول HR</a>
       </div>
     </nav>
 
     <div class="hero-copy">
-      <div class="eyebrow"><span>مجموعة منتجات لإدارة أعمالك بذكاء</span></div>
-      <h1>أربع أدوات، شركة واحدة تثق فيها</h1>
-      <div class="subtitle">اختر المنتج اللي محتاجه شغلك دلوقتي — كل منتج شغال لوحده، ولو حبيت تجمعهم مع بعض تقدر بسهولة</div>
+      <div class="eyebrow"><span data-i18n="eyebrow">مجموعة منتجات لإدارة أعمالك بذكاء</span></div>
+      <h1 data-i18n="h1">أربع أدوات، شركة واحدة تثق فيها</h1>
+      <div class="subtitle" data-i18n="sub">اختر المنتج اللي محتاجه شغلك دلوقتي — كل منتج شغال لوحده، ولو حبيت تجمعهم مع بعض تقدر بسهولة</div>
     </div>
 
     <div class="grid">
@@ -100,9 +106,9 @@
         </svg>
         <div class="badge" style="background:var(--hr); color:#2c1c04;">HR</div>
         <div class="card-title">Roma HR</div>
-        <div class="card-desc">حضور وانصراف بالموقع الجغرافي، رواتب تلقائية، طلبات وموافقات — لأي شركة</div>
-        <div class="card-tags"><span>حضور بالـGPS</span><span>رواتب تلقائية</span><span>إجازات وطلبات</span></div>
-        <div class="card-cta" style="color:var(--hr);">جرّبه الآن ←</div>
+        <div class="card-desc" data-i18n="hrDesc">حضور وانصراف بالموقع الجغرافي، رواتب تلقائية، طلبات وموافقات — لأي شركة</div>
+        <div class="card-tags"><span data-i18n="hrT1">حضور بالـGPS</span><span data-i18n="hrT2">رواتب تلقائية</span><span data-i18n="hrT3">إجازات وطلبات</span></div>
+        <div class="card-cta" style="color:var(--hr);" data-i18n="hrCta">جرّبه الآن ←</div>
       </a>
 
       <a href="roma-erp.html" class="card erp">
@@ -115,9 +121,9 @@
         </svg>
         <div class="badge" style="background:var(--primary);">ERP</div>
         <div class="card-title">RomaERP</div>
-        <div class="card-desc">محاسبة، مبيعات، مخزون، وتقارير — نظام إدارة أعمال متكامل بالذكاء الاصطناعي</div>
-        <div class="card-tags"><span>محاسبة</span><span>مبيعات ومخزون</span><span>كاشير POS</span><span>فاتورة إلكترونية</span><span>ذكاء اصطناعي</span></div>
-        <div class="card-cta" style="color:#5fd0a1;">شغال حاليًا ←</div>
+        <div class="card-desc" data-i18n="erpDesc">محاسبة، مبيعات، مخزون، وتقارير — نظام إدارة أعمال متكامل بالذكاء الاصطناعي</div>
+        <div class="card-tags"><span data-i18n="erpT1">محاسبة</span><span data-i18n="erpT2">مبيعات ومخزون</span><span data-i18n="erpT3">كاشير POS</span><span data-i18n="erpT4">فاتورة إلكترونية</span><span data-i18n="erpT5">ذكاء اصطناعي</span></div>
+        <div class="card-cta" style="color:#5fd0a1;" data-i18n="erpCta">شغال حاليًا ←</div>
       </a>
 
       <div class="card voice" aria-disabled="true">
@@ -129,8 +135,8 @@
         </svg>
         <div class="badge" style="background:var(--voice);">V</div>
         <div class="card-title">Roma Voice</div>
-        <div class="card-desc">تسجيل عمليات ومكالمات بالصوت وتحويلها تلقائيًا لبيانات — تفاصيله قريبًا</div>
-        <div class="card-cta muted">قريبًا</div>
+        <div class="card-desc" data-i18n="voiceDesc">تسجيل عمليات ومكالمات بالصوت وتحويلها تلقائيًا لبيانات — تفاصيله قريبًا</div>
+        <div class="card-cta muted" data-i18n="soon">قريبًا</div>
       </div>
 
       <div class="card tools" aria-disabled="true">
@@ -139,8 +145,8 @@
         </svg>
         <div class="badge" style="background:var(--tools);">T</div>
         <div class="card-title">Roma Tools</div>
-        <div class="card-desc">أدوات مساعدة صغيرة لتشغيل أعمالك اليومية — تفاصيله قريبًا</div>
-        <div class="card-cta muted">قريبًا</div>
+        <div class="card-desc" data-i18n="toolsDesc">أدوات مساعدة صغيرة لتشغيل أعمالك اليومية — تفاصيله قريبًا</div>
+        <div class="card-cta muted" data-i18n="soon">قريبًا</div>
       </div>
     </div>
   </div>
@@ -154,6 +160,37 @@
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null }),
   }).catch(() => {});
+</script>
+<script>
+  SiteLang.apply({
+  "@title": "Roma Group — products to run your business",
+  "@description": "Roma Group brings our products together: Roma HR for people management, RomaERP for accounting and business operations, plus Roma Voice and Roma Tools. Pick the product your business needs.",
+  "@ogTitle": "Roma Group — four tools, one company you can trust",
+  "@ogDescription": "Pick the product you need today — each one works on its own, and you can combine them whenever you like.",
+  "navProducts": "Products",
+  "navAbout": "About",
+  "navContact": "Contact",
+  "loginErp": "ERP login",
+  "loginHr": "HR login",
+  "eyebrow": "Products that run your business smarter",
+  "h1": "Four tools, one company you can trust",
+  "sub": "Pick the product your business needs today — each one works on its own, and you can combine them whenever you like.",
+  "hrDesc": "GPS attendance, automatic payroll, requests and approvals — for any company",
+  "hrT1": "GPS attendance",
+  "hrT2": "Automatic payroll",
+  "hrT3": "Leave &amp; requests",
+  "hrCta": "Try it now →",
+  "erpDesc": "Accounting, sales, inventory and reports — a complete AI-powered business management system",
+  "erpT1": "Accounting",
+  "erpT2": "Sales &amp; inventory",
+  "erpT3": "POS",
+  "erpT4": "E-invoicing",
+  "erpT5": "AI",
+  "erpCta": "Live now →",
+  "voiceDesc": "Record operations and calls by voice and turn them into data automatically — details coming soon",
+  "toolsDesc": "Small helper tools for your day-to-day operations — details coming soon",
+  "soon": "Coming soon"
+});
 </script>
 </body>
 </html>

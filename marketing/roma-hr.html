@@ -72,6 +72,11 @@
   footer{border-top:1px solid var(--border); padding:22px 24px; text-align:center; font-size:12.5px; color:#8a8a86;}
   footer a{color:var(--hr); font-weight:700;}
 </style>
+<script src="/site-lang.js"></script>
+<style>
+.lang-btn{background:var(--surface); border:1px solid var(--border); color:#4a5750; border-radius:999px; padding:7px 14px; font:inherit; font-size:13px; font-weight:700; cursor:pointer;}
+.lang-btn:hover{border-color:#b9b29f;}
+</style>
 </head>
 <body>
 
@@ -80,23 +85,24 @@
     <div class="brand">
       <div class="brand-mark">R</div>
       <div class="brand-name">Roma HR</div>
-      <div class="brand-sub">جزء من Roma Group</div>
+      <div class="brand-sub" data-i18n="partOf">جزء من Roma Group</div>
     </div>
     <div class="nav-right">
-      <span>المميزات</span>
-      <a href="#pricing">الأسعار</a>
+      <span data-i18n="navFeatures">المميزات</span>
+      <a href="#pricing" data-i18n="navPricing">الأسعار</a>
       <a href="roma-group.html" class="muted">← Roma Group</a>
-      <a href="/people-login" class="btn-nav">دخول</a>
+      <button id="langToggle" class="lang-btn" type="button">English</button>
+      <a href="/people-login" class="btn-nav" data-i18n="login">دخول</a>
     </div>
   </header>
 
   <div class="hero">
-    <div class="eyebrow">إدارة الموارد البشرية</div>
-    <h1>حضور وانصراف ورواتب، من غير ورق ولا فوضى</h1>
-    <div class="lede">روما إتش آر بيدير موظفينك بالكامل — تسجيل حضور بالموقع الجغرافي، رواتب تتحسب لوحدها، وطلبات إجازة توافق عليها بضغطة واحدة</div>
+    <div class="eyebrow" data-i18n="eyebrow">إدارة الموارد البشرية</div>
+    <h1 data-i18n="h1">حضور وانصراف ورواتب، من غير ورق ولا فوضى</h1>
+    <div class="lede" data-i18n="lede">روما إتش آر بيدير موظفينك بالكامل — تسجيل حضور بالموقع الجغرافي، رواتب تتحسب لوحدها، وطلبات إجازة توافق عليها بضغطة واحدة</div>
     <div class="hero-ctas">
-      <a href="/start-trial?product=hr" class="btn btn-primary">ابدأ تجربتك المجانية</a>
-      <a href="#pricing" class="btn btn-ghost">شوف السعر</a>
+      <a href="/start-trial?product=hr" class="btn btn-primary" data-i18n="cta1">ابدأ تجربتك المجانية</a>
+      <a href="#pricing" class="btn btn-ghost" data-i18n="cta2">شوف السعر</a>
     </div>
   </div>
 </div>
@@ -104,61 +110,61 @@
 <div class="stats-wrap">
   <div class="stats">
     <div class="stat">
-      <div class="stat-label">موظف حاضر النهاردة</div>
+      <div class="stat-label" data-i18n="st1">موظف حاضر النهاردة</div>
       <div class="stat-value mono">42 / 48</div>
     </div>
     <div class="stat">
-      <div class="stat-label">طلبات إجازة مفتوحة</div>
+      <div class="stat-label" data-i18n="st2">طلبات إجازة مفتوحة</div>
       <div class="stat-value mono">3</div>
     </div>
     <div class="stat">
-      <div class="stat-label">رواتب الشهر ده</div>
-      <div class="stat-value good">جاهزة ✓</div>
+      <div class="stat-label" data-i18n="st3">رواتب الشهر ده</div>
+      <div class="stat-value good" data-i18n="st3v">جاهزة ✓</div>
     </div>
   </div>
 </div>
 
 <div class="features">
-  <div class="section-title">كل حاجة محتاجها لإدارة فريقك</div>
+  <div class="section-title" data-i18n="secTitle">كل حاجة محتاجها لإدارة فريقك</div>
   <div class="feature-grid">
     <div class="feature">
       <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.7 7-12.2A7 7 0 1 0 5 8.8C5 14.3 12 21 12 21z"/><circle cx="12" cy="8.5" r="3.3"/></svg></div>
-      <div class="feature-title">حضور وانصراف بالـ GPS</div>
-      <div class="feature-desc">الموظف يسجل من موبايله، والنظام يتأكد إنه في موقع الشغل فعلاً</div>
+      <div class="feature-title" data-i18n="f1t">حضور وانصراف بالـ GPS</div>
+      <div class="feature-desc" data-i18n="f1d">الموظف يسجل من موبايله، والنظام يتأكد إنه في موقع الشغل فعلاً</div>
     </div>
     <div class="feature">
       <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg></div>
-      <div class="feature-title">رواتب تلقائية</div>
-      <div class="feature-desc">تحسب الرواتب والخصومات من ساعات الحضور الفعلية أوتوماتيك</div>
+      <div class="feature-title" data-i18n="f2t">رواتب تلقائية</div>
+      <div class="feature-desc" data-i18n="f2d">تحسب الرواتب والخصومات من ساعات الحضور الفعلية أوتوماتيك</div>
     </div>
     <div class="feature">
       <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div>
-      <div class="feature-title">طلبات وموافقات</div>
-      <div class="feature-desc">إجازات وسُلف وطلبات الموظفين، توافق عليها من الموبايل</div>
+      <div class="feature-title" data-i18n="f3t">طلبات وموافقات</div>
+      <div class="feature-desc" data-i18n="f3d">إجازات وسُلف وطلبات الموظفين، توافق عليها من الموبايل</div>
     </div>
     <div class="feature">
       <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M6 21V14"/><path d="M11.5 21V9"/><path d="M17 21V5"/></svg></div>
-      <div class="feature-title">تقارير جاهزة</div>
-      <div class="feature-desc">تقرير غياب، إضافي، ومصاريف الرواتب في أي وقت</div>
+      <div class="feature-title" data-i18n="f4t">تقارير جاهزة</div>
+      <div class="feature-desc" data-i18n="f4d">تقرير غياب، إضافي، ومصاريف الرواتب في أي وقت</div>
     </div>
   </div>
 </div>
 
 <div class="pricing" id="pricing">
   <div class="price-card">
-    <div class="price-tag">باقة روما إتش آر</div>
+    <div class="price-tag" data-i18n="priceTag">باقة روما إتش آر</div>
     <div class="price-num">
       <span class="n mono">99</span>
-      <span class="u">ريال / شهريًا</span>
+      <span class="u" data-i18n="unit">ريال / شهريًا</span>
     </div>
-    <div class="price-note">حتى 25 موظف — بدون حد أقصى للفروع</div>
-    <a href="/start-trial?product=hr" class="btn btn-primary" style="display:block;">ابدأ تجربة مجانية 21 يوم</a>
-    <div class="price-note" style="margin:12px 0 0;">من غير بطاقة بنكية · تقدر تلغي في أي وقت</div>
+    <div class="price-note" data-i18n="priceNote">حتى 25 موظف — بدون حد أقصى للفروع</div>
+    <a href="/start-trial?product=hr" class="btn btn-primary" style="display:block;" data-i18n="trialBtn">ابدأ تجربة مجانية 21 يوم</a>
+    <div class="price-note" style="margin:12px 0 0;" data-i18n="trialNote">من غير بطاقة بنكية · تقدر تلغي في أي وقت</div>
   </div>
 </div>
 
 <footer>
-  Roma HR — جزء من <a href="roma-group.html">Roma Group</a> · <a href="/terms.html">الشروط والأحكام</a>
+  <span data-i18n="footPart">Roma HR — جزء من</span> <a href="roma-group.html">Roma Group</a> · <a href="/terms.html" data-i18n="terms">الشروط والأحكام</a>
 </footer>
 
 <script>
@@ -167,6 +173,43 @@
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null }),
   }).catch(() => {});
+</script>
+<script>
+  SiteLang.apply({
+  "@title": "Roma HR — attendance and payroll without the chaos",
+  "@description": "Roma HR manages your whole workforce — GPS attendance, payroll that calculates itself, and leave requests you approve in one tap. 21-day free trial, no credit card.",
+  "@ogTitle": "Roma HR — attendance and payroll without the chaos",
+  "@ogDescription": "GPS attendance, automatic payroll, requests and approvals — for any company. Part of Roma Group.",
+  "partOf": "Part of Roma Group",
+  "navFeatures": "Features",
+  "navPricing": "Pricing",
+  "login": "Log in",
+  "eyebrow": "Human resources management",
+  "h1": "Attendance and payroll — no paper, no chaos",
+  "lede": "Roma HR manages your whole team — GPS attendance, payroll that calculates itself, and leave requests you approve in one tap",
+  "cta1": "Start your free trial",
+  "cta2": "See the price",
+  "st1": "Employees present today",
+  "st2": "Open leave requests",
+  "st3": "This month's payroll",
+  "st3v": "Ready ✓",
+  "secTitle": "Everything you need to manage your team",
+  "f1t": "GPS attendance",
+  "f1d": "Employees clock in from their phone, and the system verifies they're actually at the work location",
+  "f2t": "Automatic payroll",
+  "f2d": "Salaries and deductions are calculated automatically from actual attendance hours",
+  "f3t": "Requests &amp; approvals",
+  "f3d": "Leave, advances and employee requests — approve them from your phone",
+  "f4t": "Ready-made reports",
+  "f4d": "Absence, overtime and payroll cost reports whenever you need them",
+  "priceTag": "Roma HR plan",
+  "unit": "SAR / month",
+  "priceNote": "Up to 25 employees — no limit on branches",
+  "trialBtn": "Start a free 21-day trial",
+  "trialNote": "No credit card · cancel anytime",
+  "footPart": "Roma HR — part of",
+  "terms": "Terms &amp; conditions"
+});
 </script>
 </body>
 </html>

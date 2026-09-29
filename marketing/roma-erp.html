@@ -141,51 +141,57 @@
   footer { text-align: center; padding: 28px 24px; font-size: 12.5px; color: var(--ink-soft); }
   footer a { color: var(--primary); font-weight: 700; }
 </style>
+<script src="/site-lang.js"></script>
+<style>
+.lang-btn{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18); color:var(--hero-ink-soft); border-radius:999px; padding:7px 14px; font:inherit; font-size:13px; font-weight:700; cursor:pointer;}
+.lang-btn:hover{color:var(--hero-ink); border-color:rgba(255,255,255,.4);}
+</style>
 </head>
 <body>
 
 <header class="hero-dark">
   <div class="wrap">
     <nav class="dark-nav">
-      <div class="brand"><span class="brand-mark">R</span> RomaERP <span class="brand-sub">جزء من Roma Group</span></div>
+      <div class="brand"><span class="brand-mark">R</span> RomaERP <span class="brand-sub" data-i18n="partOf">جزء من Roma Group</span></div>
       <div class="nav-links">
-        <a href="#features">المميزات</a>
-        <a href="#why">ليه RomaERP</a>
-        <a href="pricing.html">الأسعار</a>
+        <a href="#features" data-i18n="navFeatures">المميزات</a>
+        <a href="#why" data-i18n="navWhy">ليه RomaERP</a>
+        <a href="pricing.html" data-i18n="navPricing">الأسعار</a>
         <a href="roma-group.html">← Roma Group</a>
       </div>
       <div class="nav-right">
-        <a href="/login" class="nav-login">دخول</a>
-        <a href="/start-trial" class="btn btn-accent">ابدأ مجانًا</a>
+        <button id="langToggle" class="lang-btn" type="button">English</button>
+        <a href="/login" class="nav-login" data-i18n="login">دخول</a>
+        <a href="/start-trial" class="btn btn-accent" data-i18n="startFree">ابدأ مجانًا</a>
       </div>
     </nav>
 
     <div class="hero-grid">
       <div class="hero-copy">
-        <span class="eyebrow">🧠 مدعوم بالذكاء الاصطناعي</span>
-        <h1>نظام واحد بدل خمس برامج <span class="hl">بيتكلموا مع بعض تلقائيًا</span></h1>
-        <p class="hero-sub">محاسبة، نقاط بيع، مخزون، فاتورة إلكترونية، وموارد بشرية — كل ده في اشتراك واحد. من غير ترحيل بيانات يدوي بين برامج، ومن غير ما تدفع لخمس شركات مختلفة.</p>
+        <span class="eyebrow" data-i18n="eyebrow">🧠 مدعوم بالذكاء الاصطناعي</span>
+        <h1 data-i18n="h1">نظام واحد بدل خمس برامج <span class="hl">بيتكلموا مع بعض تلقائيًا</span></h1>
+        <p class="hero-sub" data-i18n="heroSub">محاسبة، نقاط بيع، مخزون، فاتورة إلكترونية، وموارد بشرية — كل ده في اشتراك واحد. من غير ترحيل بيانات يدوي بين برامج، ومن غير ما تدفع لخمس شركات مختلفة.</p>
         <div class="hero-cta">
-          <a href="/start-trial" class="btn btn-accent">ابدأ تجربتك المجانية</a>
-          <a href="pricing.html" class="btn btn-ghost-dark">شوف الأسعار بالتفصيل</a>
+          <a href="/start-trial" class="btn btn-accent" data-i18n="cta1">ابدأ تجربتك المجانية</a>
+          <a href="pricing.html" class="btn btn-ghost-dark" data-i18n="cta2">شوف الأسعار بالتفصيل</a>
         </div>
         <div class="hero-trust">
-          <b>21 يوم تجربة مجانية</b><span class="dot">·</span><span>من غير بطاقة بنكية</span><span class="dot">·</span><span>تقدر تلغي في أي وقت</span>
+          <b data-i18n="trust1">21 يوم تجربة مجانية</b><span class="dot">·</span><span data-i18n="trust2">من غير بطاقة بنكية</span><span class="dot">·</span><span data-i18n="trust3">تقدر تلغي في أي وقت</span>
         </div>
       </div>
 
       <div class="hero-visual">
         <div class="converge">
-          <div class="converge-label">بدل ما تجمع البرامج دي واحد واحد</div>
+          <div class="converge-label" data-i18n="convLabel">بدل ما تجمع البرامج دي واحد واحد</div>
           <div class="chip-row">
-            <span class="chip">🖥️ كاشير</span>
-            <span class="chip">📒 محاسبة</span>
-            <span class="chip">📦 مخزون</span>
-            <span class="chip">🧾 فاتورة إلكترونية</span>
-            <span class="chip">👥 رواتب</span>
+            <span class="chip" data-i18n="chipPos">🖥️ كاشير</span>
+            <span class="chip" data-i18n="chipAcc">📒 محاسبة</span>
+            <span class="chip" data-i18n="chipInv">📦 مخزون</span>
+            <span class="chip" data-i18n="chipEinv">🧾 فاتورة إلكترونية</span>
+            <span class="chip" data-i18n="chipPay">👥 رواتب</span>
           </div>
           <div class="converge-arrow">↓</div>
-          <div class="converge-result"><span class="brand-mark" style="background:#fff;color:var(--primary-dark);">R</span> RomaERP — نظام واحد</div>
+          <div class="converge-result"><span class="brand-mark" style="background:#fff;color:var(--primary-dark);">R</span> <span data-i18n="oneSystem">RomaERP — نظام واحد</span></div>
         </div>
       </div>
     </div>
@@ -195,40 +201,40 @@
 <section id="features">
   <div class="wrap">
     <div class="section-head">
-      <span class="section-eyebrow">كل حاجة محتاجها</span>
-      <h2>مش بس محاسبة — نظام تشغيل كامل لشغلك</h2>
-      <p>كل ميزة هنا شغالة فعليًا وبتتزامن مع الباقي أوتوماتيك، مش مجرد وعد على شعار.</p>
+      <span class="section-eyebrow" data-i18n="featEyebrow">كل حاجة محتاجها</span>
+      <h2 data-i18n="featH2">مش بس محاسبة — نظام تشغيل كامل لشغلك</h2>
+      <p data-i18n="featP">كل ميزة هنا شغالة فعليًا وبتتزامن مع الباقي أوتوماتيك، مش مجرد وعد على شعار.</p>
     </div>
     <div class="feature-grid">
       <div class="feature">
         <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 3v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></div>
-        <div class="feature-title">محاسبة وقيود كاملة</div>
-        <div class="feature-desc">دليل حسابات، قيود يومية، ميزانية وقائمة دخل جاهزة أول ما تسجل أي عملية بيع أو شراء.</div>
+        <div class="feature-title" data-i18n="f1t">محاسبة وقيود كاملة</div>
+        <div class="feature-desc" data-i18n="f1d">دليل حسابات، قيود يومية، ميزانية وقائمة دخل جاهزة أول ما تسجل أي عملية بيع أو شراء.</div>
       </div>
       <div class="feature">
         <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M8 14h2"/></svg></div>
-        <div class="feature-title">نقاط بيع (POS)</div>
-        <div class="feature-desc">كاشير سريع للفروع، متزامن لحظيًا مع المخزون والمحاسبة — من غير ترحيل يدوي آخر اليوم.</div>
+        <div class="feature-title" data-i18n="f2t">نقاط بيع (POS)</div>
+        <div class="feature-desc" data-i18n="f2d">كاشير سريع للفروع، متزامن لحظيًا مع المخزون والمحاسبة — من غير ترحيل يدوي آخر اليوم.</div>
       </div>
       <div class="feature">
         <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div>
-        <div class="feature-title">مخزون وتكاليف</div>
-        <div class="feature-desc">تتبع كميات المخزون بكل فرع، وتكلفة كل منتج تتحدث تلقائيًا مع كل عملية شراء أو بيع.</div>
+        <div class="feature-title" data-i18n="f3t">مخزون وتكاليف</div>
+        <div class="feature-desc" data-i18n="f3d">تتبع كميات المخزون بكل فرع، وتكلفة كل منتج تتحدث تلقائيًا مع كل عملية شراء أو بيع.</div>
       </div>
       <div class="feature">
         <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6"/><path d="M9 16h4"/><path d="M4 19V6a2 2 0 0 1 2-2h9l5 5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/></svg></div>
-        <div class="feature-title">فاتورة إلكترونية معتمدة</div>
-        <div class="feature-desc">فواتير متوافقة مع مصلحة الضرائب المصرية (ETA)، بتتبعت أوتوماتيك من غير خطوات يدوية إضافية.</div>
+        <div class="feature-title" data-i18n="f4t">فاتورة إلكترونية معتمدة</div>
+        <div class="feature-desc" data-i18n="f4d">فواتير متوافقة مع مصلحة الضرائب المصرية (ETA)، بتتبعت أوتوماتيك من غير خطوات يدوية إضافية.</div>
       </div>
       <div class="feature">
         <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.7 7-12.2A7 7 0 1 0 5 8.8C5 14.3 12 21 12 21z"/><circle cx="12" cy="8.5" r="3.3"/></svg></div>
-        <div class="feature-title">موارد بشرية ورواتب</div>
-        <div class="feature-desc">حضور وانصراف، طلبات إجازة، ورواتب تتحسب من ساعات الشغل الفعلية — مدمجة، مش برنامج تاني منفصل.</div>
+        <div class="feature-title" data-i18n="f5t">موارد بشرية ورواتب</div>
+        <div class="feature-desc" data-i18n="f5d">حضور وانصراف، طلبات إجازة، ورواتب تتحسب من ساعات الشغل الفعلية — مدمجة، مش برنامج تاني منفصل.</div>
       </div>
       <div class="feature">
         <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 0-4 4v1a4 4 0 0 0-2 3.5c0 1 .4 1.9 1 2.5l-1 3.5 3-1a4 4 0 0 0 3 1.5h0a4 4 0 0 0 3-1.5l3 1-1-3.5a3.9 3.9 0 0 0 1-2.5A4 4 0 0 0 16 8V7a4 4 0 0 0-4-4Z"/></svg></div>
-        <div class="feature-title">مساعد ذكاء اصطناعي</div>
-        <div class="feature-desc">يسجل مصروفاتك من صورة الإيصال، يطابق كشف حساب البنك تلقائيًا، ويجاوبك على أسئلتك المالية.</div>
+        <div class="feature-title" data-i18n="f6t">مساعد ذكاء اصطناعي</div>
+        <div class="feature-desc" data-i18n="f6d">يسجل مصروفاتك من صورة الإيصال، يطابق كشف حساب البنك تلقائيًا، ويجاوبك على أسئلتك المالية.</div>
       </div>
     </div>
   </div>
@@ -237,31 +243,31 @@
 <section id="why">
   <div class="wrap">
     <div class="section-head">
-      <span class="section-eyebrow">ليه RomaERP مختلف</span>
-      <h2>مش بديل لبرنامج واحد — بديل لخمس برامج مع بعض</h2>
-      <p>الطريقة العادية إنك تجمع أدوات منفصلة لكل احتياج. RomaERP بيلغي الحاجة لكل ده من الأول.</p>
+      <span class="section-eyebrow" data-i18n="whyEyebrow">ليه RomaERP مختلف</span>
+      <h2 data-i18n="whyH2">مش بديل لبرنامج واحد — بديل لخمس برامج مع بعض</h2>
+      <p data-i18n="whyP">الطريقة العادية إنك تجمع أدوات منفصلة لكل احتياج. RomaERP بيلغي الحاجة لكل ده من الأول.</p>
     </div>
     <div class="compare">
       <div class="compare-card old">
-        <div class="compare-title">✕ الطريقة التقليدية</div>
+        <div class="compare-title" data-i18n="oldTitle">✕ الطريقة التقليدية</div>
         <ul class="compare-list">
-          <li><span class="mark">✕</span> كاشير من شركة، محاسبة من شركة تانية، رواتب على إكسل منفصل</li>
-          <li><span class="mark">✕</span> بيانات كل برنامج لوحدها — لازم تنقلها يدوي بين الأنظمة</li>
-          <li><span class="mark">✕</span> اشتراكات متعددة، وفواتير ودعم فني من جهات مختلفة</li>
-          <li><span class="mark">✕</span> فاتورة إلكترونية غالبًا خطوة إضافية منفصلة تمامًا</li>
+          <li><span class="mark">✕</span> <span data-i18n="o1">كاشير من شركة، محاسبة من شركة تانية، رواتب على إكسل منفصل</span></li>
+          <li><span class="mark">✕</span> <span data-i18n="o2">بيانات كل برنامج لوحدها — لازم تنقلها يدوي بين الأنظمة</span></li>
+          <li><span class="mark">✕</span> <span data-i18n="o3">اشتراكات متعددة، وفواتير ودعم فني من جهات مختلفة</span></li>
+          <li><span class="mark">✕</span> <span data-i18n="o4">فاتورة إلكترونية غالبًا خطوة إضافية منفصلة تمامًا</span></li>
         </ul>
       </div>
       <div class="compare-card new">
-        <div class="compare-title">✓ مع RomaERP</div>
+        <div class="compare-title" data-i18n="newTitle">✓ مع RomaERP</div>
         <ul class="compare-list">
-          <li><span class="mark">✓</span> كل الأنظمة دي مبنية جوه بعضها من الأول، مش موصّلة ببعض بعدين</li>
-          <li><span class="mark">✓</span> أي عملية بيع أو شراء بتتحدث في المحاسبة والمخزون فورًا</li>
-          <li><span class="mark">✓</span> اشتراك واحد، فاتورة واحدة، فريق دعم واحد بالعربي</li>
-          <li><span class="mark">✓</span> الفاتورة الإلكترونية جزء من نفس شاشة البيع، مش خطوة زيادة</li>
+          <li><span class="mark">✓</span> <span data-i18n="n1">كل الأنظمة دي مبنية جوه بعضها من الأول، مش موصّلة ببعض بعدين</span></li>
+          <li><span class="mark">✓</span> <span data-i18n="n2">أي عملية بيع أو شراء بتتحدث في المحاسبة والمخزون فورًا</span></li>
+          <li><span class="mark">✓</span> <span data-i18n="n3">اشتراك واحد، فاتورة واحدة، فريق دعم واحد</span></li>
+          <li><span class="mark">✓</span> <span data-i18n="n4">الفاتورة الإلكترونية جزء من نفس شاشة البيع، مش خطوة زيادة</span></li>
         </ul>
       </div>
     </div>
-    <div class="market-note">
+    <div class="market-note" data-i18n="market">
       <b>بالأرقام:</b> أنظمة الكاشير المنفصلة في السوق بتتكلف عادة من 1,500 لـ3,400 جنيه شهريًا وبتغطي نقطة البيع بس، وبرامج المحاسبة المنفصلة تبدأ من حوالي 1,500 جنيه وبرضو من غير نقطة بيع أو موارد بشرية أو فاتورة إلكترونية. يعني لو جمعت الأدوات دي مع بعض هتدفع أضعاف كده — RomaERP بيجمعهم في اشتراك واحد يبدأ من أقل من ده.
     </div>
   </div>
@@ -271,18 +277,18 @@
   <div class="wrap">
     <div class="efficiency">
       <div class="section-head">
-        <span class="section-eyebrow">إزاي بنقدر نقدملك سعر أقل</span>
-        <h2>مش بنقدملك أقل — بنشتغل بكفاءة أكتر</h2>
-        <p>الذكاء الاصطناعي بياخد شغل يدوي كان محتاج وقت وموظف، وده بيوفر عليك وعلينا — من غير ما نضحي بميزة واحدة.</p>
+        <span class="section-eyebrow" data-i18n="effEyebrow">إزاي بنقدر نقدملك سعر أقل</span>
+        <h2 data-i18n="effH2">مش بنقدملك أقل — بنشتغل بكفاءة أكتر</h2>
+        <p data-i18n="effP">الذكاء الاصطناعي بياخد شغل يدوي كان محتاج وقت وموظف، وده بيوفر عليك وعلينا — من غير ما نضحي بميزة واحدة.</p>
       </div>
       <div class="flow">
-        <div class="flow-step"><div class="n">🧾</div><div class="t">صورة إيصال</div><div class="d">تصور الإيصال بموبايلك</div></div>
-        <div class="flow-arrow">←</div>
-        <div class="flow-step"><div class="n">🤖</div><div class="t">قراءة تلقائية</div><div class="d">المساعد يستخرج المبلغ والحساب المناسب</div></div>
-        <div class="flow-arrow">←</div>
-        <div class="flow-step"><div class="n">✅</div><div class="t">اعتماد بضغطة</div><div class="d">تراجع وتوافق، والقيد يترحّل تلقائيًا</div></div>
+        <div class="flow-step"><div class="n">🧾</div><div class="t" data-i18n="s1t">صورة إيصال</div><div class="d" data-i18n="s1d">تصور الإيصال بموبايلك</div></div>
+        <div class="flow-arrow" data-i18n="arrow">←</div>
+        <div class="flow-step"><div class="n">🤖</div><div class="t" data-i18n="s2t">قراءة تلقائية</div><div class="d" data-i18n="s2d">المساعد يستخرج المبلغ والحساب المناسب</div></div>
+        <div class="flow-arrow" data-i18n="arrow">←</div>
+        <div class="flow-step"><div class="n">✅</div><div class="t" data-i18n="s3t">اعتماد بضغطة</div><div class="d" data-i18n="s3d">تراجع وتوافق، والقيد يترحّل تلقائيًا</div></div>
       </div>
-      <p class="efficiency-note">نفس المبدأ في المطابقة البنكية والرد على تذاكر الدعم — <b>أي مجهود يدوي متكرر بياخده الذكاء الاصطناعي</b>، فبنقدر نديك نظام متكامل بسعر تنافسي من غير ما نحتاج فريق دعم أو محاسبة ضخم يرفع التكلفة عليك.</p>
+      <p class="efficiency-note" data-i18n="effNote">نفس المبدأ في المطابقة البنكية والرد على تذاكر الدعم — <b>أي مجهود يدوي متكرر بياخده الذكاء الاصطناعي</b>، فبنقدر نديك نظام متكامل بسعر تنافسي من غير ما نحتاج فريق دعم أو محاسبة ضخم يرفع التكلفة عليك.</p>
     </div>
   </div>
 </section>
@@ -290,21 +296,21 @@
 <section id="trial">
   <div class="wrap">
     <div class="cta-banner">
-      <h2>جرّب من غير ما تفكّر كتير</h2>
-      <p>21 يوم تجربة مجانية كاملة، وبياناتك من أول لحظة في قاعدة بيانات خاصة بيك لوحدك — مش متقاسمة مع حد.</p>
-      <a href="/start-trial" class="btn btn-accent">ابدأ تجربتك المجانية دلوقتي</a>
+      <h2 data-i18n="trialH2">جرّب من غير ما تفكّر كتير</h2>
+      <p data-i18n="trialP">21 يوم تجربة مجانية كاملة، وبياناتك من أول لحظة في قاعدة بيانات خاصة بيك لوحدك — مش متقاسمة مع حد.</p>
+      <a href="/start-trial" class="btn btn-accent" data-i18n="trialBtn">ابدأ تجربتك المجانية دلوقتي</a>
       <div class="reassure">
-        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> من غير بطاقة بنكية</span>
-        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> تقدر تلغي في أي وقت</span>
-        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> بياناتك معزولة بالكامل</span>
-        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> دعم فني بالعربي</span>
+        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> <span data-i18n="r1">من غير بطاقة بنكية</span></span>
+        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> <span data-i18n="r2">تقدر تلغي في أي وقت</span></span>
+        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> <span data-i18n="r3">بياناتك معزولة بالكامل</span></span>
+        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> <span data-i18n="r4">دعم فني</span></span>
       </div>
     </div>
   </div>
 </section>
 
 <footer>
-  RomaERP — جزء من <a href="roma-group.html">Roma Group</a> · <a href="pricing.html">الأسعار</a> · <a href="/terms.html">الشروط والأحكام</a>
+  <span data-i18n="footPart">RomaERP — جزء من</span> <a href="roma-group.html">Roma Group</a> · <a href="pricing.html" data-i18n="navPricing">الأسعار</a> · <a href="/terms.html" data-i18n="terms">الشروط والأحكام</a>
 </footer>
 
 <script>
@@ -313,6 +319,84 @@
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null }),
   }).catch(() => {});
+</script>
+<script>
+  SiteLang.apply({
+  "@title": "RomaERP — a complete AI-powered business management system",
+  "@description": "Instead of stitching together a POS, an accounting package, payroll spreadsheets and an e-invoicing tool from different vendors, RomaERP brings them into one subscription that talks to itself, with AI that saves you time and effort. 21-day free trial, no credit card.",
+  "@ogTitle": "RomaERP — a complete AI-powered business management system",
+  "@ogDescription": "Accounting, POS, inventory, HR and e-invoicing — in one system, not five separate programs.",
+  "partOf": "Part of Roma Group",
+  "navFeatures": "Features",
+  "navWhy": "Why RomaERP",
+  "navPricing": "Pricing",
+  "login": "Log in",
+  "startFree": "Start free",
+  "eyebrow": "🧠 AI-powered",
+  "h1": "One system instead of five programs <span class=\"hl\">that talk to each other automatically</span>",
+  "heroSub": "Accounting, POS, inventory, e-invoicing and HR — all in one subscription. No manual data transfer between programs, and no paying five different vendors.",
+  "cta1": "Start your free trial",
+  "cta2": "See pricing in detail",
+  "trust1": "21-day free trial",
+  "trust2": "No credit card",
+  "trust3": "Cancel anytime",
+  "convLabel": "Instead of buying these one by one",
+  "chipPos": "🖥️ POS",
+  "chipAcc": "📒 Accounting",
+  "chipInv": "📦 Inventory",
+  "chipEinv": "🧾 E-invoicing",
+  "chipPay": "👥 Payroll",
+  "oneSystem": "RomaERP — one system",
+  "featEyebrow": "Everything you need",
+  "featH2": "Not just accounting — a complete operating system for your business",
+  "featP": "Every feature here is actually live and syncs with the rest automatically — not just a promise on a slogan.",
+  "f1t": "Full accounting &amp; journal entries",
+  "f1d": "Chart of accounts, journal entries, a balance sheet and income statement ready the moment you record any sale or purchase.",
+  "f2t": "Point of sale (POS)",
+  "f2d": "A fast checkout for your branches, synced instantly with inventory and accounting — no manual end-of-day posting.",
+  "f3t": "Inventory &amp; costing",
+  "f3d": "Track stock levels at every branch; each product's cost updates automatically with every purchase or sale.",
+  "f4t": "Approved e-invoicing",
+  "f4d": "Invoices compliant with the Egyptian Tax Authority (ETA), submitted automatically with no extra manual steps.",
+  "f5t": "HR &amp; payroll",
+  "f5d": "Attendance, leave requests, and payroll calculated from actual hours worked — built in, not a separate program.",
+  "f6t": "AI assistant",
+  "f6d": "Logs your expenses from a photo of the receipt, matches your bank statement automatically, and answers your financial questions.",
+  "whyEyebrow": "Why RomaERP is different",
+  "whyH2": "Not a replacement for one program — a replacement for five",
+  "whyP": "The usual way is to assemble separate tools for every need. RomaERP removes the need for all of that from the start.",
+  "oldTitle": "✕ The traditional way",
+  "newTitle": "✓ With RomaERP",
+  "o1": "A POS from one vendor, accounting from another, payroll in a separate spreadsheet",
+  "o2": "Each program keeps its own data — you have to move it between systems by hand",
+  "o3": "Multiple subscriptions, with invoices and technical support from different vendors",
+  "o4": "E-invoicing is usually a completely separate extra step",
+  "n1": "All of these systems are built inside each other from day one, not bolted together later",
+  "n2": "Every sale or purchase updates accounting and inventory immediately",
+  "n3": "One subscription, one invoice, one support team",
+  "n4": "E-invoicing is part of the same sales screen, not an extra step",
+  "market": "<b>By the numbers:</b> stand-alone POS systems, separate accounting packages, HR tools and e-invoicing add-ons each carry their own monthly fee, and none of them covers the others. Put them together and you pay several times over — RomaERP brings them all into one subscription.",
+  "effEyebrow": "How we can offer you a lower price",
+  "effH2": "We don't offer you less — we work more efficiently",
+  "effP": "AI takes over manual work that used to need time and a person, saving both you and us — without sacrificing a single feature.",
+  "s1t": "Receipt photo",
+  "s1d": "Snap the receipt with your phone",
+  "s2t": "Automatic reading",
+  "s2d": "The assistant extracts the amount and the right account",
+  "s3t": "One-tap approval",
+  "s3d": "You review and approve, and the entry posts automatically",
+  "arrow": "→",
+  "effNote": "The same principle applies to bank reconciliation and answering support tickets — <b>any repetitive manual effort is handled by AI</b>, so we can give you a complete system at a competitive price without needing a huge support or accounting team that drives your cost up.",
+  "trialH2": "Try it without overthinking",
+  "trialP": "A full 21-day free trial, and from the very first moment your data sits in a database of its own — not shared with anyone.",
+  "trialBtn": "Start your free trial now",
+  "r1": "No credit card",
+  "r2": "Cancel anytime",
+  "r3": "Your data is fully isolated",
+  "r4": "Technical support",
+  "footPart": "RomaERP — part of",
+  "terms": "Terms &amp; conditions"
+});
 </script>
 </body>
 </html>

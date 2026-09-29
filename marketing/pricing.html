@@ -660,7 +660,11 @@
     GBP: { label: { ar: "جنيه إسترليني (GBP)", en: "British Pound (GBP)" }, unit: { ar: "جنيه إسترليني", en: "GBP" }, rate: 0.206, decimals: 0, independent: true },
   };
   let currentCurrency = "SAR";
-  let currentLang = localStorage.getItem("lang") === "en" ? "en" : "ar";
+  // English is the default; Arabic is chosen explicitly (toggle or a ?lang=ar link) and remembered under the
+  // same "lang" key the app and the other marketing pages use, so the choice follows the visitor.
+  const langParam = new URLSearchParams(location.search).get("lang");
+  if (langParam === "ar" || langParam === "en") localStorage.setItem("lang", langParam);
+  let currentLang = localStorage.getItem("lang") === "ar" ? "ar" : "en";
 
   // Illustrative dashboard-mockup data only — not a live data feed.
   const REVENUE_TREND = [30, 34, 32, 38, 42, 40, 46, 50, 48, 55, 60, 64];
@@ -744,7 +748,7 @@
       perMonth: "شهريًا", customPriceLabel: "سعر مخصص", customPriceNote: "بيتحدد حسب حجم ونوع النشاط",
       includesUpTo: (branches, users, branchWord) => `يشمل حتى ${branches} ${branchWord} و ${users} مستخدمين`,
       branchWord1: "فرع", branchWordMany: "فروع",
-      includeAllModules: "كل موديولات ROMA بدون استثناء", includeSupport: "دعم فني بالعربي",
+      includeAllModules: "كل موديولات ROMA بدون استثناء", includeSupport: "دعم فني",
       includeUnlimited: "فروع ومستخدمون بلا حدود عملية", includeExtraPricing: "زيادة الفروع/المستخدمين بسعر إضافي واضح",
       ctaContact: "تواصل معنا", ctaStartTrial: "ابدأ تجربتك",
       calcEyebrow: "الحاسبة", calcHeading: "احسب السعر المناسب لنشاطك",
@@ -783,7 +787,7 @@
       trialHeading: "لا تصدّقنا. جرّب ROMA بنفسك.",
       trialDesc: "21 يوم مجانًا، بحساب شركة حقيقي ببياناتك، وكل إمكانيات ROMA متاحة — من غير ما تحط بيانات بطاقة بنكية.",
       trialCta: "ابدأ تجربتك الآن",
-      trialPerks: ["⚡ إعداد سريع", "🎧 دعم فني بالعربي", "🔒 بياناتك محفوظة ومؤمّنة"],
+      trialPerks: ["⚡ إعداد سريع", "🎧 دعم فني", "🔒 بياناتك محفوظة ومؤمّنة"],
       qrCaption: "امسح الكود عشان تفتح الصفحة على موبايلك، أو تشاركها مع حد واقف قدامك.",
       footer: `© RomaERP — السعودية أولاً. الأسعار قابلة للتغيير حتى الإطلاق الرسمي. <a href="/terms.html" style="color:var(--primary)">الشروط والأحكام</a>`,
       approxNote: "أسعار تقريبية محوّلة من الريال السعودي.",
@@ -864,7 +868,7 @@
       perMonth: "/ month", customPriceLabel: "Custom pricing", customPriceNote: "Based on the size and type of your business",
       includesUpTo: (branches, users, branchWord) => `Includes up to ${branches} ${branchWord} and ${users} users`,
       branchWord1: "branch", branchWordMany: "branches",
-      includeAllModules: "Every ROMA module, no exceptions", includeSupport: "Arabic-language support",
+      includeAllModules: "Every ROMA module, no exceptions", includeSupport: "Technical support",
       includeUnlimited: "Practically unlimited branches and users", includeExtraPricing: "Extra branches/users at a clear add-on price",
       ctaContact: "Contact us", ctaStartTrial: "Start your trial",
       calcEyebrow: "Calculator", calcHeading: "Calculate the right price for your business",
@@ -903,7 +907,7 @@
       trialHeading: "Don't take our word for it. Try ROMA yourself.",
       trialDesc: "21 days free, with a real company account and your own data, and every ROMA feature available — no credit card required.",
       trialCta: "Start your trial now",
-      trialPerks: ["⚡ Fast setup", "🎧 Arabic-language support", "🔒 Your data is safe and secured"],
+      trialPerks: ["⚡ Fast setup", "🎧 Technical support", "🔒 Your data is safe and secured"],
       qrCaption: "Scan the code to open the page on your phone, or share it with someone standing in front of you.",
       footer: `© RomaERP — Saudi Arabia first. Prices subject to change until official launch. <a href="/terms.html" style="color:var(--primary)">Terms &amp; Privacy</a>`,
       approxNote: "Approximate prices converted from Saudi Riyal.",

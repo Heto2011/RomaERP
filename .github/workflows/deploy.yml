@@ -231,6 +231,7 @@ jobs:
             cp /root/RomaERP/marketing/roma-group.html /var/www/romaerp/roma-group.html
             cp /root/RomaERP/marketing/roma-hr.html /var/www/romaerp/roma-hr.html
             cp /root/RomaERP/marketing/roma-erp.html /var/www/romaerp/roma-erp.html
+            cp /root/RomaERP/marketing/site-lang.js /var/www/romaerp/site-lang.js
 
             echo "DEPLOY_OK"
 
