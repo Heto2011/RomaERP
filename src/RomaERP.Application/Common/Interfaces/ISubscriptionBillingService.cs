@@ -30,7 +30,8 @@ public record TenantSubscriptionDto(
     string PaymentProvider,
     int CurrentBranches,
     int CurrentUsers,
-    decimal OutstandingAmount);
+    decimal OutstandingAmount,
+    string Currency);
 
 public record SubscriptionInvoiceDto(
     Guid Id,

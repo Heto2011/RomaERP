@@ -231,18 +231,42 @@ static async Task MigrateAllTenantsAsync(IServiceProvider services)
     }
 }
 
-// Seeds the 4 public pricing tiers (marketing/roma-erp.html) once, on first startup after this feature
-// deployed. Safe to call on every startup — only inserts when the table is empty.
+// Keeps the 4 public pricing tiers (marketing/roma-erp.html) in the central DB: inserts any missing tier and
+// re-aligns the included branches/users and SAR list price of existing ones, so a change to the public page
+// only needs the numbers updated here (per-currency prices live in SubscriptionPriceList). Safe on every startup.
 static async Task SeedSubscriptionPlansAsync(CentralDbContext central)
 {
-    if (await central.SubscriptionPlans.AnyAsync()) return;
+    var tiers = new (string Code, int Branches, int Users, bool Custom, int Sort)[]
+    {
+        ("essential", 3, 10, false, 1),
+        ("business", 7, 25, false, 2),
+        ("professional", 15, 50, false, 3),
+        ("enterprise", int.MaxValue, int.MaxValue, true, 4),
+    };
 
-    central.SubscriptionPlans.AddRange(
-        new RomaERP.Domain.Tenancy.SubscriptionPlan { Code = "essential", NameAr = "Essential", NameEn = "Essential", MonthlyBasePrice = 499, IncludedBranches = 1, IncludedUsers = 2, SortOrder = 1 },
-        new RomaERP.Domain.Tenancy.SubscriptionPlan { Code = "business", NameAr = "Business", NameEn = "Business", MonthlyBasePrice = 799, IncludedBranches = 3, IncludedUsers = 5, SortOrder = 2 },
-        new RomaERP.Domain.Tenancy.SubscriptionPlan { Code = "professional", NameAr = "Professional", NameEn = "Professional", MonthlyBasePrice = 1299, IncludedBranches = 7, IncludedUsers = 10, SortOrder = 3 },
-        new RomaERP.Domain.Tenancy.SubscriptionPlan { Code = "enterprise", NameAr = "Enterprise", NameEn = "Enterprise", MonthlyBasePrice = 2499, IncludedBranches = int.MaxValue, IncludedUsers = int.MaxValue, IsCustomPricing = true, SortOrder = 4 }
-    );
+    var existing = await central.SubscriptionPlans.ToListAsync();
+    foreach (var (code, branches, users, custom, sort) in tiers)
+    {
+        var name = char.ToUpperInvariant(code[0]) + code[1..];
+        var sarPrice = RomaERP.Domain.Tenancy.SubscriptionPriceList.Find(code, RomaERP.Domain.Tenancy.SubscriptionPriceList.Sar)!.Base;
+        var plan = existing.FirstOrDefault(p => p.Code == code);
+        if (plan is null)
+        {
+            central.SubscriptionPlans.Add(new RomaERP.Domain.Tenancy.SubscriptionPlan
+            {
+                Code = code, NameAr = name, NameEn = name, MonthlyBasePrice = sarPrice,
+                IncludedBranches = branches, IncludedUsers = users, IsCustomPricing = custom, SortOrder = sort
+            });
+            continue;
+        }
+
+        plan.MonthlyBasePrice = sarPrice;
+        plan.IncludedBranches = branches;
+        plan.IncludedUsers = users;
+        plan.IsCustomPricing = custom;
+        plan.SortOrder = sort;
+    }
+
     await central.SaveChangesAsync();
 }
 

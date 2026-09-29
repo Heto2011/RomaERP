@@ -1998,6 +1998,7 @@ export interface TenantSubscription {
   currentBranches: number;
   currentUsers: number;
   outstandingAmount: number;
+  currency: string;
 }
 
 export interface SubscriptionInvoice {

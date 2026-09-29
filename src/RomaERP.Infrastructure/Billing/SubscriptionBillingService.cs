@@ -162,8 +162,11 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             var (branches, users) = await CountTenantUsageAsync(tenant, ct);
 
             var isAdditionalCompany = subscription.BillingAccountId.HasValue && !seenBillingAccounts.Add(subscription.BillingAccountId.Value);
-            var invoice = BuildInvoice(subscription, plan, branches, users, isAdditionalCompany);
+            var priceSet = await ResolvePriceSetAsync(subscription, tenant, plan, ct);
+            var invoice = BuildInvoice(subscription, plan, priceSet, branches, users, isAdditionalCompany);
             _central.SubscriptionInvoices.Add(invoice);
+            // Saved per invoice so the founding-customer ranking above sees invoices generated earlier in this same run.
+            await _central.SaveChangesAsync(ct);
             generated++;
 
             subscription.CurrentPeriodStart = subscription.CurrentPeriodEnd;
@@ -230,10 +233,49 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         return suspendedCount;
     }
 
-    private static SubscriptionInvoice BuildInvoice(Subscription subscription, SubscriptionPlan plan, int branches, int users, bool isAdditionalCompany)
+    /// <summary>What this tenant is billed in: the price list for its country's currency, at the founding price
+    /// while the Egypt launch offer still applies to it. Falls back to the plan row's own price (SAR) for a plan
+    /// code the price list doesn't know.</summary>
+    private async Task<PlanPriceSet> ResolvePriceSetAsync(Subscription subscription, Tenant tenant, SubscriptionPlan plan, CancellationToken ct)
+    {
+        var currency = SubscriptionPriceList.CurrencyFor(tenant.Country);
+        var listed = SubscriptionPriceList.Find(plan.Code, currency);
+        if (listed is null)
+            return new PlanPriceSet(SubscriptionPriceList.Sar, plan.MonthlyBasePrice, 0,
+                SubscriptionPricingConstants.ExtraBranchPrice, SubscriptionPricingConstants.ExtraUserPrice);
+
+        if (listed.FoundingBase > 0 && await IsFoundingCustomerAsync(subscription, tenant, ct))
+            return listed with { Base = listed.FoundingBase };
+
+        return listed;
+    }
+
+    /// <summary>Egypt launch offer: among the first <see cref="SubscriptionPriceList.FoundingCustomerLimit"/> Egyptian
+    /// subscriptions to be invoiced, for their first <see cref="SubscriptionPriceList.FoundingInvoiceCount"/> invoices.</summary>
+    private async Task<bool> IsFoundingCustomerAsync(Subscription subscription, Tenant tenant, CancellationToken ct)
+    {
+        if (tenant.Country != Country.Egypt) return false;
+
+        var egyptTenantIds = _central.Tenants.Where(t => t.Country == Country.Egypt).Select(t => t.Id);
+        var firstInvoices = await _central.SubscriptionInvoices
+            .Where(i => egyptTenantIds.Contains(i.TenantId) && i.Status != SubscriptionInvoiceStatus.Cancelled)
+            .GroupBy(i => i.SubscriptionId)
+            .Select(g => new { SubscriptionId = g.Key, First = g.Min(i => i.CreatedAtUtc), Count = g.Count() })
+            .ToListAsync(ct);
+
+        var mine = firstInvoices.FirstOrDefault(x => x.SubscriptionId == subscription.Id);
+        if (mine is null) return firstInvoices.Count < SubscriptionPriceList.FoundingCustomerLimit;
+
+        var ahead = firstInvoices.Count(x => x.First < mine.First);
+        return ahead < SubscriptionPriceList.FoundingCustomerLimit && mine.Count < SubscriptionPriceList.FoundingInvoiceCount;
+    }
+
+    private static SubscriptionInvoice BuildInvoice(
+        Subscription subscription, SubscriptionPlan plan, PlanPriceSet prices, int branches, int users, bool isAdditionalCompany)
     {
         var pricing = SubscriptionInvoiceCalculator.Compute(
-            plan.MonthlyBasePrice, plan.IncludedBranches, plan.IncludedUsers, plan.IsCustomPricing, branches, users, isAdditionalCompany);
+            prices.Base, plan.IncludedBranches, plan.IncludedUsers, plan.IsCustomPricing, branches, users, isAdditionalCompany,
+            prices.ExtraBranch, prices.ExtraUser);
 
         return new SubscriptionInvoice
         {
@@ -250,7 +292,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             ExtraUsersAmount = pricing.ExtraUsersAmount,
             MultiCompanyDiscountAmount = pricing.MultiCompanyDiscountAmount,
             TotalAmount = pricing.TotalAmount,
-            Currency = SubscriptionPricingConstants.DefaultCurrency,
+            Currency = prices.Currency,
             Status = SubscriptionInvoiceStatus.Pending,
             DueDateUtc = subscription.CurrentPeriodEnd,
         };
@@ -313,7 +355,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
     private static TenantSubscriptionDto MapTenantSubscription(Tenant tenant, Subscription s, SubscriptionPlan plan, int branches, int users, decimal outstanding) =>
         new(tenant.Id, tenant.CompanyCode, tenant.CompanyNameAr, tenant.CompanyNameEn, tenant.IsActive,
             s.Id, plan.Id, plan.Code, plan.NameAr, s.Status, s.CurrentPeriodStart, s.CurrentPeriodEnd,
-            s.BillingAccountId, s.PaymentProvider, branches, users, outstanding);
+            s.BillingAccountId, s.PaymentProvider, branches, users, outstanding, SubscriptionPriceList.CurrencyFor(tenant.Country));
 
     private static SubscriptionInvoiceDto MapInvoice(SubscriptionInvoice i, string companyNameAr) =>
         new(i.Id, i.TenantId, companyNameAr, i.PlanCode, i.PlanNameAr, i.PeriodStart, i.PeriodEnd,

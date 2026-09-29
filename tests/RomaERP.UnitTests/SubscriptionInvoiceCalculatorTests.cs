@@ -23,17 +23,31 @@ public class SubscriptionInvoiceCalculatorTests
     [Fact]
     public void Compute_BeyondIncludedLimits_ChargesOverageAtPublishedRates()
     {
-        // Business tier: 3 branches / 5 users included; here we're 2 branches and 4 users over.
+        // Business tier (SAR list): 7 branches / 25 users included; here we're 2 branches and 4 users over.
         var result = SubscriptionInvoiceCalculator.Compute(
-            monthlyBasePrice: 799m, includedBranches: 3, includedUsers: 5, isCustomPricing: false,
-            actualBranches: 5, actualUsers: 9, isAdditionalCompany: false);
+            monthlyBasePrice: 349m, includedBranches: 7, includedUsers: 25, isCustomPricing: false,
+            actualBranches: 9, actualUsers: 29, isAdditionalCompany: false);
 
         Assert.Equal(2, result.ExtraBranches);
-        Assert.Equal(300m, result.ExtraBranchesAmount); // 2 * 150
+        Assert.Equal(30m, result.ExtraBranchesAmount); // 2 * 15 SAR
         Assert.Equal(4, result.ExtraUsers);
-        Assert.Equal(160m, result.ExtraUsersAmount); // 4 * 40
+        Assert.Equal(80m, result.ExtraUsersAmount); // 4 * 20 SAR
         Assert.Equal(0m, result.MultiCompanyDiscountAmount);
-        Assert.Equal(799m + 300m + 160m, result.TotalAmount);
+        Assert.Equal(349m + 30m + 80m, result.TotalAmount);
+    }
+
+    [Fact]
+    public void Compute_WithACurrencysOwnOveragePrices_UsesThemInsteadOfTheSarDefaults()
+    {
+        // Egypt's independent list: 200 EGP per extra branch, 400 EGP per extra user.
+        var result = SubscriptionInvoiceCalculator.Compute(
+            monthlyBasePrice: 7000m, includedBranches: 7, includedUsers: 25, isCustomPricing: false,
+            actualBranches: 8, actualUsers: 26, isAdditionalCompany: false,
+            extraBranchPrice: 200m, extraUserPrice: 400m);
+
+        Assert.Equal(200m, result.ExtraBranchesAmount);
+        Assert.Equal(400m, result.ExtraUsersAmount);
+        Assert.Equal(7600m, result.TotalAmount);
     }
 
     [Fact]

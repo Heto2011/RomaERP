@@ -161,7 +161,7 @@ export default function SubscriptionsPage() {
                 <tr key={p.id}>
                   <td>{p.code}</td>
                   <td>{p.nameEn}</td>
-                  <td>{p.isCustomPricing ? "Custom" : `${p.monthlyBasePrice.toLocaleString()} SAR`}</td>
+                  <td>{p.isCustomPricing ? "Custom" : `${p.monthlyBasePrice.toLocaleString()} SAR (EGP / GBP lists differ)`}</td>
                   <td>{p.isCustomPricing ? "—" : p.includedBranches}</td>
                   <td>{p.isCustomPricing ? "—" : p.includedUsers}</td>
                 </tr>
@@ -194,7 +194,7 @@ export default function SubscriptionsPage() {
                     <td className={statusClass[s.status]}>{statusLabel[s.status]}</td>
                     <td>{s.currentBranches} branches / {s.currentUsers} users</td>
                     <td>{new Date(s.currentPeriodEnd).toLocaleDateString()}</td>
-                    <td className={s.outstandingAmount > 0 ? "text-danger" : undefined}>{s.outstandingAmount.toLocaleString()} SAR</td>
+                    <td className={s.outstandingAmount > 0 ? "text-danger" : undefined}>{s.outstandingAmount.toLocaleString()} {s.currency}</td>
                     <td>
                       {s.tenantIsActive ? (
                         <button className="btn btn-secondary btn-sm" onClick={() => handleSuspend(s.tenantId)}>Suspend</button>

@@ -22,12 +22,14 @@ public static class SubscriptionInvoiceCalculator
         bool isCustomPricing,
         int actualBranches,
         int actualUsers,
-        bool isAdditionalCompany)
+        bool isAdditionalCompany,
+        decimal extraBranchPrice = SubscriptionPricingConstants.ExtraBranchPrice,
+        decimal extraUserPrice = SubscriptionPricingConstants.ExtraUserPrice)
     {
         var extraBranches = isCustomPricing ? 0 : Math.Max(0, actualBranches - includedBranches);
         var extraUsers = isCustomPricing ? 0 : Math.Max(0, actualUsers - includedUsers);
-        var extraBranchesAmount = extraBranches * SubscriptionPricingConstants.ExtraBranchPrice;
-        var extraUsersAmount = extraUsers * SubscriptionPricingConstants.ExtraUserPrice;
+        var extraBranchesAmount = extraBranches * extraBranchPrice;
+        var extraUsersAmount = extraUsers * extraUserPrice;
         var subtotal = monthlyBasePrice + extraBranchesAmount + extraUsersAmount;
         var discount = isAdditionalCompany ? subtotal * (1 - SubscriptionPricingConstants.AdditionalCompanyDiscountMultiplier) : 0;
 

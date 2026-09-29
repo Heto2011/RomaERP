@@ -138,7 +138,7 @@ export default function MySubscriptionPage() {
                 <td>{t.mySubscription.outstanding}</td>
                 <td>
                   {subscription.outstandingAmount > 0 ? (
-                    <strong className="text-danger mono">{subscription.outstandingAmount.toLocaleString()}</strong>
+                    <strong className="text-danger mono">{subscription.outstandingAmount.toLocaleString()} {subscription.currency}</strong>
                   ) : (
                     <span className="text-success">{t.mySubscription.noOutstanding}</span>
                   )}
