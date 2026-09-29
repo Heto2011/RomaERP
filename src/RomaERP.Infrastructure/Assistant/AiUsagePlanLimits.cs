@@ -1,17 +1,18 @@
 namespace RomaERP.Infrastructure.Assistant;
 
-/// <summary>Daily AI-call caps per subscription plan and feature (the "conservative" preset): sized so the
-/// worst-case monthly AI cost stays well below what each plan actually bills. Falls back to Essential's
-/// (most conservative) limits for a missing or unrecognized plan code — e.g. a trialing tenant with no
-/// subscription row yet — so an unmatched tenant never defaults to the most generous cap.</summary>
+/// <summary>Daily AI-call caps per subscription plan and feature (the "balanced" preset): generous enough
+/// that a legitimate heavy user never feels throttled during normal business use, while worst-case monthly
+/// AI cost still stays comfortably below what each plan actually bills. Falls back to Essential's (lowest)
+/// limits for a missing or unrecognized plan code — e.g. a trialing tenant with no subscription row yet —
+/// so an unmatched tenant never defaults to the most generous cap.</summary>
 internal static class AiUsagePlanLimits
 {
     private static readonly Dictionary<string, (int BusinessQa, int ExpenseCapture)> ByPlanCode = new()
     {
-        ["essential"] = (10, 40),
-        ["business"] = (30, 120),
-        ["professional"] = (60, 250),
-        ["enterprise"] = (150, 600),
+        ["essential"] = (20, 80),
+        ["business"] = (50, 200),
+        ["professional"] = (100, 400),
+        ["enterprise"] = (300, 1000),
     };
 
     private static readonly (int BusinessQa, int ExpenseCapture) Fallback = ByPlanCode["essential"];

@@ -64,7 +64,7 @@ public class AiUsageLimiterTests
     public async Task EnsureWithinDailyLimitAsync_UnderLimit_IncrementsAndDoesNotThrow()
     {
         var ctx = CreateAppContext();
-        // Essential's BusinessQa cap is 10/day.
+        // Essential's BusinessQa cap is 20/day.
         var limiter = CreateLimiter(ctx, "essential");
 
         await limiter.EnsureWithinDailyLimitAsync("BusinessQa");
@@ -78,11 +78,11 @@ public class AiUsageLimiterTests
     public async Task EnsureWithinDailyLimitAsync_AtLimit_ThrowsAndDoesNotIncrementFurther()
     {
         var ctx = CreateAppContext();
-        // Essential's ExpenseCapture cap is 40/day — cheapest way to hit a cap quickly in a test is to
-        // pre-seed the counter right at the limit rather than looping 40 real calls.
+        // Essential's ExpenseCapture cap is 80/day — cheapest way to hit a cap quickly in a test is to
+        // pre-seed the counter right at the limit rather than looping 80 real calls.
         ctx.AiUsageCounters.Add(new RomaERP.Domain.Assistant.AiUsageCounter
         {
-            FeatureKey = "ExpenseCapture", UsageDate = DateTime.UtcNow.Date, Count = 40
+            FeatureKey = "ExpenseCapture", UsageDate = DateTime.UtcNow.Date, Count = 80
         });
         await ctx.SaveChangesAsync();
         var limiter = CreateLimiter(ctx, "essential");
@@ -91,7 +91,7 @@ public class AiUsageLimiterTests
             () => limiter.EnsureWithinDailyLimitAsync("ExpenseCapture"));
 
         var counter = await ctx.AiUsageCounters.SingleAsync(c => c.FeatureKey == "ExpenseCapture");
-        Assert.Equal(40, counter.Count); // the throwing call never incremented
+        Assert.Equal(80, counter.Count); // the throwing call never incremented
     }
 
     [Fact]
@@ -129,10 +129,10 @@ public class AiUsageLimiterTests
     }
 
     [Theory]
-    [InlineData("essential", 10, 40)]
-    [InlineData("business", 30, 120)]
-    [InlineData("professional", 60, 250)]
-    [InlineData("enterprise", 150, 600)]
+    [InlineData("essential", 20, 80)]
+    [InlineData("business", 50, 200)]
+    [InlineData("professional", 100, 400)]
+    [InlineData("enterprise", 300, 1000)]
     public async Task EnsureWithinDailyLimitAsync_UsesTheCapForTheTenantsPlan(
         string planCode, int businessQaLimit, int expenseCaptureLimit)
     {
@@ -157,7 +157,7 @@ public class AiUsageLimiterTests
         // must fall back to the most conservative cap, not the most generous one.
         var limiter = CreateLimiter(ctx, planCode: null);
 
-        for (var i = 0; i < 10; i++)
+        for (var i = 0; i < 20; i++)
             await limiter.EnsureWithinDailyLimitAsync("BusinessQa");
 
         await Assert.ThrowsAsync<ValidationAppException>(() => limiter.EnsureWithinDailyLimitAsync("BusinessQa"));
