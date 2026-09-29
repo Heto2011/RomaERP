@@ -35,6 +35,11 @@ jobs:
             echo "romaerp-api active since: $(systemctl show romaerp-api --property=ActiveEnterTimestamp --value 2>/dev/null || echo unknown)"
             echo "nginx: $(systemctl is-active nginx 2>/dev/null || echo unknown)"
             echo "sqlserver container: $(docker ps --filter name=sqlserver --format '{{.Status}}' 2>/dev/null || echo unknown)"
+            # Read-only: which SQL Server edition the container is set to run. The image defaults to Developer
+            # (not licensed for production use) unless MSSQL_PID says otherwise; Express is free for production.
+            # Only the MSSQL_PID line is printed — never the rest of the container's environment (it holds the sa password).
+            SQL_PID=$(docker inspect sqlserver --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | grep '^MSSQL_PID=' || true)
+            echo "sqlserver edition setting: ${SQL_PID:-MSSQL_PID not set (image default = Developer, not licensed for production)}"
             echo "unhandled exceptions in the last 24h:"
             # `grep | tail` as a pipeline always exits via tail's own status (0, even on empty input),
             # so "grep ... | tail -20 || echo none" never actually falls back — capture the text first
