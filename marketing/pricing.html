@@ -584,8 +584,10 @@
 
 <script>
   // ---- Configurable pricing assumptions (placeholders — tune before launch) ----
-  // Base currency is SAR. All other currencies are approximate conversions for display only —
-  // real billing/tax will follow each country's law once we actually land a customer there.
+  // Base currency is SAR. Currencies WITHOUT their own price list (the Gulf ones) are conversions for
+  // display only. EGP and GBP are INDEPENDENT price lists set directly in their own currency (see
+  // INDEPENDENT_PRICING) — never derived from a rate, so they carry no "approximate" caveat. Real
+  // billing/tax will follow each country's law once we actually land a customer there.
   const LAUNCH_OFFER_LIMIT = 15;
   // egpBase/egpListPrice are a SEPARATE, independent EGP price list — NOT a currency
   // conversion of the SAR numbers (Egypt pricing is set on its own, same as any local pricing decision).
@@ -611,39 +613,42 @@
       id: "essential", emoji: "🟢", name: "Essential",
       desc: { ar: "حتى 3 فروع و10 مستخدمين", en: "Up to 3 branches and 10 users" },
       base: 149, listPrice: 499,
-      egpBase: 1500, egpListPrice: 3000,
+      egpBase: 1500, egpListPrice: 3000, gbpBase: 39,
       includedBranches: 3, includedUsers: 10,
     },
     {
       id: "business", emoji: "🔵", name: "Business",
       desc: { ar: "شركات متعددة الفروع", en: "Multi-branch businesses" },
-      base: 349, egpBase: 3500, egpListPrice: 7000, includedBranches: 7, includedUsers: 25, recommended: true,
+      base: 349, egpBase: 3500, egpListPrice: 7000, gbpBase: 89, includedBranches: 7, includedUsers: 25, recommended: true,
     },
     {
       id: "professional", emoji: "🟣", name: "Professional",
       desc: { ar: "نشاط أكبر واحتياج موسّع", en: "Larger operations, wider needs" },
-      base: 649, egpBase: 6000, egpListPrice: 12000, includedBranches: 15, includedUsers: 50,
+      base: 649, egpBase: 6000, egpListPrice: 12000, gbpBase: 169, includedBranches: 15, includedUsers: 50,
     },
     {
       id: "enterprise", emoji: "🔴", name: "Enterprise",
       desc: { ar: "الشركات الكبيرة", en: "Large enterprises" },
-      base: 2499, egpBase: 35000, includedBranches: Infinity, includedUsers: Infinity, custom: true,
+      base: 2499, egpBase: 35000, gbpBase: 599, includedBranches: Infinity, includedUsers: Infinity, custom: true,
     },
   ];
   const EXTRA_BRANCH_PRICE = 15; // SAR / branch / month, beyond tier's included branches (capped below)
   const EXTRA_USER_PRICE = 20;   // SAR / user / month, beyond tier's included users (capped below)
-  const EGP_EXTRA_BRANCH_PRICE = 200; // independent EGP equivalents of the two constants above
-  const EGP_EXTRA_USER_PRICE = 400;
+  // Independent price lists: tier fields are <prefix>Base / <prefix>ListPrice, and each has its own
+  // extra-branch / extra-user price set directly in that currency (not the SAR constants above * a rate).
+  const INDEPENDENT_PRICING = {
+    EGP: { prefix: "egp", extraBranch: 200, extraUser: 400 },
+    GBP: { prefix: "gbp", extraBranch: 5, extraUser: 3 },
+  };
   // The paid-overage cap is a FLAT PERCENTAGE of each tier's own included branches/users, not a fixed
   // number — so the ratio feels consistent across tiers instead of an arbitrary gap between them.
   const OVERAGE_CAP_PCT = 0.4;
   const ADDITIONAL_COMPANY_DISCOUNT = 0.85; // each company after the first billed at 85% of its own computed price
 
-  // rate = units of that currency per 1 SAR, used by convert() for every currency EXCEPT EGP. Gulf
-  // currencies are pegged to USD, so these are stable; GBP floats, hence its "approximate" note.
-  // EGP is NOT a conversion at all — it has its own independent price list (TIERS[].egpBase etc.,
-  // EGP_EXTRA_BRANCH_PRICE/EGP_EXTRA_USER_PRICE), set directly in Egyptian pounds. Its `rate` here is
-  // unused by pricing and kept only so EGP still sorts/displays like any other entry in this table.
+  // rate = units of that currency per 1 SAR, used by convert() for the Gulf currencies only (pegged to
+  // USD, so stable). EGP and GBP are NOT conversions at all — each has its own independent price list
+  // (TIERS[].egpBase / gbpBase etc. + INDEPENDENT_PRICING), set directly in that currency. Their `rate`
+  // is unused by pricing and kept only so they still sort/display like any other entry in this table.
   const CURRENCIES = {
     SAR: { label: { ar: "ريال سعودي (SAR)", en: "Saudi Riyal (SAR)" }, unit: { ar: "ريال", en: "SAR" }, rate: 1, decimals: 0 },
     AED: { label: { ar: "درهم إماراتي (AED)", en: "UAE Dirham (AED)" }, unit: { ar: "درهم", en: "AED" }, rate: 0.98, decimals: 0 },
@@ -652,7 +657,7 @@
     BHD: { label: { ar: "دينار بحريني (BHD)", en: "Bahraini Dinar (BHD)" }, unit: { ar: "دينار", en: "BHD" }, rate: 0.1, decimals: 1 },
     OMR: { label: { ar: "ريال عماني (OMR)", en: "Omani Rial (OMR)" }, unit: { ar: "ريال عماني", en: "OMR" }, rate: 0.1025, decimals: 1 },
     EGP: { label: { ar: "جنيه مصري (EGP)", en: "Egyptian Pound (EGP)" }, unit: { ar: "جنيه", en: "EGP" }, rate: 13, decimals: 0, independent: true },
-    GBP: { label: { ar: "جنيه إسترليني (GBP) — تقريبي", en: "British Pound (GBP) — approximate" }, unit: { ar: "جنيه إسترليني", en: "GBP" }, rate: 0.206, decimals: 0, approx: true },
+    GBP: { label: { ar: "جنيه إسترليني (GBP)", en: "British Pound (GBP)" }, unit: { ar: "جنيه إسترليني", en: "GBP" }, rate: 0.206, decimals: 0, independent: true },
   };
   let currentCurrency = "SAR";
   let currentLang = localStorage.getItem("lang") === "en" ? "en" : "ar";
@@ -781,9 +786,11 @@
       trialPerks: ["⚡ إعداد سريع", "🎧 دعم فني بالعربي", "🔒 بياناتك محفوظة ومؤمّنة"],
       qrCaption: "امسح الكود عشان تفتح الصفحة على موبايلك، أو تشاركها مع حد واقف قدامك.",
       footer: `© RomaERP — السعودية أولاً. الأسعار قابلة للتغيير حتى الإطلاق الرسمي. <a href="/terms.html" style="color:var(--primary)">الشروط والأحكام</a>`,
-      floatingNote: "الأسعار دي تقريبية لتقلب سعر الصرف — السعر النهائي بيتأكد وقت التفعيل الفعلي.",
       approxNote: "أسعار تقريبية محوّلة من الريال السعودي.",
-      independentPriceNote: "أسعار مصر مستقلة بالجنيه المصري، مش تحويل من الريال السعودي.",
+      independentPriceNote: {
+        EGP: "أسعار مصر مستقلة بالجنيه المصري، مش تحويل من الريال السعودي.",
+        GBP: "أسعار المملكة المتحدة مستقلة بالجنيه الإسترليني، مش تحويل من الريال السعودي.",
+      },
       langToggleLabel: "English",
     },
     en: {
@@ -899,9 +906,11 @@
       trialPerks: ["⚡ Fast setup", "🎧 Arabic-language support", "🔒 Your data is safe and secured"],
       qrCaption: "Scan the code to open the page on your phone, or share it with someone standing in front of you.",
       footer: `© RomaERP — Saudi Arabia first. Prices subject to change until official launch. <a href="/terms.html" style="color:var(--primary)">Terms &amp; Privacy</a>`,
-      floatingNote: "These prices are approximate due to exchange-rate fluctuation — the final price is confirmed at activation.",
       approxNote: "Approximate prices converted from Saudi Riyal.",
-      independentPriceNote: "Egypt pricing is set independently in EGP, not converted from Saudi Riyal.",
+      independentPriceNote: {
+        EGP: "Egypt pricing is set independently in EGP, not converted from Saudi Riyal.",
+        GBP: "UK pricing is set independently in GBP, not converted from Saudi Riyal.",
+      },
       langToggleLabel: "عربي",
     },
   };
@@ -912,23 +921,28 @@
     return c.decimals > 0 ? value.toFixed(c.decimals) : Math.round(value);
   }
 
-  // EGP has its own independent numbers (see TIERS[].egpBase etc.) — no rate multiplication, just
-  // formatting. Every other currency still goes through convert() (SAR * that currency's rate).
-  function formatEgp(amount) {
-    const c = CURRENCIES.EGP;
+  // EGP and GBP have their own independent numbers (TIERS[].egpBase / gbpBase etc.) — no rate
+  // multiplication, just formatting. Every other currency still goes through convert() (SAR * rate).
+  function independentSet() {
+    return INDEPENDENT_PRICING[currentCurrency] || null;
+  }
+  function formatIndependent(amount) {
+    const c = CURRENCIES[currentCurrency];
     return c.decimals > 0 ? Number(amount).toFixed(c.decimals) : Math.round(amount);
   }
   function displayAmount(amount) {
-    return currentCurrency === "EGP" ? formatEgp(amount) : convert(amount);
+    return independentSet() ? formatIndependent(amount) : convert(amount);
   }
-  // Picks the tier field to read (egpBase/egpListPrice vs base/listPrice)
-  // and pairs it with displayAmount so the caller never has to branch on currency itself.
-  function tierAmount(tier, sarKey, egpKey) {
-    return displayAmount(currentCurrency === "EGP" ? tier[egpKey] : tier[sarKey]);
+  // Picks the tier field to read for the active currency (e.g. "base" -> egpBase / gbpBase, or plain
+  // base for SAR/Gulf) and pairs it with displayAmount so callers never branch on currency themselves.
+  function tierAmount(tier, sarKey) {
+    const set = independentSet();
+    return displayAmount(set ? tier[set.prefix + sarKey.charAt(0).toUpperCase() + sarKey.slice(1)] : tier[sarKey]);
   }
   function activePriceSet() {
-    return currentCurrency === "EGP"
-      ? { baseKey: "egpBase", extraBranch: EGP_EXTRA_BRANCH_PRICE, extraUser: EGP_EXTRA_USER_PRICE }
+    const set = independentSet();
+    return set
+      ? { baseKey: set.prefix + "Base", extraBranch: set.extraBranch, extraUser: set.extraUser }
       : { baseKey: "base", extraBranch: EXTRA_BRANCH_PRICE, extraUser: EXTRA_USER_PRICE };
   }
 
@@ -1084,10 +1098,11 @@
   }
 
   // Whether to show the founding-customer badge + crossed-out old price: derived from listPrice
-  // (SAR/Gulf) or egpListPrice (Egypt) actually existing for the currency in view, not a separate flag
+  // (SAR/Gulf) or <prefix>ListPrice (EGP) actually existing for the currency in view, not a separate flag
   // — so a tier can carry the offer in one currency without it leaking into another.
   function hasLaunchOffer(tier) {
-    return currentCurrency === "EGP" ? !!tier.egpListPrice : !!tier.listPrice;
+    const set = independentSet();
+    return set ? !!tier[set.prefix + "ListPrice"] : !!tier.listPrice;
   }
 
   function renderTiers() {
@@ -1105,8 +1120,8 @@
         <p class="tier-desc">${tier.desc[currentLang]}</p>
         <div class="tier-price">
           ${tier.custom ? `<span class="amount mono">${t.customPriceLabel}</span>` : `
-          ${launchOffer ? `<span class="tier-old-price mono">${tierAmount(tier, "listPrice", "egpListPrice")}</span>` : ""}
-          <span class="amount mono">${tierAmount(tier, "base", "egpBase")}</span>
+          ${launchOffer ? `<span class="tier-old-price mono">${tierAmount(tier, "listPrice")}</span>` : ""}
+          <span class="amount mono">${tierAmount(tier, "base")}</span>
           <span class="currency">${unit} ${t.perMonth}</span>
           `}
         </div>
@@ -1166,7 +1181,7 @@
     document.getElementById("resultPrice").textContent = Number(displayAmount(r.total)).toLocaleString("en-US");
     document.getElementById("resultCurrency").textContent = `${unit} ${t.perMonth}`;
 
-    const lines = [t.baseLine(r.tier.name, tierAmount(r.tier, "base", "egpBase"), unit)];
+    const lines = [t.baseLine(r.tier.name, tierAmount(r.tier, "base"), unit)];
     if (r.extraBranches > 0) lines.push(t.extraBranchesLine(r.extraBranches, displayAmount(r.extraBranches * priceSet.extraBranch), unit));
     if (r.extraUsers > 0) lines.push(t.extraUsersLine(r.extraUsers, displayAmount(r.extraUsers * priceSet.extraUser), unit));
     if (r.additionalCompanies > 0) lines.push(t.additionalCompanyLine(r.additionalCompanies, displayAmount(r.additionalCompanies * r.perCompany * ADDITIONAL_COMPANY_DISCOUNT), unit));
@@ -1196,7 +1211,7 @@
     const note = document.getElementById("currencyNote");
     if (currentCurrency === "SAR") { note.textContent = ""; return; }
     const c = CURRENCIES[currentCurrency];
-    note.textContent = c.independent ? t.independentPriceNote : c.approx ? t.floatingNote : t.approxNote;
+    note.textContent = c.independent ? t.independentPriceNote[currentCurrency] : t.approxNote;
   }
 
   function renderAll() {
