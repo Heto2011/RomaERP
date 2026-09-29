@@ -532,7 +532,7 @@ jobs:
             echo "---- Enterprise-only features in use (Express can't hold these) ----"
             SKU_FEATURES=""
             for DB in $DBS; do
-              F=$(q "$OLD" -Q "SET NOCOUNT ON; USE [$DB]; SELECT feature_name FROM sys.dm_db_persisted_sku_features" | tr -d '\r' | sed '/^\s*$/d' || true)
+              F=$(q "$OLD" -d "$DB" -Q "SET NOCOUNT ON; SELECT feature_name FROM sys.dm_db_persisted_sku_features" | tr -d '\r' | sed '/^\s*$/d' | grep -v 'Changed database context' || true)
               if [ -n "$F" ]; then SKU_FEATURES="$SKU_FEATURES $DB:$F"; fi
             done
             echo "${SKU_FEATURES:-none}"
