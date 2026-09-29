@@ -251,7 +251,6 @@
   .tier-badge { position: absolute; top: -13px; inset-inline-end: 22px; background: var(--primary); color: #fff; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px; }
   .tier-badge.is-launch { background: var(--accent); }
   .tier-old-price { text-decoration: line-through; color: var(--ink-soft); font-size: 15px; font-weight: 700; margin-inline-end: 6px; }
-  .tier-annual-note { background: var(--accent-tint); color: #6b4a19; border-radius: 8px; font-size: 12.5px; font-weight: 700; padding: 6px 10px; margin: -8px 0 16px; }
   .currency-select { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 0 28px; }
   .currency-select label { font-size: 13.5px; color: var(--ink-soft); font-weight: 700; }
   .currency-select select { font-family: inherit; font-size: 14px; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 8px 16px; cursor: pointer; }
@@ -588,7 +587,7 @@
   // Base currency is SAR. All other currencies are approximate conversions for display only —
   // real billing/tax will follow each country's law once we actually land a customer there.
   const LAUNCH_OFFER_LIMIT = 15;
-  // egpBase/egpListPrice/egpAnnualPrice are a SEPARATE, independent EGP price list — NOT a currency
+  // egpBase/egpListPrice are a SEPARATE, independent EGP price list — NOT a currency
   // conversion of the SAR numbers (Egypt pricing is set on its own, same as any local pricing decision).
   //
   // egpListPrice is the tier's actual published Egypt price (3,000/7,000/12,000) — unchanged, shown
@@ -611,8 +610,8 @@
     {
       id: "essential", emoji: "🟢", name: "Essential",
       desc: { ar: "حتى 3 فروع و10 مستخدمين", en: "Up to 3 branches and 10 users" },
-      base: 149, listPrice: 499, annualPrice: 1500,
-      egpBase: 1500, egpListPrice: 3000, egpAnnualPrice: 30000,
+      base: 149, listPrice: 499,
+      egpBase: 1500, egpListPrice: 3000,
       includedBranches: 3, includedUsers: 10,
     },
     {
@@ -740,7 +739,6 @@
       perMonth: "شهريًا", customPriceLabel: "سعر مخصص", customPriceNote: "بيتحدد حسب حجم ونوع النشاط",
       includesUpTo: (branches, users, branchWord) => `يشمل حتى ${branches} ${branchWord} و ${users} مستخدمين`,
       branchWord1: "فرع", branchWordMany: "فروع",
-      annualNote: (amount, unit) => `أو ${amount} ${unit} سنويًا (وفّر أكتر)`,
       includeAllModules: "كل موديولات ROMA بدون استثناء", includeSupport: "دعم فني بالعربي",
       includeUnlimited: "فروع ومستخدمون بلا حدود عملية", includeExtraPricing: "زيادة الفروع/المستخدمين بسعر إضافي واضح",
       ctaContact: "تواصل معنا", ctaStartTrial: "ابدأ تجربتك",
@@ -859,7 +857,6 @@
       perMonth: "/ month", customPriceLabel: "Custom pricing", customPriceNote: "Based on the size and type of your business",
       includesUpTo: (branches, users, branchWord) => `Includes up to ${branches} ${branchWord} and ${users} users`,
       branchWord1: "branch", branchWordMany: "branches",
-      annualNote: (amount, unit) => `or ${amount} ${unit} yearly (save more)`,
       includeAllModules: "Every ROMA module, no exceptions", includeSupport: "Arabic-language support",
       includeUnlimited: "Practically unlimited branches and users", includeExtraPricing: "Extra branches/users at a clear add-on price",
       ctaContact: "Contact us", ctaStartTrial: "Start your trial",
@@ -924,7 +921,7 @@
   function displayAmount(amount) {
     return currentCurrency === "EGP" ? formatEgp(amount) : convert(amount);
   }
-  // Picks the tier field to read (egpBase/egpListPrice/egpAnnualPrice vs base/listPrice/annualPrice)
+  // Picks the tier field to read (egpBase/egpListPrice vs base/listPrice)
   // and pairs it with displayAmount so the caller never has to branch on currency itself.
   function tierAmount(tier, sarKey, egpKey) {
     return displayAmount(currentCurrency === "EGP" ? tier[egpKey] : tier[sarKey]);
@@ -1114,7 +1111,6 @@
           `}
         </div>
         <div class="tier-price-note">${tier.custom ? t.customPriceNote : t.includesUpTo(tier.includedBranches, tier.includedUsers, branchWord)}</div>
-        ${tier.annualPrice ? `<div class="tier-annual-note">${t.annualNote(tierAmount(tier, "annualPrice", "egpAnnualPrice"), unit)}</div>` : ""}
         <ul class="tier-includes">
           <li>${t.includeAllModules}</li>
           <li>${t.includeSupport}</li>
