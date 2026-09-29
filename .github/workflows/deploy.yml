@@ -367,4 +367,25 @@ jobs:
               CODE=$(curl -s -o /dev/null -w "%{http_code}" --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN$path" || true)
               echo "GET https://$DOMAIN$path -> ${CODE:-000}"
             done
+            # Optional: attach a contact email to the Let's Encrypt account so expiry notices reach a human.
+            # Comes from the LETSENCRYPT_EMAIL secret (the repo is public, so it is never written in code);
+            # empty/unset = skipped. Only re-applied when the value changes (marker stores a hash, not the
+            # address, so nothing readable is left behind or echoed).
+            LE_EMAIL="${{ secrets.LETSENCRYPT_EMAIL }}"
+            if [ -n "$LE_EMAIL" ]; then
+              EMAIL_HASH=$(printf '%s' "$LE_EMAIL" | sha256sum | cut -d' ' -f1)
+              MARKER=/etc/letsencrypt/.contact-email-hash
+              if [ ! -f "$MARKER" ] || [ "$(cat "$MARKER")" != "$EMAIL_HASH" ]; then
+                if certbot update_account --email "$LE_EMAIL" --no-eff-email --non-interactive >/dev/null 2>&1; then
+                  echo "$EMAIL_HASH" > "$MARKER"
+                  echo "Let's Encrypt contact email set (from LETSENCRYPT_EMAIL secret)"
+                else
+                  echo "WARNING: could not set the Let's Encrypt contact email (non-fatal)"
+                fi
+              else
+                echo "Let's Encrypt contact email already set"
+              fi
+            else
+              echo "LETSENCRYPT_EMAIL secret not set - expiry notices disabled (auto-renewal still runs)"
+            fi
             echo "DOMAIN_SETUP_OK"
