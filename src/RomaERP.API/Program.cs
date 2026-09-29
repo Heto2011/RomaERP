@@ -46,6 +46,7 @@ builder.Services.AddApplication();
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
+builder.Services.AddScoped<IUserLanguage, HttpUserLanguage>();
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.ExchangeRateRefreshBackgroundService>();
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.WhatsAppAlertDigestBackgroundService>();
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.DemoTenantExpiryBackgroundService>();
@@ -230,7 +231,7 @@ static async Task MigrateAllTenantsAsync(IServiceProvider services)
     }
 }
 
-// Seeds the 4 public pricing tiers (marketing/pricing.html) once, on first startup after this feature
+// Seeds the 4 public pricing tiers (marketing/roma-erp.html) once, on first startup after this feature
 // deployed. Safe to call on every startup — only inserts when the table is empty.
 static async Task SeedSubscriptionPlansAsync(CentralDbContext central)
 {

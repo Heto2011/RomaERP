@@ -6,6 +6,7 @@ using RomaERP.Application.Accounting.DTOs;
 using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Assistant.Services;
 using RomaERP.Application.Common.Exceptions;
+using RomaERP.Application.Common.Interfaces;
 
 namespace RomaERP.Infrastructure.Assistant;
 
@@ -21,13 +22,15 @@ public class ClaudeBusinessQaService : IBusinessQaService
     private readonly ClaudeSettings _settings;
     private readonly IFinancialReportService _reports;
     private readonly IAiUsageLimiter _usageLimiter;
+    private readonly IUserLanguage _language;
 
-    public ClaudeBusinessQaService(HttpClient httpClient, IOptions<ClaudeSettings> settings, IFinancialReportService reports, IAiUsageLimiter usageLimiter)
+    public ClaudeBusinessQaService(HttpClient httpClient, IOptions<ClaudeSettings> settings, IFinancialReportService reports, IAiUsageLimiter usageLimiter, IUserLanguage language)
     {
         _httpClient = httpClient;
         _settings = settings.Value;
         _reports = reports;
         _usageLimiter = usageLimiter;
+        _language = language;
     }
 
     public async Task<string> AskAsync(string question, CancellationToken ct = default)
@@ -103,7 +106,7 @@ public class ClaudeBusinessQaService : IBusinessQaService
         {
             ["model"] = _settings.Model,
             ["max_tokens"] = 512,
-            ["system"] = systemPrompt,
+            ["system"] = systemPrompt + AiLanguage.ReplyDirective(_language.PrefersArabic),
             ["messages"] = new JsonArray { new JsonObject { ["role"] = "user", ["content"] = question } }
         };
 

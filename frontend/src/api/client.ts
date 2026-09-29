@@ -11,6 +11,8 @@ export const systemApiClient = axios.create({
 });
 
 apiClient.interceptors.request.use((config) => {
+  // English is the base language; the server uses this so AI replies and messages match the UI.
+  config.headers["Accept-Language"] = localStorage.getItem("lang") === "ar" ? "ar" : "en";
   const token = localStorage.getItem("token");
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;

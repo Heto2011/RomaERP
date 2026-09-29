@@ -1,6 +1,6 @@
 namespace RomaERP.Domain.Tenancy;
 
-/// <summary>Mirrors the overage pricing shown on the public marketing page (marketing/pricing.html) — keep
+/// <summary>Mirrors the overage pricing shown on the public marketing page (marketing/roma-erp.html) — keep
 /// both in sync if these change.</summary>
 public static class SubscriptionPricingConstants
 {

@@ -9,7 +9,7 @@ using RomaERP.Infrastructure.Persistence.Central;
 
 namespace RomaERP.API.Controllers;
 
-/// <summary>Anonymous page-view logging for the public marketing pages (pricing.html etc.) — no cookies,
+/// <summary>Anonymous page-view logging for the public marketing pages (roma-erp.html etc.) — no cookies,
 /// no visitor identity, just enough to see traffic volume and where it came from. Not tenant-scoped (see
 /// TenantResolutionMiddleware's exempt prefixes), since a marketing-page visitor has no tenant at all.
 /// The write endpoint is open to anyone (that's the point); reading the results is system-key gated like

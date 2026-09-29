@@ -3,7 +3,7 @@ using RomaERP.Domain.Tenancy;
 namespace RomaERP.Application.Common;
 
 /// <summary>Pure pricing math for one subscription invoice — mirrors the public calculator on
-/// marketing/pricing.html exactly, so both sides always agree on what a customer will actually be charged.</summary>
+/// marketing/roma-erp.html exactly, so both sides always agree on what a customer will actually be charged.</summary>
 public static class SubscriptionInvoiceCalculator
 {
     public record Result(

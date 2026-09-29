@@ -5,6 +5,7 @@ using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
 using RomaERP.Application.Assistant.Services;
 using RomaERP.Application.Common.Exceptions;
+using RomaERP.Application.Common.Interfaces;
 
 namespace RomaERP.Infrastructure.Assistant;
 
@@ -15,12 +16,14 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
     private readonly HttpClient _httpClient;
     private readonly ClaudeSettings _settings;
     private readonly IAiUsageLimiter _usageLimiter;
+    private readonly IUserLanguage _language;
 
-    public ClaudeExpenseParser(HttpClient httpClient, IOptions<ClaudeSettings> settings, IAiUsageLimiter usageLimiter)
+    public ClaudeExpenseParser(HttpClient httpClient, IOptions<ClaudeSettings> settings, IAiUsageLimiter usageLimiter, IUserLanguage language)
     {
         _httpClient = httpClient;
         _settings = settings.Value;
         _usageLimiter = usageLimiter;
+        _language = language;
     }
 
     public async Task<ExpenseExtractionResult> ExtractAsync(
@@ -111,7 +114,7 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
         {
             ["model"] = _settings.Model,
             ["max_tokens"] = 1024,
-            ["system"] = systemPrompt,
+            ["system"] = systemPrompt + AiLanguage.ReplyDirective(_language.PrefersArabic),
             ["messages"] = new JsonArray { new JsonObject { ["role"] = "user", ["content"] = userContent } },
             ["tools"] = new JsonArray
             {

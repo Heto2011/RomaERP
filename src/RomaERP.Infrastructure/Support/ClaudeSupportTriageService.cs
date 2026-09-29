@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Options;
+using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.Support.Services;
 using RomaERP.Infrastructure.Assistant;
 
@@ -26,11 +27,13 @@ public class ClaudeSupportTriageService : ISupportAiTriageService
 
     private readonly HttpClient _httpClient;
     private readonly ClaudeSettings _settings;
+    private readonly IUserLanguage _language;
 
-    public ClaudeSupportTriageService(HttpClient httpClient, IOptions<ClaudeSettings> settings)
+    public ClaudeSupportTriageService(HttpClient httpClient, IOptions<ClaudeSettings> settings, IUserLanguage language)
     {
         _httpClient = httpClient;
         _settings = settings.Value;
+        _language = language;
     }
 
     public async Task<SupportTriageResult> TriageAsync(string subject, string body, CancellationToken ct = default)
@@ -53,7 +56,7 @@ public class ClaudeSupportTriageService : ISupportAiTriageService
         {
             ["model"] = _settings.Model,
             ["max_tokens"] = 1024,
-            ["system"] = systemPrompt,
+            ["system"] = systemPrompt + RomaERP.Infrastructure.Assistant.AiLanguage.ReplyDirective(_language.PrefersArabic),
             ["messages"] = new JsonArray
             {
                 new JsonObject { ["role"] = "user", ["content"] = $"الموضوع: {subject}\n\nالرسالة: {body}" }

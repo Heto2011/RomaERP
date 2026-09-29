@@ -56,7 +56,7 @@ public record SubscriptionInvoiceDto(
 public record BillingRunResultDto(int InvoicesGenerated, int AutoCharged, int Suspended, List<string> Notes);
 
 /// <summary>Owns the recurring monthly billing lifecycle for every tenant: plans, subscriptions, generating
-/// due invoices (with branch/user overage and multi-company discount, mirroring marketing/pricing.html),
+/// due invoices (with branch/user overage and multi-company discount, mirroring marketing/roma-erp.html),
 /// attempting auto-charge where a real gateway is configured, and suspending tenants that stay unpaid past
 /// the grace period. Not tenant-scoped — this is platform/central data.</summary>
 public interface ISubscriptionBillingService

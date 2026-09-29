@@ -21,6 +21,11 @@ public class AiUsageLimiterTests
         return new ApplicationDbContext(options);
     }
 
+    private class FakeUserLanguage : IUserLanguage
+    {
+        public bool PrefersArabic { get; init; }
+    }
+
     private class FakeTenantContext : ITenantContext
     {
         public Guid TenantId { get; init; }
@@ -57,8 +62,8 @@ public class AiUsageLimiterTests
         return central;
     }
 
-    private static AiUsageLimiter CreateLimiter(ApplicationDbContext ctx, string? planCode)
-        => new(ctx, CreateCentralContext(planCode), new FakeTenantContext { TenantId = TenantId });
+    private static AiUsageLimiter CreateLimiter(ApplicationDbContext ctx, string? planCode, bool arabic = false)
+        => new(ctx, CreateCentralContext(planCode), new FakeTenantContext { TenantId = TenantId }, new FakeUserLanguage { PrefersArabic = arabic });
 
     [Fact]
     public async Task EnsureWithinDailyLimitAsync_UnderLimit_IncrementsAndDoesNotThrow()
@@ -161,5 +166,30 @@ public class AiUsageLimiterTests
             await limiter.EnsureWithinDailyLimitAsync("BusinessQa");
 
         await Assert.ThrowsAsync<ValidationAppException>(() => limiter.EnsureWithinDailyLimitAsync("BusinessQa"));
+    }
+
+    [Theory]
+    [InlineData(false, "You've reached today's limit")]
+    [InlineData(true, "وصلتوا للحد الأقصى")]
+    public async Task EnsureWithinDailyLimitAsync_OverTheCap_MessageFollowsTheUsersLanguage(bool arabic, string expectedStart)
+    {
+        var ctx = CreateAppContext();
+        ctx.AiUsageCounters.Add(new RomaERP.Domain.Assistant.AiUsageCounter
+        {
+            FeatureKey = "BusinessQa", UsageDate = DateTime.UtcNow.Date, Count = 20
+        });
+        await ctx.SaveChangesAsync();
+        var limiter = CreateLimiter(ctx, "essential", arabic);
+
+        var ex = await Assert.ThrowsAsync<ValidationAppException>(() => limiter.EnsureWithinDailyLimitAsync("BusinessQa"));
+
+        Assert.StartsWith(expectedStart, ex.Message);
+    }
+
+    [Fact]
+    public void AiLanguage_EnglishGetsADirective_ArabicPromptsAreLeftUntouched()
+    {
+        Assert.Contains("English", AiLanguage.ReplyDirective(prefersArabic: false));
+        Assert.Equal(string.Empty, AiLanguage.ReplyDirective(prefersArabic: true));
     }
 }

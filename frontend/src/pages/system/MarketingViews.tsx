@@ -31,7 +31,7 @@ export default function MarketingViewsPage() {
     <div style={{ maxWidth: 900, margin: "40px auto", padding: "0 20px" }}>
       <h1>Marketing Page Views</h1>
       <p className="text-muted">
-        Anonymous visit log for the public marketing pages (pricing.html etc.) — no cookies, no visitor identity,
+        Anonymous visit log for the public marketing pages (roma-erp.html etc.) — no cookies, no visitor identity,
         just volume, page, and where it came from (Referrer).
       </p>
 
