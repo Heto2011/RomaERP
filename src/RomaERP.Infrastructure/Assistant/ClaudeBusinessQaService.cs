@@ -16,16 +16,21 @@ namespace RomaERP.Infrastructure.Assistant;
 public class ClaudeBusinessQaService : IBusinessQaService
 {
     private const string AnthropicVersion = "2023-06-01";
+    // Real-money guardrail: caps how many Claude calls one tenant can rack up in a day. Generous for any
+    // normal use, but stops a stuck loop or a bored user from spending unbounded API cost unattended.
+    private const int DailyLimit = 50;
 
     private readonly HttpClient _httpClient;
     private readonly ClaudeSettings _settings;
     private readonly IFinancialReportService _reports;
+    private readonly IAiUsageLimiter _usageLimiter;
 
-    public ClaudeBusinessQaService(HttpClient httpClient, IOptions<ClaudeSettings> settings, IFinancialReportService reports)
+    public ClaudeBusinessQaService(HttpClient httpClient, IOptions<ClaudeSettings> settings, IFinancialReportService reports, IAiUsageLimiter usageLimiter)
     {
         _httpClient = httpClient;
         _settings = settings.Value;
         _reports = reports;
+        _usageLimiter = usageLimiter;
     }
 
     public async Task<string> AskAsync(string question, CancellationToken ct = default)
@@ -38,6 +43,8 @@ public class ClaudeBusinessQaService : IBusinessQaService
             throw new ValidationAppException(
                 "المساعد الذكي مش مفعّل لسه — لازم تضيف مفتاح Claude API في إعدادات السيرفر (Claude:ApiKey) عشان يشتغل.");
         }
+
+        await _usageLimiter.EnsureWithinDailyLimitAsync("BusinessQa", DailyLimit, ct);
 
         var today = DateTime.UtcNow.Date;
         var monthStart = new DateTime(today.Year, today.Month, 1);

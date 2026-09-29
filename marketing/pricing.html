@@ -591,31 +591,31 @@
   // egpBase/egpListPrice/egpAnnualPrice are a SEPARATE, independent EGP price list — NOT a currency
   // conversion of the SAR numbers (Egypt pricing is set on its own, same as any local pricing decision).
   //
-  // egpListPrice, where present, is the anchor "regular" price shown crossed out next to egpBase — a
-  // founding-customer discount for our first Egyptian customers (zero customers there so far), limited
-  // to LAUNCH_OFFER_LIMIT customers and the first 3 months of their subscription, then it returns to
-  // egpListPrice. Essential's SAR/Gulf listPrice is a separate, earlier launch-offer decision (not
-  // Egypt-specific) and is untouched here. Business/Professional get an EGP-only egpListPrice (no SAR
-  // listPrice) so the launch badge and old-price strikethrough only appear when EGP is selected —
-  // whether a tier shows the offer is derived from listPrice/egpListPrice existing (see
-  // hasLaunchOffer()), not a separate flag.
+  // egpListPrice is the tier's actual published Egypt price (3,000/7,000/12,000) — unchanged, shown
+  // crossed out as the anchor. egpBase is a 50%-off founding-customer price for our first Egyptian
+  // customers (zero customers there so far), limited to LAUNCH_OFFER_LIMIT customers and the first 3
+  // months of their subscription, then it returns to egpListPrice. Essential's SAR/Gulf listPrice is a
+  // separate, earlier launch-offer decision (not Egypt-specific) and is untouched here.
+  // Business/Professional get an EGP-only egpListPrice (no SAR listPrice) so the launch badge and
+  // old-price strikethrough only appear when EGP is selected — whether a tier shows the offer is derived
+  // from listPrice/egpListPrice existing (see hasLaunchOffer()), not a separate flag.
   const TIERS = [
     {
       id: "essential", emoji: "🟢", name: "Essential",
       desc: { ar: "حتى 3 فروع و10 مستخدمين", en: "Up to 3 branches and 10 users" },
       base: 149, listPrice: 499, annualPrice: 1500,
-      egpBase: 3000, egpListPrice: 10000, egpAnnualPrice: 30000,
+      egpBase: 1500, egpListPrice: 3000, egpAnnualPrice: 30000,
       includedBranches: 3, includedUsers: 10,
     },
     {
       id: "business", emoji: "🔵", name: "Business",
       desc: { ar: "شركات متعددة الفروع", en: "Multi-branch businesses" },
-      base: 349, egpBase: 7000, egpListPrice: 11000, includedBranches: 7, includedUsers: 25, recommended: true,
+      base: 349, egpBase: 3500, egpListPrice: 7000, includedBranches: 7, includedUsers: 25, recommended: true,
     },
     {
       id: "professional", emoji: "🟣", name: "Professional",
       desc: { ar: "نشاط أكبر واحتياج موسّع", en: "Larger operations, wider needs" },
-      base: 649, egpBase: 12000, egpListPrice: 18500, includedBranches: 15, includedUsers: 50,
+      base: 649, egpBase: 6000, egpListPrice: 12000, includedBranches: 15, includedUsers: 50,
     },
     {
       id: "enterprise", emoji: "🔴", name: "Enterprise",

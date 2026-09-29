@@ -102,6 +102,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
 
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<LoginHistory> LoginHistories => Set<LoginHistory>();
+    public DbSet<RomaERP.Domain.Assistant.AiUsageCounter> AiUsageCounters => Set<RomaERP.Domain.Assistant.AiUsageCounter>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
