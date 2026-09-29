@@ -587,26 +587,35 @@
   // ---- Configurable pricing assumptions (placeholders — tune before launch) ----
   // Base currency is SAR. All other currencies are approximate conversions for display only —
   // real billing/tax will follow each country's law once we actually land a customer there.
-  const LAUNCH_OFFER_LIMIT = 100;
+  const LAUNCH_OFFER_LIMIT = 15;
   // egpBase/egpListPrice/egpAnnualPrice are a SEPARATE, independent EGP price list — NOT a currency
   // conversion of the SAR numbers (Egypt pricing is set on its own, same as any local pricing decision).
+  //
+  // egpListPrice, where present, is the anchor "regular" price shown crossed out next to egpBase — a
+  // founding-customer discount for our first Egyptian customers (zero customers there so far), limited
+  // to LAUNCH_OFFER_LIMIT customers and the first 3 months of their subscription, then it returns to
+  // egpListPrice. Essential's SAR/Gulf listPrice is a separate, earlier launch-offer decision (not
+  // Egypt-specific) and is untouched here. Business/Professional get an EGP-only egpListPrice (no SAR
+  // listPrice) so the launch badge and old-price strikethrough only appear when EGP is selected —
+  // whether a tier shows the offer is derived from listPrice/egpListPrice existing (see
+  // hasLaunchOffer()), not a separate flag.
   const TIERS = [
     {
       id: "essential", emoji: "🟢", name: "Essential",
       desc: { ar: "حتى 3 فروع و10 مستخدمين", en: "Up to 3 branches and 10 users" },
       base: 149, listPrice: 499, annualPrice: 1500,
       egpBase: 3000, egpListPrice: 10000, egpAnnualPrice: 30000,
-      launchOffer: true, includedBranches: 3, includedUsers: 10,
+      includedBranches: 3, includedUsers: 10,
     },
     {
       id: "business", emoji: "🔵", name: "Business",
       desc: { ar: "شركات متعددة الفروع", en: "Multi-branch businesses" },
-      base: 349, egpBase: 7000, includedBranches: 7, includedUsers: 25, recommended: true,
+      base: 349, egpBase: 7000, egpListPrice: 11000, includedBranches: 7, includedUsers: 25, recommended: true,
     },
     {
       id: "professional", emoji: "🟣", name: "Professional",
       desc: { ar: "نشاط أكبر واحتياج موسّع", en: "Larger operations, wider needs" },
-      base: 649, egpBase: 12000, includedBranches: 15, includedUsers: 50,
+      base: 649, egpBase: 12000, egpListPrice: 18500, includedBranches: 15, includedUsers: 50,
     },
     {
       id: "enterprise", emoji: "🔴", name: "Enterprise",
@@ -719,7 +728,7 @@
       tiersEyebrow: "الباقات", tiersHeading: "نقطة بداية، مش قالب جاهز",
       tiersDesc: "الأسعار دي بداية معقولة لكل حجم نشاط. استخدم الحاسبة تحت عشان تشوف السعر الفعلي المناسب لك بالظبط.",
       currencyLabel: "اعرض الأسعار بعملة:",
-      launchBadge: `عرض الإطلاق — أول ${LAUNCH_OFFER_LIMIT} عميل`, recommendedBadge: "الأكثر طلبًا",
+      launchBadge: `عرض تأسيسي — أول ${LAUNCH_OFFER_LIMIT} عميل (٣ شهور)`, recommendedBadge: "الأكثر طلبًا",
       perMonth: "شهريًا", customPricePrefix: "من ", customPriceNote: "سعر مخصص حسب النشاط",
       includesUpTo: (branches, users, branchWord) => `يشمل حتى ${branches} ${branchWord} و ${users} مستخدمين`,
       branchWord1: "فرع", branchWordMany: "فروع",
@@ -838,7 +847,7 @@
       tiersEyebrow: "Plans", tiersHeading: "A starting point, not a rigid template",
       tiersDesc: "These prices are a reasonable start for every business size. Use the calculator below to see the exact price that fits you.",
       currencyLabel: "Show prices in:",
-      launchBadge: `Launch offer — first ${LAUNCH_OFFER_LIMIT} customers`, recommendedBadge: "Most popular",
+      launchBadge: `Founding offer — first ${LAUNCH_OFFER_LIMIT} customers (3 months)`, recommendedBadge: "Most popular",
       perMonth: "/ month", customPricePrefix: "From ", customPriceNote: "Custom pricing based on your activity",
       includesUpTo: (branches, users, branchWord) => `Includes up to ${branches} ${branchWord} and ${users} users`,
       branchWord1: "branch", branchWordMany: "branches",
@@ -1069,20 +1078,28 @@
     renderForecast();
   }
 
+  // Whether to show the founding-customer badge + crossed-out old price: derived from listPrice
+  // (SAR/Gulf) or egpListPrice (Egypt) actually existing for the currency in view, not a separate flag
+  // — so a tier can carry the offer in one currency without it leaking into another.
+  function hasLaunchOffer(tier) {
+    return currentCurrency === "EGP" ? !!tier.egpListPrice : !!tier.listPrice;
+  }
+
   function renderTiers() {
     const t = T[currentLang];
     const unit = CURRENCIES[currentCurrency].unit[currentLang];
     const grid = document.getElementById("tiersGrid");
     grid.innerHTML = TIERS.map(tier => {
       const branchWord = tier.includedBranches === 1 ? t.branchWord1 : t.branchWordMany;
+      const launchOffer = hasLaunchOffer(tier);
       return `
       <div class="tier ${tier.recommended ? "is-recommended" : ""}">
-        ${tier.launchOffer ? `<div class="tier-badge is-launch">${t.launchBadge}</div>` : tier.recommended ? `<div class="tier-badge">${t.recommendedBadge}</div>` : ""}
+        ${launchOffer ? `<div class="tier-badge is-launch">${t.launchBadge}</div>` : tier.recommended ? `<div class="tier-badge">${t.recommendedBadge}</div>` : ""}
         <div class="tier-emoji">${tier.emoji}</div>
         <h3 class="tier-name">${tier.name}</h3>
         <p class="tier-desc">${tier.desc[currentLang]}</p>
         <div class="tier-price">
-          ${tier.listPrice ? `<span class="tier-old-price mono">${tierAmount(tier, "listPrice", "egpListPrice")}</span>` : ""}
+          ${launchOffer ? `<span class="tier-old-price mono">${tierAmount(tier, "listPrice", "egpListPrice")}</span>` : ""}
           <span class="amount mono">${tier.custom ? t.customPricePrefix + tierAmount(tier, "base", "egpBase") : tierAmount(tier, "base", "egpBase")}</span>
           <span class="currency">${unit} ${t.perMonth}</span>
         </div>
@@ -1093,7 +1110,7 @@
           <li>${t.includeSupport}</li>
           <li>${tier.custom ? t.includeUnlimited : t.includeExtraPricing}</li>
         </ul>
-        <a href="/start-trial" class="btn ${tier.recommended || tier.launchOffer ? "btn-primary" : "btn-ghost"}">${tier.custom ? t.ctaContact : t.ctaStartTrial}</a>
+        <a href="/start-trial" class="btn ${tier.recommended || launchOffer ? "btn-primary" : "btn-ghost"}">${tier.custom ? t.ctaContact : t.ctaStartTrial}</a>
       </div>
     `;
     }).join("");
