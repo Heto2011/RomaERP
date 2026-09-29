@@ -47,13 +47,18 @@
   .grid{flex:1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; padding:32px 0 64px; max-width:900px; margin:0 auto; width:100%;}
   @media (max-width:640px){ .grid{grid-template-columns:1fr;} }
 
-  .card{position:relative; overflow:hidden; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); transition:transform .15s, border-color .15s;}
+  .card{position:relative; isolation:isolate; overflow:hidden; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); transition:transform .15s, border-color .15s;}
   .card:hover{transform:translateY(-2px); border-color:rgba(255,255,255,.3);}
-  .card.featured{background:rgba(200,134,46,.08); border-color:rgba(200,134,46,.35);}
-  .card-art{position:absolute; z-index:-1; inset-inline-end:-22px; bottom:-22px; width:150px; height:150px; opacity:.16; pointer-events:none;}
+  .card.featured{background:rgba(200,134,46,.14); border-color:rgba(200,134,46,.4); color:#c8862e;}
+  .card.erp{background:rgba(15,92,75,.26); border-color:rgba(95,208,161,.36); color:#5fd0a1;}
+  .card.voice{background:rgba(58,110,165,.14); border-color:rgba(58,110,165,.42); color:#6fa3dc;}
+  .card.tools{background:rgba(138,115,85,.14); border-color:rgba(138,115,85,.42); color:#b59a72;}
+  .card-art{position:absolute; z-index:-1; inset-inline-end:-22px; bottom:-22px; width:160px; height:160px; opacity:.27; pointer-events:none;}
   .badge{width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:#fff;}
   .card-title{font-weight:900; font-size:18px; color:#fff;}
   .card-desc{font-size:13px; color:rgba(255,255,255,.55); line-height:1.6; max-width:80%;}
+  .card-tags{display:flex; flex-wrap:wrap; gap:6px; max-width:88%;}
+  .card-tags span{font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; background:rgba(255,255,255,.09); color:rgba(255,255,255,.78);}
   .card-cta{font-size:12.5px; font-weight:700; margin-top:4px;}
   .card-cta.muted{color:rgba(255,255,255,.4);}
 
@@ -88,7 +93,7 @@
 
     <div class="grid">
       <a href="roma-hr.html" class="card featured">
-        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="var(--hr)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 21s7-6.7 7-12.2A7 7 0 1 0 5 8.8C5 14.3 12 21 12 21z"/>
           <circle cx="12" cy="8.5" r="3.3"/>
           <path d="M12 6.8V8.6l1.4 1"/>
@@ -96,11 +101,12 @@
         <div class="badge" style="background:var(--hr); color:#2c1c04;">HR</div>
         <div class="card-title">Roma HR</div>
         <div class="card-desc">حضور وانصراف بالموقع الجغرافي، رواتب تلقائية، طلبات وموافقات — لأي شركة</div>
+        <div class="card-tags"><span>حضور بالـGPS</span><span>رواتب تلقائية</span><span>إجازات وطلبات</span></div>
         <div class="card-cta" style="color:var(--hr);">جرّبه الآن ←</div>
       </a>
 
-      <a href="roma-erp.html" class="card">
-        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+      <a href="roma-erp.html" class="card erp">
+        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 21h18"/>
           <path d="M6 21V14"/>
           <path d="M11.5 21V9"/>
@@ -110,11 +116,12 @@
         <div class="badge" style="background:var(--primary);">ERP</div>
         <div class="card-title">RomaERP</div>
         <div class="card-desc">محاسبة، مبيعات، مخزون، وتقارير — نظام إدارة أعمال متكامل بالذكاء الاصطناعي</div>
+        <div class="card-tags"><span>محاسبة</span><span>مبيعات ومخزون</span><span>كاشير POS</span><span>فاتورة إلكترونية</span><span>ذكاء اصطناعي</span></div>
         <div class="card-cta" style="color:#5fd0a1;">شغال حاليًا ←</div>
       </a>
 
-      <div class="card" aria-disabled="true">
-        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="var(--voice)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+      <div class="card voice" aria-disabled="true">
+        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <rect x="9.3" y="3" width="5.4" height="10" rx="2.7"/>
           <path d="M5.5 11a6.5 6.5 0 0 0 13 0"/>
           <path d="M12 17.5V21"/>
@@ -126,8 +133,8 @@
         <div class="card-cta muted">قريبًا</div>
       </div>
 
-      <div class="card" aria-disabled="true">
-        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="var(--tools)" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round">
+      <div class="card tools" aria-disabled="true">
+        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14.7 6.3a3.6 3.6 0 0 0-4.9 4.9L4 17l3 3 5.8-5.8a3.6 3.6 0 0 0 4.9-4.9l-1.9 1.9a1.8 1.8 0 0 1-2.5-2.5l1.9-1.9z"/>
         </svg>
         <div class="badge" style="background:var(--tools);">T</div>
