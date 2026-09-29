@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RomaERP — نظام إدارة أعمال متكامل بالذكاء الاصطناعي</title>
+<meta name="description" content="بدل ما تجمع كاشير وبرنامج محاسبة وإكسل رواتب وفاتورة إلكترونية من شركات مختلفة، RomaERP بيجمعهم كلهم في اشتراك واحد بيتكلم مع نفسه، مدعوم بذكاء اصطناعي بيوفر عليك وقت ومجهود. تجربة مجانية 21 يوم من غير بطاقة بنكية.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="RomaERP">
+<meta property="og:title" content="RomaERP — نظام إدارة أعمال متكامل بالذكاء الاصطناعي">
+<meta property="og:description" content="محاسبة، نقاط بيع، مخزون، موارد بشرية، وفاتورة إلكترونية — كل ده في نظام واحد، مش خمسة برامج منفصلة.">
+<meta property="og:image" content="/og-image.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f4ee;
+    --surface: #ffffff;
+    --ink: #1c2620;
+    --ink-soft: #5b6a60;
+    --border: #e2ddd0;
+    --primary: #0f5c4b;
+    --primary-dark: #0a4438;
+    --primary-tint: #e6f0ec;
+    --accent: #c8862e;
+    --accent-tint: #faf1e2;
+    --danger: #b3452f;
+    --danger-tint: #f8ebe6;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(28,38,32,.04), 0 12px 32px -16px rgba(28,38,32,.18);
+    --hero-bg: #0a0f13;
+    --hero-ink: #f4f6f5;
+    --hero-ink-soft: rgba(244,246,245,.66);
+    --mint: #5fd0a1;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Tajawal","Segoe UI",sans-serif; line-height: 1.65; }
+  a { text-decoration: none; color: inherit; }
+  .mono { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+  section { padding: 76px 0; }
+  @media (max-width: 720px) { section { padding: 52px 0; } }
+
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 26px; border-radius: 11px; font-weight: 800; font-size: 15px; cursor: pointer; border: none; }
+  .btn-accent { background: var(--accent); color: #2c1c04; box-shadow: 0 12px 26px -12px rgba(200,134,46,.6); }
+  .btn-primary { background: var(--primary); color: #fff; }
+  .btn-ghost-dark { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.18); color: var(--hero-ink); }
+  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--ink); }
+
+  /* ---- Nav + dark hero ---- */
+  header.hero-dark { background: radial-gradient(120% 90% at 15% -10%, #16222a 0%, var(--hero-bg) 62%); color: var(--hero-ink); padding: 24px 0 68px; }
+  .dark-nav { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 56px; }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 18px; }
+  .brand-mark { width: 32px; height: 32px; border-radius: 9px; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; font-size: 14px; }
+  .brand-sub { font-size: 11.5px; color: var(--hero-ink-soft); font-weight: 700; border-inline-start: 1px solid rgba(255,255,255,.2); padding-inline-start: 10px; margin-inline-start: 2px; }
+  .nav-links { display: flex; gap: 26px; font-size: 14px; color: var(--hero-ink-soft); font-weight: 600; }
+  .nav-right { display: flex; align-items: center; gap: 14px; }
+  .nav-login { font-size: 14px; font-weight: 700; color: var(--hero-ink-soft); }
+  @media (max-width: 780px) { .nav-links { display: none; } }
+
+  .hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
+  @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } }
+  .eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 6px 16px; font-size: 12.5px; font-weight: 700; }
+  h1 { font-size: clamp(30px,4.2vw,44px); font-weight: 900; line-height: 1.32; margin: 18px 0 14px; }
+  h1 .hl { color: var(--mint); }
+  .hero-sub { font-size: 16.5px; color: var(--hero-ink-soft); max-width: 520px; line-height: 1.85; }
+  .hero-cta { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
+  .hero-trust { margin-top: 20px; font-size: 13px; color: var(--hero-ink-soft); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .hero-trust b { color: var(--hero-ink); }
+  .dot { opacity: .5; }
+
+  /* ---- "5 tools -> 1" convergence diagram ---- */
+  .converge { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.12); border-radius: 20px; padding: 26px 22px; }
+  .converge-label { font-size: 12px; color: var(--hero-ink-soft); font-weight: 700; text-align: center; margin-bottom: 14px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+  .chip { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; padding: 9px 12px; font-size: 12.5px; color: var(--hero-ink-soft); display: flex; align-items: center; gap: 6px; }
+  .converge-arrow { display: flex; justify-content: center; margin: 12px 0; color: var(--hero-ink-soft); font-size: 20px; }
+  .converge-result { background: var(--primary); border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 900; font-size: 16px; color: #fff; box-shadow: 0 16px 30px -14px rgba(15,92,75,.65); }
+
+  /* ---- Section heads ---- */
+  .section-head { text-align: center; max-width: 620px; margin: 0 auto 40px; }
+  .section-eyebrow { display: inline-block; background: var(--primary-tint); color: var(--primary); border-radius: 999px; padding: 6px 16px; font-size: 12.5px; font-weight: 800; margin-bottom: 14px; }
+  .section-head h2 { font-size: clamp(22px,3vw,30px); font-weight: 900; margin: 0 0 10px; }
+  .section-head p { color: var(--ink-soft); font-size: 15px; }
+
+  /* ---- Features grid ---- */
+  .feature-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
+  @media (max-width: 860px) { .feature-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
+  @media (max-width: 560px) { .feature-grid { grid-template-columns: 1fr; } }
+  .feature { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
+  .feature-icon { width: 40px; height: 40px; border-radius: 11px; background: var(--primary-tint); color: var(--primary); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
+  .feature-icon svg { width: 20px; height: 20px; }
+  .feature-title { font-weight: 800; font-size: 15px; margin-bottom: 6px; }
+  .feature-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
+
+  /* ---- Why different: comparison ---- */
+  .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 780px) { .compare { grid-template-columns: 1fr; } }
+  .compare-card { border-radius: 18px; padding: 26px 24px; }
+  .compare-card.old { background: var(--danger-tint); border: 1px solid #ecd3ca; }
+  .compare-card.new { background: var(--primary-tint); border: 1px solid #cfe3da; }
+  .compare-title { font-weight: 900; font-size: 15px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .compare-card.old .compare-title { color: var(--danger); }
+  .compare-card.new .compare-title { color: var(--primary); }
+  .compare-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
+  .compare-list li { font-size: 14px; display: flex; gap: 10px; align-items: flex-start; line-height: 1.6; }
+  .compare-list .mark { flex: none; font-weight: 900; }
+  .compare-card.old .mark { color: var(--danger); }
+  .compare-card.new .mark { color: var(--primary); }
+  .market-note { margin-top: 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; font-size: 13.5px; color: var(--ink-soft); line-height: 1.8; }
+  .market-note b { color: var(--ink); }
+
+  /* ---- Efficiency / AI flow ---- */
+  .efficiency { background: #10221c; color: var(--hero-ink); border-radius: 24px; padding: 46px 36px; }
+  .efficiency .section-head p { color: var(--hero-ink-soft); }
+  .efficiency .section-eyebrow { background: rgba(95,208,161,.14); color: var(--mint); }
+  .flow { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 30px 0 8px; }
+  .flow-step { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 18px 20px; min-width: 150px; text-align: center; }
+  .flow-step .n { font-size: 26px; margin-bottom: 8px; }
+  .flow-step .t { font-weight: 800; font-size: 13.5px; margin-bottom: 4px; }
+  .flow-step .d { font-size: 12px; color: var(--hero-ink-soft); line-height: 1.6; }
+  .flow-arrow { color: var(--hero-ink-soft); font-size: 20px; }
+  @media (max-width: 720px) { .flow { flex-direction: column; } .flow-arrow { transform: rotate(90deg); } }
+  .efficiency-note { text-align: center; max-width: 640px; margin: 26px auto 0; font-size: 14px; color: var(--hero-ink-soft); line-height: 1.85; }
+  .efficiency-note b { color: var(--hero-ink); }
+
+  /* ---- Trust / low-friction CTA banner ---- */
+  .cta-banner { background: var(--primary); border-radius: 24px; padding: 52px 36px; text-align: center; color: #fff; }
+  .cta-banner h2 { font-size: clamp(22px,3.4vw,30px); font-weight: 900; margin: 0 0 14px; }
+  .cta-banner p { color: rgba(255,255,255,.78); max-width: 520px; margin: 0 auto 28px; font-size: 15px; }
+  .cta-banner .btn-accent { font-size: 16px; padding: 15px 34px; }
+  .reassure { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; margin-top: 30px; }
+  .reassure-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255,255,255,.85); font-weight: 600; }
+  .reassure-item svg { width: 16px; height: 16px; color: var(--mint); flex: none; }
+
+  footer { text-align: center; padding: 28px 24px; font-size: 12.5px; color: var(--ink-soft); }
+  footer a { color: var(--primary); font-weight: 700; }
+</style>
+</head>
+<body>
+
+<header class="hero-dark">
+  <div class="wrap">
+    <nav class="dark-nav">
+      <div class="brand"><span class="brand-mark">R</span> RomaERP <span class="brand-sub">جزء من Roma Group</span></div>
+      <div class="nav-links">
+        <a href="#features">المميزات</a>
+        <a href="#why">ليه RomaERP</a>
+        <a href="pricing.html">الأسعار</a>
+        <a href="roma-group.html">← Roma Group</a>
+      </div>
+      <div class="nav-right">
+        <a href="/" class="nav-login">دخول</a>
+        <a href="/start-trial" class="btn btn-accent">ابدأ مجانًا</a>
+      </div>
+    </nav>
+
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <span class="eyebrow">🧠 مدعوم بالذكاء الاصطناعي</span>
+        <h1>نظام واحد بدل خمس برامج <span class="hl">بيتكلموا مع بعض تلقائيًا</span></h1>
+        <p class="hero-sub">محاسبة، نقاط بيع، مخزون، فاتورة إلكترونية، وموارد بشرية — كل ده في اشتراك واحد. من غير ترحيل بيانات يدوي بين برامج، ومن غير ما تدفع لخمس شركات مختلفة.</p>
+        <div class="hero-cta">
+          <a href="/start-trial" class="btn btn-accent">ابدأ تجربتك المجانية</a>
+          <a href="pricing.html" class="btn btn-ghost-dark">شوف الأسعار بالتفصيل</a>
+        </div>
+        <div class="hero-trust">
+          <b>21 يوم تجربة مجانية</b><span class="dot">·</span><span>من غير بطاقة بنكية</span><span class="dot">·</span><span>تقدر تلغي في أي وقت</span>
+        </div>
+      </div>
+
+      <div class="hero-visual">
+        <div class="converge">
+          <div class="converge-label">بدل ما تجمع البرامج دي واحد واحد</div>
+          <div class="chip-row">
+            <span class="chip">🖥️ كاشير</span>
+            <span class="chip">📒 محاسبة</span>
+            <span class="chip">📦 مخزون</span>
+            <span class="chip">🧾 فاتورة إلكترونية</span>
+            <span class="chip">👥 رواتب</span>
+          </div>
+          <div class="converge-arrow">↓</div>
+          <div class="converge-result"><span class="brand-mark" style="background:#fff;color:var(--primary-dark);">R</span> RomaERP — نظام واحد</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</header>
+
+<section id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">كل حاجة محتاجها</span>
+      <h2>مش بس محاسبة — نظام تشغيل كامل لشغلك</h2>
+      <p>كل ميزة هنا شغالة فعليًا وبتتزامن مع الباقي أوتوماتيك، مش مجرد وعد على شعار.</p>
+    </div>
+    <div class="feature-grid">
+      <div class="feature">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 3v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></div>
+        <div class="feature-title">محاسبة وقيود كاملة</div>
+        <div class="feature-desc">دليل حسابات، قيود يومية، ميزانية وقائمة دخل جاهزة أول ما تسجل أي عملية بيع أو شراء.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M8 14h2"/></svg></div>
+        <div class="feature-title">نقاط بيع (POS)</div>
+        <div class="feature-desc">كاشير سريع للفروع، متزامن لحظيًا مع المخزون والمحاسبة — من غير ترحيل يدوي آخر اليوم.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div>
+        <div class="feature-title">مخزون وتكاليف</div>
+        <div class="feature-desc">تتبع كميات المخزون بكل فرع، وتكلفة كل منتج تتحدث تلقائيًا مع كل عملية شراء أو بيع.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6"/><path d="M9 16h4"/><path d="M4 19V6a2 2 0 0 1 2-2h9l5 5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/></svg></div>
+        <div class="feature-title">فاتورة إلكترونية معتمدة</div>
+        <div class="feature-desc">فواتير متوافقة مع مصلحة الضرائب المصرية (ETA)، بتتبعت أوتوماتيك من غير خطوات يدوية إضافية.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.7 7-12.2A7 7 0 1 0 5 8.8C5 14.3 12 21 12 21z"/><circle cx="12" cy="8.5" r="3.3"/></svg></div>
+        <div class="feature-title">موارد بشرية ورواتب</div>
+        <div class="feature-desc">حضور وانصراف، طلبات إجازة، ورواتب تتحسب من ساعات الشغل الفعلية — مدمجة، مش برنامج تاني منفصل.</div>
+      </div>
+      <div class="feature">
+        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 0-4 4v1a4 4 0 0 0-2 3.5c0 1 .4 1.9 1 2.5l-1 3.5 3-1a4 4 0 0 0 3 1.5h0a4 4 0 0 0 3-1.5l3 1-1-3.5a3.9 3.9 0 0 0 1-2.5A4 4 0 0 0 16 8V7a4 4 0 0 0-4-4Z"/></svg></div>
+        <div class="feature-title">مساعد ذكاء اصطناعي</div>
+        <div class="feature-desc">يسجل مصروفاتك من صورة الإيصال، يطابق كشف حساب البنك تلقائيًا، ويجاوبك على أسئلتك المالية.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="why">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="section-eyebrow">ليه RomaERP مختلف</span>
+      <h2>مش بديل لبرنامج واحد — بديل لخمس برامج مع بعض</h2>
+      <p>الطريقة العادية إنك تجمع أدوات منفصلة لكل احتياج. RomaERP بيلغي الحاجة لكل ده من الأول.</p>
+    </div>
+    <div class="compare">
+      <div class="compare-card old">
+        <div class="compare-title">✕ الطريقة التقليدية</div>
+        <ul class="compare-list">
+          <li><span class="mark">✕</span> كاشير من شركة، محاسبة من شركة تانية، رواتب على إكسل منفصل</li>
+          <li><span class="mark">✕</span> بيانات كل برنامج لوحدها — لازم تنقلها يدوي بين الأنظمة</li>
+          <li><span class="mark">✕</span> اشتراكات متعددة، وفواتير ودعم فني من جهات مختلفة</li>
+          <li><span class="mark">✕</span> فاتورة إلكترونية غالبًا خطوة إضافية منفصلة تمامًا</li>
+        </ul>
+      </div>
+      <div class="compare-card new">
+        <div class="compare-title">✓ مع RomaERP</div>
+        <ul class="compare-list">
+          <li><span class="mark">✓</span> كل الأنظمة دي مبنية جوه بعضها من الأول، مش موصّلة ببعض بعدين</li>
+          <li><span class="mark">✓</span> أي عملية بيع أو شراء بتتحدث في المحاسبة والمخزون فورًا</li>
+          <li><span class="mark">✓</span> اشتراك واحد، فاتورة واحدة، فريق دعم واحد بالعربي</li>
+          <li><span class="mark">✓</span> الفاتورة الإلكترونية جزء من نفس شاشة البيع، مش خطوة زيادة</li>
+        </ul>
+      </div>
+    </div>
+    <div class="market-note">
+      <b>بالأرقام:</b> أنظمة الكاشير المنفصلة في السوق بتتكلف عادة من 1,500 لـ3,400 جنيه شهريًا وبتغطي نقطة البيع بس، وبرامج المحاسبة المنفصلة تبدأ من حوالي 1,500 جنيه وبرضو من غير نقطة بيع أو موارد بشرية أو فاتورة إلكترونية. يعني لو جمعت الأدوات دي مع بعض هتدفع أضعاف كده — RomaERP بيجمعهم في اشتراك واحد يبدأ من أقل من ده.
+    </div>
+  </div>
+</section>
+
+<section id="efficiency">
+  <div class="wrap">
+    <div class="efficiency">
+      <div class="section-head">
+        <span class="section-eyebrow">إزاي بنقدر نقدملك سعر أقل</span>
+        <h2>مش بنقدملك أقل — بنشتغل بكفاءة أكتر</h2>
+        <p>الذكاء الاصطناعي بياخد شغل يدوي كان محتاج وقت وموظف، وده بيوفر عليك وعلينا — من غير ما نضحي بميزة واحدة.</p>
+      </div>
+      <div class="flow">
+        <div class="flow-step"><div class="n">🧾</div><div class="t">صورة إيصال</div><div class="d">تصور الإيصال بموبايلك</div></div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-step"><div class="n">🤖</div><div class="t">قراءة تلقائية</div><div class="d">المساعد يستخرج المبلغ والحساب المناسب</div></div>
+        <div class="flow-arrow">←</div>
+        <div class="flow-step"><div class="n">✅</div><div class="t">اعتماد بضغطة</div><div class="d">تراجع وتوافق، والقيد يترحّل تلقائيًا</div></div>
+      </div>
+      <p class="efficiency-note">نفس المبدأ في المطابقة البنكية والرد على تذاكر الدعم — <b>أي مجهود يدوي متكرر بياخده الذكاء الاصطناعي</b>، فبنقدر نديك نظام متكامل بسعر تنافسي من غير ما نحتاج فريق دعم أو محاسبة ضخم يرفع التكلفة عليك.</p>
+    </div>
+  </div>
+</section>
+
+<section id="trial">
+  <div class="wrap">
+    <div class="cta-banner">
+      <h2>جرّب من غير ما تفكّر كتير</h2>
+      <p>21 يوم تجربة مجانية كاملة، وبياناتك من أول لحظة في قاعدة بيانات خاصة بيك لوحدك — مش متقاسمة مع حد.</p>
+      <a href="/start-trial" class="btn btn-accent">ابدأ تجربتك المجانية دلوقتي</a>
+      <div class="reassure">
+        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> من غير بطاقة بنكية</span>
+        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> تقدر تلغي في أي وقت</span>
+        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> بياناتك معزولة بالكامل</span>
+        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> دعم فني بالعربي</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  RomaERP — جزء من <a href="roma-group.html">Roma Group</a> · <a href="pricing.html">الأسعار</a> · <a href="/terms.html">الشروط والأحكام</a>
+</footer>
+
+<script>
+  fetch("/api/marketing/pageview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null }),
+  }).catch(() => {});
+</script>
+</body>
+</html>

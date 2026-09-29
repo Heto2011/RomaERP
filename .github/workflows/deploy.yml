@@ -227,5 +227,6 @@ jobs:
             cp /root/RomaERP/marketing/og-image.png /var/www/romaerp/og-image.png
             cp /root/RomaERP/marketing/roma-group.html /var/www/romaerp/roma-group.html
             cp /root/RomaERP/marketing/roma-hr.html /var/www/romaerp/roma-hr.html
+            cp /root/RomaERP/marketing/roma-erp.html /var/www/romaerp/roma-erp.html
 
             echo "DEPLOY_OK"
