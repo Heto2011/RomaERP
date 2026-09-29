@@ -729,7 +729,7 @@
       tiersDesc: "الأسعار دي بداية معقولة لكل حجم نشاط. استخدم الحاسبة تحت عشان تشوف السعر الفعلي المناسب لك بالظبط.",
       currencyLabel: "اعرض الأسعار بعملة:",
       launchBadge: `عرض تأسيسي — أول ${LAUNCH_OFFER_LIMIT} عميل (٣ شهور)`, recommendedBadge: "الأكثر طلبًا",
-      perMonth: "شهريًا", customPricePrefix: "من ", customPriceNote: "سعر مخصص حسب النشاط",
+      perMonth: "شهريًا", customPriceLabel: "سعر مخصص", customPriceNote: "بيتحدد حسب حجم ونوع النشاط",
       includesUpTo: (branches, users, branchWord) => `يشمل حتى ${branches} ${branchWord} و ${users} مستخدمين`,
       branchWord1: "فرع", branchWordMany: "فروع",
       annualNote: (amount, unit) => `أو ${amount} ${unit} سنويًا (وفّر أكتر)`,
@@ -848,7 +848,7 @@
       tiersDesc: "These prices are a reasonable start for every business size. Use the calculator below to see the exact price that fits you.",
       currencyLabel: "Show prices in:",
       launchBadge: `Founding offer — first ${LAUNCH_OFFER_LIMIT} customers (3 months)`, recommendedBadge: "Most popular",
-      perMonth: "/ month", customPricePrefix: "From ", customPriceNote: "Custom pricing based on your activity",
+      perMonth: "/ month", customPriceLabel: "Custom pricing", customPriceNote: "Based on the size and type of your business",
       includesUpTo: (branches, users, branchWord) => `Includes up to ${branches} ${branchWord} and ${users} users`,
       branchWord1: "branch", branchWordMany: "branches",
       annualNote: (amount, unit) => `or ${amount} ${unit} yearly (save more)`,
@@ -1099,9 +1099,11 @@
         <h3 class="tier-name">${tier.name}</h3>
         <p class="tier-desc">${tier.desc[currentLang]}</p>
         <div class="tier-price">
+          ${tier.custom ? `<span class="amount mono">${t.customPriceLabel}</span>` : `
           ${launchOffer ? `<span class="tier-old-price mono">${tierAmount(tier, "listPrice", "egpListPrice")}</span>` : ""}
-          <span class="amount mono">${tier.custom ? t.customPricePrefix + tierAmount(tier, "base", "egpBase") : tierAmount(tier, "base", "egpBase")}</span>
+          <span class="amount mono">${tierAmount(tier, "base", "egpBase")}</span>
           <span class="currency">${unit} ${t.perMonth}</span>
+          `}
         </div>
         <div class="tier-price-note">${tier.custom ? t.customPriceNote : t.includesUpTo(tier.includedBranches, tier.includedUsers, branchWord)}</div>
         ${tier.annualPrice ? `<div class="tier-annual-note">${t.annualNote(tierAmount(tier, "annualPrice", "egpAnnualPrice"), unit)}</div>` : ""}
