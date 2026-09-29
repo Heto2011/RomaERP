@@ -134,13 +134,14 @@ function HomeRoute() {
   return <Dashboard />;
 }
 
-// A logged-out visitor hitting the bare domain sees the public marketing/pricing page (a plain static
-// file, not part of this SPA) instead of being dropped straight on a login form — a real browser
-// navigation, not React Router, since the target lives outside the app's routes entirely.
+// A logged-out visitor hitting the bare domain lands on the Roma Group hub (a plain static file, not
+// part of this SPA) where they pick which product they want — RomaERP, Roma HR, ... — instead of being
+// dropped straight on a login form. A real browser navigation, not React Router, since the target lives
+// outside the app's routes entirely. Returning customers log in from links on the hub itself.
 function RootRoute() {
   const { user } = useAuth();
   if (!user) {
-    window.location.replace("/pricing.html");
+    window.location.replace("/roma-group.html");
     return null;
   }
   return (
