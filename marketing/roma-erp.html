@@ -1,14 +1,14 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="en" dir="ltr">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RomaERP — نظام إدارة أعمال متكامل بالذكاء الاصطناعي</title>
-<meta name="description" content="بدل ما تجمع كاشير وبرنامج محاسبة وإكسل رواتب وفاتورة إلكترونية من شركات مختلفة، RomaERP بيجمعهم كلهم في اشتراك واحد بيتكلم مع نفسه، مدعوم بذكاء اصطناعي بيوفر عليك وقت ومجهود. تجربة مجانية 21 يوم من غير بطاقة بنكية.">
+<title>RomaERP — a complete AI-powered business management system</title>
+<meta name="description" content="Accounting, POS, inventory, HR and e-invoicing in one AI-powered subscription instead of five separate programs. 21-day free trial, no credit card.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="RomaERP">
-<meta property="og:title" content="RomaERP — نظام إدارة أعمال متكامل بالذكاء الاصطناعي">
-<meta property="og:description" content="محاسبة، نقاط بيع، مخزون، موارد بشرية، وفاتورة إلكترونية — كل ده في نظام واحد، مش خمسة برامج منفصلة.">
+<meta property="og:title" content="RomaERP — manage your business smarter">
+<meta property="og:description" content="Accounting, POS, inventory, HR and e-invoicing in one AI-powered subscription. 21-day free trial, no credit card.">
 <meta property="og:image" content="/og-image.png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -37,74 +37,336 @@
     --hero-ink: #f4f6f5;
     --hero-ink-soft: rgba(244,246,245,.66);
     --mint: #5fd0a1;
+    --sky: #3aa0c4;
   }
   * { box-sizing: border-box; }
-  body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Tajawal","Segoe UI",sans-serif; line-height: 1.65; }
-  a { text-decoration: none; color: inherit; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Tajawal", "Segoe UI", sans-serif;
+    line-height: 1.6;
+  }
   .mono { font-family: "IBM Plex Mono", monospace; font-variant-numeric: tabular-nums; }
   .wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
-  section { padding: 76px 0; }
-  @media (max-width: 720px) { section { padding: 52px 0; } }
 
-  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 13px 26px; border-radius: 11px; font-weight: 800; font-size: 15px; cursor: pointer; border: none; }
-  .btn-accent { background: var(--accent); color: #2c1c04; box-shadow: 0 12px 26px -12px rgba(200,134,46,.6); }
-  .btn-primary { background: var(--primary); color: #fff; }
-  .btn-ghost-dark { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.18); color: var(--hero-ink); }
-  .btn-ghost { background: var(--surface); border: 1px solid var(--border); color: var(--ink); }
+  /* ---- Dark hero ---- */
+  header.hero-dark {
+    background: radial-gradient(120% 90% at 15% -10%, #16222a 0%, var(--hero-bg) 62%);
+    color: var(--hero-ink);
+    padding: 24px 0 60px;
+  }
+  .dark-nav {
+    display: flex; align-items: center; justify-content: space-between;
+    flex-wrap: wrap; gap: 14px; margin-bottom: 52px;
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 900; font-size: 20px; color: var(--primary-dark);
+  }
+  .dark-nav .brand { color: #fff; }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 15px; font-weight: 900; flex-shrink: 0;
+  }
+  .nav-links { display: flex; gap: 22px; font-size: 14px; font-weight: 700; flex-wrap: wrap; }
+  .nav-links a { color: var(--hero-ink-soft); text-decoration: none; }
+  .nav-links a:hover { color: #fff; }
+  .nav-right { display: flex; align-items: center; gap: 10px; }
+  .lang-toggle {
+    background: rgba(255,255,255,.08); color: #fff; border: 1px solid rgba(255,255,255,.18);
+    border-radius: 999px; padding: 7px 16px; font-weight: 700; font-size: 13px;
+    cursor: pointer; font-family: inherit;
+  }
+  .lang-toggle:hover { border-color: rgba(255,255,255,.4); }
 
-  /* ---- Nav + dark hero ---- */
-  header.hero-dark { background: radial-gradient(120% 90% at 15% -10%, #16222a 0%, var(--hero-bg) 62%); color: var(--hero-ink); padding: 24px 0 68px; }
-  .dark-nav { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; margin-bottom: 56px; }
-  .brand { display: flex; align-items: center; gap: 10px; font-weight: 900; font-size: 18px; }
-  .brand-mark { width: 32px; height: 32px; border-radius: 9px; background: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 900; color: #fff; font-size: 14px; }
-  .brand-sub { font-size: 11.5px; color: var(--hero-ink-soft); font-weight: 700; border-inline-start: 1px solid rgba(255,255,255,.2); padding-inline-start: 10px; margin-inline-start: 2px; }
-  .nav-links { display: flex; gap: 26px; font-size: 14px; color: var(--hero-ink-soft); font-weight: 600; }
-  .nav-right { display: flex; align-items: center; gap: 14px; }
-  .nav-login { font-size: 14px; font-weight: 700; color: var(--hero-ink-soft); }
-  @media (max-width: 780px) { .nav-links { display: none; } }
+  .hero-grid { display: grid; grid-template-columns: 1.05fr 1fr; gap: 44px; align-items: center; }
+  h1 {
+    font-size: clamp(28px, 3.6vw, 42px);
+    font-weight: 900;
+    margin: 0 0 16px;
+    text-wrap: balance;
+    color: #fff;
+  }
+  h1 span { color: var(--mint); }
+  .hero-sub { max-width: 480px; color: var(--hero-ink-soft); font-size: 16.5px; margin: 0 0 8px; }
+  .hero-cta { margin-top: 26px; display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 13px 26px; border-radius: 999px;
+    font-weight: 700; font-size: 15px;
+    text-decoration: none; cursor: pointer; border: none;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--primary); color: #fff; box-shadow: 0 10px 24px -10px rgba(15,92,75,.55); }
+  .btn-accent { background: var(--accent); color: #2c1c04; box-shadow: 0 10px 24px -10px rgba(200,134,46,.55); }
+  .btn-ghost { background: var(--surface); color: var(--ink); border: 1px solid var(--border); }
+  .btn-ghost-dark { background: rgba(255,255,255,.06); color: #fff; border: 1px solid rgba(255,255,255,.2); }
 
-  .hero-grid { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
-  @media (max-width: 900px) { .hero-grid { grid-template-columns: 1fr; } }
-  .eyebrow { display: inline-flex; align-items: center; gap: 8px; background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.16); border-radius: 999px; padding: 6px 16px; font-size: 12.5px; font-weight: 700; }
-  h1 { font-size: clamp(30px,4.2vw,44px); font-weight: 900; line-height: 1.32; margin: 18px 0 14px; }
-  h1 .hl { color: var(--mint); }
-  .hero-sub { font-size: 16.5px; color: var(--hero-ink-soft); max-width: 520px; line-height: 1.85; }
-  .hero-cta { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
-  .hero-trust { margin-top: 20px; font-size: 13px; color: var(--hero-ink-soft); display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-  .hero-trust b { color: var(--hero-ink); }
-  .dot { opacity: .5; }
+  .hero-trust { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 22px; font-size: 12.5px; color: var(--hero-ink-soft); }
+  .hero-trust span { display: inline-flex; align-items: center; gap: 6px; }
 
-  /* ---- "5 tools -> 1" convergence diagram ---- */
-  .converge { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.12); border-radius: 20px; padding: 26px 22px; }
-  .converge-label { font-size: 12px; color: var(--hero-ink-soft); font-weight: 700; text-align: center; margin-bottom: 14px; }
-  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
-  .chip { background: rgba(255,255,255,.07); border: 1px solid rgba(255,255,255,.14); border-radius: 10px; padding: 9px 12px; font-size: 12.5px; color: var(--hero-ink-soft); display: flex; align-items: center; gap: 6px; }
-  .converge-arrow { display: flex; justify-content: center; margin: 12px 0; color: var(--hero-ink-soft); font-size: 20px; }
-  .converge-result { background: var(--primary); border-radius: 14px; padding: 16px 20px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 900; font-size: 16px; color: #fff; box-shadow: 0 16px 30px -14px rgba(15,92,75,.65); }
+  .industries-strip { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 26px; }
+  .industries-strip span {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14);
+    border-radius: 999px; padding: 7px 14px; font-size: 12.5px; font-weight: 700;
+    color: var(--hero-ink-soft);
+  }
 
-  /* ---- Section heads ---- */
+  /* Device mockup */
+  .device-stack { display: flex; align-items: flex-end; justify-content: center; gap: 14px; }
+  .laptop { flex: 1; max-width: 480px; background: #1a232c; border-radius: 14px; padding: 10px; box-shadow: 0 40px 90px -30px rgba(0,0,0,.65); }
+  .laptop-base { height: 8px; width: 60%; margin: 8px auto 0; background: #232e38; border-radius: 0 0 10px 10px; }
+  .laptop-screen { background: #0d1319; border-radius: 8px; overflow: hidden; display: flex; min-height: 340px; }
+  .preview-sidebar { width: 160px; flex-shrink: 0; border-inline-end: 1px solid #202a33; padding: 14px 0; display: flex; flex-direction: column; gap: 2px; }
+  .preview-sidebar .brand { color: #fff; font-weight: 900; font-size: 14px; padding: 0 16px 14px; margin: 0; }
+  .preview-sidebar a { padding: 8px 16px; font-size: 12.5px; color: #8b96a3; }
+  .preview-sidebar a.active { background: var(--sky); color: #fff; font-weight: 700; }
+  .preview-main { flex: 1; padding: 18px 20px; min-width: 0; color: #e5e9ee; }
+  .preview-topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .preview-topbar .greeting { font-size: 15px; font-weight: 900; color: #fff; }
+  .preview-topbar .bell { width: 26px; height: 26px; border-radius: 50%; background: #161e26; border: 1px solid #232e38; display: flex; align-items: center; justify-content: center; font-size: 12px; }
+  .preview-main h2 { font-size: 16.5px; font-weight: 900; margin: 0 0 14px; color: #fff; }
+  .preview-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 16px; }
+  .preview-stat { background: #161e26; border: 1px solid #232e38; border-radius: 10px; padding: 10px 12px; }
+  .preview-stat .label { font-size: 10.5px; color: #8b96a3; margin-bottom: 5px; }
+  .preview-stat .value-row { display: flex; align-items: baseline; gap: 6px; }
+  .preview-stat .value { font-size: 16px; font-weight: 900; color: #fff; font-family: "IBM Plex Mono", monospace; }
+  .preview-stat .value.up { color: var(--mint); }
+  .preview-stat .value.warn { color: #e0a94c; }
+  .preview-stat .delta { font-size: 10.5px; font-weight: 700; font-family: "IBM Plex Mono", monospace; }
+  .preview-stat .delta.up { color: var(--mint); }
+  .preview-stat .delta.down { color: #e0725f; }
+  .chart-row { display: flex; align-items: center; gap: 16px; background: #161e26; border: 1px solid #232e38; border-radius: 10px; padding: 12px 14px; }
+  .line-chart-block { flex: 1.4; min-width: 0; }
+  .line-chart-block .caption { font-size: 10.5px; color: #8b96a3; margin-top: 4px; }
+  .donut-block { display: flex; align-items: center; gap: 10px; flex: 1; }
+  .donut { width: 78px; height: 78px; border-radius: 50%; flex-shrink: 0; position: relative; }
+  .donut::after { content: ""; position: absolute; inset: 14px; border-radius: 50%; background: #161e26; }
+  .donut-legend { display: flex; flex-direction: column; gap: 4px; font-size: 10px; color: #c7cdd4; }
+  .donut-legend .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; margin-inline-end: 5px; }
+
+  .phone { width: 96px; flex-shrink: 0; background: #1a232c; border-radius: 18px; padding: 8px 6px; box-shadow: 0 30px 70px -28px rgba(0,0,0,.6); }
+  .phone-screen { background: #0d1319; border-radius: 12px; padding: 12px 8px; min-height: 190px; }
+  .phone-screen .brand { color: #fff; font-weight: 900; font-size: 10px; text-align: center; margin: 0 0 10px; }
+  .phone-stat { background: #161e26; border-radius: 8px; padding: 7px 8px; margin-bottom: 6px; }
+  .phone-stat .label { font-size: 7.5px; color: #8b96a3; }
+  .phone-stat .value { font-size: 11px; font-weight: 900; color: var(--mint); font-family: "IBM Plex Mono", monospace; }
+  @media (max-width: 700px) { .phone { display: none; } }
+
+  section { padding: 40px 0; }
   .section-head { text-align: center; max-width: 620px; margin: 0 auto 40px; }
-  .section-eyebrow { display: inline-block; background: var(--primary-tint); color: var(--primary); border-radius: 999px; padding: 6px 16px; font-size: 12.5px; font-weight: 800; margin-bottom: 14px; }
-  .section-head h2 { font-size: clamp(22px,3vw,30px); font-weight: 900; margin: 0 0 10px; }
-  .section-head p { color: var(--ink-soft); font-size: 15px; }
+  .section-head .eyebrow {
+    color: var(--primary); font-weight: 700; font-size: 13px;
+    letter-spacing: .04em; text-transform: uppercase; margin-bottom: 10px; display: block;
+  }
+  .section-head h2 { font-size: 28px; margin: 0 0 10px; font-weight: 900; }
+  .section-head p { color: var(--ink-soft); margin: 0; }
+  .section-head.on-dark h2, .section-head.on-dark .eyebrow { color: #fff; }
+  .section-head.on-dark .eyebrow { color: var(--mint); }
+  .section-head.on-dark p { color: rgba(255,255,255,.68); }
 
-  /* ---- Features grid ---- */
-  .feature-grid { display: grid; grid-template-columns: repeat(3,minmax(0,1fr)); gap: 16px; }
-  @media (max-width: 860px) { .feature-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } }
-  @media (max-width: 560px) { .feature-grid { grid-template-columns: 1fr; } }
-  .feature { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 22px; }
-  .feature-icon { width: 40px; height: 40px; border-radius: 11px; background: var(--primary-tint); color: var(--primary); display: flex; align-items: center; justify-content: center; margin-bottom: 12px; }
-  .feature-icon svg { width: 20px; height: 20px; }
-  .feature-title { font-weight: 800; font-size: 15px; margin-bottom: 6px; }
-  .feature-desc { font-size: 13px; color: var(--ink-soft); line-height: 1.7; }
+  /* Feature icon grid */
+  .icon-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  .icon-tile {
+    display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 18px 10px;
+  }
+  .icon-tile .icon {
+    width: 40px; height: 40px; border-radius: 11px; background: var(--primary-tint); color: var(--primary);
+    display: flex; align-items: center; justify-content: center; font-size: 19px;
+  }
+  .icon-tile span.label { font-size: 12.5px; font-weight: 700; }
 
-  /* ---- Why different: comparison ---- */
+  /* Audiences */
+  .audience-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+  .audience-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 14px;
+    padding: 20px 14px; text-align: center; box-shadow: var(--shadow);
+  }
+  .audience-card .icon { font-size: 26px; margin-bottom: 10px; }
+  .audience-card h4 { font-size: 14px; font-weight: 900; margin: 0 0 6px; }
+  .audience-card p { font-size: 12px; color: var(--ink-soft); margin: 0; }
+
+  /* AI showcase (dark green) */
+  .ai-showcase {
+    background: linear-gradient(160deg, #0e2b22 0%, #0a1f19 100%);
+    color: #fff; border-radius: 24px; padding: 44px;
+  }
+  .ai-showcase-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .ai-checklist { list-style: none; padding: 0; margin: 20px 0 0; display: flex; flex-direction: column; gap: 12px; }
+  .ai-checklist li { display: flex; gap: 10px; align-items: flex-start; color: rgba(255,255,255,.88); font-size: 14px; }
+  .ai-checklist li::before { content: "✓"; color: var(--mint); font-weight: 900; flex-shrink: 0; }
+  .chat-mock { background: rgba(0,0,0,.25); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; }
+  .chat-bubble { max-width: 82%; padding: 9px 13px; border-radius: 14px; font-size: 13px; line-height: 1.5; }
+  .chat-bubble.user { margin-inline-start: auto; background: rgba(255,255,255,.12); color: #fff; }
+  .chat-bubble.bot { margin-inline-end: auto; background: var(--mint); color: #08251a; font-weight: 600; }
+  .forecast-card { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: 16px; padding: 16px; margin-top: 14px; }
+  .forecast-card .title { font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,.8); margin-bottom: 10px; }
+  .forecast-bars { display: flex; align-items: flex-end; gap: 10px; height: 60px; }
+  .forecast-bars .bar { flex: 1; background: linear-gradient(to top, var(--mint), rgba(95,208,161,.3)); border-radius: 6px 6px 2px 2px; }
+  .forecast-labels { display: flex; justify-content: space-between; font-size: 10.5px; color: rgba(255,255,255,.5); margin-top: 6px; }
+  .forecast-caption { font-size: 11.5px; color: rgba(255,255,255,.5); margin-top: 8px; }
+
+  .ai-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 36px; }
+  .ai-card { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.1); border-radius: var(--radius); padding: 22px; }
+  .ai-card .ai-icon {
+    width: 40px; height: 40px; border-radius: 11px; background: rgba(255,255,255,.08); color: var(--mint);
+    display: flex; align-items: center; justify-content: center; font-size: 19px; margin-bottom: 12px;
+  }
+  .ai-card h3 { font-size: 15.5px; font-weight: 900; margin: 0 0 8px; color: #fff; }
+  .ai-card p { font-size: 13px; color: rgba(255,255,255,.68); margin: 0; }
+
+  /* Data journey */
+  .journey { display: flex; align-items: flex-start; gap: 0; flex-wrap: wrap; justify-content: center; }
+  .journey-step { width: 180px; text-align: center; }
+  .journey-step .icon {
+    width: 54px; height: 54px; border-radius: 50%; background: var(--primary-tint); color: var(--primary);
+    display: flex; align-items: center; justify-content: center; font-size: 22px; margin: 0 auto 12px;
+  }
+  .journey-step h4 { font-size: 14px; font-weight: 900; margin: 0 0 6px; }
+  .journey-step p { font-size: 12px; color: var(--ink-soft); margin: 0; }
+  .journey-arrow { display: flex; align-items: center; justify-content: center; width: 30px; height: 54px; color: var(--border); font-size: 20px; flex-shrink: 0; }
+  @media (max-width: 900px) {
+    .journey { flex-direction: column; align-items: center; }
+    .journey-arrow { transform: rotate(90deg); width: auto; height: 24px; }
+  }
+
+  /* Integrations */
+  .integrations-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+  .integration-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px; text-align: center; box-shadow: var(--shadow); }
+  .integration-card .name { font-weight: 900; font-size: 15px; margin-bottom: 8px; }
+  .integration-status { display: inline-block; font-size: 11.5px; font-weight: 700; padding: 4px 10px; border-radius: 999px; }
+  .integration-status.live { background: #e2f5ec; color: #0f6b45; }
+  .integration-status.manual { background: var(--accent-tint); color: #6b4a19; }
+  .integrations-note { text-align: center; color: var(--ink-soft); font-size: 13px; max-width: 620px; margin: 20px auto 0; }
+
+  /* Tiers */
+  .tiers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .tier { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; position: relative; }
+  .tier.is-recommended { border-color: var(--primary); box-shadow: 0 1px 2px rgba(28,38,32,.04), 0 20px 40px -18px rgba(15,92,75,.4); }
+  .tier-badge { position: absolute; top: -13px; inset-inline-end: 22px; background: var(--primary); color: #fff; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px; }
+  .tier-badge.is-launch { background: var(--accent); }
+  .tier-old-price { text-decoration: line-through; color: var(--ink-soft); font-size: 15px; font-weight: 700; margin-inline-end: 6px; }
+  .currency-select { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 0 28px; }
+  .currency-select label { font-size: 13.5px; color: var(--ink-soft); font-weight: 700; }
+  .currency-select select { font-family: inherit; font-size: 14px; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+  .currency-note { text-align: center; font-size: 12px; color: var(--ink-soft); max-width: 480px; margin: -16px auto 32px; }
+  .tier-emoji { font-size: 22px; margin-bottom: 10px; }
+  .tier-name { font-weight: 900; font-size: 19px; margin: 0 0 4px; }
+  .tier-desc { color: var(--ink-soft); font-size: 13.5px; margin: 0 0 20px; min-height: 40px; }
+  .tier-price { display: flex; align-items: baseline; gap: 6px; margin-bottom: 4px; }
+  .tier-price .amount { font-size: 32px; font-weight: 900; }
+  .tier-price .currency { font-size: 14px; color: var(--ink-soft); font-weight: 700; }
+  .tier-price-note { color: var(--ink-soft); font-size: 12.5px; margin-bottom: 20px; }
+  .tier-includes { list-style: none; margin: 0 0 24px; padding: 0; display: flex; flex-direction: column; gap: 10px; flex: 1; }
+  .tier-includes li { display: flex; gap: 8px; align-items: flex-start; font-size: 14px; }
+  .tier-includes li::before { content: "✓"; color: var(--primary); font-weight: 900; flex-shrink: 0; }
+  .tier .btn { justify-content: center; width: 100%; }
+
+  /* Calculator */
+  .calc-card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; box-shadow: var(--shadow); padding: 36px; display: grid; grid-template-columns: 1fr 320px; gap: 36px; }
+  .calc-controls { display: flex; flex-direction: column; gap: 26px; }
+  .field-label { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; margin-bottom: 10px; }
+  .field-label .val { color: var(--primary); font-family: "IBM Plex Mono", monospace; }
+  .val-input {
+    width: 56px; text-align: center; font: inherit;
+    color: var(--primary); font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    border: 1px solid var(--border); border-radius: 6px; padding: 3px 4px;
+    background: var(--surface); -moz-appearance: textfield;
+  }
+  .val-input::-webkit-outer-spin-button, .val-input::-webkit-inner-spin-button { margin: 0; }
+  .val-input:focus { outline: none; border-color: var(--primary); }
+  input[type=range] { width: 100%; height: 6px; border-radius: 999px; background: var(--border); appearance: none; -webkit-appearance: none; }
+  input[type=range]::-webkit-slider-thumb { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--primary); border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,.3); cursor: pointer; }
+  .field-hint { color: var(--ink-soft); font-size: 12.5px; margin-top: 8px; }
+  .calc-result { background: var(--primary-dark); color: #fff; border-radius: 16px; padding: 26px; display: flex; flex-direction: column; justify-content: space-between; }
+  .calc-result .tier-tag { align-self: flex-start; background: rgba(255,255,255,.14); font-size: 12.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px; margin-bottom: 18px; }
+  .calc-result .price-label { font-size: 13px; opacity: .75; margin-bottom: 6px; }
+  .calc-result .price { font-size: 42px; font-weight: 900; font-family: "IBM Plex Mono", monospace; }
+  .calc-result .price small { font-size: 15px; opacity: .8; font-family: "Tajawal", sans-serif; font-weight: 700; }
+  .calc-result .breakdown { margin-top: 18px; display: flex; flex-direction: column; gap: 6px; font-size: 13px; opacity: .85; }
+  .calc-result .breakdown div { display: flex; justify-content: space-between; }
+  .calc-result .btn-primary { margin-top: 20px; background: #fff; color: var(--primary-dark); box-shadow: none; }
+  .btn-whatsapp { margin-top: 10px; background: #25d366; color: #05320f; width: 100%; justify-content: center; }
+  .assumptions-note { margin-top: 18px; padding: 14px 18px; background: var(--accent-tint); border: 1px dashed var(--accent); border-radius: 12px; font-size: 13px; color: #6b4a19; }
+
+  /* FAQ */
+  .faq { max-width: 720px; margin: 0 auto; display: flex; flex-direction: column; gap: 10px; }
+  .faq details { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 4px 20px; }
+  .faq summary { cursor: pointer; font-weight: 700; font-size: 15px; padding: 16px 0; list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font-size: 20px; color: var(--primary); flex-shrink: 0; }
+  .faq details[open] summary::after { content: "−"; }
+  .faq p { margin: 0 0 18px; color: var(--ink-soft); font-size: 14px; }
+
+  /* Trial */
+  .trial-band { background: var(--primary); color: #fff; border-radius: 20px; padding: 44px; text-align: center; }
+  .trial-band h2 { font-size: 26px; margin: 0 0 10px; font-weight: 900; }
+  .trial-band p { opacity: .9; max-width: 560px; margin: 0 auto 24px; }
+  .trial-perks { display: flex; justify-content: center; gap: 28px; margin-top: 30px; flex-wrap: wrap; font-size: 13px; font-weight: 700; }
+  .trial-perks span { display: inline-flex; align-items: center; gap: 8px; }
+
+  .qr-block { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+  .qr-block img { border-radius: 12px; border: 1px solid var(--border); padding: 8px; background: #fff; }
+  .qr-block p { font-size: 13px; color: var(--ink-soft); max-width: 320px; margin: 0; }
+
+  footer { text-align: center; padding: 40px 0 60px; color: var(--ink-soft); font-size: 13px; }
+
+  /* Sticky mobile CTA */
+  .sticky-cta {
+    display: none; position: fixed; bottom: 0; inset-inline: 0; z-index: 40;
+    background: var(--surface); border-top: 1px solid var(--border);
+    padding: 12px 16px; box-shadow: 0 -8px 24px -12px rgba(28,38,32,.25);
+    align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .sticky-cta .txt { font-size: 12.5px; font-weight: 700; color: var(--ink); min-width: 0; }
+  .sticky-cta .txt small { display: block; font-weight: 500; color: var(--ink-soft); font-size: 11px; }
+  .sticky-cta .btn { padding: 10px 18px; font-size: 13.5px; flex-shrink: 0; }
+  @media (max-width: 640px) {
+    .sticky-cta { display: flex; }
+    body { padding-bottom: 66px; }
+  }
+
+  @media (max-width: 900px) {
+    .hero-grid { grid-template-columns: 1fr; }
+    .hero-copy { text-align: center; }
+    .hero-sub { margin-inline: auto; }
+    .hero-cta, .hero-trust, .industries-strip { justify-content: center; }
+    .ai-showcase-grid { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 860px) {
+    .tiers { grid-template-columns: 1fr 1fr; }
+    .calc-card { grid-template-columns: 1fr; }
+    .icon-grid { grid-template-columns: 1fr 1fr; }
+    .ai-grid { grid-template-columns: 1fr; }
+    .integrations-grid { grid-template-columns: 1fr 1fr; }
+    .preview-stats { grid-template-columns: 1fr; }
+    .chart-row { flex-direction: column; align-items: stretch; }
+    .audience-grid { grid-template-columns: 1fr 1fr; }
+    .laptop-screen { flex-direction: column; }
+    .preview-sidebar { display: none; }
+  }
+  @media (max-width: 540px) {
+    .tiers { grid-template-columns: 1fr; }
+    .dark-nav { justify-content: center; text-align: center; }
+    .nav-links { display: none; }
+  }
+
+  /* Merged-in story sections: comparison + efficiency flow, and nav helpers */
+  .nav-plain { color: var(--hero-ink-soft); font-size: 13.5px; font-weight: 700; text-decoration: none; }
+  .nav-plain:hover { color: #fff; }
+  @media (max-width: 560px) { .nav-plain { display: none; } }
   .compare { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   @media (max-width: 780px) { .compare { grid-template-columns: 1fr; } }
   .compare-card { border-radius: 18px; padding: 26px 24px; }
   .compare-card.old { background: var(--danger-tint); border: 1px solid #ecd3ca; }
   .compare-card.new { background: var(--primary-tint); border: 1px solid #cfe3da; }
-  .compare-title { font-weight: 900; font-size: 15px; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+  .compare-title { font-weight: 900; font-size: 15px; margin-bottom: 16px; }
   .compare-card.old .compare-title { color: var(--danger); }
   .compare-card.new .compare-title { color: var(--primary); }
   .compare-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 12px; }
@@ -114,11 +376,7 @@
   .compare-card.new .mark { color: var(--primary); }
   .market-note { margin-top: 22px; background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 20px; font-size: 13.5px; color: var(--ink-soft); line-height: 1.8; }
   .market-note b { color: var(--ink); }
-
-  /* ---- Efficiency / AI flow ---- */
   .efficiency { background: #10221c; color: var(--hero-ink); border-radius: 24px; padding: 46px 36px; }
-  .efficiency .section-head p { color: var(--hero-ink-soft); }
-  .efficiency .section-eyebrow { background: rgba(95,208,161,.14); color: var(--mint); }
   .flow { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 30px 0 8px; }
   .flow-step { background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.14); border-radius: 14px; padding: 18px 20px; min-width: 150px; text-align: center; }
   .flow-step .n { font-size: 26px; margin-bottom: 8px; }
@@ -128,23 +386,6 @@
   @media (max-width: 720px) { .flow { flex-direction: column; } .flow-arrow { transform: rotate(90deg); } }
   .efficiency-note { text-align: center; max-width: 640px; margin: 26px auto 0; font-size: 14px; color: var(--hero-ink-soft); line-height: 1.85; }
   .efficiency-note b { color: var(--hero-ink); }
-
-  /* ---- Trust / low-friction CTA banner ---- */
-  .cta-banner { background: var(--primary); border-radius: 24px; padding: 52px 36px; text-align: center; color: #fff; }
-  .cta-banner h2 { font-size: clamp(22px,3.4vw,30px); font-weight: 900; margin: 0 0 14px; }
-  .cta-banner p { color: rgba(255,255,255,.78); max-width: 520px; margin: 0 auto 28px; font-size: 15px; }
-  .cta-banner .btn-accent { font-size: 16px; padding: 15px 34px; }
-  .reassure { display: flex; flex-wrap: wrap; justify-content: center; gap: 22px; margin-top: 30px; }
-  .reassure-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: rgba(255,255,255,.85); font-weight: 600; }
-  .reassure-item svg { width: 16px; height: 16px; color: var(--mint); flex: none; }
-
-  footer { text-align: center; padding: 28px 24px; font-size: 12.5px; color: var(--ink-soft); }
-  footer a { color: var(--primary); font-weight: 700; }
-</style>
-<script src="/site-lang.js"></script>
-<style>
-.lang-btn{background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.18); color:var(--hero-ink-soft); border-radius:999px; padding:7px 14px; font:inherit; font-size:13px; font-weight:700; cursor:pointer;}
-.lang-btn:hover{color:var(--hero-ink); border-color:rgba(255,255,255,.4);}
 </style>
 </head>
 <body>
@@ -152,46 +393,59 @@
 <header class="hero-dark">
   <div class="wrap">
     <nav class="dark-nav">
-      <div class="brand"><span class="brand-mark">R</span> RomaERP <span class="brand-sub" data-i18n="partOf">جزء من Roma Group</span></div>
-      <div class="nav-links">
-        <a href="#features" data-i18n="navFeatures">المميزات</a>
-        <a href="#why" data-i18n="navWhy">ليه RomaERP</a>
-        <a href="pricing.html" data-i18n="navPricing">الأسعار</a>
-        <a href="roma-group.html">← Roma Group</a>
-      </div>
+      <div class="brand"><span class="brand-mark">R</span> RomaERP</div>
+      <div class="nav-links" id="navLinks"></div>
       <div class="nav-right">
-        <button id="langToggle" class="lang-btn" type="button">English</button>
-        <a href="/login" class="nav-login" data-i18n="login">دخول</a>
-        <a href="/start-trial" class="btn btn-accent" data-i18n="startFree">ابدأ مجانًا</a>
+        <a href="roma-group.html" class="nav-plain" id="navBack"></a>
+        <a href="/login" class="nav-plain" id="navLogin"></a>
+        <button class="lang-toggle" id="langToggle" type="button">English</button>
+        <a href="/start-trial" class="btn btn-accent" id="navCta"></a>
       </div>
     </nav>
-
     <div class="hero-grid">
       <div class="hero-copy">
-        <span class="eyebrow" data-i18n="eyebrow">🧠 مدعوم بالذكاء الاصطناعي</span>
-        <h1 data-i18n="h1">نظام واحد بدل خمس برامج <span class="hl">بيتكلموا مع بعض تلقائيًا</span></h1>
-        <p class="hero-sub" data-i18n="heroSub">محاسبة، نقاط بيع، مخزون، فاتورة إلكترونية، وموارد بشرية — كل ده في اشتراك واحد. من غير ترحيل بيانات يدوي بين برامج، ومن غير ما تدفع لخمس شركات مختلفة.</p>
+        <h1 id="heroTitle"></h1>
+        <p class="hero-sub" id="heroSub"></p>
         <div class="hero-cta">
-          <a href="/start-trial" class="btn btn-accent" data-i18n="cta1">ابدأ تجربتك المجانية</a>
-          <a href="pricing.html" class="btn btn-ghost-dark" data-i18n="cta2">شوف الأسعار بالتفصيل</a>
+          <a href="/start-trial" class="btn btn-accent" id="heroCtaTrial"></a>
+          <a href="#tiers" class="btn btn-ghost-dark" id="heroCtaCalc"></a>
         </div>
-        <div class="hero-trust">
-          <b data-i18n="trust1">21 يوم تجربة مجانية</b><span class="dot">·</span><span data-i18n="trust2">من غير بطاقة بنكية</span><span class="dot">·</span><span data-i18n="trust3">تقدر تلغي في أي وقت</span>
-        </div>
+        <div class="hero-trust" id="heroTrust"></div>
+        <div class="industries-strip" id="industriesStrip"></div>
       </div>
-
       <div class="hero-visual">
-        <div class="converge">
-          <div class="converge-label" data-i18n="convLabel">بدل ما تجمع البرامج دي واحد واحد</div>
-          <div class="chip-row">
-            <span class="chip" data-i18n="chipPos">🖥️ كاشير</span>
-            <span class="chip" data-i18n="chipAcc">📒 محاسبة</span>
-            <span class="chip" data-i18n="chipInv">📦 مخزون</span>
-            <span class="chip" data-i18n="chipEinv">🧾 فاتورة إلكترونية</span>
-            <span class="chip" data-i18n="chipPay">👥 رواتب</span>
+        <div class="device-stack">
+          <div class="laptop">
+            <div class="laptop-screen">
+              <div class="preview-sidebar" id="previewSidebar">
+                <p class="brand">RomaERP</p>
+              </div>
+              <div class="preview-main">
+                <div class="preview-topbar">
+                  <span class="greeting" id="previewGreeting"></span>
+                  <span class="bell">🔔</span>
+                </div>
+                <div class="preview-stats" id="previewStats"></div>
+                <div class="chart-row">
+                  <div class="line-chart-block">
+                    <div id="lineChart"></div>
+                    <div class="caption" id="lineChartCaption"></div>
+                  </div>
+                  <div class="donut-block">
+                    <div class="donut" id="donut"></div>
+                    <div class="donut-legend" id="donutLegend"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="laptop-base"></div>
           </div>
-          <div class="converge-arrow">↓</div>
-          <div class="converge-result"><span class="brand-mark" style="background:#fff;color:var(--primary-dark);">R</span> <span data-i18n="oneSystem">RomaERP — نظام واحد</span></div>
+          <div class="phone">
+            <div class="phone-screen">
+              <p class="brand">ROMA</p>
+              <div id="phoneStats"></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -201,74 +455,63 @@
 <section id="features">
   <div class="wrap">
     <div class="section-head">
-      <span class="section-eyebrow" data-i18n="featEyebrow">كل حاجة محتاجها</span>
-      <h2 data-i18n="featH2">مش بس محاسبة — نظام تشغيل كامل لشغلك</h2>
-      <p data-i18n="featP">كل ميزة هنا شغالة فعليًا وبتتزامن مع الباقي أوتوماتيك، مش مجرد وعد على شعار.</p>
+      <span class="eyebrow" id="includedEyebrow"></span>
+      <h2 id="includedHeading"></h2>
+      <p id="includedDesc"></p>
     </div>
-    <div class="feature-grid">
-      <div class="feature">
-        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V5a2 2 0 0 1 2-2h8l6 6v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/><path d="M14 3v6h6"/><path d="M9 13h6"/><path d="M9 17h6"/></svg></div>
-        <div class="feature-title" data-i18n="f1t">محاسبة وقيود كاملة</div>
-        <div class="feature-desc" data-i18n="f1d">دليل حسابات، قيود يومية، ميزانية وقائمة دخل جاهزة أول ما تسجل أي عملية بيع أو شراء.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><path d="M8 14h2"/></svg></div>
-        <div class="feature-title" data-i18n="f2t">نقاط بيع (POS)</div>
-        <div class="feature-desc" data-i18n="f2d">كاشير سريع للفروع، متزامن لحظيًا مع المخزون والمحاسبة — من غير ترحيل يدوي آخر اليوم.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8 12 3 3 8l9 5 9-5Z"/><path d="M3 8v8l9 5 9-5V8"/><path d="M12 13v8"/></svg></div>
-        <div class="feature-title" data-i18n="f3t">مخزون وتكاليف</div>
-        <div class="feature-desc" data-i18n="f3d">تتبع كميات المخزون بكل فرع، وتكلفة كل منتج تتحدث تلقائيًا مع كل عملية شراء أو بيع.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M9 12h6"/><path d="M9 16h4"/><path d="M4 19V6a2 2 0 0 1 2-2h9l5 5v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2Z"/></svg></div>
-        <div class="feature-title" data-i18n="f4t">فاتورة إلكترونية معتمدة</div>
-        <div class="feature-desc" data-i18n="f4d">فواتير متوافقة مع مصلحة الضرائب المصرية (ETA)، بتتبعت أوتوماتيك من غير خطوات يدوية إضافية.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s7-6.7 7-12.2A7 7 0 1 0 5 8.8C5 14.3 12 21 12 21z"/><circle cx="12" cy="8.5" r="3.3"/></svg></div>
-        <div class="feature-title" data-i18n="f5t">موارد بشرية ورواتب</div>
-        <div class="feature-desc" data-i18n="f5d">حضور وانصراف، طلبات إجازة، ورواتب تتحسب من ساعات الشغل الفعلية — مدمجة، مش برنامج تاني منفصل.</div>
-      </div>
-      <div class="feature">
-        <div class="feature-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a4 4 0 0 0-4 4v1a4 4 0 0 0-2 3.5c0 1 .4 1.9 1 2.5l-1 3.5 3-1a4 4 0 0 0 3 1.5h0a4 4 0 0 0 3-1.5l3 1-1-3.5a3.9 3.9 0 0 0 1-2.5A4 4 0 0 0 16 8V7a4 4 0 0 0-4-4Z"/></svg></div>
-        <div class="feature-title" data-i18n="f6t">مساعد ذكاء اصطناعي</div>
-        <div class="feature-desc" data-i18n="f6d">يسجل مصروفاتك من صورة الإيصال، يطابق كشف حساب البنك تلقائيًا، ويجاوبك على أسئلتك المالية.</div>
-      </div>
-    </div>
+    <div class="icon-grid" id="includedGrid"></div>
   </div>
 </section>
 
 <section id="why">
   <div class="wrap">
     <div class="section-head">
-      <span class="section-eyebrow" data-i18n="whyEyebrow">ليه RomaERP مختلف</span>
-      <h2 data-i18n="whyH2">مش بديل لبرنامج واحد — بديل لخمس برامج مع بعض</h2>
-      <p data-i18n="whyP">الطريقة العادية إنك تجمع أدوات منفصلة لكل احتياج. RomaERP بيلغي الحاجة لكل ده من الأول.</p>
+      <span class="eyebrow" id="whyEyebrow"></span>
+      <h2 id="whyHeading"></h2>
+      <p id="whyDesc"></p>
     </div>
     <div class="compare">
-      <div class="compare-card old">
-        <div class="compare-title" data-i18n="oldTitle">✕ الطريقة التقليدية</div>
-        <ul class="compare-list">
-          <li><span class="mark">✕</span> <span data-i18n="o1">كاشير من شركة، محاسبة من شركة تانية، رواتب على إكسل منفصل</span></li>
-          <li><span class="mark">✕</span> <span data-i18n="o2">بيانات كل برنامج لوحدها — لازم تنقلها يدوي بين الأنظمة</span></li>
-          <li><span class="mark">✕</span> <span data-i18n="o3">اشتراكات متعددة، وفواتير ودعم فني من جهات مختلفة</span></li>
-          <li><span class="mark">✕</span> <span data-i18n="o4">فاتورة إلكترونية غالبًا خطوة إضافية منفصلة تمامًا</span></li>
-        </ul>
-      </div>
-      <div class="compare-card new">
-        <div class="compare-title" data-i18n="newTitle">✓ مع RomaERP</div>
-        <ul class="compare-list">
-          <li><span class="mark">✓</span> <span data-i18n="n1">كل الأنظمة دي مبنية جوه بعضها من الأول، مش موصّلة ببعض بعدين</span></li>
-          <li><span class="mark">✓</span> <span data-i18n="n2">أي عملية بيع أو شراء بتتحدث في المحاسبة والمخزون فورًا</span></li>
-          <li><span class="mark">✓</span> <span data-i18n="n3">اشتراك واحد، فاتورة واحدة، فريق دعم واحد</span></li>
-          <li><span class="mark">✓</span> <span data-i18n="n4">الفاتورة الإلكترونية جزء من نفس شاشة البيع، مش خطوة زيادة</span></li>
-        </ul>
-      </div>
+      <div class="compare-card old"><div class="compare-title" id="oldTitle"></div><ul class="compare-list" id="oldList"></ul></div>
+      <div class="compare-card new"><div class="compare-title" id="newTitle"></div><ul class="compare-list" id="newList"></ul></div>
     </div>
-    <div class="market-note" data-i18n="market">
-      <b>بالأرقام:</b> أنظمة الكاشير المنفصلة في السوق بتتكلف عادة من 1,500 لـ3,400 جنيه شهريًا وبتغطي نقطة البيع بس، وبرامج المحاسبة المنفصلة تبدأ من حوالي 1,500 جنيه وبرضو من غير نقطة بيع أو موارد بشرية أو فاتورة إلكترونية. يعني لو جمعت الأدوات دي مع بعض هتدفع أضعاف كده — RomaERP بيجمعهم في اشتراك واحد يبدأ من أقل من ده.
+    <div class="market-note" id="marketNote"></div>
+  </div>
+</section>
+
+<section id="audiences">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="audiencesEyebrow"></span>
+      <h2 id="audiencesHeading"></h2>
+      <p id="audiencesDesc"></p>
+    </div>
+    <div class="audience-grid" id="audienceGrid"></div>
+  </div>
+</section>
+
+<section id="ai">
+  <div class="wrap">
+    <div class="ai-showcase">
+      <div class="section-head on-dark">
+        <span class="eyebrow" id="aiEyebrow"></span>
+        <h2 id="aiHeading"></h2>
+        <p id="aiDesc"></p>
+      </div>
+      <div class="ai-showcase-grid">
+        <div>
+          <ul class="ai-checklist" id="aiChecklist"></ul>
+        </div>
+        <div>
+          <div class="chat-mock" id="chatMock"></div>
+          <div class="forecast-card">
+            <div class="title" id="forecastTitle"></div>
+            <div class="forecast-bars" id="forecastBars"></div>
+            <div class="forecast-labels" id="forecastLabels"></div>
+            <div class="forecast-caption" id="forecastCaption"></div>
+          </div>
+        </div>
+      </div>
+      <div class="ai-grid" id="aiGrid"></div>
     </div>
   </div>
 </section>
@@ -276,127 +519,877 @@
 <section id="efficiency">
   <div class="wrap">
     <div class="efficiency">
-      <div class="section-head">
-        <span class="section-eyebrow" data-i18n="effEyebrow">إزاي بنقدر نقدملك سعر أقل</span>
-        <h2 data-i18n="effH2">مش بنقدملك أقل — بنشتغل بكفاءة أكتر</h2>
-        <p data-i18n="effP">الذكاء الاصطناعي بياخد شغل يدوي كان محتاج وقت وموظف، وده بيوفر عليك وعلينا — من غير ما نضحي بميزة واحدة.</p>
+      <div class="section-head on-dark">
+        <span class="eyebrow" id="effEyebrow"></span>
+        <h2 id="effHeading"></h2>
+        <p id="effDesc"></p>
       </div>
-      <div class="flow">
-        <div class="flow-step"><div class="n">🧾</div><div class="t" data-i18n="s1t">صورة إيصال</div><div class="d" data-i18n="s1d">تصور الإيصال بموبايلك</div></div>
-        <div class="flow-arrow" data-i18n="arrow">←</div>
-        <div class="flow-step"><div class="n">🤖</div><div class="t" data-i18n="s2t">قراءة تلقائية</div><div class="d" data-i18n="s2d">المساعد يستخرج المبلغ والحساب المناسب</div></div>
-        <div class="flow-arrow" data-i18n="arrow">←</div>
-        <div class="flow-step"><div class="n">✅</div><div class="t" data-i18n="s3t">اعتماد بضغطة</div><div class="d" data-i18n="s3d">تراجع وتوافق، والقيد يترحّل تلقائيًا</div></div>
-      </div>
-      <p class="efficiency-note" data-i18n="effNote">نفس المبدأ في المطابقة البنكية والرد على تذاكر الدعم — <b>أي مجهود يدوي متكرر بياخده الذكاء الاصطناعي</b>، فبنقدر نديك نظام متكامل بسعر تنافسي من غير ما نحتاج فريق دعم أو محاسبة ضخم يرفع التكلفة عليك.</p>
+      <div class="flow" id="flowSteps"></div>
+      <p class="efficiency-note" id="effNote"></p>
     </div>
+  </div>
+</section>
+
+<section id="journey">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="journeyEyebrow"></span>
+      <h2 id="journeyHeading"></h2>
+      <p id="journeyDesc"></p>
+    </div>
+    <div class="journey" id="journeySteps"></div>
+  </div>
+</section>
+
+<section id="tiers">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="tiersEyebrow"></span>
+      <h2 id="tiersHeading"></h2>
+      <p id="tiersDesc"></p>
+    </div>
+    <div class="currency-select">
+      <label for="currencyPicker" id="currencyLabel"></label>
+      <select id="currencyPicker"></select>
+    </div>
+    <p class="currency-note" id="currencyNote"></p>
+    <div class="tiers" id="tiersGrid"></div>
+  </div>
+</section>
+
+<section id="calculator">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="calcEyebrow"></span>
+      <h2 id="calcHeading"></h2>
+      <p id="calcDesc"></p>
+    </div>
+    <div class="calc-card">
+      <div class="calc-controls">
+        <div>
+          <div class="field-label"><span id="companiesLabel"></span><input type="number" class="val-input" id="companiesVal" value="1" min="1" max="8" /></div>
+          <input type="range" id="companiesRange" min="1" max="8" value="1" step="1" />
+          <div class="field-hint" id="companiesHint"></div>
+        </div>
+        <div>
+          <div class="field-label"><span id="branchesLabel"></span><input type="number" class="val-input" id="branchesVal" value="1" min="1" max="25" /></div>
+          <input type="range" id="branchesRange" min="1" max="25" value="1" step="1" />
+        </div>
+        <div>
+          <div class="field-label"><span id="usersLabel"></span><input type="number" class="val-input" id="usersVal" value="2" min="1" max="70" /></div>
+          <input type="range" id="usersRange" min="1" max="70" value="2" step="1" />
+        </div>
+      </div>
+      <div class="calc-result">
+        <div>
+          <div class="tier-tag" id="resultTier">Essential 🟢</div>
+          <div class="price-label" id="priceLabel"></div>
+          <div class="price"><span id="resultPrice">149</span> <small id="resultCurrency"></small></div>
+          <div class="breakdown" id="resultBreakdown"></div>
+        </div>
+        <a href="/start-trial" class="btn btn-primary" id="calcCta"></a>
+        <a href="#" target="_blank" rel="noopener" class="btn btn-whatsapp" id="calcShare"></a>
+      </div>
+    </div>
+    <div class="assumptions-note" id="assumptionsNote"></div>
+  </div>
+</section>
+
+<section id="integrations">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="integrationsEyebrow"></span>
+      <h2 id="integrationsHeading"></h2>
+      <p id="integrationsDesc"></p>
+    </div>
+    <div class="integrations-grid" id="integrationsGrid"></div>
+    <p class="integrations-note" id="integrationsNote"></p>
+  </div>
+</section>
+
+<section id="faq">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" id="faqEyebrow"></span>
+      <h2 id="faqHeading"></h2>
+    </div>
+    <div class="faq" id="faqList"></div>
   </div>
 </section>
 
 <section id="trial">
   <div class="wrap">
-    <div class="cta-banner">
-      <h2 data-i18n="trialH2">جرّب من غير ما تفكّر كتير</h2>
-      <p data-i18n="trialP">21 يوم تجربة مجانية كاملة، وبياناتك من أول لحظة في قاعدة بيانات خاصة بيك لوحدك — مش متقاسمة مع حد.</p>
-      <a href="/start-trial" class="btn btn-accent" data-i18n="trialBtn">ابدأ تجربتك المجانية دلوقتي</a>
-      <div class="reassure">
-        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> <span data-i18n="r1">من غير بطاقة بنكية</span></span>
-        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> <span data-i18n="r2">تقدر تلغي في أي وقت</span></span>
-        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> <span data-i18n="r3">بياناتك معزولة بالكامل</span></span>
-        <span class="reassure-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg> <span data-i18n="r4">دعم فني</span></span>
-      </div>
+    <div class="trial-band">
+      <h2 id="trialHeading"></h2>
+      <p id="trialDesc"></p>
+      <a href="/start-trial" class="btn btn-primary" style="background:#fff;color:var(--primary-dark)" id="trialCta"></a>
+      <div class="trial-perks" id="trialPerks"></div>
     </div>
   </div>
 </section>
 
-<footer>
-  <span data-i18n="footPart">RomaERP — جزء من</span> <a href="roma-group.html">Roma Group</a> · <a href="pricing.html" data-i18n="navPricing">الأسعار</a> · <a href="/terms.html" data-i18n="terms">الشروط والأحكام</a>
-</footer>
+<section id="qr">
+  <div class="wrap">
+    <div class="qr-block">
+      <img id="qrImage" alt="QR code" width="120" height="120" loading="lazy" />
+      <p id="qrCaption"></p>
+    </div>
+  </div>
+</section>
+
+<footer id="footerText"></footer>
+
+<div class="sticky-cta">
+  <div class="txt"><span id="stickyCtaTitle"></span><small id="stickyCtaSub"></small></div>
+  <a href="/start-trial" class="btn btn-primary" id="stickyCtaBtn"></a>
+</div>
 
 <script>
+  // ---- Configurable pricing assumptions (placeholders — tune before launch) ----
+  // Base currency is SAR. Currencies WITHOUT their own price list (the Gulf ones) are conversions for
+  // display only. EGP and GBP are INDEPENDENT price lists set directly in their own currency (see
+  // INDEPENDENT_PRICING) — never derived from a rate, so they carry no "approximate" caveat. Real
+  // billing/tax will follow each country's law once we actually land a customer there.
+  const LAUNCH_OFFER_LIMIT = 15;
+  // egpBase/egpListPrice are a SEPARATE, independent EGP price list — NOT a currency
+  // conversion of the SAR numbers (Egypt pricing is set on its own, same as any local pricing decision).
+  //
+  // egpListPrice is the tier's actual published Egypt price (3,000/7,000/12,000) — unchanged, shown
+  // crossed out as the anchor. egpBase is a 50%-off founding-customer price for our first Egyptian
+  // customers (zero customers there so far), limited to LAUNCH_OFFER_LIMIT customers and the first 3
+  // months of their subscription, then it returns to egpListPrice. Essential's SAR/Gulf listPrice is a
+  // separate, earlier launch-offer decision (not Egypt-specific) and is untouched here.
+  // Business/Professional get an EGP-only egpListPrice (no SAR listPrice) so the launch badge and
+  // old-price strikethrough only appear when EGP is selected — whether a tier shows the offer is derived
+  // from listPrice/egpListPrice existing (see hasLaunchOffer()), not a separate flag.
+  //
+  // RULE for any future founding-customer discount (a new country launch, a new offer, etc.): the
+  // discounted monthly price must stay comfortably above that tier's worst-case monthly AI cost ceiling
+  // (AiUsagePlanLimits in the backend, priced at Claude's per-token rate) — the goal during a launch
+  // window is to win customers without actually losing money on them, not to run at a loss. Work out
+  // that ceiling for the new price before publishing the discount, the same way Egypt's 50%-off numbers
+  // were checked (worst case ~730/1,820/3,600 EGP in AI cost per month for Essential/Business/Professional,
+  // safely under each one's discounted 1,500/3,500/6,000 EGP price).
+  const TIERS = [
+    {
+      id: "essential", emoji: "🟢", name: "Essential",
+      desc: { ar: "حتى 3 فروع و10 مستخدمين", en: "Up to 3 branches and 10 users" },
+      base: 149, listPrice: 499,
+      egpBase: 1500, egpListPrice: 3000, gbpBase: 49,
+      includedBranches: 3, includedUsers: 10,
+    },
+    {
+      id: "business", emoji: "🔵", name: "Business",
+      desc: { ar: "شركات متعددة الفروع", en: "Multi-branch businesses" },
+      base: 349, egpBase: 3500, egpListPrice: 7000, gbpBase: 99, includedBranches: 7, includedUsers: 25, recommended: true,
+    },
+    {
+      id: "professional", emoji: "🟣", name: "Professional",
+      desc: { ar: "نشاط أكبر واحتياج موسّع", en: "Larger operations, wider needs" },
+      base: 649, egpBase: 6000, egpListPrice: 12000, gbpBase: 179, includedBranches: 15, includedUsers: 50,
+    },
+    {
+      id: "enterprise", emoji: "🔴", name: "Enterprise",
+      desc: { ar: "الشركات الكبيرة", en: "Large enterprises" },
+      base: 2499, egpBase: 35000, gbpBase: 599, includedBranches: Infinity, includedUsers: Infinity, custom: true,
+    },
+  ];
+  const EXTRA_BRANCH_PRICE = 15; // SAR / branch / month, beyond tier's included branches (capped below)
+  const EXTRA_USER_PRICE = 20;   // SAR / user / month, beyond tier's included users (capped below)
+  // Independent price lists: tier fields are <prefix>Base / <prefix>ListPrice, and each has its own
+  // extra-branch / extra-user price set directly in that currency (not the SAR constants above * a rate).
+  const INDEPENDENT_PRICING = {
+    EGP: { prefix: "egp", extraBranch: 200, extraUser: 400 },
+    GBP: { prefix: "gbp", extraBranch: 5, extraUser: 3 },
+  };
+  // The paid-overage cap is a FLAT PERCENTAGE of each tier's own included branches/users, not a fixed
+  // number — so the ratio feels consistent across tiers instead of an arbitrary gap between them.
+  const OVERAGE_CAP_PCT = 0.4;
+  const ADDITIONAL_COMPANY_DISCOUNT = 0.85; // each company after the first billed at 85% of its own computed price
+
+  // rate = units of that currency per 1 SAR, used by convert() for the Gulf currencies only (pegged to
+  // USD, so stable). EGP and GBP are NOT conversions at all — each has its own independent price list
+  // (TIERS[].egpBase / gbpBase etc. + INDEPENDENT_PRICING), set directly in that currency. Their `rate`
+  // is unused by pricing and kept only so they still sort/display like any other entry in this table.
+  const CURRENCIES = {
+    SAR: { label: { ar: "ريال سعودي (SAR)", en: "Saudi Riyal (SAR)" }, unit: { ar: "ريال", en: "SAR" }, rate: 1, decimals: 0 },
+    AED: { label: { ar: "درهم إماراتي (AED)", en: "UAE Dirham (AED)" }, unit: { ar: "درهم", en: "AED" }, rate: 0.98, decimals: 0 },
+    QAR: { label: { ar: "ريال قطري (QAR)", en: "Qatari Riyal (QAR)" }, unit: { ar: "ريال قطري", en: "QAR" }, rate: 0.97, decimals: 0 },
+    KWD: { label: { ar: "دينار كويتي (KWD)", en: "Kuwaiti Dinar (KWD)" }, unit: { ar: "دينار", en: "KWD" }, rate: 0.082, decimals: 1 },
+    BHD: { label: { ar: "دينار بحريني (BHD)", en: "Bahraini Dinar (BHD)" }, unit: { ar: "دينار", en: "BHD" }, rate: 0.1, decimals: 1 },
+    OMR: { label: { ar: "ريال عماني (OMR)", en: "Omani Rial (OMR)" }, unit: { ar: "ريال عماني", en: "OMR" }, rate: 0.1025, decimals: 1 },
+    EGP: { label: { ar: "جنيه مصري (EGP)", en: "Egyptian Pound (EGP)" }, unit: { ar: "جنيه", en: "EGP" }, rate: 13, decimals: 0, independent: true },
+    GBP: { label: { ar: "جنيه إسترليني (GBP)", en: "British Pound (GBP)" }, unit: { ar: "جنيه إسترليني", en: "GBP" }, rate: 0.206, decimals: 0, independent: true },
+  };
+  let currentCurrency = "SAR";
+  // English is the default; Arabic is chosen explicitly (toggle or a ?lang=ar link) and remembered under the
+  // same "lang" key the app and the other marketing pages use, so the choice follows the visitor.
+  const langParam = new URLSearchParams(location.search).get("lang");
+  if (langParam === "ar" || langParam === "en") localStorage.setItem("lang", langParam);
+  let currentLang = localStorage.getItem("lang") === "ar" ? "ar" : "en";
+
+  // Illustrative dashboard-mockup data only — not a live data feed.
+  const REVENUE_TREND = [30, 34, 32, 38, 42, 40, 46, 50, 48, 55, 60, 64];
+  const EXPENSE_BREAKDOWN = [
+    { pct: 35, color: "#0f5c4b" },
+    { pct: 28, color: "#c8862e" },
+    { pct: 20, color: "#3aa0c4" },
+    { pct: 17, color: "#8b96a3" },
+  ];
+  const FORECAST_FACTORS = [1, 1.08, 1.16];
+
+  const T = {
+    ar: {
+      pageTitle: "RomaERP — نظام إدارة أعمال متكامل بالذكاء الاصطناعي",
+      navLinks: [["المميزات", "#features"], ["ليه RomaERP", "#why"], ["الذكاء الاصطناعي", "#ai"], ["الأسعار", "#tiers"], ["الأسئلة الشائعة", "#faq"]],
+      navCta: "ابدأ الآن",
+      heroTitlePrefix: "إدارة أعمالك ", heroTitleHighlight: "بشكل أذكى", heroTitleSuffix: "",
+      heroSub: "نظام متكامل واحد بدل ما تشتري المحاسبة وحدها والـ POS وحده والمخزون والتكاليف كل واحد لوحده. اشتراك واحد، كل الإمكانيات، مدعوم بالذكاء الاصطناعي.",
+      heroCtaTrial: "ابدأ تجربتك المجانية", heroCtaCalc: "شوف الأسعار",
+      stickyCtaTitle: "جرّب ROMA مجانًا", stickyCtaSub: "21 يوم، من غير بطاقة بنكية", stickyCtaBtn: "ابدأ الآن",
+      heroTrust: ["⚡ إعداد سريع من غير برامج إضافية", "🔒 بياناتك آمنة ومحفوظة", "📅 تجربة 21 يوم من غير بطاقة بنكية"],
+      industries: ["🍽️ مطاعم", "🛒 تجزئة", "📦 جملة وتوزيع", "🏗️ مقاولات ومشاريع", "🧰 خدمات"],
+      previewNav: ["الرئيسية", "المساعد الذكي", "المبيعات", "المشتريات", "المخزون", "المحاسبة", "التقارير"],
+      previewGreeting: "مرحبًا بك 👋",
+      previewStats: [
+        ["الإيرادات هذا الشهر", "٦٤,٢٠٠ ريال", "up", "+12%", "up"],
+        ["مصروفات بانتظار اعتماد AI", "٣", "warn", "-4%", "down"],
+        ["فروع متصلة", "٦", "", "", ""],
+      ],
+      lineChartCaption: "الإيرادات آخر 12 شهر",
+      expenseBreakdown: ["مشتريات ومخزون", "رواتب", "إيجارات ومرافق", "أخرى"],
+      previewCaption: "شكل تقريبي للوحة التحكم اللي هتشتغل عليها من أول يوم.",
+      includedEyebrow: "كل الإمكانيات، مفيش استثناءات", includedHeading: "كل مستويات الاشتراك تشمل النظام بالكامل",
+      includedDesc: "مفيش Modules منفصلة، ومفيش تقارير أو صلاحيات مقفولة على باقة معينة. الفرق بين الباقات هو حجم النشاط بس — سواء كنت مطعم، محل تجزئة، شركة توزيع، أو مقاول.",
+      includedFeatures: [
+        ["📒", "المحاسبة والقيود"], ["🖥️", "نقاط البيع POS"], ["🛒", "المبيعات والمشتريات"], ["📦", "المخزون والتكاليف"],
+        ["🍳", "الوصفات والمطاعم"], ["👥", "الموارد البشرية والرواتب"], ["📊", "التقارير المالية"], ["🔮", "توقعات مالية وتحليل ماذا-لو"],
+        ["🏬", "إدارة فروع ومواقع متعددة"], ["🔐", "الصلاحيات"], ["🕵️", "سجل التدقيق (Audit Trail)"], ["📱", "تطبيق ويب يتثبت على الموبايل"],
+      ],
+      navBack: "← Roma Group", navLogin: "دخول",
+      whyEyebrow: "ليه RomaERP مختلف",
+      whyHeading: "مش بديل لبرنامج واحد — بديل لخمس برامج مع بعض",
+      whyDesc: "الطريقة العادية إنك تجمع أدوات منفصلة لكل احتياج. RomaERP بيلغي الحاجة لكل ده من الأول.",
+      oldTitle: "✕ الطريقة التقليدية", newTitle: "✓ مع RomaERP",
+      oldList: [
+        "كاشير من شركة، محاسبة من شركة تانية، رواتب على إكسل منفصل",
+        "بيانات كل برنامج لوحدها — لازم تنقلها يدوي بين الأنظمة",
+        "اشتراكات متعددة، وفواتير ودعم فني من جهات مختلفة",
+        "فاتورة إلكترونية غالبًا خطوة إضافية منفصلة تمامًا",
+      ],
+      newList: [
+        "كل الأنظمة دي مبنية جوه بعضها من الأول، مش موصّلة ببعض بعدين",
+        "أي عملية بيع أو شراء بتتحدث في المحاسبة والمخزون فورًا",
+        "اشتراك واحد، فاتورة واحدة، فريق دعم واحد",
+        "الفاتورة الإلكترونية جزء من نفس شاشة البيع، مش خطوة زيادة",
+      ],
+      marketNote: "<b>بالأرقام:</b> أنظمة الكاشير المنفصلة وبرامج المحاسبة المنفصلة وأدوات الموارد البشرية وإضافات الفاتورة الإلكترونية لكل واحد فيهم اشتراكه الشهري، وماحدش فيهم بيغطي التاني. لو جمعتهم مع بعض هتدفع أضعاف كده — RomaERP بيجمعهم كلهم في اشتراك واحد.",
+      effEyebrow: "إزاي بنقدر نقدملك سعر أقل",
+      effHeading: "مش بنقدملك أقل — بنشتغل بكفاءة أكتر",
+      effDesc: "الذكاء الاصطناعي بياخد شغل يدوي كان محتاج وقت وموظف، وده بيوفر عليك وعلينا — من غير ما نضحي بميزة واحدة.",
+      flow: [["🧾", "صورة إيصال", "تصور الإيصال بموبايلك"], ["🤖", "قراءة تلقائية", "المساعد يستخرج المبلغ والحساب المناسب"], ["✅", "اعتماد بضغطة", "تراجع وتوافق، والقيد يترحّل تلقائيًا"]],
+      effNote: "نفس المبدأ في المطابقة البنكية والرد على تذاكر الدعم — <b>أي مجهود يدوي متكرر بياخده الذكاء الاصطناعي</b>، فبنقدر نديك نظام متكامل بسعر تنافسي من غير ما نحتاج فريق دعم أو محاسبة ضخم يرفع التكلفة عليك.",
+      audiencesEyebrow: "يناسب أي نشاط", audiencesHeading: "بيشتغل مع شكل شغلك إزاي ما كان",
+      audiencesDesc: "من فرع واحد لعشرات الفروع، ومن نشاط واحد لعدة شركات — نفس النظام بيكبر معاك.",
+      audiences: [
+        ["🏢", "فروع متعددة", "تدير كل فروعك من مكان واحد بصلاحيات مختلفة لكل فرع"],
+        ["🏭", "أكتر من شركة", "شركات منفصلة تحت إدارة واحدة، كل واحدة ببياناتها المستقلة"],
+        ["🔗", "سلاسل وامتيازات", "نفس الإعداد بينتشر على كل فروع السلسلة بسهولة"],
+        ["🧰", "خدمات ومقاولات", "محاسبة ومخزون ومشتريات وموارد بشرية تناسب أي نشاط، مش بس مطاعم"],
+        ["🏪", "نشاط مستقل بفرع واحد", "تبدأ بسيط وتكبر من غير ما تغيّر نظامك"],
+      ],
+      aiEyebrow: "الذكاء الاصطناعي", aiHeading: "مساعد بيشتغل معاك، مش بس شات بيرد",
+      aiDesc: "الذكاء الاصطناعي في ROMA مبني جوه شغلك اليومي، وأي حاجة بيعملها بتنتظر اعتمادك قبل ما تترحل فعليًا.",
+      aiChecklist: [
+        "تسجيل المصروفات بالكلام أو بصورة الإيصال",
+        "المطابقة البنكية التلقائية مع مصروفات الكارت",
+        "رد فوري وذكي على تذاكر الدعم للأسئلة العامة",
+        "توقعات مالية مبنية على تاريخ حساباتك الفعلي",
+      ],
+      chat: [
+        { role: "user", text: "صرفت النهاردة 480 ريال قطع غيار" },
+        { role: "bot", text: "تم تسجيل مصروف 480 ريال تحت حساب (قطع غيار وصيانة) — هينتظر اعتماد المسؤول قبل الترحيل. ✅" },
+      ],
+      forecastTitle: "التوقع المالي للأشهر الجاية",
+      forecastLabels: ["الشهر ده", "الجاي", "بعده"],
+      forecastCaption: "توقعات مبنية على تاريخ حساباتك الفعلي، مش تخمين عام.",
+      aiCards: [
+        { icon: "🧾", title: "تسجيل المصروفات بالكلام أو بالصورة", desc: "قول للمساعد المصروف كام وعلى إيه، أو ابعتله صورة الإيصال، وهو يستخرج المبلغ والوصف وأنسب حساب تلقائيًا. أي مصروف من المساعد بيروح لشاشة الاعتماد، ومفيش حاجة بتترحل للمحاسبة من غير موافقة مسؤول." },
+        { icon: "🏦", title: "المطابقة البنكية الذكية", desc: "ارفع كشف حساب البنك زي ما هو (Excel أو CSV)، والنظام يطابقه تلقائيًا مع مصروفات الكارت اللي سجّلها المساعد، فيوفر عليك المطابقة اليدوية بندًا ببند." },
+        { icon: "💬", title: "رد فوري على تذاكر الدعم", desc: "أي تذكرة دعم جديدة بتاخد أول رد فوري من الذكاء الاصطناعي على الأسئلة العامة عن النظام. أي حاجة تخص حسابك أو فاتورتك أو مشكلة تقنية بتتحول لفريق الدعم البشري على طول من غير ما المساعد يخمّن." },
+      ],
+      journeyEyebrow: "رحلة البيانات", journeyHeading: "من المصدر للتقرير، خطوة بخطوة",
+      journeyDesc: "نفس الرحلة سواء كانت فاتورة مورد، إيصال مصروف، أو طلب بيع — البيانات بتتسجل مرة واحدة وتظهر في كل مكان.",
+      journeySteps: [
+        ["📥", "المصدر", "فاتورة، إيصال، طلب بيع، أو حركة مخزون"],
+        ["✍️", "الإدخال", "المساعد الذكي يقترح القيد، أو إدخال يدوي مباشر"],
+        ["✅", "الاعتماد", "المسؤول يراجع ويعتمد قبل الترحيل"],
+        ["📊", "النتيجة", "قيد محاسبي وحركة مخزون فوريين، ويظهروا في التقارير على طول"],
+      ],
+      tiersEyebrow: "الباقات", tiersHeading: "نقطة بداية، مش قالب جاهز",
+      tiersDesc: "الأسعار دي بداية معقولة لكل حجم نشاط. استخدم الحاسبة تحت عشان تشوف السعر الفعلي المناسب لك بالظبط.",
+      currencyLabel: "اعرض الأسعار بعملة:",
+      launchBadge: `عرض تأسيسي — أول ${LAUNCH_OFFER_LIMIT} عميل (٣ شهور)`, recommendedBadge: "الأكثر طلبًا",
+      perMonth: "شهريًا", customPriceLabel: "سعر مخصص", customPriceNote: "بيتحدد حسب حجم ونوع النشاط",
+      includesUpTo: (branches, users, branchWord) => `يشمل حتى ${branches} ${branchWord} و ${users} مستخدمين`,
+      branchWord1: "فرع", branchWordMany: "فروع",
+      includeAllModules: "كل موديولات ROMA بدون استثناء", includeSupport: "دعم فني",
+      includeUnlimited: "فروع ومستخدمون بلا حدود عملية", includeExtraPricing: "زيادة الفروع/المستخدمين بسعر إضافي واضح",
+      ctaContact: "تواصل معنا", ctaStartTrial: "ابدأ تجربتك",
+      calcEyebrow: "الحاسبة", calcHeading: "احسب السعر المناسب لنشاطك",
+      calcDesc: "غيّر عدد الشركات والفروع والمستخدمين وشوف السعر بيتغير على طول.",
+      companiesLabel: "عدد الشركات (كيانات منفصلة)",
+      companiesHint: "كل شركة = حساب مستقل بالكامل ببياناته الخاصة، وبنجمعهم في فاتورة واحدة بخصم على الشركات الإضافية.",
+      branchesLabel: "عدد الفروع (لكل شركة)", usersLabel: "عدد المستخدمين (لكل شركة)",
+      priceLabel: "السعر الشهري التقديري", calcCta: "ابدأ بهذا السعر",
+      calcShare: "📤 شارك على واتساب",
+      shareMessage: (tierName, price, unit, branches, users, url) =>
+        `جربت حاسبة أسعار RomaERP: باقة ${tierName} تناسب ${branches} فرع و${users} مستخدم بسعر ${price} ${unit} شهريًا. جربها بنفسك: ${url}`,
+      baseLine: (tierName, amount, unit) => `<div><span>السعر الأساسي (${tierName})</span><span>${amount} ${unit}</span></div>`,
+      extraBranchesLine: (count, amount, unit) => `<div><span>فروع إضافية × ${count}</span><span>+${amount} ${unit}</span></div>`,
+      extraUsersLine: (count, amount, unit) => `<div><span>مستخدمون إضافيون × ${count}</span><span>+${amount} ${unit}</span></div>`,
+      additionalCompanyLine: (count, amount, unit) => `<div><span>${count} شركة إضافية (خصم 15%)</span><span>+${amount} ${unit}</span></div>`,
+      enterpriseContactLine: `<div><span>تواصل معنا لعرض دقيق للمؤسسات الكبيرة</span></div>`,
+      assumptionsNote: `⚠️ الأرقام دي نقطة بداية للمراجعة الداخلية قبل الإطلاق — مش أسعار نهائية معلنة. لو حابب تعدلها غيّر الثوابت في أول ملف <code class="mono">pricing.html</code>.`,
+      integrationsEyebrow: "التكاملات", integrationsHeading: "تكاملات حقيقية، ومكتوبة بصراحة",
+      integrationsDesc: "بنقولك بالظبط إيه اللي متكامل مباشر وإيه اللي لسه بيتم بمطابقة يدوية — من غير مبالغة.",
+      integrations: [
+        { name: "جاهز (Jahez)", status: "live" },
+        { name: "هنجرستيشن (HungerStation)", status: "live" },
+        { name: "مرسول (Mrsool)", status: "live" },
+        { name: "أي منصة توصيل تانية", status: "manual" },
+      ],
+      integrationLiveLabel: "تكامل مباشر", integrationManualLabel: "مطابقة كشف تسوية",
+      integrationsNote: "التكامل المباشر (Webhook) شغال فعليًا مع جاهز وهنجرستيشن ومرسول — الطلبات بتوصل أوتوماتيك من غير أي تدخل. أي منصة توصيل تانية (زي طلبات أو كريم أو غيرهم) بترفع كشف التسوية اللي بتصدّره المنصة (Excel أو CSV) والنظام يطابقه تلقائيًا مع مبيعاتك — مش مربوط باسم منصة معينة، فبيشتغل مع أي منصة تصدّر كشف حساب.",
+      faqEyebrow: "أسئلة شائعة", faqHeading: "قبل ما تسأل، جاوبنا هنا",
+      faq: [
+        ["الأسعار دي نهائية؟", "لأ، دي أرقام بداية لمراجعتنا الداخلية قبل الإطلاق الرسمي. ممكن تتغير، وأي عميل حالي هياخد إشعار مسبق لو حصل تغيير يخصه."],
+        ["ينفع أجرب من غير بطاقة بنكية؟", "أيوه، 21 يوم تجربة كاملة من غير أي بيانات دفع، وكل الإمكانيات متاحة زي أي حساب مدفوع بالظبط."],
+        ["لو لغيت في نص الشهر، بترجعوا لي الفلوس؟", "الاشتراك بيتحسب شهر كامل مقدمًا، ومفيش استرداد جزئي لو لغيت في نص المدة — بس تقدر تلغي في أي وقت من غير أي التزام لأكتر من شهر واحد."],
+        ["نشاطي مقاولات مش مطعم، هينفع معايا؟", "أيوه. المحاسبة والمخزون والمشتريات والموارد البشرية والتقارير المالية بتشتغل لأي نشاط عنده فروع أو مواقع ومستخدمين متعددين — مش بس مطاعم. موديول الوصفات مخصص للمطاعم وممكن ببساطة متستخدموش لو نشاطك مختلف."],
+        ["لو طلبت حذف بياناتي، بيحصل إيه فعليًا؟", "بيتم حذف بيانات شركتك فعليًا ونهائيًا من قواعد البيانات — مش مجرد إيقاف الحساب. بنحتفظ بس برقم مرجعي (Confirmation Number) كإثبات إن الطلب اتنفذ، من غير أي بيانات تفصيلية عن نشاطك."],
+      ],
+      trialHeading: "لا تصدّقنا. جرّب ROMA بنفسك.",
+      trialDesc: "21 يوم مجانًا، بحساب شركة حقيقي ببياناتك، وكل إمكانيات ROMA متاحة — من غير ما تحط بيانات بطاقة بنكية.",
+      trialCta: "ابدأ تجربتك الآن",
+      trialPerks: ["⚡ إعداد سريع", "🎧 دعم فني", "🔒 بياناتك محفوظة ومؤمّنة"],
+      qrCaption: "امسح الكود عشان تفتح الصفحة على موبايلك، أو تشاركها مع حد واقف قدامك.",
+      footer: `© RomaERP — جزء من <a href="roma-group.html" style="color:var(--primary)">Roma Group</a>. الأسعار قابلة للتغيير حتى الإطلاق الرسمي. <a href="/terms.html" style="color:var(--primary)">الشروط والأحكام</a>`,
+      approxNote: "أسعار تقريبية محوّلة من الريال السعودي.",
+      independentPriceNote: {
+        EGP: "أسعار مصر مستقلة بالجنيه المصري، مش تحويل من الريال السعودي.",
+        GBP: "أسعار المملكة المتحدة مستقلة بالجنيه الإسترليني، مش تحويل من الريال السعودي.",
+      },
+      langToggleLabel: "English",
+    },
+    en: {
+      pageTitle: "RomaERP — a complete AI-powered business management system",
+      navLinks: [["Features", "#features"], ["Why RomaERP", "#why"], ["AI", "#ai"], ["Pricing", "#tiers"], ["FAQ", "#faq"]],
+      navCta: "Start now",
+      heroTitlePrefix: "Manage your business, ", heroTitleHighlight: "smarter", heroTitleSuffix: "",
+      heroSub: "One integrated system instead of buying accounting alone, POS alone, and inventory & costing alone. One subscription, every feature, powered by AI.",
+      heroCtaTrial: "Start your free trial", heroCtaCalc: "See pricing",
+      stickyCtaTitle: "Try ROMA free", stickyCtaSub: "21 days, no credit card", stickyCtaBtn: "Start now",
+      heroTrust: ["⚡ Fast setup, no extra software", "🔒 Your data is safe", "📅 21-day trial, no credit card"],
+      industries: ["🍽️ Restaurants", "🛒 Retail", "📦 Wholesale & distribution", "🏗️ Contracting & projects", "🧰 Services"],
+      previewNav: ["Home", "AI Assistant", "Sales", "Purchasing", "Inventory", "Accounting", "Reports"],
+      previewGreeting: "Welcome back 👋",
+      previewStats: [
+        ["Revenue this month", "SAR 64,200", "up", "+12%", "up"],
+        ["Expenses awaiting AI approval", "3", "warn", "-4%", "down"],
+        ["Connected branches", "6", "", "", ""],
+      ],
+      lineChartCaption: "Revenue over the last 12 months",
+      expenseBreakdown: ["Purchases & inventory", "Payroll", "Rent & utilities", "Other"],
+      previewCaption: "An approximate look at the dashboard you'll work on from day one.",
+      includedEyebrow: "Everything included, no exceptions", includedHeading: "Every plan includes the full system",
+      includedDesc: "No separate modules, no reports or permissions locked to a specific plan. The only difference between plans is the size of your activity — whether you run a restaurant, a retail shop, a distribution business, or a contracting company.",
+      includedFeatures: [
+        ["📒", "Accounting & journal entries"], ["🖥️", "POS"], ["🛒", "Sales & purchasing"], ["📦", "Inventory & costing"],
+        ["🍳", "Recipes & restaurants"], ["👥", "HR & payroll"], ["📊", "Financial reports"], ["🔮", "Financial forecasting & what-if analysis"],
+        ["🏬", "Multi-branch & multi-site management"], ["🔐", "Permissions"], ["🕵️", "Audit trail"], ["📱", "Installable web app on mobile"],
+      ],
+      navBack: "← Roma Group", navLogin: "Log in",
+      whyEyebrow: "Why RomaERP is different",
+      whyHeading: "Not a replacement for one program — a replacement for five",
+      whyDesc: "The usual way is to assemble separate tools for every need. RomaERP removes the need for all of that from the start.",
+      oldTitle: "✕ The traditional way", newTitle: "✓ With RomaERP",
+      oldList: [
+        "A POS from one vendor, accounting from another, payroll in a separate spreadsheet",
+        "Each program keeps its own data — you have to move it between systems by hand",
+        "Multiple subscriptions, with invoices and technical support from different vendors",
+        "E-invoicing is usually a completely separate extra step",
+      ],
+      newList: [
+        "All of these systems are built inside each other from day one, not bolted together later",
+        "Every sale or purchase updates accounting and inventory immediately",
+        "One subscription, one invoice, one support team",
+        "E-invoicing is part of the same sales screen, not an extra step",
+      ],
+      marketNote: "<b>By the numbers:</b> stand-alone POS systems, separate accounting packages, HR tools and e-invoicing add-ons each carry their own monthly fee, and none of them covers the others. Put them together and you pay several times over — RomaERP brings them all into one subscription.",
+      effEyebrow: "How we can offer you a lower price",
+      effHeading: "We don't offer you less — we work more efficiently",
+      effDesc: "AI takes over manual work that used to need time and a person, saving both you and us — without sacrificing a single feature.",
+      flow: [["🧾", "Receipt photo", "Snap the receipt with your phone"], ["🤖", "Automatic reading", "The assistant extracts the amount and the right account"], ["✅", "One-tap approval", "You review and approve, and the entry posts automatically"]],
+      effNote: "The same principle applies to bank reconciliation and answering support tickets — <b>any repetitive manual effort is handled by AI</b>, so we can give you a complete system at a competitive price without needing a huge support or accounting team that drives your cost up.",
+      audiencesEyebrow: "Fits any business", audiencesHeading: "Works with your business, whatever shape it takes",
+      audiencesDesc: "From a single branch to dozens, from one business to several companies — the same system grows with you.",
+      audiences: [
+        ["🏢", "Multi-branch operations", "Manage every branch from one place, with different permissions per branch"],
+        ["🏭", "Multiple companies", "Separate companies under one roof, each with its own independent data"],
+        ["🔗", "Chains & franchises", "The same setup rolls out to every branch in the chain with ease"],
+        ["🧰", "Services & contracting", "Accounting, inventory, purchasing, and HR that fit any business, not just restaurants"],
+        ["🏪", "A single-location business", "Start simple and grow without switching systems"],
+      ],
+      aiEyebrow: "AI", aiHeading: "An assistant that works with you, not just a chatbot",
+      aiDesc: "The AI in ROMA is built into your daily work, and anything it does waits for your approval before it actually posts.",
+      aiChecklist: [
+        "Capture expenses by chat or a photo of the receipt",
+        "Automatic bank reconciliation against card expenses",
+        "Instant, smart replies to support tickets on general questions",
+        "Financial forecasts based on your actual account history",
+      ],
+      chat: [
+        { role: "user", text: "I spent 480 SAR on spare parts today" },
+        { role: "bot", text: "Logged a 480 SAR expense under (Spare parts & maintenance) — it'll wait for manager approval before posting. ✅" },
+      ],
+      forecastTitle: "Financial forecast for the coming months",
+      forecastLabels: ["This month", "Next", "After"],
+      forecastCaption: "Forecasts based on your own account history, not a generic guess.",
+      aiCards: [
+        { icon: "🧾", title: "Capture expenses by chat or photo", desc: "Tell the assistant what the expense was, or send it a photo of the receipt, and it extracts the amount, description, and the right account automatically. Every expense from the assistant goes to an approval screen — nothing posts to accounting without a manager's approval." },
+        { icon: "🏦", title: "Smart bank reconciliation", desc: "Upload your bank statement exactly as exported (Excel or CSV), and the system automatically matches it against card expenses the assistant already captured, saving you line-by-line manual matching." },
+        { icon: "💬", title: "Instant first response on support tickets", desc: "Every new support ticket gets an immediate first response from the AI for general product questions. Anything account-specific, billing-related, or a technical issue is escalated straight to the human support team instead of the AI guessing." },
+      ],
+      journeyEyebrow: "Data journey", journeyHeading: "From source to report, step by step",
+      journeyDesc: "The same journey whether it's a vendor invoice, an expense receipt, or a sales order — data is entered once and shows up everywhere.",
+      journeySteps: [
+        ["📥", "Source", "An invoice, a receipt, a sales order, or a stock movement"],
+        ["✍️", "Entry", "The AI assistant suggests the entry, or it's entered manually"],
+        ["✅", "Approval", "A manager reviews and approves before it posts"],
+        ["📊", "Result", "An instant journal entry and stock movement, showing up in reports right away"],
+      ],
+      tiersEyebrow: "Plans", tiersHeading: "A starting point, not a rigid template",
+      tiersDesc: "These prices are a reasonable start for every business size. Use the calculator below to see the exact price that fits you.",
+      currencyLabel: "Show prices in:",
+      launchBadge: `Founding offer — first ${LAUNCH_OFFER_LIMIT} customers (3 months)`, recommendedBadge: "Most popular",
+      perMonth: "/ month", customPriceLabel: "Custom pricing", customPriceNote: "Based on the size and type of your business",
+      includesUpTo: (branches, users, branchWord) => `Includes up to ${branches} ${branchWord} and ${users} users`,
+      branchWord1: "branch", branchWordMany: "branches",
+      includeAllModules: "Every ROMA module, no exceptions", includeSupport: "Technical support",
+      includeUnlimited: "Practically unlimited branches and users", includeExtraPricing: "Extra branches/users at a clear add-on price",
+      ctaContact: "Contact us", ctaStartTrial: "Start your trial",
+      calcEyebrow: "Calculator", calcHeading: "Calculate the right price for your business",
+      calcDesc: "Change the number of companies, branches, and users and watch the price update instantly.",
+      companiesLabel: "Number of companies (separate entities)",
+      companiesHint: "Each company = a fully independent account with its own data, combined into one invoice with a discount on additional companies.",
+      branchesLabel: "Number of branches (per company)", usersLabel: "Number of users (per company)",
+      priceLabel: "Estimated monthly price", calcCta: "Start at this price",
+      calcShare: "📤 Share on WhatsApp",
+      shareMessage: (tierName, price, unit, branches, users, url) =>
+        `I tried the RomaERP pricing calculator: the ${tierName} plan fits ${branches} branches and ${users} users at ${price} ${unit}/month. Try it yourself: ${url}`,
+      baseLine: (tierName, amount, unit) => `<div><span>Base price (${tierName})</span><span>${amount} ${unit}</span></div>`,
+      extraBranchesLine: (count, amount, unit) => `<div><span>Extra branches × ${count}</span><span>+${amount} ${unit}</span></div>`,
+      extraUsersLine: (count, amount, unit) => `<div><span>Extra users × ${count}</span><span>+${amount} ${unit}</span></div>`,
+      additionalCompanyLine: (count, amount, unit) => `<div><span>${count} additional compan${count === 1 ? "y" : "ies"} (15% off)</span><span>+${amount} ${unit}</span></div>`,
+      enterpriseContactLine: `<div><span>Contact us for an exact quote for large organizations</span></div>`,
+      assumptionsNote: `⚠️ These numbers are a starting point for internal review before launch — not final published pricing. To adjust them, change the constants at the top of <code class="mono">pricing.html</code>.`,
+      integrationsEyebrow: "Integrations", integrationsHeading: "Real integrations, described honestly",
+      integrationsDesc: "We tell you exactly what's directly integrated and what's still handled through manual reconciliation — no overselling.",
+      integrations: [
+        { name: "Jahez", status: "live" },
+        { name: "HungerStation", status: "live" },
+        { name: "Mrsool", status: "live" },
+        { name: "Any other delivery platform", status: "manual" },
+      ],
+      integrationLiveLabel: "Direct integration", integrationManualLabel: "Settlement-statement matching",
+      integrationsNote: "Direct (webhook) integration is live with Jahez, HungerStation, and Mrsool — orders arrive automatically with no manual work. Any other delivery platform (Talabat, Careem, or others) works by uploading the settlement statement it exports (Excel or CSV), which the system automatically matches against your sales — it isn't tied to a specific platform's name, so it works with any platform that exports a statement.",
+      faqEyebrow: "FAQ", faqHeading: "Answers before you have to ask",
+      faq: [
+        ["Are these prices final?", "No, these are a starting point for our internal review before official launch. They may change, and any existing customer will get advance notice of any change that affects them."],
+        ["Can I try it without a credit card?", "Yes, a full 21-day trial with no payment details, and every feature available exactly as in a paid account."],
+        ["If I cancel mid-month, do I get a refund?", "The subscription is billed a full month in advance, and there's no partial refund for cancelling mid-period — but you can cancel any time with no commitment beyond a single month."],
+        ["My business is contracting, not a restaurant — will this work for me?", "Yes. Accounting, inventory, purchasing, HR, and financial reports all work for any business with multiple branches or sites and multiple users — not just restaurants. The recipes module is restaurant-specific and you simply won't use it if your business is different."],
+        ["If I request data deletion, what actually happens?", "Your company's data is genuinely and permanently deleted from the databases — not just a deactivated account. We keep only a confirmation number as proof the request was carried out, with no detailed data about your business."],
+      ],
+      trialHeading: "Don't take our word for it. Try ROMA yourself.",
+      trialDesc: "21 days free, with a real company account and your own data, and every ROMA feature available — no credit card required.",
+      trialCta: "Start your trial now",
+      trialPerks: ["⚡ Fast setup", "🎧 Technical support", "🔒 Your data is safe and secured"],
+      qrCaption: "Scan the code to open the page on your phone, or share it with someone standing in front of you.",
+      footer: `© RomaERP — part of <a href="roma-group.html" style="color:var(--primary)">Roma Group</a>. Prices subject to change until official launch. <a href="/terms.html" style="color:var(--primary)">Terms &amp; Privacy</a>`,
+      approxNote: "Approximate prices converted from Saudi Riyal.",
+      independentPriceNote: {
+        EGP: "Egypt pricing is set independently in EGP, not converted from Saudi Riyal.",
+        GBP: "UK pricing is set independently in GBP, not converted from Saudi Riyal.",
+      },
+      langToggleLabel: "عربي",
+    },
+  };
+
+  function convert(sarAmount) {
+    const c = CURRENCIES[currentCurrency];
+    const value = sarAmount * c.rate;
+    return c.decimals > 0 ? value.toFixed(c.decimals) : Math.round(value);
+  }
+
+  // EGP and GBP have their own independent numbers (TIERS[].egpBase / gbpBase etc.) — no rate
+  // multiplication, just formatting. Every other currency still goes through convert() (SAR * rate).
+  function independentSet() {
+    return INDEPENDENT_PRICING[currentCurrency] || null;
+  }
+  function formatIndependent(amount) {
+    const c = CURRENCIES[currentCurrency];
+    return c.decimals > 0 ? Number(amount).toFixed(c.decimals) : Math.round(amount);
+  }
+  function displayAmount(amount) {
+    return independentSet() ? formatIndependent(amount) : convert(amount);
+  }
+  // Picks the tier field to read for the active currency (e.g. "base" -> egpBase / gbpBase, or plain
+  // base for SAR/Gulf) and pairs it with displayAmount so callers never branch on currency themselves.
+  function tierAmount(tier, sarKey) {
+    const set = independentSet();
+    return displayAmount(set ? tier[set.prefix + sarKey.charAt(0).toUpperCase() + sarKey.slice(1)] : tier[sarKey]);
+  }
+  function activePriceSet() {
+    const set = independentSet();
+    return set
+      ? { baseKey: set.prefix + "Base", extraBranch: set.extraBranch, extraUser: set.extraUser }
+      : { baseKey: "base", extraBranch: EXTRA_BRANCH_PRICE, extraUser: EXTRA_USER_PRICE };
+  }
+
+  function renderLineChart() {
+    const w = 200, h = 56, pad = 4;
+    const max = Math.max(...REVENUE_TREND), min = Math.min(...REVENUE_TREND);
+    const points = REVENUE_TREND.map((v, i) => {
+      const x = pad + i * ((w - 2 * pad) / (REVENUE_TREND.length - 1));
+      const y = h - pad - ((v - min) / (max - min || 1)) * (h - 2 * pad);
+      return [x.toFixed(1), y.toFixed(1)];
+    });
+    const linePoints = points.map(p => p.join(",")).join(" ");
+    const areaPoints = `${pad},${h - pad} ` + linePoints + ` ${w - pad},${h - pad}`;
+    document.getElementById("lineChart").innerHTML = `
+      <svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none">
+        <polygon points="${areaPoints}" fill="rgba(95,208,161,.18)"></polygon>
+        <polyline points="${linePoints}" fill="none" stroke="#5fd0a1" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></polyline>
+      </svg>`;
+  }
+
+  function renderDonut() {
+    let cum = 0;
+    const stops = EXPENSE_BREAKDOWN.map(seg => {
+      const start = cum; cum += seg.pct;
+      return `${seg.color} ${start}% ${cum}%`;
+    }).join(", ");
+    document.getElementById("donut").style.background = `conic-gradient(${stops})`;
+    const t = T[currentLang];
+    document.getElementById("donutLegend").innerHTML = EXPENSE_BREAKDOWN.map((seg, i) =>
+      `<div><span class="dot" style="background:${seg.color}"></span>${t.expenseBreakdown[i]}</div>`
+    ).join("");
+  }
+
+  function renderForecast() {
+    const t = T[currentLang];
+    const max = Math.max(...FORECAST_FACTORS);
+    document.getElementById("forecastTitle").textContent = t.forecastTitle;
+    document.getElementById("forecastBars").innerHTML = FORECAST_FACTORS.map(f =>
+      `<div class="bar" style="height:${Math.round((f / max) * 100)}%"></div>`
+    ).join("");
+    document.getElementById("forecastLabels").innerHTML = t.forecastLabels.map(l => `<span>${l}</span>`).join("");
+    document.getElementById("forecastCaption").textContent = t.forecastCaption;
+  }
+
+  function renderStatic() {
+    const t = T[currentLang];
+    document.documentElement.lang = currentLang;
+    document.documentElement.dir = currentLang === "ar" ? "rtl" : "ltr";
+    document.title = t.pageTitle;
+    document.getElementById("langToggle").textContent = t.langToggleLabel;
+
+    document.getElementById("navLinks").innerHTML = t.navLinks.map(([label, href]) => `<a href="${href}">${label}</a>`).join("");
+    document.getElementById("navCta").textContent = t.navCta;
+
+    document.getElementById("heroTitle").innerHTML =
+      `${t.heroTitlePrefix}<span>${t.heroTitleHighlight}</span>${t.heroTitleSuffix}`;
+    document.getElementById("heroSub").textContent = t.heroSub;
+    document.getElementById("heroCtaTrial").textContent = t.heroCtaTrial;
+    document.getElementById("heroCtaCalc").textContent = t.heroCtaCalc;
+    document.getElementById("stickyCtaTitle").textContent = t.stickyCtaTitle;
+    document.getElementById("stickyCtaSub").textContent = t.stickyCtaSub;
+    document.getElementById("stickyCtaBtn").textContent = t.stickyCtaBtn;
+    document.getElementById("heroTrust").innerHTML = t.heroTrust.map(x => `<span>${x}</span>`).join("");
+    document.getElementById("industriesStrip").innerHTML = t.industries.map(i => `<span>${i}</span>`).join("");
+
+    const sidebar = document.getElementById("previewSidebar");
+    sidebar.innerHTML = `<p class="brand">RomaERP</p>` +
+      t.previewNav.map((label, i) => `<a class="${i === 0 ? "active" : ""}">${label}</a>`).join("");
+    document.getElementById("previewGreeting").textContent = t.previewGreeting;
+    document.getElementById("previewStats").innerHTML = t.previewStats.map(([label, value, cls, delta, deltaCls]) =>
+      `<div class="preview-stat"><div class="label">${label}</div><div class="value-row"><span class="value ${cls}">${value}</span>${delta ? `<span class="delta ${deltaCls}">${delta}</span>` : ""}</div></div>`
+    ).join("");
+    document.getElementById("lineChartCaption").textContent = t.lineChartCaption;
+
+    document.getElementById("includedEyebrow").textContent = t.includedEyebrow;
+    document.getElementById("includedHeading").textContent = t.includedHeading;
+    document.getElementById("includedDesc").textContent = t.includedDesc;
+    document.getElementById("includedGrid").innerHTML = t.includedFeatures.map(([icon, label]) =>
+      `<div class="icon-tile"><div class="icon">${icon}</div><span class="label">${label}</span></div>`
+    ).join("");
+
+    document.getElementById("audiencesEyebrow").textContent = t.audiencesEyebrow;
+    document.getElementById("audiencesHeading").textContent = t.audiencesHeading;
+    document.getElementById("audiencesDesc").textContent = t.audiencesDesc;
+    document.getElementById("audienceGrid").innerHTML = t.audiences.map(([icon, title, desc]) =>
+      `<div class="audience-card"><div class="icon">${icon}</div><h4>${title}</h4><p>${desc}</p></div>`
+    ).join("");
+
+    document.getElementById("aiEyebrow").textContent = t.aiEyebrow;
+    document.getElementById("aiHeading").textContent = t.aiHeading;
+    document.getElementById("aiDesc").textContent = t.aiDesc;
+    document.getElementById("aiChecklist").innerHTML = t.aiChecklist.map(x => `<li>${x}</li>`).join("");
+    document.getElementById("chatMock").innerHTML = t.chat.map(m => `<div class="chat-bubble ${m.role}">${m.text}</div>`).join("");
+    document.getElementById("aiGrid").innerHTML = t.aiCards.map(c =>
+      `<div class="ai-card"><div class="ai-icon">${c.icon}</div><h3>${c.title}</h3><p>${c.desc}</p></div>`
+    ).join("");
+
+    document.getElementById("navBack").textContent = t.navBack;
+    document.getElementById("navLogin").textContent = t.navLogin;
+    document.getElementById("whyEyebrow").textContent = t.whyEyebrow;
+    document.getElementById("whyHeading").textContent = t.whyHeading;
+    document.getElementById("whyDesc").textContent = t.whyDesc;
+    document.getElementById("oldTitle").textContent = t.oldTitle;
+    document.getElementById("newTitle").textContent = t.newTitle;
+    document.getElementById("oldList").innerHTML = t.oldList.map(x => `<li><span class="mark">✕</span> ${x}</li>`).join("");
+    document.getElementById("newList").innerHTML = t.newList.map(x => `<li><span class="mark">✓</span> ${x}</li>`).join("");
+    document.getElementById("marketNote").innerHTML = t.marketNote;
+    document.getElementById("effEyebrow").textContent = t.effEyebrow;
+    document.getElementById("effHeading").textContent = t.effHeading;
+    document.getElementById("effDesc").textContent = t.effDesc;
+    document.getElementById("flowSteps").innerHTML = t.flow.map(([icon, title, desc], i) => {
+      const step = `<div class="flow-step"><div class="n">${icon}</div><div class="t">${title}</div><div class="d">${desc}</div></div>`;
+      return i < t.flow.length - 1 ? step + `<div class="flow-arrow">${currentLang === "ar" ? "←" : "→"}</div>` : step;
+    }).join("");
+    document.getElementById("effNote").innerHTML = t.effNote;
+
+    document.getElementById("journeyEyebrow").textContent = t.journeyEyebrow;
+    document.getElementById("journeyHeading").textContent = t.journeyHeading;
+    document.getElementById("journeyDesc").textContent = t.journeyDesc;
+    document.getElementById("journeySteps").innerHTML = t.journeySteps.map(([icon, title, desc], i) => {
+      const step = `<div class="journey-step"><div class="icon">${icon}</div><h4>${title}</h4><p>${desc}</p></div>`;
+      return i < t.journeySteps.length - 1 ? step + `<div class="journey-arrow">${currentLang === "ar" ? "←" : "→"}</div>` : step;
+    }).join("");
+
+    document.getElementById("tiersEyebrow").textContent = t.tiersEyebrow;
+    document.getElementById("tiersHeading").textContent = t.tiersHeading;
+    document.getElementById("tiersDesc").textContent = t.tiersDesc;
+    document.getElementById("currencyLabel").textContent = t.currencyLabel;
+
+    document.getElementById("calcEyebrow").textContent = t.calcEyebrow;
+    document.getElementById("calcHeading").textContent = t.calcHeading;
+    document.getElementById("calcDesc").textContent = t.calcDesc;
+    document.getElementById("companiesLabel").textContent = t.companiesLabel;
+    document.getElementById("companiesHint").textContent = t.companiesHint;
+    document.getElementById("branchesLabel").textContent = t.branchesLabel;
+    document.getElementById("usersLabel").textContent = t.usersLabel;
+    document.getElementById("priceLabel").textContent = t.priceLabel;
+    document.getElementById("calcCta").textContent = t.calcCta;
+    document.getElementById("assumptionsNote").innerHTML = t.assumptionsNote;
+
+    document.getElementById("integrationsEyebrow").textContent = t.integrationsEyebrow;
+    document.getElementById("integrationsHeading").textContent = t.integrationsHeading;
+    document.getElementById("integrationsDesc").textContent = t.integrationsDesc;
+    document.getElementById("integrationsGrid").innerHTML = t.integrations.map(i => `
+      <div class="integration-card">
+        <div class="name">${i.name}</div>
+        <span class="integration-status ${i.status}">${i.status === "live" ? t.integrationLiveLabel : t.integrationManualLabel}</span>
+      </div>
+    `).join("");
+    document.getElementById("integrationsNote").textContent = t.integrationsNote;
+
+    document.getElementById("faqEyebrow").textContent = t.faqEyebrow;
+    document.getElementById("faqHeading").textContent = t.faqHeading;
+    document.getElementById("faqList").innerHTML = t.faq.map(([q, a]) =>
+      `<details><summary>${q}</summary><p>${a}</p></details>`
+    ).join("");
+
+    document.getElementById("trialHeading").textContent = t.trialHeading;
+    document.getElementById("trialDesc").textContent = t.trialDesc;
+    document.getElementById("trialCta").textContent = t.trialCta;
+    document.getElementById("trialPerks").innerHTML = t.trialPerks.map(x => `<span>${x}</span>`).join("");
+
+    const pageUrl = window.location.href.split("#")[0].split("?")[0];
+    document.getElementById("qrImage").src = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&margin=0&data=${encodeURIComponent(pageUrl)}`;
+    document.getElementById("qrCaption").textContent = t.qrCaption;
+
+    document.getElementById("footerText").innerHTML = t.footer;
+
+    renderLineChart();
+    renderDonut();
+    renderForecast();
+  }
+
+  // Whether to show the founding-customer badge + crossed-out old price: derived from listPrice
+  // (SAR/Gulf) or <prefix>ListPrice (EGP) actually existing for the currency in view, not a separate flag
+  // — so a tier can carry the offer in one currency without it leaking into another.
+  function hasLaunchOffer(tier) {
+    const set = independentSet();
+    return set ? !!tier[set.prefix + "ListPrice"] : !!tier.listPrice;
+  }
+
+  function renderTiers() {
+    const t = T[currentLang];
+    const unit = CURRENCIES[currentCurrency].unit[currentLang];
+    const grid = document.getElementById("tiersGrid");
+    grid.innerHTML = TIERS.map(tier => {
+      const branchWord = tier.includedBranches === 1 ? t.branchWord1 : t.branchWordMany;
+      const launchOffer = hasLaunchOffer(tier);
+      return `
+      <div class="tier ${tier.recommended ? "is-recommended" : ""}">
+        ${launchOffer ? `<div class="tier-badge is-launch">${t.launchBadge}</div>` : tier.recommended ? `<div class="tier-badge">${t.recommendedBadge}</div>` : ""}
+        <div class="tier-emoji">${tier.emoji}</div>
+        <h3 class="tier-name">${tier.name}</h3>
+        <p class="tier-desc">${tier.desc[currentLang]}</p>
+        <div class="tier-price">
+          ${tier.custom ? `<span class="amount mono">${t.customPriceLabel}</span>` : `
+          ${launchOffer ? `<span class="tier-old-price mono">${tierAmount(tier, "listPrice")}</span>` : ""}
+          <span class="amount mono">${tierAmount(tier, "base")}</span>
+          <span class="currency">${unit} ${t.perMonth}</span>
+          `}
+        </div>
+        <div class="tier-price-note">${tier.custom ? t.customPriceNote : t.includesUpTo(tier.includedBranches, tier.includedUsers, branchWord)}</div>
+        <ul class="tier-includes">
+          <li>${t.includeAllModules}</li>
+          <li>${t.includeSupport}</li>
+          <li>${tier.custom ? t.includeUnlimited : t.includeExtraPricing}</li>
+        </ul>
+        <a href="/start-trial" class="btn ${tier.recommended || launchOffer ? "btn-primary" : "btn-ghost"}">${tier.custom ? t.ctaContact : t.ctaStartTrial}</a>
+      </div>
+    `;
+    }).join("");
+  }
+
+  // Picks the CHEAPEST tier that can actually cover the requested branches/users, staying within
+  // that tier's paid-overage cap (maxExtraBranches/maxExtraUsers) — never just the first tier that
+  // happens to fit, so a small overage never forces an unnecessarily expensive tier jump.
+  function bestFit(branches, users, priceSet) {
+    let best = null;
+    for (const t of TIERS) {
+      if (t.custom) continue;
+      const maxExtraBranches = Math.round(t.includedBranches * OVERAGE_CAP_PCT);
+      const maxExtraUsers = Math.round(t.includedUsers * OVERAGE_CAP_PCT);
+      const extraBranches = Math.max(0, branches - t.includedBranches);
+      const extraUsers = Math.max(0, users - t.includedUsers);
+      if (extraBranches > maxExtraBranches || extraUsers > maxExtraUsers) continue;
+      const perCompany = t[priceSet.baseKey] + extraBranches * priceSet.extraBranch + extraUsers * priceSet.extraUser;
+      if (!best || perCompany < best.perCompany) best = { tier: t, extraBranches, extraUsers, perCompany };
+    }
+    if (best) return best;
+    const enterprise = TIERS[TIERS.length - 1];
+    return { tier: enterprise, extraBranches: 0, extraUsers: 0, perCompany: enterprise[priceSet.baseKey] };
+  }
+
+  function computePrice(companies, branches, users, priceSet) {
+    const { tier, extraBranches, extraUsers, perCompany } = bestFit(branches, users, priceSet);
+    const additionalCompanies = Math.max(0, companies - 1);
+    const total = perCompany + additionalCompanies * perCompany * ADDITIONAL_COMPANY_DISCOUNT;
+    return { tier, perCompany, extraBranches, extraUsers, additionalCompanies, total: Math.round(total) };
+  }
+
+  function renderCalculator() {
+    const t = T[currentLang];
+    const unit = CURRENCIES[currentCurrency].unit[currentLang];
+    const companies = Number(document.getElementById("companiesRange").value);
+    const branches = Number(document.getElementById("branchesRange").value);
+    const users = Number(document.getElementById("usersRange").value);
+    document.getElementById("companiesVal").value = companies;
+    document.getElementById("branchesVal").value = branches;
+    document.getElementById("usersVal").value = users;
+    try { localStorage.setItem(CALC_STORAGE_KEY, JSON.stringify({ companies, branches, users })); } catch { /* private mode etc. */ }
+
+    const priceSet = activePriceSet();
+    const r = computePrice(companies, branches, users, priceSet);
+    document.getElementById("resultTier").textContent = `${r.tier.name} ${r.tier.emoji}`;
+    document.getElementById("resultPrice").textContent = Number(displayAmount(r.total)).toLocaleString("en-US");
+    document.getElementById("resultCurrency").textContent = `${unit} ${t.perMonth}`;
+
+    const lines = [t.baseLine(r.tier.name, tierAmount(r.tier, "base"), unit)];
+    if (r.extraBranches > 0) lines.push(t.extraBranchesLine(r.extraBranches, displayAmount(r.extraBranches * priceSet.extraBranch), unit));
+    if (r.extraUsers > 0) lines.push(t.extraUsersLine(r.extraUsers, displayAmount(r.extraUsers * priceSet.extraUser), unit));
+    if (r.additionalCompanies > 0) lines.push(t.additionalCompanyLine(r.additionalCompanies, displayAmount(r.additionalCompanies * r.perCompany * ADDITIONAL_COMPANY_DISCOUNT), unit));
+    if (r.tier.custom) lines.push(t.enterpriseContactLine);
+    document.getElementById("resultBreakdown").innerHTML = lines.join("");
+
+    const shareBtn = document.getElementById("calcShare");
+    shareBtn.textContent = t.calcShare;
+    const shareText = t.shareMessage(r.tier.name, Number(displayAmount(r.total)).toLocaleString("en-US"), unit, branches, users, window.location.href.split("#")[0]);
+    shareBtn.href = `https://wa.me/?text=${encodeURIComponent(shareText)}`;
+  }
+
+  function renderCurrencyPicker() {
+    const select = document.getElementById("currencyPicker");
+    select.innerHTML = Object.entries(CURRENCIES).map(([code, c]) =>
+      `<option value="${code}" ${code === currentCurrency ? "selected" : ""}>${c.label[currentLang]}</option>`
+    ).join("");
+    select.onchange = () => {
+      currentCurrency = select.value;
+      renderAll();
+    };
+    renderCurrencyNote();
+  }
+
+  function renderCurrencyNote() {
+    const t = T[currentLang];
+    const note = document.getElementById("currencyNote");
+    if (currentCurrency === "SAR") { note.textContent = ""; return; }
+    const c = CURRENCIES[currentCurrency];
+    note.textContent = c.independent ? t.independentPriceNote[currentCurrency] : t.approxNote;
+  }
+
+  function renderAll() {
+    renderStatic();
+    renderTiers();
+    renderCurrencyPicker();
+    renderCalculator();
+  }
+
+  document.getElementById("langToggle").addEventListener("click", () => {
+    currentLang = currentLang === "ar" ? "en" : "ar";
+    localStorage.setItem("lang", currentLang);
+    renderAll();
+  });
+
+  // Restore the visitor's last calculator inputs, if any, so returning to the page doesn't reset to defaults.
+  const CALC_STORAGE_KEY = "romaerp_calc_state";
+  try {
+    const saved = JSON.parse(localStorage.getItem(CALC_STORAGE_KEY) || "null");
+    if (saved) {
+      ["companiesRange", "branchesRange", "usersRange"].forEach(id => {
+        const el = document.getElementById(id);
+        const key = id.replace("Range", "");
+        if (saved[key] != null) el.value = Math.min(Number(el.max), Math.max(Number(el.min), saved[key]));
+      });
+    }
+  } catch { /* corrupt/unavailable storage — ignore and use defaults */ }
+
+  renderAll();
+  [["companiesRange", "companiesVal"], ["branchesRange", "branchesVal"], ["usersRange", "usersVal"]].forEach(([rangeId, valId]) => {
+    const range = document.getElementById(rangeId);
+    const val = document.getElementById(valId);
+    range.addEventListener("input", renderCalculator);
+    val.addEventListener("input", () => {
+      const clamped = Math.min(Number(val.max), Math.max(Number(val.min), Number(val.value) || Number(val.min)));
+      range.value = clamped;
+      renderCalculator();
+    });
+  });
+
+  // Anonymous, cookie-free page-view ping — no visitor identity, just volume/path/referrer.
+  // Fire-and-forget: never blocks or affects the page if it fails (e.g. no backend reachable locally).
   fetch("/api/marketing/pageview", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null }),
   }).catch(() => {});
-</script>
-<script>
-  SiteLang.apply({
-  "@title": "RomaERP — a complete AI-powered business management system",
-  "@description": "Instead of stitching together a POS, an accounting package, payroll spreadsheets and an e-invoicing tool from different vendors, RomaERP brings them into one subscription that talks to itself, with AI that saves you time and effort. 21-day free trial, no credit card.",
-  "@ogTitle": "RomaERP — a complete AI-powered business management system",
-  "@ogDescription": "Accounting, POS, inventory, HR and e-invoicing — in one system, not five separate programs.",
-  "partOf": "Part of Roma Group",
-  "navFeatures": "Features",
-  "navWhy": "Why RomaERP",
-  "navPricing": "Pricing",
-  "login": "Log in",
-  "startFree": "Start free",
-  "eyebrow": "🧠 AI-powered",
-  "h1": "One system instead of five programs <span class=\"hl\">that talk to each other automatically</span>",
-  "heroSub": "Accounting, POS, inventory, e-invoicing and HR — all in one subscription. No manual data transfer between programs, and no paying five different vendors.",
-  "cta1": "Start your free trial",
-  "cta2": "See pricing in detail",
-  "trust1": "21-day free trial",
-  "trust2": "No credit card",
-  "trust3": "Cancel anytime",
-  "convLabel": "Instead of buying these one by one",
-  "chipPos": "🖥️ POS",
-  "chipAcc": "📒 Accounting",
-  "chipInv": "📦 Inventory",
-  "chipEinv": "🧾 E-invoicing",
-  "chipPay": "👥 Payroll",
-  "oneSystem": "RomaERP — one system",
-  "featEyebrow": "Everything you need",
-  "featH2": "Not just accounting — a complete operating system for your business",
-  "featP": "Every feature here is actually live and syncs with the rest automatically — not just a promise on a slogan.",
-  "f1t": "Full accounting &amp; journal entries",
-  "f1d": "Chart of accounts, journal entries, a balance sheet and income statement ready the moment you record any sale or purchase.",
-  "f2t": "Point of sale (POS)",
-  "f2d": "A fast checkout for your branches, synced instantly with inventory and accounting — no manual end-of-day posting.",
-  "f3t": "Inventory &amp; costing",
-  "f3d": "Track stock levels at every branch; each product's cost updates automatically with every purchase or sale.",
-  "f4t": "Approved e-invoicing",
-  "f4d": "Invoices compliant with the Egyptian Tax Authority (ETA), submitted automatically with no extra manual steps.",
-  "f5t": "HR &amp; payroll",
-  "f5d": "Attendance, leave requests, and payroll calculated from actual hours worked — built in, not a separate program.",
-  "f6t": "AI assistant",
-  "f6d": "Logs your expenses from a photo of the receipt, matches your bank statement automatically, and answers your financial questions.",
-  "whyEyebrow": "Why RomaERP is different",
-  "whyH2": "Not a replacement for one program — a replacement for five",
-  "whyP": "The usual way is to assemble separate tools for every need. RomaERP removes the need for all of that from the start.",
-  "oldTitle": "✕ The traditional way",
-  "newTitle": "✓ With RomaERP",
-  "o1": "A POS from one vendor, accounting from another, payroll in a separate spreadsheet",
-  "o2": "Each program keeps its own data — you have to move it between systems by hand",
-  "o3": "Multiple subscriptions, with invoices and technical support from different vendors",
-  "o4": "E-invoicing is usually a completely separate extra step",
-  "n1": "All of these systems are built inside each other from day one, not bolted together later",
-  "n2": "Every sale or purchase updates accounting and inventory immediately",
-  "n3": "One subscription, one invoice, one support team",
-  "n4": "E-invoicing is part of the same sales screen, not an extra step",
-  "market": "<b>By the numbers:</b> stand-alone POS systems, separate accounting packages, HR tools and e-invoicing add-ons each carry their own monthly fee, and none of them covers the others. Put them together and you pay several times over — RomaERP brings them all into one subscription.",
-  "effEyebrow": "How we can offer you a lower price",
-  "effH2": "We don't offer you less — we work more efficiently",
-  "effP": "AI takes over manual work that used to need time and a person, saving both you and us — without sacrificing a single feature.",
-  "s1t": "Receipt photo",
-  "s1d": "Snap the receipt with your phone",
-  "s2t": "Automatic reading",
-  "s2d": "The assistant extracts the amount and the right account",
-  "s3t": "One-tap approval",
-  "s3d": "You review and approve, and the entry posts automatically",
-  "arrow": "→",
-  "effNote": "The same principle applies to bank reconciliation and answering support tickets — <b>any repetitive manual effort is handled by AI</b>, so we can give you a complete system at a competitive price without needing a huge support or accounting team that drives your cost up.",
-  "trialH2": "Try it without overthinking",
-  "trialP": "A full 21-day free trial, and from the very first moment your data sits in a database of its own — not shared with anyone.",
-  "trialBtn": "Start your free trial now",
-  "r1": "No credit card",
-  "r2": "Cancel anytime",
-  "r3": "Your data is fully isolated",
-  "r4": "Technical support",
-  "footPart": "RomaERP — part of",
-  "terms": "Terms &amp; conditions"
-});
 </script>
 </body>
 </html>
