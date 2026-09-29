@@ -599,6 +599,14 @@
   // Business/Professional get an EGP-only egpListPrice (no SAR listPrice) so the launch badge and
   // old-price strikethrough only appear when EGP is selected — whether a tier shows the offer is derived
   // from listPrice/egpListPrice existing (see hasLaunchOffer()), not a separate flag.
+  //
+  // RULE for any future founding-customer discount (a new country launch, a new offer, etc.): the
+  // discounted monthly price must stay comfortably above that tier's worst-case monthly AI cost ceiling
+  // (AiUsagePlanLimits in the backend, priced at Claude's per-token rate) — the goal during a launch
+  // window is to win customers without actually losing money on them, not to run at a loss. Work out
+  // that ceiling for the new price before publishing the discount, the same way Egypt's 50%-off numbers
+  // were checked (worst case ~730/1,820/3,600 EGP in AI cost per month for Essential/Business/Professional,
+  // safely under each one's discounted 1,500/3,500/6,000 EGP price).
   const TIERS = [
     {
       id: "essential", emoji: "🟢", name: "Essential",
