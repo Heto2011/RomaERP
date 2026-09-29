@@ -1,0 +1,16 @@
+{
+  "name": "ROMA Inventory",
+  "short_name": "ROMA Inventory",
+  "description": "Inventory, warehouse, and manufacturing app powered by RomaERP",
+  "start_url": "/inventory-portal",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#f4f6f8",
+  "theme_color": "#5b4b9e",
+  "icons": [
+    { "src": "/icons/inventory-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/inventory-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/inventory-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

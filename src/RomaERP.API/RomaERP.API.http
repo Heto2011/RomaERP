@@ -1,0 +1,6 @@
+@RomaERP.API_HostAddress = http://localhost:5036
+
+GET {{RomaERP.API_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

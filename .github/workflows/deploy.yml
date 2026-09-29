@@ -2,9 +2,20 @@ name: Deploy to Production Server
 
 on:
   workflow_dispatch:
+    inputs:
+      sql_mode:
+        description: "none = normal deploy (default). inspect / apply = run ONLY the SQL Server Developer -> Express job instead (see below)."
+        type: choice
+        options:
+          - none
+          - inspect
+          - apply
+          - recover
+        default: none
 
 jobs:
   deploy:
+    if: ${{ inputs.sql_mode == 'none' }}
     runs-on: ubuntu-latest
     steps:
       - name: Pull latest code, rebuild backend + frontend, restart service
@@ -18,17 +29,647 @@ jobs:
             cd /root/RomaERP
             git fetch origin
             git checkout claude/project-continuation-gjlk3b
-            git pull origin claude/project-continuation-gjlk3b
+            # The secret-patch steps below edit a tracked file (appsettings.json) directly on the
+            # server, which leaves it locally modified after every deploy — reset to match the
+            # remote branch exactly before pulling so that never blocks the next deploy's pull.
+            # Nothing is lost: the values it discards are re-applied fresh from GitHub secrets below.
+            git reset --hard origin/claude/project-continuation-gjlk3b
             git log -1 --oneline
+
+            # Read-only snapshot of the CURRENTLY-RUNNING process, before anything below touches it —
+            # answers "is the system actually healthy right now" independently of whether this deploy
+            # itself succeeds. Never fails the job (all commands tolerate missing data).
+            echo "---- pre-deploy health snapshot (read-only) ----"
+            df -h / | tail -1
+            free -h | sed -n '2p'
+            echo "romaerp-api restarts so far: $(systemctl show romaerp-api --property=NRestarts --value 2>/dev/null || echo unknown)"
+            echo "romaerp-api active since: $(systemctl show romaerp-api --property=ActiveEnterTimestamp --value 2>/dev/null || echo unknown)"
+            echo "nginx: $(systemctl is-active nginx 2>/dev/null || echo unknown)"
+            echo "sqlserver container: $(docker ps --filter name=sqlserver --format '{{.Status}}' 2>/dev/null || echo unknown)"
+            # Read-only: which SQL Server edition the container is set to run. The image defaults to Developer
+            # (not licensed for production use) unless MSSQL_PID says otherwise; Express is free for production.
+            # Only the MSSQL_PID line is printed — never the rest of the container's environment (it holds the sa password).
+            SQL_PID=$(docker inspect sqlserver --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | grep '^MSSQL_PID=' || true)
+            echo "sqlserver edition setting: ${SQL_PID:-MSSQL_PID not set (image default = Developer, not licensed for production)}"
+            echo "unhandled exceptions in the last 24h:"
+            # `grep | tail` as a pipeline always exits via tail's own status (0, even on empty input),
+            # so "grep ... | tail -20 || echo none" never actually falls back — capture the text first
+            # and branch on whether it's empty instead.
+            RECENT_EXCEPTIONS=$(journalctl -u romaerp-api --since "24 hours ago" --no-pager 2>/dev/null | grep -iE "unhandled exception|System\.[A-Za-z]+Exception" | tail -20)
+            if [ -n "$RECENT_EXCEPTIONS" ]; then echo "$RECENT_EXCEPTIONS"; else echo "  none found"; fi
+
+            # SQL Server runs in the "sqlserver" Docker container (confirmed via `docker ps`), not as a
+            # native service — its sa password was never covered by any secret-patch step, so an earlier
+            # `git reset --hard` here wiped the server's only copy of it (an uncommitted local edit) and
+            # broke every DB connection. Recovery: prefer an explicit DB_SA_PASSWORD secret if one is ever
+            # set; otherwise recover it straight from the container's own launch config, which still has
+            # it (the container itself was never touched, only the app's config file was). The password
+            # itself is never echoed anywhere in these logs.
+            NEW_DB_PASSWORD="${{ secrets.DB_SA_PASSWORD }}"
+            if [ -z "$NEW_DB_PASSWORD" ]; then
+              NEW_DB_PASSWORD=$(docker inspect sqlserver --format '{{range .Config.Env}}{{println .}}{{end}}' 2>/dev/null | grep '^MSSQL_SA_PASSWORD=' | cut -d= -f2- || true)
+              if [ -n "$NEW_DB_PASSWORD" ]; then
+                echo "DB password recovered from the sqlserver container's own launch config"
+              fi
+            else
+              echo "DB password supplied via DB_SA_PASSWORD secret"
+            fi
+            if [ -n "$NEW_DB_PASSWORD" ]; then
+              DB_SA_PASSWORD="$NEW_DB_PASSWORD" python3 -c "
+            import json, os
+            path = 'src/RomaERP.API/appsettings.json'
+            with open(path) as f:
+                data = json.load(f)
+            pwd = os.environ['DB_SA_PASSWORD']
+            data['ConnectionStrings']['Central'] = f'Server=localhost;Database=RomaERP_Central;User Id=sa;Password={pwd};TrustServerCertificate=True;'
+            data['ConnectionStrings']['TenantServer'] = f'Server=localhost;User Id=sa;Password={pwd};TrustServerCertificate=True;'
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=2)
+            "
+            else
+              echo "WARNING: could not determine the DB sa password (no DB_SA_PASSWORD secret, and docker inspect found nothing) — the API will fail to connect to SQL Server"
+            fi
+
+            NEW_SYSTEM_KEY="${{ secrets.SYSTEM_PROVISIONING_KEY }}"
+            if [ -n "$NEW_SYSTEM_KEY" ]; then
+              SYSTEM_PROVISIONING_KEY="$NEW_SYSTEM_KEY" python3 -c "
+            import json, os
+            path = 'src/RomaERP.API/appsettings.json'
+            with open(path) as f:
+                data = json.load(f)
+            data.setdefault('System', {})['ProvisioningKey'] = os.environ['SYSTEM_PROVISIONING_KEY'].strip()
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=2)
+            "
+            fi
+
+            NEW_CLAUDE_KEY="${{ secrets.CLAUDE_API_KEY }}"
+            if [ -n "$NEW_CLAUDE_KEY" ]; then
+              CLAUDE_API_KEY="$NEW_CLAUDE_KEY" python3 -c "
+            import json, os
+            path = 'src/RomaERP.API/appsettings.json'
+            with open(path) as f:
+                data = json.load(f)
+            data.setdefault('Claude', {})['ApiKey'] = os.environ['CLAUDE_API_KEY'].strip()
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=2)
+            "
+            fi
+
+            NEW_BANK_ACCOUNT_NAME="${{ secrets.BANK_ACCOUNT_NAME }}"
+            NEW_BANK_IBAN="${{ secrets.BANK_IBAN }}"
+            NEW_BANK_SWIFT="${{ secrets.BANK_SWIFT }}"
+            NEW_BANK_NAME="${{ secrets.BANK_NAME }}"
+            if [ -n "$NEW_BANK_IBAN" ]; then
+              BANK_ACCOUNT_NAME="$NEW_BANK_ACCOUNT_NAME" BANK_IBAN="$NEW_BANK_IBAN" BANK_SWIFT="$NEW_BANK_SWIFT" BANK_NAME="$NEW_BANK_NAME" python3 -c "
+            import json, os
+            path = 'src/RomaERP.API/appsettings.json'
+            with open(path) as f:
+                data = json.load(f)
+            bank = data.setdefault('BankTransfer', {})
+            bank['AccountName'] = os.environ['BANK_ACCOUNT_NAME'].strip()
+            bank['Iban'] = os.environ['BANK_IBAN'].strip()
+            bank['Swift'] = os.environ['BANK_SWIFT'].strip()
+            bank['BankName'] = os.environ['BANK_NAME'].strip()
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=2)
+            "
+            fi
+
+            NEW_INSTAPAY_MOBILE="${{ secrets.INSTAPAY_MOBILE }}"
+            if [ -n "$NEW_INSTAPAY_MOBILE" ]; then
+              INSTAPAY_MOBILE="$NEW_INSTAPAY_MOBILE" python3 -c "
+            import json, os
+            path = 'src/RomaERP.API/appsettings.json'
+            with open(path) as f:
+                data = json.load(f)
+            data.setdefault('InstaPay', {})['Mobile'] = os.environ['INSTAPAY_MOBILE'].strip()
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=2)
+            "
+            fi
+
+            # appsettings.json ships a literal placeholder JWT signing key (repo is public, so that
+            # placeholder is public too) — every login token is signed with it until this replaces it.
+            # Without a real secret here, anyone could forge a valid auth token for any tenant.
+            NEW_JWT_KEY="${{ secrets.JWT_SIGNING_KEY }}"
+            if [ -n "$NEW_JWT_KEY" ]; then
+              JWT_SIGNING_KEY="$NEW_JWT_KEY" python3 -c "
+            import json, os
+            path = 'src/RomaERP.API/appsettings.json'
+            with open(path) as f:
+                data = json.load(f)
+            data.setdefault('Jwt', {})['Key'] = os.environ['JWT_SIGNING_KEY'].strip()
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=2)
+            "
+            else
+              echo "WARNING: JWT_SIGNING_KEY secret not set — the API is signing login tokens with the public placeholder key from the repo. Add the secret to fix this."
+            fi
+
+            # Config-completeness check — never prints a value, only whether each key was patched in.
+            # Answers "what's configured on the real server right now" without needing to SSH in by hand.
+            echo "---- config completeness (values never shown) ----"
+            python3 -c "
+            import json
+            with open('src/RomaERP.API/appsettings.json') as f:
+                data = json.load(f)
+            def check(label, *path):
+                node = data
+                for p in path:
+                    node = node.get(p, {}) if isinstance(node, dict) else {}
+                ok = bool(node) if not isinstance(node, dict) else False
+                status = 'SET' if ok else 'MISSING'
+                print(status + ': ' + label)
+            check('System:ProvisioningKey', 'System', 'ProvisioningKey')
+            check('Claude:ApiKey', 'Claude', 'ApiKey')
+            check('BankTransfer:Iban', 'BankTransfer', 'Iban')
+            check('InstaPay:Mobile', 'InstaPay', 'Mobile')
+            jwt_key = data.get('Jwt', {}).get('Key', '')
+            is_placeholder = jwt_key == 'CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_KEY_IN_PRODUCTION_ENV'
+            print(('MISSING (still the public placeholder!)' if is_placeholder else 'SET') + ': Jwt:Key')
+            "
 
             dotnet publish src/RomaERP.API/RomaERP.API.csproj -c Release -o /var/www/romaerp-api
             systemctl restart romaerp-api
-            systemctl is-active romaerp-api
+            sleep 5
+            API_STATUS=$(systemctl is-active romaerp-api || true)
+            echo "romaerp-api status: $API_STATUS"
+            echo "---- romaerp-api status details ----"
+            systemctl status romaerp-api --no-pager -l || true
+            echo "---- romaerp-api recent logs ----"
+            journalctl -u romaerp-api -n 80 --no-pager || true
+            if [ "$API_STATUS" != "active" ]; then
+              echo "romaerp-api is not active — see logs above for the crash reason"
+              exit 1
+            fi
+
+            echo "---- live smoke test (localhost) ----"
+            LISTEN_URL=$(journalctl -u romaerp-api -n 200 --no-pager | grep -o 'Now listening on: http://[^ ]*' | tail -1 | sed 's/Now listening on: //')
+            if [ -n "$LISTEN_URL" ]; then
+              echo "Detected listen URL: $LISTEN_URL"
+              HEALTH_CODE=000
+              for attempt in 1 2 3 4 5; do
+                # Two failure modes to avoid here, both hit in earlier versions of this block:
+                # 1) curl's -w already prints "000" itself on a connection failure, before exiting
+                #    non-zero — appending "|| echo 000" on top of that produced "000000", which never
+                #    equals the "000" the retry check compares against, so it broke out after one
+                #    attempt instead of retrying.
+                # 2) Removing that fallback entirely (to fix #1) left curl's own non-zero exit code
+                #    live on a bare assignment. Under `set -e` (active for this whole script), that
+                #    aborted the ENTIRE deploy — including the frontend build/copy steps after this
+                #    block — the moment curl hit the API before it was ready, exactly the transient
+                #    condition this retry loop exists to tolerate.
+                # `|| true` fixes both: it only changes the pipeline's exit status (never adds output),
+                # so curl's own "000" (or nothing, on a lower-level failure) is captured cleanly.
+                HEALTH_CODE=$(curl -s -o /dev/null -w "%{http_code}" "$LISTEN_URL/api/health" 2>/dev/null || true)
+                HEALTH_CODE=${HEALTH_CODE:-000}
+                if [ "$HEALTH_CODE" != "000" ]; then break; fi
+                sleep 2
+              done
+              echo "GET /api/health -> $HEALTH_CODE"
+            else
+              echo "Could not detect the API's listen URL from recent logs — skipping the localhost smoke test (nginx-proxied requests still work externally regardless)."
+            fi
 
             cd frontend
             npm ci
-            npm run build
+            # Same-origin API base: identical behavior from the raw IP and from the romagroup.app domain
+            # over HTTPS (an absolute http://IP/api base would be blocked as mixed content there).
+            # A shell-provided value takes priority over any untracked frontend/.env on the server.
+            VITE_API_URL=/api npm run build
             rm -rf /var/www/romaerp/*
             cp -r dist/* /var/www/romaerp/
+            cp /root/RomaERP/marketing/pricing.html /var/www/romaerp/pricing.html
+            cp /root/RomaERP/marketing/terms.html /var/www/romaerp/terms.html
+            cp /root/RomaERP/marketing/favicon.svg /var/www/romaerp/favicon.svg
+            cp /root/RomaERP/marketing/og-image.png /var/www/romaerp/og-image.png
+            cp /root/RomaERP/marketing/roma-group.html /var/www/romaerp/roma-group.html
+            cp /root/RomaERP/marketing/roma-hr.html /var/www/romaerp/roma-hr.html
+            cp /root/RomaERP/marketing/roma-erp.html /var/www/romaerp/roma-erp.html
+            cp /root/RomaERP/marketing/site-lang.js /var/www/romaerp/site-lang.js
 
             echo "DEPLOY_OK"
+
+      # Its own step with continue-on-error so a domain/HTTPS problem can never fail or block a product
+      # deploy. Idempotent: only ever ADDS one nginx site file for romagroup.app (never edits the existing
+      # site's config), validates with `nginx -t` before every reload, and rolls back on failure.
+      - name: Configure romagroup.app domain + free HTTPS (Let's Encrypt)
+        continue-on-error: true
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            DOMAIN=romagroup.app
+            ACME_ROOT=/var/www/letsencrypt
+
+            echo "---- domain setup: $DOMAIN ----"
+            if ! getent hosts "$DOMAIN" >/dev/null 2>&1; then
+              echo "DNS for $DOMAIN does not resolve from the server yet - skipping until it does."
+              exit 0
+            fi
+
+            # Debian/Ubuntu nginx loads sites-enabled/*; fall back to conf.d/ if this server doesn't.
+            if grep -qE 'include[[:space:]]+/etc/nginx/sites-enabled' /etc/nginx/nginx.conf 2>/dev/null; then
+              CONF=/etc/nginx/sites-available/$DOMAIN.conf
+              LINK=/etc/nginx/sites-enabled/$DOMAIN.conf
+            else
+              CONF=/etc/nginx/conf.d/$DOMAIN.conf
+              LINK=""
+            fi
+            mkdir -p "$(dirname "$CONF")"
+
+            if ! command -v certbot >/dev/null 2>&1; then
+              echo "installing certbot"
+              apt-get update -qq
+              DEBIAN_FRONTEND=noninteractive apt-get install -y -qq certbot
+            fi
+            mkdir -p "$ACME_ROOT"
+
+            # Names to certify: always the bare domain; www only once its DNS record resolves.
+            CERT_NAMES="-d $DOMAIN"
+            if getent hosts "www.$DOMAIN" >/dev/null 2>&1; then CERT_NAMES="$CERT_NAMES -d www.$DOMAIN"; fi
+
+            http_only_site() {
+              cat <<'NGINX'
+            server {
+                listen 80;
+                server_name romagroup.app www.romagroup.app;
+                location /.well-known/acme-challenge/ { root /var/www/letsencrypt; }
+                location / { return 301 https://$host$request_uri; }
+            }
+            NGINX
+            }
+
+            full_site() {
+              cat <<'NGINX'
+            server {
+                listen 80;
+                server_name romagroup.app www.romagroup.app;
+                location /.well-known/acme-challenge/ { root /var/www/letsencrypt; }
+                location / { return 301 https://$host$request_uri; }
+            }
+            server {
+                listen 443 ssl http2;
+                server_name romagroup.app www.romagroup.app;
+                ssl_certificate /etc/letsencrypt/live/romagroup.app/fullchain.pem;
+                ssl_certificate_key /etc/letsencrypt/live/romagroup.app/privkey.pem;
+                ssl_protocols TLSv1.2 TLSv1.3;
+                root /var/www/romaerp;
+                index index.html;
+                client_max_body_size 25m;
+                location /api/ {
+                    proxy_pass http://127.0.0.1:5000;
+                    proxy_http_version 1.1;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $remote_addr;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                    proxy_read_timeout 120s;
+                }
+                location / { try_files $uri $uri/ /index.html; }
+            }
+            NGINX
+            }
+
+            # Installs a candidate site file: skip if unchanged, otherwise validate with nginx -t,
+            # reload, and roll back to the previous file (or remove ours) if validation fails.
+            apply_site() {
+              "$1" > "$CONF.new"
+              if [ -f "$CONF" ] && cmp -s "$CONF" "$CONF.new"; then
+                rm -f "$CONF.new"
+                return 0
+              fi
+              if [ -f "$CONF" ]; then cp "$CONF" "$CONF.bak"; fi
+              mv "$CONF.new" "$CONF"
+              if [ -n "$LINK" ]; then ln -sf "$CONF" "$LINK"; fi
+              if nginx -t 2>&1; then
+                systemctl reload nginx
+              else
+                echo "nginx -t FAILED - rolling back"
+                if [ -f "$CONF.bak" ]; then
+                  mv "$CONF.bak" "$CONF"
+                else
+                  rm -f "$CONF"
+                  if [ -n "$LINK" ]; then rm -f "$LINK"; fi
+                fi
+                nginx -t
+                exit 1
+              fi
+            }
+
+            NEED_CERT=0
+            if [ ! -f "/etc/letsencrypt/live/$DOMAIN/fullchain.pem" ]; then
+              NEED_CERT=1
+            elif getent hosts "www.$DOMAIN" >/dev/null 2>&1 && ! openssl x509 -in "/etc/letsencrypt/live/$DOMAIN/cert.pem" -noout -text | grep -q "DNS:www.$DOMAIN"; then
+              NEED_CERT=1
+            fi
+
+            if [ "$NEED_CERT" = "1" ]; then
+              # Port-80 site first so Let's Encrypt can fetch the challenge file.
+              apply_site http_only_site
+              certbot certonly --webroot -w "$ACME_ROOT" $CERT_NAMES --expand \
+                --non-interactive --agree-tos --register-unsafely-without-email \
+                --deploy-hook "systemctl reload nginx"
+            fi
+
+            apply_site full_site
+            systemctl enable --now certbot.timer >/dev/null 2>&1 || true
+
+            echo "---- domain smoke test (from the server itself) ----"
+            for path in / /roma-group.html /api/health; do
+              CODE=$(curl -s -o /dev/null -w "%{http_code}" --resolve "$DOMAIN:443:127.0.0.1" "https://$DOMAIN$path" || true)
+              echo "GET https://$DOMAIN$path -> ${CODE:-000}"
+            done
+            # Optional: attach a contact email to the Let's Encrypt account so expiry notices reach a human.
+            # Comes from the LETSENCRYPT_EMAIL secret (the repo is public, so it is never written in code);
+            # empty/unset = skipped. Only re-applied when the value changes (marker stores a hash, not the
+            # address, so nothing readable is left behind or echoed).
+            LE_EMAIL="${{ secrets.LETSENCRYPT_EMAIL }}"
+            if [ -n "$LE_EMAIL" ]; then
+              EMAIL_HASH=$(printf '%s' "$LE_EMAIL" | sha256sum | cut -d' ' -f1)
+              MARKER=/etc/letsencrypt/.contact-email-hash
+              if [ ! -f "$MARKER" ] || [ "$(cat "$MARKER")" != "$EMAIL_HASH" ]; then
+                if certbot update_account --email "$LE_EMAIL" --no-eff-email --non-interactive >/dev/null 2>&1; then
+                  echo "$EMAIL_HASH" > "$MARKER"
+                  echo "Let's Encrypt contact email set (from LETSENCRYPT_EMAIL secret)"
+                else
+                  echo "WARNING: could not set the Let's Encrypt contact email (non-fatal)"
+                fi
+              else
+                echo "Let's Encrypt contact email already set"
+              fi
+            else
+              echo "LETSENCRYPT_EMAIL secret not set - expiry notices disabled (auto-renewal still runs)"
+            fi
+            echo "DOMAIN_SETUP_OK"
+
+  # ---- SQL Server Developer -> Express switch (manual; skipped on a normal deploy) ----
+  # The production "sqlserver" container runs MSSQL_PID=developer, whose licence is for development/test only.
+  # Changing MSSQL_PID on a container that already has data does not change the edition, and Microsoft does
+  # not support downgrading Developer -> Express in place. So this workflow does the supported route: back
+  # every database up, start a fresh Express container on a NEW volume, restore into it, verify, then swap it
+  # in under the same name/ports. The old container is kept (stopped) as an instant rollback, and any failure
+  # after the app is stopped restores the old container and restarts the app automatically.
+  #
+  #   mode = inspect  -> read-only report, changes nothing (default; run this first)
+  #   mode = apply    -> the actual switch (a few minutes of downtime)
+  sql-express:
+    if: ${{ inputs.sql_mode != 'none' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: SQL Server Developer -> Express
+        uses: appleboy/ssh-action@v1.0.3
+        env:
+          MODE: ${{ inputs.sql_mode }}
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          envs: MODE
+          command_timeout: 30m
+          script: |
+            set -eEuo pipefail
+            MODE="${MODE:-inspect}"
+            OLD=sqlserver
+            OLD_KEEP=sqlserver-developer-old
+            NEW_TMP=sqlserver-express-new
+            NEW_VOL=sqlserver_express_data
+            SPEC=/root/sqlserver-container-spec.json
+            STAMP=$(date +%Y%m%d_%H%M%S)
+            BACKUP_DIR=/root/db-backups/express-switch-$STAMP
+            STAGE=preflight
+            SWAPPED=0
+            APP_STOPPED=0
+
+            echo "mode: $MODE"
+
+            # recover: put production back into its normal state after an interrupted switch — drop any
+            # leftover temporary Express container, make sure the original "sqlserver" container exists and
+            # runs, then start the app and check it is healthy. Never touches data.
+            if [ "$MODE" = recover ]; then
+              docker rm -f "$NEW_TMP" >/dev/null 2>&1 || true
+              if ! docker ps -a --format '{{.Names}}' | grep -qx "$OLD" && docker ps -a --format '{{.Names}}' | grep -qx "$OLD_KEEP"; then
+                docker rename "$OLD_KEEP" "$OLD"
+              fi
+              docker start "$OLD" >/dev/null 2>&1 || true
+              for i in $(seq 1 40); do
+                if [ "$(docker inspect -f '{{.State.Running}}' "$OLD" 2>/dev/null)" = true ]; then break; fi
+                sleep 3
+              done
+              sleep 15
+              systemctl start romaerp-api || true
+              OK=0
+              for i in $(seq 1 30); do
+                if curl -fsS -m 10 https://romagroup.app/api/health >/dev/null 2>&1; then OK=1; break; fi
+                sleep 3
+              done
+              echo "containers:"; docker ps -a --format '  {{.Names}}: {{.Status}}' | grep -i sql || true
+              echo "romaerp-api: $(systemctl is-active romaerp-api || true)"
+              if [ "$OK" = 1 ]; then echo "RECOVER_OK: app healthy"; else echo "RECOVER_FAILED: API health check did not pass"; exit 1; fi
+              exit 0
+            fi
+
+            docker inspect "$OLD" > "$SPEC"
+            chmod 600 "$SPEC"
+            ORIG_RESTART=$(python3 -c "import json; print(json.load(open('$SPEC'))[0]['HostConfig']['RestartPolicy']['Name'] or 'no')")
+
+            # Rebuilds the old container's `docker run` from its own inspect data (image pinned by id, same
+            # env/ports/network/restart policy/extra mounts) with two deliberate differences: MSSQL_PID=Express,
+            # and /var/opt/mssql on a fresh named volume. Modes: "print" (password masked) or "run".
+            # portmode "temp" publishes only on 127.0.0.1:14330 so it can run beside the old container.
+            cat > /tmp/sql-plan.py <<'PY'
+            import json, os, subprocess, sys
+            mode, name, volume, portmode = sys.argv[1:5]
+            spec = json.load(open('/root/sqlserver-container-spec.json'))[0]
+            cfg, host = spec['Config'], spec['HostConfig']
+            image = json.loads(subprocess.check_output(['docker', 'image', 'inspect', spec['Image']]))[0]
+            image_env = set(image['Config'].get('Env') or [])
+
+            for key in ('Privileged', 'CapAdd', 'CapDrop', 'Devices', 'Links', 'VolumesFrom', 'Tmpfs', 'Sysctls'):
+                if host.get(key):
+                    sys.exit('unsupported setting on the old container (%s); not guessing: %s' % (key, host.get(key)))
+
+            env = [e for e in (cfg.get('Env') or []) if e not in image_env and not e.startswith('MSSQL_PID=')]
+            if not any(e.startswith('MSSQL_SA_PASSWORD=') for e in env):
+                sys.exit('MSSQL_SA_PASSWORD not found in the old container environment')
+            if 'ACCEPT_EULA=Y' not in env:
+                env.append('ACCEPT_EULA=Y')
+            env.append('MSSQL_PID=Express')
+
+            args = ['docker', 'run', '-d', '--name', name]
+            for e in env:
+                args += ['-e', e]
+
+            for m in spec.get('Mounts') or []:
+                if m['Destination'] == '/var/opt/mssql':
+                    args += ['-v', '%s:/var/opt/mssql' % volume]
+                elif m['Type'] == 'bind':
+                    args += ['-v', '%s:%s%s' % (m['Source'], m['Destination'], '' if m.get('RW', True) else ':ro')]
+                elif m['Type'] == 'volume':
+                    args += ['-v', '%s:%s%s' % (m['Name'], m['Destination'], '' if m.get('RW', True) else ':ro')]
+            if not any(a == '%s:/var/opt/mssql' % volume for a in args):
+                args += ['-v', '%s:/var/opt/mssql' % volume]
+
+            if portmode == 'temp':
+                args += ['-p', '127.0.0.1:14330:1433']
+            else:
+                for cport, binds in (host.get('PortBindings') or {}).items():
+                    for b in binds or []:
+                        ip = b.get('HostIp') or ''
+                        args += ['-p', ('%s:' % ip if ip else '') + '%s:%s' % (b['HostPort'], cport)]
+
+            restart = host.get('RestartPolicy') or {}
+            if portmode != 'temp' and restart.get('Name') not in (None, '', 'no'):
+                args += ['--restart', restart['Name'] + (':%s' % restart['MaximumRetryCount'] if restart.get('MaximumRetryCount') else '')]
+            if host.get('Memory'):
+                args += ['--memory', str(host['Memory'])]
+            if host.get('NetworkMode') not in (None, '', 'default', 'bridge'):
+                args += ['--network', host['NetworkMode']]
+
+            args.append(spec['Image'])
+            if mode == 'print':
+                print(' '.join('MSSQL_SA_PASSWORD=***' if a.startswith('MSSQL_SA_PASSWORD=') else a for a in args))
+            else:
+                os.execvp('docker', args)
+            PY
+
+            SQLCMD=$(docker exec "$OLD" bash -c 'for p in /opt/mssql-tools18/bin/sqlcmd /opt/mssql-tools/bin/sqlcmd; do [ -x "$p" ] && echo "$p" && break; done')
+            [ -n "$SQLCMD" ] || { echo "sqlcmd not found inside $OLD"; exit 1; }
+            PASS=$(docker exec "$OLD" printenv MSSQL_SA_PASSWORD)
+            q() { local c=$1; shift; docker exec "$c" "$SQLCMD" -S localhost -U sa -P "$PASS" -C -b -h -1 -W "$@"; }
+            wait_ready() {
+              for i in $(seq 1 60); do
+                if q "$1" -Q "SET NOCOUNT ON; SELECT 1" >/dev/null 2>&1; then return 0; fi
+                sleep 3
+              done
+              echo "$1 did not become ready in time"; return 1
+            }
+
+            echo "---- current edition ----"
+            q "$OLD" -Q "SET NOCOUNT ON; SELECT CAST(SERVERPROPERTY('Edition') AS nvarchar(100)) + ' / ' + CAST(SERVERPROPERTY('ProductVersion') AS nvarchar(50))"
+            echo "---- databases: name | size MB | state ----"
+            q "$OLD" -s "|" -Q "SET NOCOUNT ON; SELECT d.name, CAST(SUM(mf.size)*8/1024 AS int), d.state_desc FROM sys.databases d JOIN sys.master_files mf ON mf.database_id = d.database_id WHERE d.database_id > 4 GROUP BY d.name, d.state_desc ORDER BY d.name"
+            DBS=$(q "$OLD" -Q "SET NOCOUNT ON; SELECT name FROM sys.databases WHERE database_id > 4 AND state = 0" | tr -d '\r' | sed '/^\s*$/d')
+            echo "---- SQL logins other than sa (restoring would orphan their users) ----"
+            OTHER_LOGINS=$(q "$OLD" -Q "SET NOCOUNT ON; SELECT name FROM sys.server_principals WHERE type = 'S' AND name <> 'sa' AND name NOT LIKE '##%'" | tr -d '\r' | sed '/^\s*$/d' || true)
+            echo "${OTHER_LOGINS:-none}"
+            echo "---- Enterprise-only features in use (Express can't hold these) ----"
+            SKU_FEATURES=""
+            for DB in $DBS; do
+              F=$(q "$OLD" -d "$DB" -Q "SET NOCOUNT ON; SELECT feature_name FROM sys.dm_db_persisted_sku_features" | tr -d '\r' | sed '/^\s*$/d' | grep -v 'Changed database context' || true)
+              if [ -n "$F" ]; then SKU_FEATURES="$SKU_FEATURES $DB:$F"; fi
+            done
+            echo "${SKU_FEATURES:-none}"
+            LARGE=$(q "$OLD" -Q "SET NOCOUNT ON; SELECT d.name FROM sys.databases d JOIN sys.master_files mf ON mf.database_id = d.database_id WHERE d.database_id > 4 AND mf.type = 0 GROUP BY d.name HAVING SUM(mf.size)*8/1024 > 9000" | tr -d '\r' | sed '/^\s*$/d')
+            echo "---- databases near Express's 10 GB data limit ----"
+            echo "${LARGE:-none}"
+            echo "---- planned Express container (password masked) ----"
+            python3 /tmp/sql-plan.py print "$OLD" "$NEW_VOL" keep
+            echo "---- disk ----"
+            df -h / | tail -1
+            du -sh /root/db-backups 2>/dev/null || true
+
+            if [ -n "$OTHER_LOGINS" ] || [ -n "$SKU_FEATURES" ] || [ -n "$LARGE" ]; then
+              echo "BLOCKED: see the lists above; Express switch is not safe as-is."
+              if [ "$MODE" = apply ]; then exit 1; fi
+            fi
+            if [ "$MODE" != apply ]; then
+              echo "INSPECT_OK: nothing was changed. Re-run with mode=apply to switch."
+              exit 0
+            fi
+
+            rollback() {
+              trap - ERR EXIT
+              echo "!! FAILED at stage '$STAGE' — rolling back to the original Developer container"
+              docker rm -f "$NEW_TMP" >/dev/null 2>&1 || true
+              if [ "$SWAPPED" = 1 ]; then
+                docker rm -f "$OLD" >/dev/null 2>&1 || true
+                docker rename "$OLD_KEEP" "$OLD" || true
+                docker update --restart="$ORIG_RESTART" "$OLD" >/dev/null 2>&1 || true
+              fi
+              docker start "$OLD" >/dev/null 2>&1 || true
+              if [ "$APP_STOPPED" = 1 ]; then systemctl start romaerp-api || true; fi
+              echo "ROLLBACK_DONE: original container is running again. Backups are in $BACKUP_DIR"
+              exit 1
+            }
+            trap rollback ERR
+            trap 'rc=$?; if [ "$rc" -ne 0 ]; then rollback; fi' EXIT
+
+            STAGE=stop-app
+            systemctl stop romaerp-api
+            APP_STOPPED=1
+
+            STAGE=backup
+            mkdir -p "$BACKUP_DIR"
+            docker exec "$OLD" mkdir -p /var/opt/mssql/backup
+            COUNT=0
+            for DB in $DBS; do
+              echo "backing up $DB"
+              q "$OLD" -Q "BACKUP DATABASE [$DB] TO DISK = N'/var/opt/mssql/backup/${DB}_${STAMP}.bak' WITH INIT, CHECKSUM"
+              q "$OLD" -Q "RESTORE VERIFYONLY FROM DISK = N'/var/opt/mssql/backup/${DB}_${STAMP}.bak' WITH CHECKSUM" >/dev/null
+              docker cp "$OLD:/var/opt/mssql/backup/${DB}_${STAMP}.bak" "$BACKUP_DIR/"
+              [ -s "$BACKUP_DIR/${DB}_${STAMP}.bak" ] || { echo "empty backup for $DB"; false; }
+              COUNT=$((COUNT+1))
+            done
+            echo "backed up and verified $COUNT database(s) into $BACKUP_DIR"
+
+            STAGE=start-express-temp
+            docker rm -f "$NEW_TMP" >/dev/null 2>&1 || true
+            if docker volume inspect "$NEW_VOL" >/dev/null 2>&1; then
+              if docker ps -a --filter volume="$NEW_VOL" --format '{{.Names}}' | grep -qx "$OLD"; then
+                echo "the current $OLD container already uses $NEW_VOL; nothing to switch"; false
+              fi
+              docker volume rm "$NEW_VOL" >/dev/null   # leftover of an earlier failed attempt (only ever holds a partial copy)
+            fi
+            docker volume create "$NEW_VOL" >/dev/null
+            python3 /tmp/sql-plan.py run "$NEW_TMP" "$NEW_VOL" temp >/dev/null
+            wait_ready "$NEW_TMP"
+            EDITION=$(q "$NEW_TMP" -Q "SET NOCOUNT ON; SELECT CAST(SERVERPROPERTY('Edition') AS nvarchar(100))")
+            echo "new container edition: $EDITION"
+            case "$EDITION" in *Express*) ;; *) echo "new container is not Express"; false;; esac
+
+            STAGE=restore
+            docker exec "$NEW_TMP" mkdir -p /var/opt/mssql/backup
+            for DB in $DBS; do
+              echo "restoring $DB"
+              docker cp "$BACKUP_DIR/${DB}_${STAMP}.bak" "$NEW_TMP:/var/opt/mssql/backup/"
+              docker exec -u 0 "$NEW_TMP" chown mssql:root "/var/opt/mssql/backup/${DB}_${STAMP}.bak"
+              docker exec -u 0 "$NEW_TMP" chmod 640 "/var/opt/mssql/backup/${DB}_${STAMP}.bak"
+              if ! RESTORE_OUT=$(q "$NEW_TMP" -Q "RESTORE DATABASE [$DB] FROM DISK = N'/var/opt/mssql/backup/${DB}_${STAMP}.bak' WITH REPLACE, CHECKSUM" 2>&1); then
+                echo "restore of $DB failed:"; echo "$RESTORE_OUT" | tail -15; false
+              fi
+            done
+            ONLINE=$(q "$NEW_TMP" -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE database_id > 4 AND state = 0" | tr -d '\r ' )
+            echo "databases online in Express: $ONLINE (expected $COUNT)"
+            [ "$ONLINE" = "$COUNT" ] || false
+
+            STAGE=swap
+            docker stop -t 60 "$OLD" >/dev/null
+            docker stop -t 60 "$NEW_TMP" >/dev/null
+            docker rm "$NEW_TMP" >/dev/null
+            docker rename "$OLD" "$OLD_KEEP"
+            SWAPPED=1
+            docker update --restart=no "$OLD_KEEP" >/dev/null
+            python3 /tmp/sql-plan.py run "$OLD" "$NEW_VOL" keep >/dev/null
+            wait_ready "$OLD"
+            EDITION=$(q "$OLD" -Q "SET NOCOUNT ON; SELECT CAST(SERVERPROPERTY('Edition') AS nvarchar(100))")
+            case "$EDITION" in *Express*) ;; *) echo "swapped container is not Express: $EDITION"; false;; esac
+            ONLINE=$(q "$OLD" -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM sys.databases WHERE database_id > 4 AND state = 0" | tr -d '\r ')
+            [ "$ONLINE" = "$COUNT" ] || { echo "only $ONLINE of $COUNT databases online after swap"; false; }
+
+            STAGE=start-app
+            systemctl start romaerp-api
+            OK=0
+            for i in $(seq 1 30); do
+              if curl -fsS -m 10 https://romagroup.app/api/health >/dev/null 2>&1; then OK=1; break; fi
+              sleep 3
+            done
+            [ "$OK" = 1 ] || { echo "API health check failed after the switch"; false; }
+
+            trap - ERR EXIT
+            echo "SWITCH_OK: SQL Server is now '$EDITION' with $ONLINE databases online; the app is healthy."
+            echo "The old Developer container is kept stopped as '$OLD_KEEP' (remove it after a few days: docker rm $OLD_KEEP; docker volume ls shows its old data volume)."

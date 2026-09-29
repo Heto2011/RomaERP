@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Roma Group — مجموعة منتجات لإدارة أعمالك</title>
+<meta name="description" content="Roma Group تجمع منتجاتنا: Roma HR لإدارة الموارد البشرية، RomaERP لإدارة الأعمال والمحاسبة، بالإضافة لـRoma Voice وRoma Tools. اختر المنتج اللي محتاجه شغلك.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Roma Group">
+<meta property="og:title" content="Roma Group — أربع أدوات، شركة واحدة تثق فيها">
+<meta property="og:description" content="اختر المنتج اللي محتاجه شغلك دلوقتي — كل منتج شغال لوحده، ولو حبيت تجمعهم مع بعض تقدر بسهولة.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#0f5c4b; --hr:#c8862e; --voice:#3a6ea5; --tools:#8a7355;
+    --hero-bg:#0d1319;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Tajawal","Segoe UI",sans-serif; background:var(--hero-bg);}
+  a{text-decoration:none; color:inherit;}
+  .wrap{max-width:1080px; margin:0 auto; padding:0 24px;}
+
+  .hero{
+    min-height:100vh;
+    background:radial-gradient(120% 70% at 50% -10%, #16222a 0%, var(--hero-bg) 65%);
+    display:flex; flex-direction:column;
+  }
+  nav{display:flex; align-items:center; justify-content:space-between; padding:26px 0;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand-mark{width:34px; height:34px; border-radius:9px; background:var(--primary); display:flex; align-items:center; justify-content:center; font-weight:900; color:#fff; font-size:16px;}
+  .brand-name{font-weight:900; font-size:19px; color:#fff;}
+  .nav-links{display:flex; gap:28px; font-size:14px; color:rgba(255,255,255,.72); font-weight:500;}
+  @media (max-width:640px){ .nav-links{display:none;} }
+  .nav-login{display:flex; flex-wrap:wrap; justify-content:flex-end; gap:8px; font-size:13px; font-weight:700;}
+  .nav-login a{padding:7px 14px; border:1px solid rgba(255,255,255,.22); border-radius:999px; color:rgba(255,255,255,.85);}
+  .nav-login a:hover{border-color:rgba(255,255,255,.5); color:#fff;}
+
+  .hero-copy{display:flex; flex-direction:column; align-items:center; text-align:center; gap:16px; padding:36px 0 8px;}
+  .eyebrow{display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); color:#fff; border-radius:999px; padding:6px 16px; font-size:12.5px; font-weight:700;}
+  h1{font-size:clamp(28px,4.5vw,42px); font-weight:900; color:#fff; line-height:1.35; max-width:760px; margin:0 auto;}
+  .subtitle{font-size:15.5px; color:rgba(255,255,255,.6); max-width:600px; line-height:1.7; margin:0 auto;}
+
+  .grid{flex:1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; padding:32px 0 64px; max-width:900px; margin:0 auto; width:100%;}
+  @media (max-width:640px){ .grid{grid-template-columns:1fr;} }
+
+  .card{position:relative; isolation:isolate; overflow:hidden; border-radius:16px; padding:24px; display:flex; flex-direction:column; gap:10px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.06); transition:transform .15s, border-color .15s;}
+  .card:hover{transform:translateY(-2px); border-color:rgba(255,255,255,.3);}
+  .card.featured{background:rgba(200,134,46,.14); border-color:rgba(200,134,46,.4); color:#c8862e;}
+  .card.erp{background:rgba(15,92,75,.26); border-color:rgba(95,208,161,.36); color:#5fd0a1;}
+  .card.voice{background:rgba(58,110,165,.14); border-color:rgba(58,110,165,.42); color:#6fa3dc;}
+  .card.tools{background:rgba(138,115,85,.14); border-color:rgba(138,115,85,.42); color:#b59a72;}
+  .card-art{position:absolute; z-index:-1; inset-inline-end:-22px; bottom:-22px; width:160px; height:160px; opacity:.27; pointer-events:none;}
+  .badge{width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:#fff;}
+  .card-title{font-weight:900; font-size:18px; color:#fff;}
+  .card-desc{font-size:13px; color:rgba(255,255,255,.55); line-height:1.6; max-width:80%;}
+  .card-tags{display:flex; flex-wrap:wrap; gap:6px; max-width:88%;}
+  .card-tags span{font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; background:rgba(255,255,255,.09); color:rgba(255,255,255,.78);}
+  .card-cta{font-size:12.5px; font-weight:700; margin-top:4px;}
+  .card-cta.muted{color:rgba(255,255,255,.4);}
+
+  footer{text-align:center; padding:24px; font-size:12.5px; color:rgba(255,255,255,.4);}
+</style>
+<script src="/site-lang.js"></script>
+<style>
+.lang-btn{background:transparent; border:1px solid rgba(255,255,255,.22); color:rgba(255,255,255,.85); border-radius:999px; padding:7px 14px; font:inherit; font-size:13px; font-weight:700; cursor:pointer;}
+.lang-btn:hover{border-color:rgba(255,255,255,.5); color:#fff;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <nav>
+      <div class="brand">
+        <div class="brand-mark">R</div>
+        <div class="brand-name">Roma Group</div>
+      </div>
+      <div class="nav-links">
+        <span data-i18n="navProducts">المنتجات</span>
+        <span data-i18n="navAbout">من نحن</span>
+        <span data-i18n="navContact">تواصل معنا</span>
+      </div>
+      <div class="nav-login">
+        <button id="langToggle" class="lang-btn" type="button">English</button>
+        <a href="/login" data-i18n="loginErp">دخول ERP</a>
+        <a href="/people-login" data-i18n="loginHr">دخول HR</a>
+      </div>
+    </nav>
+
+    <div class="hero-copy">
+      <div class="eyebrow"><span data-i18n="eyebrow">مجموعة منتجات لإدارة أعمالك بذكاء</span></div>
+      <h1 data-i18n="h1">أربع أدوات، شركة واحدة تثق فيها</h1>
+      <div class="subtitle" data-i18n="sub">اختر المنتج اللي محتاجه شغلك دلوقتي — كل منتج شغال لوحده، ولو حبيت تجمعهم مع بعض تقدر بسهولة</div>
+    </div>
+
+    <div class="grid">
+      <a href="roma-hr.html" class="card featured">
+        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 21s7-6.7 7-12.2A7 7 0 1 0 5 8.8C5 14.3 12 21 12 21z"/>
+          <circle cx="12" cy="8.5" r="3.3"/>
+          <path d="M12 6.8V8.6l1.4 1"/>
+        </svg>
+        <div class="badge" style="background:var(--hr); color:#2c1c04;">HR</div>
+        <div class="card-title">Roma HR</div>
+        <div class="card-desc" data-i18n="hrDesc">حضور وانصراف بالموقع الجغرافي، رواتب تلقائية، طلبات وموافقات — لأي شركة</div>
+        <div class="card-tags"><span data-i18n="hrT1">حضور بالـGPS</span><span data-i18n="hrT2">رواتب تلقائية</span><span data-i18n="hrT3">إجازات وطلبات</span></div>
+        <div class="card-cta" style="color:var(--hr);" data-i18n="hrCta">جرّبه الآن ←</div>
+      </a>
+
+      <a href="roma-erp.html" class="card erp">
+        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 21h18"/>
+          <path d="M6 21V14"/>
+          <path d="M11.5 21V9"/>
+          <path d="M17 21V5"/>
+          <path d="M14.5 8 17 5l2.5 3"/>
+        </svg>
+        <div class="badge" style="background:var(--primary);">ERP</div>
+        <div class="card-title">RomaERP</div>
+        <div class="card-desc" data-i18n="erpDesc">محاسبة، مبيعات، مخزون، وتقارير — نظام إدارة أعمال متكامل بالذكاء الاصطناعي</div>
+        <div class="card-tags"><span data-i18n="erpT1">محاسبة</span><span data-i18n="erpT2">مبيعات ومخزون</span><span data-i18n="erpT3">كاشير POS</span><span data-i18n="erpT4">فاتورة إلكترونية</span><span data-i18n="erpT5">ذكاء اصطناعي</span></div>
+        <div class="card-cta" style="color:#5fd0a1;" data-i18n="erpCta">شغال حاليًا ←</div>
+      </a>
+
+      <div class="card voice" aria-disabled="true">
+        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="9.3" y="3" width="5.4" height="10" rx="2.7"/>
+          <path d="M5.5 11a6.5 6.5 0 0 0 13 0"/>
+          <path d="M12 17.5V21"/>
+          <path d="M9 21h6"/>
+        </svg>
+        <div class="badge" style="background:var(--voice);">V</div>
+        <div class="card-title">Roma Voice</div>
+        <div class="card-desc" data-i18n="voiceDesc">تسجيل عمليات ومكالمات بالصوت وتحويلها تلقائيًا لبيانات — تفاصيله قريبًا</div>
+        <div class="card-cta muted" data-i18n="soon">قريبًا</div>
+      </div>
+
+      <div class="card tools" aria-disabled="true">
+        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M14.7 6.3a3.6 3.6 0 0 0-4.9 4.9L4 17l3 3 5.8-5.8a3.6 3.6 0 0 0 4.9-4.9l-1.9 1.9a1.8 1.8 0 0 1-2.5-2.5l1.9-1.9z"/>
+        </svg>
+        <div class="badge" style="background:var(--tools);">T</div>
+        <div class="card-title">Roma Tools</div>
+        <div class="card-desc" data-i18n="toolsDesc">أدوات مساعدة صغيرة لتشغيل أعمالك اليومية — تفاصيله قريبًا</div>
+        <div class="card-cta muted" data-i18n="soon">قريبًا</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Roma Group © 2026</footer>
+</div>
+
+<script>
+  fetch("/api/marketing/pageview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null }),
+  }).catch(() => {});
+</script>
+<script>
+  SiteLang.apply({
+  "@title": "Roma Group — products to run your business",
+  "@description": "Roma Group brings our products together: Roma HR for people management, RomaERP for accounting and business operations, plus Roma Voice and Roma Tools. Pick the product your business needs.",
+  "@ogTitle": "Roma Group — four tools, one company you can trust",
+  "@ogDescription": "Pick the product you need today — each one works on its own, and you can combine them whenever you like.",
+  "navProducts": "Products",
+  "navAbout": "About",
+  "navContact": "Contact",
+  "loginErp": "ERP login",
+  "loginHr": "HR login",
+  "eyebrow": "Products that run your business smarter",
+  "h1": "Four tools, one company you can trust",
+  "sub": "Pick the product your business needs today — each one works on its own, and you can combine them whenever you like.",
+  "hrDesc": "GPS attendance, automatic payroll, requests and approvals — for any company",
+  "hrT1": "GPS attendance",
+  "hrT2": "Automatic payroll",
+  "hrT3": "Leave &amp; requests",
+  "hrCta": "Try it now →",
+  "erpDesc": "Accounting, sales, inventory and reports — a complete AI-powered business management system",
+  "erpT1": "Accounting",
+  "erpT2": "Sales &amp; inventory",
+  "erpT3": "POS",
+  "erpT4": "E-invoicing",
+  "erpT5": "AI",
+  "erpCta": "Live now →",
+  "voiceDesc": "Record operations and calls by voice and turn them into data automatically — details coming soon",
+  "toolsDesc": "Small helper tools for your day-to-day operations — details coming soon",
+  "soon": "Coming soon"
+});
+</script>
+</body>
+</html>
