@@ -9,6 +9,7 @@ namespace RomaERP.API.Controllers;
 public record SetPlanRequest(Guid PlanId);
 public record SetBillingAccountRequest(Guid? BillingAccountId);
 public record MarkInvoicePaidRequest(string? PaymentReference);
+public record ActivatePaidRequest(Guid PlanId, string? PaymentReference);
 
 /// <summary>Platform-level billing console — spans every tenant, so (like SystemController) it's excluded
 /// from TenantResolutionMiddleware and protected by a system key instead of a JWT/company code.</summary>
@@ -69,6 +70,15 @@ public class SubscriptionsController : ControllerBase
         if (keyCheck is not null) return keyCheck;
 
         return Ok(await _billing.SuspendAsync(tenantId, ct));
+    }
+
+    [HttpPost("tenants/{tenantId:guid}/activate-paid")]
+    public async Task<ActionResult<TenantSubscriptionDto>> ActivatePaid(Guid tenantId, ActivatePaidRequest request, CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        return Ok(await _billing.ActivatePaidAsync(tenantId, request.PlanId, request.PaymentReference, ct));
     }
 
     [HttpPost("tenants/{tenantId:guid}/reactivate")]

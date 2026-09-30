@@ -50,6 +50,7 @@ builder.Services.AddScoped<IUserLanguage, HttpUserLanguage>();
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.ExchangeRateRefreshBackgroundService>();
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.WhatsAppAlertDigestBackgroundService>();
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.DemoTenantExpiryBackgroundService>();
+builder.Services.AddHostedService<RomaERP.API.BackgroundServices.SubscriptionBillingBackgroundService>();
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
 builder.Services.AddAuthentication(options =>

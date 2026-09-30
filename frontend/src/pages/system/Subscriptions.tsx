@@ -89,6 +89,19 @@ export default function SubscriptionsPage() {
     }
   }
 
+  async function handleActivatePaid(s: TenantSubscription) {
+    if (!systemKey) return;
+    const reference = prompt(`Confirm ${s.companyNameEn}'s first payment. This makes the account permanent (the trial no longer expires) on the plan shown, and records this month's invoice as paid.\n\nPayment reference (bank transfer note, receipt #, etc.) — optional:`);
+    if (reference === null) return;
+    setError(null);
+    try {
+      await SubscriptionsApi.activatePaid(systemKey, s.tenantId, s.planId, reference || null);
+      await loadAll();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function handleMarkPaid(invoiceId: string) {
     if (!systemKey) return;
     const reference = prompt("Payment reference (bank transfer note, receipt #, etc.) — optional:") ?? undefined;
@@ -103,7 +116,7 @@ export default function SubscriptionsPage() {
 
   async function handleRunBillingCycle() {
     if (!systemKey) return;
-    if (!confirm("Run the billing cycle now? This generates invoices for every subscription due today and suspends tenants past the grace period.")) return;
+    if (!confirm("Run the billing cycle now? This generates invoices for every active subscription due today (it also runs by itself every few hours). It never invoices trials and only suspends overdue tenants if that is switched on.")) return;
     setError(null);
     setBusy(true);
     setRunResult(null);
@@ -194,8 +207,14 @@ export default function SubscriptionsPage() {
                     <td className={statusClass[s.status]}>{statusLabel[s.status]}</td>
                     <td>{s.currentBranches} branches / {s.currentUsers} users</td>
                     <td>{new Date(s.currentPeriodEnd).toLocaleDateString()}</td>
-                    <td className={s.outstandingAmount > 0 ? "text-danger" : undefined}>{s.outstandingAmount.toLocaleString()} {s.currency}</td>
-                    <td>
+                    <td className={s.outstandingAmount > 0 ? "text-danger" : undefined}>
+                      {s.outstandingAmount.toLocaleString()} {s.currency}
+                      {s.overdueDays > 0 && <div><b>Overdue {s.overdueDays} day(s)</b></div>}
+                    </td>
+                    <td style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      {s.status === SubscriptionStatus.Trialing && (
+                        <button className="btn btn-sm" onClick={() => handleActivatePaid(s)}>Confirm first payment</button>
+                      )}
                       {s.tenantIsActive ? (
                         <button className="btn btn-secondary btn-sm" onClick={() => handleSuspend(s.tenantId)}>Suspend</button>
                       ) : (
