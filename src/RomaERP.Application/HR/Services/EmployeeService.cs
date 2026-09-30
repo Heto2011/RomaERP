@@ -137,6 +137,44 @@ public class EmployeeService : IEmployeeService
         return employee is null ? null : Map(employee);
     }
 
+    public async Task<EmployeeDto> EnsureMyProfileAsync(Guid applicationUserId, string? fullName, string? email, CancellationToken ct = default)
+    {
+        var existing = await GetMyProfileAsync(applicationUserId, ct);
+        if (existing is not null) return existing;
+
+        var position = await _context.Positions
+            .Include(p => p.Department)
+            .Where(p => !p.IsDeleted && p.IsActive && p.Department != null && !p.Department.IsDeleted)
+            .OrderBy(p => p.Code)
+            .FirstOrDefaultAsync(ct)
+            ?? throw new ValidationAppException("لازم يكون فيه قسم ووظيفة الأول — أضفهم من شاشة الأقسام والوظائف وحاول تاني.");
+
+        var name = string.IsNullOrWhiteSpace(fullName) ? (email ?? "Owner").Split('@')[0] : fullName.Trim();
+
+        var next = await _context.Employees.CountAsync(ct) + 1;
+        string code;
+        do { code = $"EMP-{next++:000}"; }
+        while (await _context.Employees.AnyAsync(e => e.EmployeeCode == code, ct));
+
+        var employee = new Employee
+        {
+            EmployeeCode = code,
+            FullNameAr = name,
+            FullNameEn = name,
+            HireDate = DateTime.UtcNow.Date,
+            DepartmentId = position.DepartmentId,
+            PositionId = position.Id,
+            BasicSalary = 0,
+            Email = email,
+            ApplicationUserId = applicationUserId,
+            EmploymentStatus = EmploymentStatus.Active,
+        };
+        _context.Employees.Add(employee);
+        await _context.SaveChangesAsync(ct);
+
+        return await GetByIdAsync(employee.Id, ct);
+    }
+
     public async Task<EmployeeDto> LinkUserAsync(Guid employeeId, Guid? applicationUserId, CancellationToken ct = default)
     {
         var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == employeeId, ct)

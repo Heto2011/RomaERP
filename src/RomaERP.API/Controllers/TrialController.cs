@@ -91,6 +91,11 @@ public class TrialController : ControllerBase
             await userManager.UpdateAsync(user);
         }
 
+        // An HR trial lands in the attendance portal, so its owner needs an employee profile from the first minute.
+        if (tenantEntity.ProductScope == RomaERP.Domain.Tenancy.ProductScope.PeopleOnly)
+            await scope.ServiceProvider.GetRequiredService<RomaERP.Application.HR.Services.IEmployeeService>()
+                .EnsureMyProfileAsync(user.Id, user.FullName, user.Email, ct);
+
         var roles = await userManager.GetRolesAsync(user);
         var token = _tokenService.GenerateToken(user.Id, user.UserName!, user.Email!, tenant.CompanyCode, roles, Array.Empty<string>());
 

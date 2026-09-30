@@ -243,6 +243,7 @@ export const EmployeesApi = {
   getAll: () => apiClient.get<Employee[]>("/employees"),
   getById: (id: string) => apiClient.get<Employee>(`/employees/${id}`),
   getMyProfile: () => apiClient.get<Employee>("/employees/me"),
+  createMyProfile: () => apiClient.post<Employee>("/employees/me"),
   create: (data: Partial<Employee>) => apiClient.post<Employee>("/employees", data),
   update: (id: string, data: Partial<Employee>) => apiClient.put<Employee>(`/employees/${id}`, data),
   remove: (id: string) => apiClient.delete(`/employees/${id}`),

@@ -41,6 +41,19 @@ public class EmployeesController : ControllerBase
         return Ok(profile);
     }
 
+    /// <summary>Creates the signed-in user's own employee profile if they don't have one yet (see
+    /// IEmployeeService.EnsureMyProfileAsync). Safe to call repeatedly.</summary>
+    [HttpPost("me")]
+    public async Task<ActionResult<EmployeeDto>> EnsureMyProfile(
+        [FromServices] Microsoft.AspNetCore.Identity.UserManager<RomaERP.Infrastructure.Identity.ApplicationUser> userManager, CancellationToken ct)
+    {
+        if (_currentUser.UserId is not { } userId || !Guid.TryParse(userId, out var applicationUserId))
+            return Unauthorized();
+
+        var user = await userManager.FindByIdAsync(userId);
+        return Ok(await _employeeService.EnsureMyProfileAsync(applicationUserId, user?.FullName, user?.Email, ct));
+    }
+
     [HttpGet("{id:guid}")]
     [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<EmployeeDto>> GetById(Guid id, CancellationToken ct)
