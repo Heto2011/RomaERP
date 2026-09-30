@@ -228,6 +228,7 @@ export default function App() {
       <Route path="/people/departments" element={<PeopleRoute><Departments /></PeopleRoute>} />
       <Route path="/people/positions" element={<PeopleRoute><Positions /></PeopleRoute>} />
       <Route path="/people/employees" element={<PeopleRoute><Employees /></PeopleRoute>} />
+      <Route path="/people/users" element={<PeopleRoute><Users /></PeopleRoute>} />
       <Route path="/people/work-locations" element={<PeopleRoute><WorkLocations /></PeopleRoute>} />
       <Route path="/people/payroll" element={<PeopleRoute><Payroll /></PeopleRoute>} />
       <Route path="/people/payroll-settings" element={<PeopleRoute><PayrollSettingsPage /></PeopleRoute>} />
