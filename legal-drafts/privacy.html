@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>Privacy Policy — Roma Group</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f4ee;
+    --surface: #ffffff;
+    --ink: #1c2620;
+    --ink-soft: #5b6a60;
+    --border: #e2ddd0;
+    --primary: #0f5c4b;
+    --primary-dark: #0a4438;
+    --primary-tint: #e6f0ec;
+    --accent: #c8862e;
+    --accent-tint: #faf1e2;
+    --danger: #b3452f;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(28,38,32,.04), 0 12px 32px -16px rgba(28,38,32,.18);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Tajawal", "Segoe UI", sans-serif;
+    line-height: 1.75;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+  header.hero {
+    padding: 56px 0 40px;
+    text-align: center;
+    background: radial-gradient(60% 100% at 50% 0%, var(--primary-tint) 0%, transparent 70%);
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 900; font-size: 20px; color: var(--primary-dark);
+    margin-bottom: 24px; text-decoration: none;
+  }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 15px; font-weight: 900;
+  }
+  h1 { font-size: clamp(26px, 4vw, 38px); font-weight: 900; margin: 0 0 12px; text-wrap: balance; }
+  .hero-sub { max-width: 560px; margin: 0 auto; color: var(--ink-soft); font-size: 16px; }
+  .updated-note { margin-top: 18px; font-size: 13px; color: var(--ink-soft); }
+
+  .disclaimer {
+    background: var(--accent-tint); border: 1px dashed var(--accent);
+    border-radius: 12px; padding: 16px 20px; margin: 0 0 36px;
+    font-size: 14px; color: #6b4a19;
+  }
+
+  nav.toc {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px; margin-bottom: 40px;
+    box-shadow: var(--shadow);
+  }
+  nav.toc h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .03em; color: var(--primary); margin: 0 0 12px; }
+  nav.toc ol { margin: 0; padding-inline-start: 20px; columns: 2; gap: 24px; font-size: 14px; }
+  nav.toc li { margin-bottom: 6px; break-inside: avoid; }
+  nav.toc a { color: var(--ink); text-decoration: none; }
+  nav.toc a:hover { color: var(--primary); text-decoration: underline; }
+
+  section.card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 30px 32px; margin-bottom: 20px;
+    box-shadow: var(--shadow); scroll-margin-top: 20px;
+  }
+  section.card h2 {
+    font-size: 20px; font-weight: 900; margin: 0 0 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  section.card h2 .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--primary-tint); color: var(--primary);
+    font-size: 14px; font-weight: 900; flex-shrink: 0;
+  }
+  section.card p, section.card li { color: var(--ink); font-size: 15px; }
+  section.card p { margin: 0 0 12px; }
+  section.card ul { margin: 0 0 12px; padding-inline-start: 22px; display: flex; flex-direction: column; gap: 6px; }
+  section.card strong { color: var(--primary-dark); }
+  .note {
+    background: var(--primary-tint); border-radius: 10px; padding: 12px 16px;
+    font-size: 13.5px; color: var(--primary-dark); margin-top: 10px;
+  }
+
+  footer { text-align: center; padding: 40px 0 60px; color: var(--ink-soft); font-size: 13px; }
+  footer a { color: var(--primary); text-decoration: none; }
+
+  @media (max-width: 640px) {
+    nav.toc ol { columns: 1; }
+    section.card { padding: 22px 20px; }
+  }
+
+  html[lang="en"] [data-l="ar"], html[lang="ar"] [data-l="en"] { display: none; }
+  html[lang="en"] { direction: ltr; }
+  .ph { background: #fff3a8; padding: 0 3px; border-radius: 3px; }
+  section.card table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+  section.card th, section.card td { border: 1px solid var(--border); padding: 8px 10px; text-align: start; vertical-align: top; }
+  section.card th { background: var(--primary-tint); }
+  .langbtn { position: fixed; top: 14px; inset-inline-end: 14px; background: var(--surface); border: 1px solid var(--border);
+             border-radius: 999px; padding: 6px 14px; font: inherit; font-weight: 700; cursor: pointer; }
+  .draftbar { background: #fff3a8; color: #5a4700; text-align: center; padding: 8px 12px; font-size: 14px; font-weight: 700; }
+</style>
+<script src="/site-lang.js"></script>
+</head>
+<body>
+<div class="draftbar">DRAFT for lawyer review — not yet in force · مسودة قيد المراجعة القانونية</div>
+<button class="langbtn" id="langToggle">العربية</button>
+<div class="wrap">
+  <header class="hero">
+    <a class="brand" href="/roma-group.html"><span class="brand-mark">R</span> Roma Group</a>
+    <h1><span data-l="en">Privacy Policy</span><span data-l="ar">سياسة الخصوصية</span></h1>
+    <p class="updated-note"><span data-l="en">Last updated: <span class="ph">[DATE]</span></span><span data-l="ar">آخر تحديث: <span class="ph">[التاريخ]</span></span></p>
+  </header>
+  <section class="card" id="who"><div data-l="en"><h2><span class="num">1</span> Who we are</h2><p>This policy explains how <span class="ph">[LEGAL ENTITY NAME AND REGISTERED ADDRESS]</span> (“we”) handles personal data in RomaERP and Roma HR (the “Service”) and on romagroup.app.</p><p>Contact for privacy questions: <span class="ph">[PRIVACY CONTACT EMAIL]</span>.</p></div><div data-l="ar"><h2><span class="num">1</span> من نحن</h2><p>توضح هذه السياسة كيف تتعامل <span class="ph">[الاسم القانوني للكيان وعنوانه المسجّل]</span> («نحن») مع البيانات الشخصية في RomaERP و Roma HR («الخدمة») وفي romagroup.app.</p><p>للاستفسار عن الخصوصية: <span class="ph">[بريد الخصوصية]</span>.</p></div></section>
+<section class="card" id="roles"><div data-l="en"><h2><span class="num">2</span> Roles: who is responsible for what</h2><ul><li><b>Your business data</b> (your employees, customers, suppliers, invoices, payroll, attendance and everything else you enter): you are the controller and we are your processor. We use it only to provide the Service to you and follow your instructions. <span class="ph">[Lawyer: a customer Data Processing Agreement (DPA) is needed, especially for UK/EU/Guernsey customers.]</span></li><li><b>Account, billing, security and website data</b> (below): we are the controller.</li></ul></div><div data-l="ar"><h2><span class="num">2</span> الأدوار: من المسؤول عن ماذا</h2><ul><li><b>بيانات نشاطك</b> (موظفوك وعملاؤك وموردوك وفواتيرك ورواتبك وحضورك وكل ما تُدخله): أنت الجهة المتحكمة ونحن معالج لبياناتك. لا نستخدمها إلا لتقديم الخدمة لك ووفق تعليماتك. <span class="ph">[للمحامي: يلزم اتفاقية معالجة بيانات للعملاء، خاصة في بريطانيا وأوروبا وجيرنزي.]</span></li><li><b>بيانات الحساب والفوترة والأمان والموقع</b> (أدناه): نحن الجهة المتحكمة.</li></ul></div></section>
+<section class="card" id="collect"><div data-l="en"><h2><span class="num">3</span> What we collect</h2><table><thead><tr><th>Data</th><th>Details</th><th>Why</th></tr></thead><tbody><tr><td>Account</td><td>Company names (Arabic and English), country, administrator name and email, password (stored only as a one-way hash)</td><td>Create and run your account</td></tr><tr><td>Users you add</td><td>Names, emails, roles, hashed passwords</td><td>Let your team sign in</td></tr><tr><td>Sign-in records</td><td>Username, IP address, time, success or failure, method</td><td>Security and fraud prevention</td></tr><tr><td>Audit log</td><td>Which user changed what, and when</td><td>Accountability and security</td></tr><tr><td>Billing</td><td>Plan, invoices, amounts, payment reference you give us</td><td>Charge and keep accounting records</td></tr><tr><td>Support</td><td>Tickets you send and our replies</td><td>Help you</td></tr><tr><td>Attendance (if used)</td><td>GPS coordinates at check-in and check-out; optional face photos (see below)</td><td>Attendance for your employer</td></tr><tr><td>Website visits</td><td>Anonymous page-view count: page, referrer, browser user-agent. No cookies and no visitor identity</td><td>Understand traffic</td></tr><tr><td>Your business data</td><td>Whatever you and your users enter</td><td>Provide the Service to you</td></tr></tbody></table></div><div data-l="ar"><h2><span class="num">3</span> ما الذي نجمعه</h2><table><thead><tr><th>البيانات</th><th>التفاصيل</th><th>الغرض</th></tr></thead><tbody><tr><td>الحساب</td><td>أسماء الشركة (عربي وإنجليزي) والدولة واسم مسؤول الحساب وبريده وكلمة المرور (تُخزَّن كبصمة أحادية الاتجاه فقط)</td><td>إنشاء حسابك وتشغيله</td></tr><tr><td>المستخدمون الذين تضيفهم</td><td>الأسماء والبريد والصلاحيات وكلمات المرور المشفّرة</td><td>تمكين فريقك من الدخول</td></tr><tr><td>سجلات الدخول</td><td>اسم المستخدم وعنوان IP والوقت والنجاح أو الفشل وطريقة الدخول</td><td>الأمان ومنع الاحتيال</td></tr><tr><td>سجل التدقيق</td><td>من غيّر ماذا ومتى</td><td>المساءلة والأمان</td></tr><tr><td>الفوترة</td><td>الباقة والفواتير والمبالغ ومرجع الدفع الذي تزودنا به</td><td>المحاسبة وحفظ السجلات</td></tr><tr><td>الدعم</td><td>التذاكر التي ترسلها وردودنا</td><td>مساعدتك</td></tr><tr><td>الحضور (إن استُخدم)</td><td>إحداثيات GPS عند الدخول والخروج؛ وصور وجه اختيارية (انظر أدناه)</td><td>الحضور لصالح جهة العمل</td></tr><tr><td>زيارات الموقع</td><td>عدّاد مجهول لمشاهدات الصفحات: الصفحة والمُحيل ووكيل المتصفح. بلا ملفات تعريف ارتباط وبلا هوية زائر</td><td>فهم حركة الزيارات</td></tr><tr><td>بيانات نشاطك</td><td>كل ما تُدخله أنت ومستخدموك</td><td>تقديم الخدمة لك</td></tr></tbody></table></div></section>
+<section class="card" id="basis"><div data-l="en"><h2><span class="num">4</span> Why we may use it (legal bases)</h2><ul><li>To perform our contract with you (running the account and the Service).</li><li>Our legitimate interests in keeping the Service secure, preventing fraud and improving it.</li><li>To comply with legal obligations (accounting, tax, responding to lawful requests).</li><li>Consent, where required, for example for face verification if your company enables it. <span class="ph">[Lawyer: confirm bases under UK GDPR, Guernsey DP law, Saudi PDPL and Egypt Law 151/2020.]</span></li></ul></div><div data-l="ar"><h2><span class="num">4</span> الأساس القانوني للاستخدام</h2><ul><li>لتنفيذ عقدنا معك (تشغيل الحساب والخدمة).</li><li>مصالحنا المشروعة في تأمين الخدمة ومنع الاحتيال وتحسينها.</li><li>للامتثال لالتزامات قانونية (المحاسبة والضرائب والاستجابة للطلبات القانونية).</li><li>الموافقة حيث تُشترط، مثل التحقق بالوجه إذا فعّلته شركتك. <span class="ph">[للمحامي: تأكيد الأسس وفق قانون حماية البيانات البريطاني وقانون جيرنزي ونظام حماية البيانات السعودي والقانون المصري ١٥١ لسنة ٢٠٢٠.]</span></li></ul></div></section>
+<section class="card" id="ai"><div data-l="en"><h2><span class="num">5</span> AI features</h2><p>Some features use Claude, an AI model from Anthropic. We send Anthropic only what the feature needs:</p><p><ul><li><b>Business questions:</b> your question plus summary figures from your books (for example totals for the current and previous month, balance sheet figures and cost-centre totals).</li><li><b>Expense capture:</b> the expense text you type or paste.</li><li><b>Support triage:</b> the text of a support ticket.</li></ul></p><p>Anthropic processes this to produce the answer. How long Anthropic keeps API data is set by Anthropic’s own terms. <span class="ph">[Verify against Anthropic’s current commercial terms and privacy policy before publishing; we do not promise “no storage”.]</span> AI answers can be wrong and are not professional advice.</p></div><div data-l="ar"><h2><span class="num">5</span> ميزات الذكاء الاصطناعي</h2><p>تستخدم بعض الميزات Claude، وهو نموذج ذكاء اصطناعي من Anthropic. ولا نرسل إليها إلا ما تحتاجه الميزة:</p><p><ul><li><b>أسئلة الأعمال:</b> سؤالك مع أرقام ملخصة من دفاترك (مثل إجماليات الشهر الحالي والسابق وأرقام الميزانية وإجماليات مراكز التكلفة).</li><li><b>تسجيل المصروفات:</b> نص المصروف الذي تكتبه أو تلصقه.</li><li><b>فرز الدعم:</b> نص تذكرة الدعم.</li></ul></p><p>تعالج Anthropic هذه المدخلات لتكوين الإجابة، ومدة احتفاظها ببيانات الواجهة البرمجية تحددها شروطها هي. <span class="ph">[التحقق من الشروط التجارية وسياسة الخصوصية الحالية لدى Anthropic قبل النشر؛ ولا نعد بعبارة «دون أي تخزين».]</span> وقد تكون إجابات الذكاء الاصطناعي خاطئة وليست استشارة مهنية.</p></div></section>
+<section class="card" id="share"><div data-l="en"><h2><span class="num">6</span> Who we share data with</h2><p>We do not sell your data. These providers process data for us, only for the purpose shown:</p><p><table><thead><tr><th>Provider</th><th>What for</th><th>Data involved</th></tr></thead><tbody><tr><td>Hosting provider <span class="ph">[NAME, COUNTRY/REGION – confirm]</span></td><td>Runs the servers and databases</td><td>All Service data</td></tr><tr><td>Anthropic (USA)</td><td>AI features</td><td>See “AI features”</td></tr><tr><td>Dropbox (USA)</td><td>Daily off-server database backups</td><td>A copy of your database, sent over HTTPS, kept up to 7 days</td></tr><tr><td>Amazon Web Services – Rekognition (Ireland region by default)</td><td>Face verification, only if your company turns it on</td><td>Reference and check-in photos</td></tr><tr><td>Meta – WhatsApp Cloud API</td><td>Alert messages, only if your company connects WhatsApp</td><td>Message content and recipient numbers</td></tr><tr><td>PayTabs</td><td>Card payments, only if enabled</td><td>Card details go straight to PayTabs; we never see or store card numbers</td></tr><tr><td>QR-code image service (api.qrserver.com)</td><td>Our public pricing page shows a QR code image</td><td>The visitor’s IP address and the link encoded in the QR code</td></tr><tr><td>Exchange-rate service (open.er-api.com)</td><td>Currency rates</td><td>Currency codes only, no personal data</td></tr></tbody></table></p><p>We may also disclose data if the law requires it. <span class="ph">[Lawyer: complete the sub-processor list once hosting is confirmed; consider offering customers notice of changes.]</span></p></div><div data-l="ar"><h2><span class="num">6</span> مع من نشارك البيانات</h2><p>لا نبيع بياناتك. ويعالج هؤلاء المزودون البيانات لصالحنا وللغرض الموضح فقط:</p><p><table><thead><tr><th>المزود</th><th>الغرض</th><th>البيانات</th></tr></thead><tbody><tr><td>مزود الاستضافة <span class="ph">[الاسم والدولة/المنطقة – للتأكيد]</span></td><td>تشغيل الخوادم وقواعد البيانات</td><td>كل بيانات الخدمة</td></tr><tr><td>Anthropic (الولايات المتحدة)</td><td>ميزات الذكاء الاصطناعي</td><td>انظر «ميزات الذكاء الاصطناعي»</td></tr><tr><td>Dropbox (الولايات المتحدة)</td><td>نسخ احتياطية يومية لقواعد البيانات خارج الخادم</td><td>نسخة من قاعدة بياناتك عبر HTTPS تُحفظ حتى ٧ أيام</td></tr><tr><td>Amazon Web Services – Rekognition (منطقة أيرلندا افتراضيًا)</td><td>التحقق بالوجه، فقط إذا فعّلته شركتك</td><td>الصورة المرجعية وصور الحضور</td></tr><tr><td>Meta – واجهة WhatsApp</td><td>رسائل التنبيه، فقط إذا ربطت شركتك واتساب</td><td>نص الرسائل وأرقام المستلمين</td></tr><tr><td>PayTabs</td><td>الدفع بالبطاقة، إذا فُعّل</td><td>بيانات البطاقة تذهب مباشرة إلى PayTabs ولا نراها ولا نخزّنها</td></tr><tr><td>خدمة صور رموز QR (api.qrserver.com)</td><td>تعرض صفحة الأسعار العامة صورة رمز QR</td><td>عنوان IP للزائر والرابط المُرمَّز في الصورة</td></tr><tr><td>خدمة أسعار الصرف (open.er-api.com)</td><td>أسعار العملات</td><td>رموز العملات فقط دون بيانات شخصية</td></tr></tbody></table></p><p>وقد نفصح عن البيانات إذا أوجب القانون ذلك. <span class="ph">[للمحامي: استكمال قائمة المعالجين الفرعيين بعد تأكيد الاستضافة، والنظر في إخطار العملاء بالتغييرات.]</span></p></div></section>
+<section class="card" id="transfers"><div data-l="en"><h2><span class="num">7</span> International transfers</h2><p>Our servers are in <span class="ph">[REGION – confirm]</span>. Some providers above process data in other countries (for example the USA and Ireland). <span class="ph">[Lawyer: choose and document the transfer safeguards for each jurisdiction – e.g. UK IDTA/Addendum, EU SCCs, Guernsey adequacy or approved clauses, Saudi PDPL transfer conditions.]</span></p></div><div data-l="ar"><h2><span class="num">7</span> النقل الدولي للبيانات</h2><p>خوادمنا في <span class="ph">[المنطقة – للتأكيد]</span>. ويعالج بعض المزودين أعلاه البيانات في دول أخرى (مثل الولايات المتحدة وأيرلندا). <span class="ph">[للمحامي: اختيار وتوثيق ضمانات النقل لكل ولاية قضائية – مثل ملحق المملكة المتحدة والبنود التعاقدية النموذجية الأوروبية وقرار الملاءمة لجيرنزي وشروط النقل في نظام حماية البيانات السعودي.]</span></p></div></section>
+<section class="card" id="keep"><div data-l="en"><h2><span class="num">8</span> How long we keep it</h2><ul><li><b>Account and business data:</b> while your account exists. If it stops, we keep the data locked until you ask us to delete it. <span class="ph">[Decide a maximum for expired trials.]</span></li><li><b>Backups:</b> up to 7 days on our server and in Dropbox, plus any recovery period Dropbox applies (up to 30 days on some plans).</li><li><b>Sign-in records and audit log:</b> <span class="ph">[retention period not yet defined – decide]</span>.</li><li><b>Billing records:</b> as long as accounting and tax law require. <span class="ph">[Confirm.]</span></li><li><b>Deletion record:</b> kept permanently (company name and code, requester email, reason, times, confirmation number).</li></ul></div><div data-l="ar"><h2><span class="num">8</span> مدة الاحتفاظ</h2><ul><li><b>بيانات الحساب والنشاط:</b> ما دام حسابك قائمًا. وإذا توقف نُبقيها مقفلة حتى تطلب حذفها. <span class="ph">[تحديد حد أقصى للتجارب المنتهية.]</span></li><li><b>النسخ الاحتياطية:</b> حتى ٧ أيام على خادمنا وفي Dropbox، إضافة إلى أي فترة استرجاع يطبقها Dropbox (حتى ٣٠ يومًا في بعض الباقات).</li><li><b>سجلات الدخول وسجل التدقيق:</b> <span class="ph">[مدة الاحتفاظ لم تُحدد بعد – يجب تحديدها]</span>.</li><li><b>سجلات الفوترة:</b> بالمدة التي تفرضها قوانين المحاسبة والضرائب. <span class="ph">[للتأكيد.]</span></li><li><b>سجل الحذف:</b> يُحفظ بصورة دائمة (اسم الشركة ورمزها وبريد مقدّم الطلب والسبب والأوقات ورقم التأكيد).</li></ul></div></section>
+<section class="card" id="rights"><div data-l="en"><h2><span class="num">9</span> Your rights</h2><p>Depending on where you live you may have the right to access, correct, delete, restrict or object to the use of your personal data, to receive it in a portable form, and to withdraw consent. To use these rights, open a support ticket or write to <span class="ph">[PRIVACY CONTACT EMAIL]</span>. If you are an employee of one of our customers, please contact your employer first, because they control that data.</p><p>You may also complain to your data protection authority, for example the UK Information Commissioner’s Office, the Guernsey Office of the Data Protection Authority, the Saudi Data & AI Authority (SDAIA), or Egypt’s Personal Data Protection Centre. <span class="ph">[Lawyer: verify the authorities and any registration or licence we must hold.]</span></p></div><div data-l="ar"><h2><span class="num">9</span> حقوقك</h2><p>بحسب مكان إقامتك قد يكون لك الحق في الاطلاع على بياناتك الشخصية وتصحيحها وحذفها وتقييد استخدامها أو الاعتراض عليه، والحصول عليها بصيغة قابلة للنقل، وسحب الموافقة. ولممارسة هذه الحقوق افتح تذكرة دعم أو راسل <span class="ph">[بريد الخصوصية]</span>. وإذا كنت موظفًا لدى أحد عملائنا فتواصل مع جهة عملك أولًا لأنها المتحكمة في تلك البيانات.</p><p>ويمكنك أيضًا الشكوى إلى جهة حماية البيانات المختصة، مثل مكتب مفوض المعلومات في المملكة المتحدة، ومكتب هيئة حماية البيانات في جيرنزي، والهيئة السعودية للبيانات والذكاء الاصطناعي (سدايا)، ومركز حماية البيانات الشخصية في مصر. <span class="ph">[للمحامي: التحقق من الجهات وأي تسجيل أو ترخيص مطلوب منا.]</span></p></div></section>
+<section class="card" id="securitypriv"><div data-l="en"><h2><span class="num">10</span> Security</h2><ul><li>Traffic to the Service uses HTTPS.</li><li>Each customer’s data is kept in a separate database.</li><li>Passwords are stored only as one-way hashes.</li><li>Database backups are sent to Dropbox over HTTPS. We do not add our own encryption to the backup file before sending it. <span class="ph">[Planned improvement: encrypt backups before upload.]</span></li><li>Sign-ins and changes are recorded for accountability.</li><li>No system is perfectly secure. If a breach affects your data we will notify you and the authorities as the law requires.</li></ul></div><div data-l="ar"><h2><span class="num">10</span> الأمان</h2><ul><li>تستخدم الاتصالات بالخدمة بروتوكول HTTPS.</li><li>تُحفظ بيانات كل عميل في قاعدة بيانات منفصلة.</li><li>تُخزَّن كلمات المرور كبصمة أحادية الاتجاه فقط.</li><li>تُرسل النسخ الاحتياطية إلى Dropbox عبر HTTPS، ولا نضيف تشفيرًا خاصًا بنا على ملف النسخة قبل إرساله. <span class="ph">[تحسين مخطط: تشفير النسخ قبل الرفع.]</span></li><li>تُسجَّل عمليات الدخول والتغييرات للمساءلة.</li><li>لا يوجد نظام آمن تمامًا. وإذا أثّر اختراق على بياناتك فسنبلغك والجهات المختصة كما يوجب القانون.</li></ul></div></section>
+<section class="card" id="cookies"><div data-l="en"><h2><span class="num">11</span> Cookies and browser storage</h2><p>We do not use cookies or advertising trackers. The app stores in your browser only what it needs to work: your sign-in token, company code, name and role, and your language and theme choices. Our public pages record an anonymous page view (page, referrer, browser type) without cookies.</p></div><div data-l="ar"><h2><span class="num">11</span> ملفات تعريف الارتباط وتخزين المتصفح</h2><p>لا نستخدم ملفات تعريف الارتباط ولا متتبعات إعلانية. يخزّن التطبيق في متصفحك ما يلزم لعمله فقط: رمز الدخول ورمز الشركة والاسم والصلاحية واختيارك للغة والمظهر. وتسجّل صفحاتنا العامة مشاهدة مجهولة (الصفحة والمُحيل ونوع المتصفح) دون ملفات تعريف ارتباط.</p></div></section>
+<section class="card" id="children"><div data-l="en"><h2><span class="num">12</span> Children</h2><p>The Service is for businesses and is not directed at anyone under 18.</p></div><div data-l="ar"><h2><span class="num">12</span> الأطفال</h2><p>الخدمة موجهة للشركات وليست موجهة لمن هم دون ١٨ عامًا.</p></div></section>
+<section class="card" id="changespriv"><div data-l="en"><h2><span class="num">13</span> Changes to this policy</h2><p>We will post changes here and notify you of material ones. Last updated: <span class="ph">[DATE]</span>.</p></div><div data-l="ar"><h2><span class="num">13</span> تعديل هذه السياسة</h2><p>سننشر التعديلات هنا ونبلغك بالجوهري منها. آخر تحديث: <span class="ph">[التاريخ]</span>.</p></div></section>
+</div>
+<footer>© Roma Group — <a href="/terms.html"><span data-l="en">Terms of Service</span><span data-l="ar">الشروط والأحكام</span></a> · <a href="/roma-erp.html#tiers"><span data-l="en">Pricing</span><span data-l="ar">الأسعار</span></a></footer>
+<script>SiteLang.apply({});</script>
+</body>
+</html>
