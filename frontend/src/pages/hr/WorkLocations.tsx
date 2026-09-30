@@ -4,7 +4,7 @@ import type { WorkLocation } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 
-const emptyForm = { name: "", latitude: "", longitude: "", geofenceRadiusMeters: "20", isActive: true };
+const emptyForm = { name: "", latitude: "", longitude: "", geofenceRadiusMeters: "100", isActive: true };
 
 export default function WorkLocations() {
   const { t } = useLanguage();

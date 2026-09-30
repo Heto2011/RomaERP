@@ -94,6 +94,62 @@ public class AttendanceServiceTests
     }
 
     [Fact]
+    public async Task CheckInAsync_EmployeeWithNoAssignedSite_IsInRangeAtAnyActiveCompanySite()
+    {
+        var (ctx, _, location) = await SeedAsync();
+        var owner = new Employee { EmployeeCode = "OWNER", FullNameAr = "مالك", FullNameEn = "Owner", HireDate = DateTime.UtcNow };   // no WorkLocation
+        ctx.Employees.Add(owner);
+        await ctx.SaveChangesAsync();
+        var service = new AttendanceService(ctx, new FakeFaceVerificationProvider());
+
+        var record = await service.CheckInAsync(owner.Id, location.Latitude, location.Longitude, null, null);
+
+        Assert.True(record.CheckInWithinGeofence);
+    }
+
+    [Fact]
+    public async Task CheckInAsync_EmployeeWithNoAssignedSite_IsOutOfRangeWhenFarFromEverySite()
+    {
+        var (ctx, _, _) = await SeedAsync();
+        var owner = new Employee { EmployeeCode = "OWNER", FullNameAr = "مالك", FullNameEn = "Owner", HireDate = DateTime.UtcNow };
+        ctx.Employees.Add(owner);
+        await ctx.SaveChangesAsync();
+        var service = new AttendanceService(ctx, new FakeFaceVerificationProvider());
+
+        var record = await service.CheckInAsync(owner.Id, 31.2001m, 29.9187m, null, null);
+
+        Assert.False(record.CheckInWithinGeofence);
+    }
+
+    [Fact]
+    public async Task CheckInAsync_EmployeeWithNoAssignedSiteAndNoSitesAtAll_IsOutOfRange()
+    {
+        var ctx = CreateContext();
+        var owner = new Employee { EmployeeCode = "OWNER", FullNameAr = "مالك", FullNameEn = "Owner", HireDate = DateTime.UtcNow };
+        ctx.Employees.Add(owner);
+        await ctx.SaveChangesAsync();
+        var service = new AttendanceService(ctx, new FakeFaceVerificationProvider());
+
+        var record = await service.CheckInAsync(owner.Id, 30.0m, 31.0m, null, null);
+
+        Assert.False(record.CheckInWithinGeofence);
+    }
+
+    [Fact]
+    public async Task CheckInAsync_AnAssignedSiteStaysAuthoritative_EvenNextToAnotherSite()
+    {
+        var (ctx, employee, _) = await SeedAsync();   // assigned to the site at 30.0444, 31.2357
+        var other = new WorkLocation { Name = "فرع تاني", Latitude = 31.2001m, Longitude = 29.9187m, GeofenceRadiusMeters = 100 };
+        ctx.WorkLocations.Add(other);
+        await ctx.SaveChangesAsync();
+        var service = new AttendanceService(ctx, new FakeFaceVerificationProvider());
+
+        var record = await service.CheckInAsync(employee.Id, other.Latitude, other.Longitude, null, null);
+
+        Assert.False(record.CheckInWithinGeofence);
+    }
+
+    [Fact]
     public async Task CheckInAsync_ThrowsWhenAnAttendanceIsAlreadyOpen()
     {
         var (ctx, employee, location) = await SeedAsync();

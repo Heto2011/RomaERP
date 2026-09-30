@@ -10,6 +10,6 @@ public class WorkLocation : AuditableEntity
     public string Name { get; set; } = string.Empty;
     public decimal Latitude { get; set; }
     public decimal Longitude { get; set; }
-    public int GeofenceRadiusMeters { get; set; } = 20;
+    public int GeofenceRadiusMeters { get; set; } = 100;
     public bool IsActive { get; set; } = true;
 }
