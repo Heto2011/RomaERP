@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using RomaERP.Application.Common;
 using RomaERP.Application.Common.Exceptions;
@@ -17,18 +18,25 @@ public class SubscriptionBillingService : ISubscriptionBillingService
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ITenantRegistry _registry;
     private readonly IReadOnlyDictionary<string, IPaymentGatewayProvider> _providers;
+    private readonly IConfiguration _configuration;
 
     public SubscriptionBillingService(
         CentralDbContext central,
         IServiceScopeFactory scopeFactory,
         ITenantRegistry registry,
-        IEnumerable<IPaymentGatewayProvider> providers)
+        IEnumerable<IPaymentGatewayProvider> providers,
+        IConfiguration configuration)
     {
         _central = central;
         _scopeFactory = scopeFactory;
         _registry = registry;
         _providers = providers.ToDictionary(p => p.Name, StringComparer.OrdinalIgnoreCase);
+        _configuration = configuration;
     }
+
+    /// <summary>Off by default: an unpaid invoice only shows up as "overdue" for the owner to act on. Turning this on
+    /// makes the billing run suspend a tenant automatically once an invoice is past the grace period.</summary>
+    private bool AutoSuspendOverdue => _configuration.GetValue<bool>("Billing:AutoSuspendOverdue");
 
     public async Task<List<SubscriptionPlanDto>> GetPlansAsync(CancellationToken ct = default)
     {
@@ -50,7 +58,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
                 .Where(i => i.TenantId == tenant.Id && i.Status != SubscriptionInvoiceStatus.Paid && i.Status != SubscriptionInvoiceStatus.Cancelled)
                 .SumAsync(i => (decimal?)i.TotalAmount, ct) ?? 0;
 
-            result.Add(MapTenantSubscription(tenant, subscription, plan, branches, users, outstanding));
+            result.Add(MapTenantSubscription(tenant, subscription, plan, branches, users, outstanding, await GetOverdueDaysAsync(tenant.Id, ct)));
         }
 
         return result;
@@ -78,6 +86,42 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         await _central.SaveChangesAsync(ct);
 
         var plan = await _central.SubscriptionPlans.AsNoTracking().FirstAsync(p => p.Id == subscription.PlanId, ct);
+        return await BuildDtoAsync(tenant, subscription, plan, ct);
+    }
+
+    public async Task<TenantSubscriptionDto> ActivatePaidAsync(Guid tenantId, Guid planId, string? paymentReference, CancellationToken ct = default)
+    {
+        var tenant = await GetTenantOrThrowAsync(tenantId, ct);
+        var plan = await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Id == planId, ct)
+            ?? throw new NotFoundException(nameof(SubscriptionPlan), planId);
+        var subscription = await GetOrCreateSubscriptionAsync(tenant, ct);
+        var now = DateTime.UtcNow;
+
+        // First confirmed payment turns a trial into a customer for good. Clearing the trial flags matters: the
+        // expiry sweep locks any tenant that is still IsDemo past ExpiresAtUtc, even one the owner just reactivated.
+        tenant.IsDemo = false;
+        tenant.ExpiresAtUtc = null;
+        tenant.IsActive = true;
+
+        subscription.PlanId = plan.Id;
+        subscription.Status = SubscriptionStatus.Active;
+        subscription.SuspendedAtUtc = null;
+        subscription.CurrentPeriodStart = now;
+        subscription.CurrentPeriodEnd = now.AddMonths(1);
+
+        var (branches, users) = await CountTenantUsageAsync(tenant, ct);
+        var priceSet = await ResolvePriceSetAsync(subscription, tenant, plan, ct);
+        var isAdditionalCompany = subscription.BillingAccountId.HasValue && await _central.Subscriptions.AnyAsync(
+            s => s.BillingAccountId == subscription.BillingAccountId && s.Id != subscription.Id && s.Status == SubscriptionStatus.Active, ct);
+
+        var invoice = BuildInvoice(subscription, plan, priceSet, branches, users, isAdditionalCompany);
+        invoice.Status = SubscriptionInvoiceStatus.Paid;
+        invoice.PaidAtUtc = now;
+        invoice.DueDateUtc = now;
+        invoice.PaymentReference = paymentReference;
+        _central.SubscriptionInvoices.Add(invoice);
+
+        await _central.SaveChangesAsync(ct);
         return await BuildDtoAsync(tenant, subscription, plan, ct);
     }
 
@@ -145,7 +189,9 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var today = DateTime.UtcNow;
 
         var dueSubscriptions = await _central.Subscriptions
-            .Where(s => (s.Status == SubscriptionStatus.Active || s.Status == SubscriptionStatus.Trialing || s.Status == SubscriptionStatus.PastDue)
+            // Trialing is deliberately left out: an expired trial is not a customer. It becomes one only when the
+            // owner confirms the first payment (ActivatePaidAsync); invoicing it automatically would bill everyone who just tried.
+            .Where(s => (s.Status == SubscriptionStatus.Active || s.Status == SubscriptionStatus.PastDue)
                         && s.CurrentPeriodEnd <= today)
             .OrderBy(s => s.BillingAccountId).ThenBy(s => s.CreatedAtUtc)
             .ToListAsync(ct);
@@ -200,9 +246,31 @@ public class SubscriptionBillingService : ISubscriptionBillingService
 
         await _central.SaveChangesAsync(ct);
 
-        var suspended = await SuspendOverdueAsync(today, ct);
+        var suspended = 0;
+        if (AutoSuspendOverdue)
+            suspended = await SuspendOverdueAsync(today, ct);
+        else
+            await AddOverdueNotesAsync(today, notes, ct);
 
         return new BillingRunResultDto(generated, autoCharged, suspended, notes);
+    }
+
+    /// <summary>The alert-only path: lists every tenant whose oldest unpaid invoice is past the grace period, without
+    /// touching the tenant, so the owner decides.</summary>
+    private async Task AddOverdueNotesAsync(DateTime today, List<string> notes, CancellationToken ct)
+    {
+        var late = await _central.SubscriptionInvoices.AsNoTracking()
+            .Where(i => (i.Status == SubscriptionInvoiceStatus.Pending || i.Status == SubscriptionInvoiceStatus.Failed)
+                        && i.DueDateUtc < today.AddDays(-SubscriptionPricingConstants.GracePeriodDays))
+            .GroupBy(i => i.TenantId)
+            .Select(g => new { TenantId = g.Key, Oldest = g.Min(i => i.DueDateUtc) })
+            .ToListAsync(ct);
+        if (late.Count == 0) return;
+
+        var names = await _central.Tenants.AsNoTracking().Where(t => late.Select(l => l.TenantId).Contains(t.Id))
+            .ToDictionaryAsync(t => t.Id, t => t.CompanyNameEn, ct);
+        foreach (var l in late)
+            notes.Add($"{names.GetValueOrDefault(l.TenantId, l.TenantId.ToString())}: متأخر عن الدفع {(int)(today - l.Oldest).TotalDays} يوم — راجع وأوقف الحساب يدويًا لو لازم.");
     }
 
     private async Task<int> SuspendOverdueAsync(DateTime today, CancellationToken ct)
@@ -339,12 +407,23 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var outstanding = await _central.SubscriptionInvoices.AsNoTracking()
             .Where(i => i.TenantId == tenant.Id && i.Status != SubscriptionInvoiceStatus.Paid && i.Status != SubscriptionInvoiceStatus.Cancelled)
             .SumAsync(i => (decimal?)i.TotalAmount, ct) ?? 0;
-        return MapTenantSubscription(tenant, subscription, plan, branches, users, outstanding);
+        return MapTenantSubscription(tenant, subscription, plan, branches, users, outstanding, await GetOverdueDaysAsync(tenant.Id, ct));
+    }
+
+    /// <summary>Whole days the oldest unpaid invoice is past its due date (0 when nothing is late).</summary>
+    private async Task<int> GetOverdueDaysAsync(Guid tenantId, CancellationToken ct)
+    {
+        var oldestDue = await _central.SubscriptionInvoices.AsNoTracking()
+            .Where(i => i.TenantId == tenantId && (i.Status == SubscriptionInvoiceStatus.Pending || i.Status == SubscriptionInvoiceStatus.Failed))
+            .OrderBy(i => i.DueDateUtc)
+            .Select(i => (DateTime?)i.DueDateUtc)
+            .FirstOrDefaultAsync(ct);
+        return oldestDue is { } due && due < DateTime.UtcNow ? (int)(DateTime.UtcNow - due).TotalDays : 0;
     }
 
     /// <summary>Opens a fresh scope resolved to this tenant's own database, purely to count active
     /// branches/users for overage billing — the same numbers the in-app Usage indicator shows.</summary>
-    private async Task<(int Branches, int Users)> CountTenantUsageAsync(Tenant tenant, CancellationToken ct)
+    protected virtual async Task<(int Branches, int Users)> CountTenantUsageAsync(Tenant tenant, CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
         var tenantContext = scope.ServiceProvider.GetRequiredService<TenantContext>();
@@ -361,10 +440,10 @@ public class SubscriptionBillingService : ISubscriptionBillingService
     private static SubscriptionPlanDto MapPlan(SubscriptionPlan p) =>
         new(p.Id, p.Code, p.NameAr, p.NameEn, p.MonthlyBasePrice, p.IncludedBranches, p.IncludedUsers, p.IsCustomPricing, p.IsActive);
 
-    private static TenantSubscriptionDto MapTenantSubscription(Tenant tenant, Subscription s, SubscriptionPlan plan, int branches, int users, decimal outstanding) =>
+    private static TenantSubscriptionDto MapTenantSubscription(Tenant tenant, Subscription s, SubscriptionPlan plan, int branches, int users, decimal outstanding, int overdueDays) =>
         new(tenant.Id, tenant.CompanyCode, tenant.CompanyNameAr, tenant.CompanyNameEn, tenant.IsActive,
             s.Id, plan.Id, plan.Code, plan.NameAr, s.Status, s.CurrentPeriodStart, s.CurrentPeriodEnd,
-            s.BillingAccountId, s.PaymentProvider, branches, users, outstanding, SubscriptionPriceList.CurrencyFor(tenant.Country));
+            s.BillingAccountId, s.PaymentProvider, branches, users, outstanding, SubscriptionPriceList.CurrencyFor(tenant.Country), overdueDays);
 
     private static SubscriptionInvoiceDto MapInvoice(SubscriptionInvoice i, string companyNameAr) =>
         new(i.Id, i.TenantId, companyNameAr, i.PlanCode, i.PlanNameAr, i.PeriodStart, i.PeriodEnd,

@@ -2001,6 +2001,7 @@ export interface TenantSubscription {
   currentUsers: number;
   outstandingAmount: number;
   currency: string;
+  overdueDays: number;
 }
 
 export interface SubscriptionInvoice {
