@@ -312,21 +312,31 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             return new PlanPriceSet(SubscriptionPriceList.Sar, plan.MonthlyBasePrice, 0,
                 SubscriptionPricingConstants.ExtraBranchPrice, SubscriptionPricingConstants.ExtraUserPrice);
 
-        if (listed.FoundingBase > 0 && await IsFoundingCustomerAsync(subscription, tenant, ct))
+        if (listed.FoundingBase > 0 && await IsFoundingCustomerAsync(subscription, tenant, plan, ct))
             return listed with { Base = listed.FoundingBase };
 
         return listed;
     }
 
-    /// <summary>Egypt launch offer: among the first <see cref="SubscriptionPriceList.FoundingCustomerLimit"/> Egyptian
-    /// subscriptions to be invoiced, for their first <see cref="SubscriptionPriceList.FoundingInvoiceCount"/> invoices.</summary>
-    private async Task<bool> IsFoundingCustomerAsync(Subscription subscription, Tenant tenant, CancellationToken ct)
+    /// <summary>Launch offers: the first <see cref="SubscriptionPriceList.FoundingCustomerLimit"/> subscriptions to be
+    /// invoiced pay the founding price for their first <see cref="SubscriptionPriceList.FoundingInvoiceCount"/> invoices.
+    /// For the ERP tiers that is the Egypt offer (Egyptian tenants only); for ROMA People (HR) it is open to any country.</summary>
+    private async Task<bool> IsFoundingCustomerAsync(Subscription subscription, Tenant tenant, SubscriptionPlan plan, CancellationToken ct)
     {
-        if (tenant.Country != Country.Egypt) return false;
+        IQueryable<SubscriptionInvoice> cohort;
+        if (plan.Code == SubscriptionPriceList.PeoplePlanCode)
+        {
+            cohort = _central.SubscriptionInvoices.Where(i => i.PlanCode == SubscriptionPriceList.PeoplePlanCode);
+        }
+        else
+        {
+            if (tenant.Country != Country.Egypt) return false;
+            var egyptTenantIds = _central.Tenants.Where(t => t.Country == Country.Egypt).Select(t => t.Id);
+            cohort = _central.SubscriptionInvoices.Where(i => egyptTenantIds.Contains(i.TenantId));
+        }
 
-        var egyptTenantIds = _central.Tenants.Where(t => t.Country == Country.Egypt).Select(t => t.Id);
-        var firstInvoices = await _central.SubscriptionInvoices
-            .Where(i => egyptTenantIds.Contains(i.TenantId) && i.Status != SubscriptionInvoiceStatus.Cancelled)
+        var firstInvoices = await cohort
+            .Where(i => i.Status != SubscriptionInvoiceStatus.Cancelled)
             .GroupBy(i => i.SubscriptionId)
             .Select(g => new { SubscriptionId = g.Key, First = g.Min(i => i.CreatedAtUtc), Count = g.Count() })
             .ToListAsync(ct);
@@ -377,10 +387,28 @@ public class SubscriptionBillingService : ISubscriptionBillingService
 
     private async Task<Subscription> GetOrCreateSubscriptionAsync(Tenant tenant, CancellationToken ct)
     {
-        var existing = await _central.Subscriptions.FirstOrDefaultAsync(s => s.TenantId == tenant.Id, ct);
-        if (existing is not null) return existing;
+        var peoplePlan = tenant.ProductScope == ProductScope.PeopleOnly
+            ? await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Code == SubscriptionPriceList.PeoplePlanCode, ct)
+            : null;
 
-        var defaultPlan = await _central.SubscriptionPlans.OrderBy(p => p.SortOrder).FirstAsync(ct);
+        var existing = await _central.Subscriptions.FirstOrDefaultAsync(s => s.TenantId == tenant.Id, ct);
+        if (existing is not null)
+        {
+            // A trial that signed up for ROMA People before it had its own plan was parked on the entry ERP tier —
+            // move it, so the owner sees (and is eventually billed) the HR price, not the ERP one.
+            if (peoplePlan is not null && existing.Status == SubscriptionStatus.Trialing && existing.PlanId != peoplePlan.Id)
+            {
+                var current = await _central.SubscriptionPlans.AsNoTracking().FirstOrDefaultAsync(p => p.Id == existing.PlanId, ct);
+                if (current?.Code == "essential")
+                {
+                    existing.PlanId = peoplePlan.Id;
+                    await _central.SaveChangesAsync(ct);
+                }
+            }
+            return existing;
+        }
+
+        var defaultPlan = peoplePlan ?? await _central.SubscriptionPlans.OrderBy(p => p.SortOrder).FirstAsync(ct);
         var now = DateTime.UtcNow;
 
         var subscription = new Subscription

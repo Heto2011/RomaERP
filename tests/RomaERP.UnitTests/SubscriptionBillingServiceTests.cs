@@ -190,4 +190,66 @@ public class SubscriptionBillingServiceTests
 
         Assert.InRange(list.Single().OverdueDays, 19, 21);
     }
+
+    [Fact]
+    public async Task PeoplePlan_ChargesTheFoundingPriceForThreeInvoicesThenTheListPrice()
+    {
+        var central = NewCentral();
+        var plan = new SubscriptionPlan { Code = "people", NameAr = "روما إتش آر", NameEn = "Roma HR", MonthlyBasePrice = 99, IncludedBranches = int.MaxValue, IncludedUsers = 25 };
+        central.SubscriptionPlans.Add(plan);
+        var (_, sub) = AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(-1));
+        var service = new TestableBillingService(central, Config()) { Branches = 4, Users = 20 };
+
+        for (var i = 0; i < 4; i++)
+        {
+            await service.RunBillingCycleAsync();
+            sub.CurrentPeriodEnd = DateTime.UtcNow.AddDays(-1); // make the next month due again
+            await central.SaveChangesAsync();
+        }
+
+        var amounts = (await central.SubscriptionInvoices.OrderBy(i => i.CreatedAtUtc).ToListAsync()).Select(i => i.TotalAmount).ToList();
+        Assert.Equal(new[] { 49.99m, 49.99m, 49.99m, 99m }, amounts);
+    }
+
+    [Fact]
+    public async Task PeoplePlan_ChargesPerEmployeeBeyondTwentyFiveAndNeverPerBranch()
+    {
+        var central = NewCentral();
+        var plan = new SubscriptionPlan { Code = "people", NameAr = "x", NameEn = "x", MonthlyBasePrice = 99, IncludedBranches = int.MaxValue, IncludedUsers = 25 };
+        central.SubscriptionPlans.Add(plan);
+        var (_, sub) = AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(-1));
+        // Push past the founding window so the list price applies.
+        for (var i = 0; i < 3; i++)
+            central.SubscriptionInvoices.Add(new SubscriptionInvoice
+            {
+                TenantId = sub.TenantId, SubscriptionId = sub.Id, PlanCode = "people", PlanNameAr = "x", TotalAmount = 49.99m,
+                Currency = "SAR", Status = SubscriptionInvoiceStatus.Paid, DueDateUtc = DateTime.UtcNow.AddMonths(-3 + i),
+            });
+        await central.SaveChangesAsync();
+        var service = new TestableBillingService(central, Config()) { Branches = 9, Users = 30 };
+
+        await service.RunBillingCycleAsync();
+
+        var latest = await central.SubscriptionInvoices.Where(i => i.Status == SubscriptionInvoiceStatus.Pending).SingleAsync();
+        Assert.Equal(0, latest.ExtraBranches);
+        Assert.Equal(5, latest.ExtraUsers);
+        Assert.Equal(99m + 5 * 4m, latest.TotalAmount);
+    }
+
+    [Fact]
+    public async Task PeopleOnlyTrial_IsMovedOntoTheHrPlanInsteadOfTheEntryErpTier()
+    {
+        var central = NewCentral();
+        var essential = new SubscriptionPlan { Code = "essential", NameAr = "e", NameEn = "e", MonthlyBasePrice = 149, IncludedBranches = 3, IncludedUsers = 10, SortOrder = 1 };
+        var people = new SubscriptionPlan { Code = "people", NameAr = "p", NameEn = "p", MonthlyBasePrice = 99, IncludedBranches = int.MaxValue, IncludedUsers = 25, SortOrder = 5 };
+        central.SubscriptionPlans.AddRange(essential, people);
+        var (tenant, _) = AddTenant(central, essential, Country.SaudiArabia, SubscriptionStatus.Trialing, DateTime.UtcNow.AddDays(10), isDemo: true);
+        tenant.ProductScope = ProductScope.PeopleOnly;
+        await central.SaveChangesAsync();
+        var service = new TestableBillingService(central, Config());
+
+        var list = await service.GetTenantSubscriptionsAsync();
+
+        Assert.Equal("people", list.Single().PlanCode);
+    }
 }
