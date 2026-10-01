@@ -20,6 +20,7 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
   // A tenant that signed up for ROMA People only has no ERP to go back to — the portal stands alone for them.
   const peopleOnly = user?.productScope === ProductScope.PeopleOnly;
   const isAdmin = user?.roles.includes("Admin") ?? false;
+  const isHrManager = isAdmin || (user?.roles.includes("HR") ?? false);
   const isHr = isAdmin || user?.roles.includes("HR") || (user?.modules.includes("HR") ?? false);
 
   const selfServiceLinks = [
@@ -31,13 +32,13 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
 
   const managerLinks = [
     { to: "/people/employees", label: t.nav.employees, icon: <IconUsers /> },
-    ...(isAdmin ? [{ to: "/people/users", label: t.nav.users, icon: <IconShield /> }] : []),
+    ...(isHrManager ? [{ to: "/people/users", label: t.nav.users, icon: <IconShield /> }] : []),
     { to: "/people/departments", label: t.nav.departments, icon: <IconBuilding /> },
     { to: "/people/positions", label: t.nav.positions, icon: <IconBriefcase /> },
     { to: "/people/employee-contracts", label: t.hr.employeeContractsTitle, icon: <IconFile /> },
     { to: "/people/salary-components", label: t.hr.salaryComponentsTitle, icon: <IconWallet /> },
     { to: "/people/payroll", label: t.nav.payroll, icon: <IconDollar /> },
-    ...(isAdmin ? [{ to: "/people/payroll-settings", label: t.hr.payrollSettingsTitle, icon: <IconWallet /> }] : []),
+    ...(isHrManager ? [{ to: "/people/payroll-settings", label: t.hr.payrollSettingsTitle, icon: <IconWallet /> }] : []),
     { to: "/people/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
     { to: "/people/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
     { to: "/people/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },

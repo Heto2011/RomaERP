@@ -22,7 +22,7 @@ import PasswordInput from "../../components/PasswordInput";
 export default function Employees() {
   const { t, lang } = useLanguage();
   const { user } = useAuth();
-  const isAdmin = user?.roles.includes("Admin") ?? false;
+  const canCreateLogin = (user?.roles.includes("Admin") || user?.roles.includes("HR")) ?? false;
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -448,7 +448,7 @@ export default function Employees() {
                   <button className="btn btn-secondary btn-sm" onClick={() => openComponentsModal(emp)}>
                     {t.hr.salaryComponentsButton}
                   </button>
-                  {isAdmin && (emp.applicationUserId ? (
+                  {canCreateLogin && (emp.applicationUserId ? (
                     <span className="badge badge-posted">{t.hr.hasLogin}</span>
                   ) : (
                     <button className="btn btn-secondary btn-sm" onClick={() => openLoginModal(emp)}>

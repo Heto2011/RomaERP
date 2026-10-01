@@ -127,7 +127,7 @@ const ar = {
   roles: {
     Admin: "مدير",
     Accountant: "محاسب",
-    HR: "موارد بشرية",
+    HR: "مدير موارد بشرية",
     Employee: "موظف",
   },
   modules: {
@@ -1536,7 +1536,7 @@ const en: typeof ar = {
   roles: {
     Admin: "Admin",
     Accountant: "Accountant",
-    HR: "HR",
+    HR: "HR Manager",
     Employee: "Employee",
   },
   modules: {

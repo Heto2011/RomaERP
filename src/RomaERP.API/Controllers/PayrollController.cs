@@ -87,7 +87,7 @@ public class PayrollController : ControllerBase
         => Ok(await _payrollService.GetSettingsAsync(ct));
 
     [HttpPut("settings")]
-    [Authorize(Roles = "Admin")]
+    [Authorize(Roles = "Admin,HR")]
     public async Task<ActionResult<PayrollSettingsDto>> UpdateSettings(PayrollSettingsDto dto, CancellationToken ct)
         => Ok(await _payrollService.UpdateSettingsAsync(dto, ct));
 }
