@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { ProductScope } from "../api/types";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { usePortalManifest } from "../utils/pwa";
@@ -16,6 +17,8 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   usePortalManifest("people");
 
+  // A tenant that signed up for ROMA People only has no ERP to go back to — the portal stands alone for them.
+  const peopleOnly = user?.productScope === ProductScope.PeopleOnly;
   const isAdmin = user?.roles.includes("Admin") ?? false;
   const isHr = isAdmin || user?.roles.includes("HR") || (user?.modules.includes("HR") ?? false);
 
@@ -53,9 +56,11 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
             <button className="btn btn-secondary btn-sm" onClick={() => setLang(lang === "ar" ? "en" : "ar")} title={t.language}>
               {lang === "ar" ? "EN" : "AR"}
             </button>
-            <Link to="/" className="btn btn-secondary btn-sm">
-              {t.backToRomaErp}
-            </Link>
+            {!peopleOnly && (
+              <Link to="/" className="btn btn-secondary btn-sm">
+                {t.backToRomaErp}
+              </Link>
+            )}
             <button className="btn btn-secondary btn-sm" onClick={logout}>
               {t.logout}
             </button>

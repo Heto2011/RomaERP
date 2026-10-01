@@ -1,13 +1,19 @@
 import { useEffect, useState } from "react";
 import { EmployeesApi, UsersApi } from "../api/services";
-import { AppRoles, ModulePermissions, type AppUser, type Employee } from "../api/types";
+import { AppRoles, ModulePermissions, ProductScope, type AppUser, type Employee } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 import { bilingualName } from "../i18n/bilingual";
 import PasswordInput from "../components/PasswordInput";
+import { useAuth } from "../context/AuthContext";
 
 export default function Users() {
   const { t, lang } = useLanguage();
+  const { user: currentUser } = useAuth();
+  // A tenant on ROMA People only has no accounting/sales/POS — don't offer those roles, module grants or the POS PIN.
+  const peopleOnly = currentUser?.productScope === ProductScope.PeopleOnly;
+  const roleOptions = peopleOnly ? AppRoles.filter((r) => r !== "Accountant") : AppRoles;
+  const moduleOptions = peopleOnly ? ModulePermissions.filter((m) => m === "HR") : ModulePermissions;
   const [users, setUsers] = useState<AppUser[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -191,7 +197,7 @@ export default function Users() {
             <div className="form-field" style={{ marginTop: 14 }}>
               <label>{t.users.roles}</label>
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-                {AppRoles.map((role) => (
+                {roleOptions.map((role) => (
                   <label key={role} style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
                     <input type="checkbox" checked={roles.includes(role)} onChange={() => setRoles((prev) => toggleRole(prev, role))} />
                     {t.roles[role]}
@@ -215,7 +221,7 @@ export default function Users() {
               <th>{t.users.roles}</th>
               <th>{t.users.modules}</th>
               <th>{t.users.linkedEmployee}</th>
-              <th>{t.users.posPin}</th>
+              {!peopleOnly && <th>{t.users.posPin}</th>}
               <th>{t.users.resetPassword}</th>
               <th>{t.common.status}</th>
               <th>{t.common.actions}</th>
@@ -236,7 +242,7 @@ export default function Users() {
                 <td>
                   {editingId === u.id ? (
                     <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      {AppRoles.map((role) => (
+                      {roleOptions.map((role) => (
                         <label key={role} style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: "normal" }}>
                           <input type="checkbox" checked={editingRoles.includes(role)} onChange={() => setEditingRoles((prev) => toggleRole(prev, role))} />
                           {t.roles[role]}
@@ -250,7 +256,7 @@ export default function Users() {
                 <td>
                   {editingModulesId === u.id ? (
                     <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      {ModulePermissions.map((module) => (
+                      {moduleOptions.map((module) => (
                         <label key={module} style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: "normal" }}>
                           <input
                             type="checkbox"
@@ -282,7 +288,7 @@ export default function Users() {
                       ))}
                   </select>
                 </td>
-                <td>
+                {!peopleOnly && <td>
                   {pinEditingId === u.id ? (
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                       <input
@@ -309,7 +315,7 @@ export default function Users() {
                       )}
                     </div>
                   )}
-                </td>
+                </td>}
                 <td>
                   {passwordEditingId === u.id ? (
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
