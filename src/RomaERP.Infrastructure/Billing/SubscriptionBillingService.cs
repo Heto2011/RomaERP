@@ -461,7 +461,11 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
         var branches = await db.Warehouses.CountAsync(w => w.IsActive, ct);
-        var users = await userManager.Users.CountAsync(u => u.IsActive, ct);
+        // ROMA People is priced per employee (25 included), and an employee may not have a login at all — so count the
+        // active employee records there, not the login accounts, or a 59-person company with 3 logins would pay for 3.
+        var users = tenant.ProductScope == ProductScope.PeopleOnly
+            ? await db.Employees.CountAsync(e => !e.IsDeleted && e.EmploymentStatus == RomaERP.Domain.HR.EmploymentStatus.Active, ct)
+            : await userManager.Users.CountAsync(u => u.IsActive, ct);
         return (branches, users);
     }
 
