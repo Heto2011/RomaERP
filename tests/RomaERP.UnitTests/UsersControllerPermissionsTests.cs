@@ -113,6 +113,23 @@ public class UsersControllerPermissionsTests
     }
 
     [Fact]
+    public async Task HrManager_DoesNotSeeAdminAccountsInList()
+    {
+        var (sp, um) = await BuildAsync();
+        var hr = await AddUserAsync(um, "hr@x.com", "HR");
+        await AddUserAsync(um, "ceo@x.com", "Admin");
+        await AddUserAsync(um, "emp@x.com", "Employee");
+
+        var hrList = ((await ControllerFor(sp, hr, "HR").GetUsers(default)).Result as OkObjectResult)!.Value as List<UserDto>;
+        Assert.DoesNotContain(hrList!, u => u.Email == "ceo@x.com");
+        Assert.Contains(hrList!, u => u.Email == "emp@x.com");
+
+        var admin = await um.FindByEmailAsync("ceo@x.com");
+        var adminList = ((await ControllerFor(sp, admin!, "Admin").GetUsers(default)).Result as OkObjectResult)!.Value as List<UserDto>;
+        Assert.Contains(adminList!, u => u.Email == "ceo@x.com");
+    }
+
+    [Fact]
     public async Task HrManager_CannotGrantAdminToHimself()
     {
         var (sp, um) = await BuildAsync();

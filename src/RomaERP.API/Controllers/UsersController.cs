@@ -64,6 +64,8 @@ public class UsersController : ControllerBase
         foreach (var user in users)
         {
             var roles = await _userManager.GetRolesAsync(user);
+            // An HR Manager never sees the Admin (or any other privileged) accounts — those are the owner's alone.
+            if (!IsAdmin && roles.Any(r => !HrManageableRoles.Contains(r))) continue;
             var modules = await GetModulesAsync(user);
             var linkedEmployee = employeeByUserId.GetValueOrDefault(user.Id);
             result.Add(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
