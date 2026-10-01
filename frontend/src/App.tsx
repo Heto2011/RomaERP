@@ -19,6 +19,8 @@ import SubscriptionsPage from "./pages/system/Subscriptions";
 import SupportTicketsPage from "./pages/system/SupportTickets";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import MyProfile from "./pages/MyProfile";
 import AlertsPage from "./pages/Alerts";
 import SupportPage from "./pages/Support";
@@ -156,6 +158,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/people-login" element={<PeopleLogin />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/restaurant-login" element={<RestaurantLogin />} />
       <Route path="/inventory-login" element={<InventoryLogin />} />
       <Route path="/start-trial" element={<StartTrial />} />

@@ -62,11 +62,11 @@ export default function PeopleLogin() {
             {loading ? t.login.submitting : t.login.submit}
           </button>
         </form>
+        <p style={{ marginTop: 12, fontSize: 13 }}>
+          <Link to="/forgot-password?p=people">{t.login.forgotPassword}</Link>
+        </p>
         <p style={{ marginTop: 16, fontSize: 13 }} className="text-muted">
           {t.poweredByRomaErp}
-        </p>
-        <p style={{ marginTop: 8, fontSize: 13 }} className="text-muted">
-          <Link to="/login">{t.backToRomaErp}</Link>
         </p>
       </div>
     </div>

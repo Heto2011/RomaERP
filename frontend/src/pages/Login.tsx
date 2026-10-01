@@ -57,6 +57,9 @@ export default function Login() {
             {loading ? t.login.submitting : t.login.submit}
           </button>
         </form>
+        <p style={{ marginTop: 12, fontSize: 13 }}>
+          <Link to="/forgot-password">{t.login.forgotPassword}</Link>
+        </p>
         <p style={{ marginTop: 16, fontSize: 13 }} className="text-muted">
           {t.login.noAccount} <Link to="/start-trial">{t.login.registerLink}</Link>
         </p>

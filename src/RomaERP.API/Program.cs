@@ -114,6 +114,11 @@ builder.Services.AddRateLimiter(options =>
 
     // Identity's own lockout only throttles repeated guesses against one account, so this adds a
     // per-IP cap to blunt password spraying across many different tenant accounts from one source.
+    // Each request can send an email, so it is capped tighter than login: 5 a minute per IP.
+    options.AddPolicy("auth-recovery", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+
     options.AddPolicy("auth-login", httpContext => RateLimitPartition.GetFixedWindowLimiter(
         partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         factory: _ => new FixedWindowRateLimiterOptions

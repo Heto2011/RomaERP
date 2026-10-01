@@ -159,6 +159,10 @@ import type {
 } from "./types";
 
 export const AuthApi = {
+  forgotPassword: (companyCode: string, email: string) =>
+    apiClient.post<{ message: string }>("/auth/forgot-password", { email }, { headers: { "X-Company-Code": companyCode } }),
+  resetPassword: (companyCode: string, email: string, token: string, newPassword: string) =>
+    apiClient.post<{ message: string }>("/auth/reset-password", { email, token, newPassword }, { headers: { "X-Company-Code": companyCode } }),
   login: (companyCode: string, email: string, password: string) =>
     apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[]; productScope: ProductScope }>(
       "/auth/login",

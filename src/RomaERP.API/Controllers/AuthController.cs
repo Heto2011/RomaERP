@@ -69,6 +69,24 @@ public class AuthController : ControllerBase
         return Ok(new AuthResponse(token, user.Email!, user.FullName, roles, modules, _tenantContext.ProductScope));
     }
 
+    /// <summary>Always answers the same way, so it can't be used to find out which emails have accounts.</summary>
+    [HttpPost("forgot-password")]
+    [EnableRateLimiting("auth-recovery")]
+    public async Task<IActionResult> ForgotPassword(ForgotPasswordRequest request, [FromServices] IPasswordRecoveryService recovery, CancellationToken ct)
+    {
+        if (!string.IsNullOrWhiteSpace(request.Email))
+            await recovery.RequestResetAsync(request.Email.Trim(), ct);
+        return Ok(new { message = "لو الإيميل ده مسجّل عندنا، هيوصلك رابط لتغيير كلمة السر." });
+    }
+
+    [HttpPost("reset-password")]
+    [EnableRateLimiting("auth-recovery")]
+    public async Task<IActionResult> ResetPassword(ResetPasswordWithTokenRequest request, [FromServices] IPasswordRecoveryService recovery, CancellationToken ct)
+    {
+        var error = await recovery.ResetAsync(request.Email.Trim(), request.Token, request.NewPassword, ct);
+        return error is null ? Ok(new { message = "تم تغيير كلمة السر. تقدر تدخل بيها دلوقتي." }) : BadRequest(new { error });
+    }
+
     /// <summary>Quick POS entry with a short PIN an Admin set for this user, instead of full email/password —
     /// scans this tenant's active PIN-enabled users for a hash match (small, per-tenant user count, so a
     /// linear scan is fine). IP rate-limited since a short PIN is brute-forceable.</summary>
