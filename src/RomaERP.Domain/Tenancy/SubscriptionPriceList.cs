@@ -49,9 +49,9 @@ public static class SubscriptionPriceList
         // ROMA People (HR only): up to 25 employees, branches unlimited (so no per-branch overage) and a small
         // per-employee overage. Launch offer: the first FoundingCustomerLimit customers pay FoundingBase for their
         // first FoundingInvoiceCount invoices (any country). EGP and GBP are independent prices, like the ERP ones.
-        [(PeoplePlanCode, Sar)] = new(Sar, 99, 49.99m, 0, 4),
-        [(PeoplePlanCode, Egp)] = new(Egp, 1999, 999, 0, 80),
-        [(PeoplePlanCode, Gbp)] = new(Gbp, 32, 16, 0, 1),
+        [(PeoplePlanCode, Sar)] = new(Sar, 99, 49.99m, 0, 5),
+        [(PeoplePlanCode, Egp)] = new(Egp, 1999, 999, 0, 100),
+        [(PeoplePlanCode, Gbp)] = new(Gbp, 32, 16, 0, 1.25m),
     };
 
     static SubscriptionPriceList()

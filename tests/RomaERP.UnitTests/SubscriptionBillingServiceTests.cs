@@ -233,7 +233,7 @@ public class SubscriptionBillingServiceTests
         var latest = await central.SubscriptionInvoices.Where(i => i.Status == SubscriptionInvoiceStatus.Pending).SingleAsync();
         Assert.Equal(0, latest.ExtraBranches);
         Assert.Equal(5, latest.ExtraUsers);
-        Assert.Equal(99m + 5 * 4m, latest.TotalAmount);
+        Assert.Equal(99m + 5 * 5m, latest.TotalAmount);
     }
 
     [Fact]
