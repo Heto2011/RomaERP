@@ -2002,6 +2002,8 @@ export interface TenantSubscription {
   outstandingAmount: number;
   currency: string;
   overdueDays: number;
+  /** 0 = monthly, 1 = annual (12 months charged as 10). */
+  billingPeriod: number;
 }
 
 export interface SubscriptionInvoice {

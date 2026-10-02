@@ -32,7 +32,8 @@ public record TenantSubscriptionDto(
     int CurrentUsers,
     decimal OutstandingAmount,
     string Currency,
-    int OverdueDays);
+    int OverdueDays,
+    BillingPeriod BillingPeriod);
 
 public record SubscriptionInvoiceDto(
     Guid Id,
@@ -69,7 +70,9 @@ public interface ISubscriptionBillingService
     Task<TenantSubscriptionDto> SetBillingAccountAsync(Guid tenantId, Guid? billingAccountId, CancellationToken ct = default);
     /// <summary>The owner confirms a customer's first payment: turns a trial tenant into a permanent paying one
     /// (clears the trial expiry), sets the plan, opens a one-month period and records that month's invoice as paid.</summary>
-    Task<TenantSubscriptionDto> ActivatePaidAsync(Guid tenantId, Guid planId, string? paymentReference, CancellationToken ct = default);
+    Task<TenantSubscriptionDto> ActivatePaidAsync(Guid tenantId, Guid planId, string? paymentReference, BillingPeriod billingPeriod = BillingPeriod.Monthly, CancellationToken ct = default);
+    /// <summary>Switches how the NEXT renewal is billed (monthly or one annual invoice). The period already paid is untouched.</summary>
+    Task<TenantSubscriptionDto> SetBillingPeriodAsync(Guid tenantId, BillingPeriod billingPeriod, CancellationToken ct = default);
     Task<TenantSubscriptionDto> SuspendAsync(Guid tenantId, CancellationToken ct = default);
     Task<TenantSubscriptionDto> ReactivateAsync(Guid tenantId, CancellationToken ct = default);
     Task<List<SubscriptionInvoiceDto>> GetInvoicesAsync(Guid? tenantId, CancellationToken ct = default);

@@ -89,7 +89,18 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         return await BuildDtoAsync(tenant, subscription, plan, ct);
     }
 
-    public async Task<TenantSubscriptionDto> ActivatePaidAsync(Guid tenantId, Guid planId, string? paymentReference, CancellationToken ct = default)
+    public async Task<TenantSubscriptionDto> SetBillingPeriodAsync(Guid tenantId, BillingPeriod billingPeriod, CancellationToken ct = default)
+    {
+        var tenant = await GetTenantOrThrowAsync(tenantId, ct);
+        var subscription = await GetOrCreateSubscriptionAsync(tenant, ct);
+        subscription.BillingPeriod = billingPeriod;
+        await _central.SaveChangesAsync(ct);
+
+        var plan = await _central.SubscriptionPlans.AsNoTracking().FirstAsync(p => p.Id == subscription.PlanId, ct);
+        return await BuildDtoAsync(tenant, subscription, plan, ct);
+    }
+
+    public async Task<TenantSubscriptionDto> ActivatePaidAsync(Guid tenantId, Guid planId, string? paymentReference, BillingPeriod billingPeriod = BillingPeriod.Monthly, CancellationToken ct = default)
     {
         var tenant = await GetTenantOrThrowAsync(tenantId, ct);
         var plan = await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Id == planId, ct)
@@ -106,8 +117,9 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         subscription.PlanId = plan.Id;
         subscription.Status = SubscriptionStatus.Active;
         subscription.SuspendedAtUtc = null;
+        subscription.BillingPeriod = billingPeriod;
         subscription.CurrentPeriodStart = now;
-        subscription.CurrentPeriodEnd = now.AddMonths(1);
+        subscription.CurrentPeriodEnd = now.AddMonths(MonthsCovered(billingPeriod));
 
         var (branches, users) = await CountTenantUsageAsync(tenant, ct);
         var priceSet = await ResolvePriceSetAsync(subscription, tenant, plan, ct);
@@ -216,7 +228,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             generated++;
 
             subscription.CurrentPeriodStart = subscription.CurrentPeriodEnd;
-            subscription.CurrentPeriodEnd = subscription.CurrentPeriodEnd.AddMonths(1);
+            subscription.CurrentPeriodEnd = subscription.CurrentPeriodEnd.AddMonths(MonthsCovered(subscription.BillingPeriod));
             subscription.Status = subscription.Status == SubscriptionStatus.Trialing ? SubscriptionStatus.Active : subscription.Status;
 
             if (subscription.PaymentProvider != "Manual" && !string.IsNullOrEmpty(subscription.PaymentProviderTokenRef)
@@ -312,7 +324,8 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             return new PlanPriceSet(SubscriptionPriceList.Sar, plan.MonthlyBasePrice, 0,
                 SubscriptionPricingConstants.ExtraBranchPrice, SubscriptionPricingConstants.ExtraUserPrice);
 
-        if (listed.FoundingBase > 0 && await IsFoundingCustomerAsync(subscription, tenant, plan, ct))
+        // The launch offer is a monthly-billing offer; an annual subscriber already gets two months free.
+        if (listed.FoundingBase > 0 && subscription.BillingPeriod == BillingPeriod.Monthly && await IsFoundingCustomerAsync(subscription, tenant, plan, ct))
             return listed with { Base = listed.FoundingBase };
 
         return listed;
@@ -348,6 +361,9 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         return ahead < SubscriptionPriceList.FoundingCustomerLimit && mine.Count < SubscriptionPriceList.FoundingInvoiceCount;
     }
 
+    private static int MonthsCovered(BillingPeriod period)
+        => period == BillingPeriod.Annual ? SubscriptionPriceList.AnnualMonthsCovered : 1;
+
     private static SubscriptionInvoice BuildInvoice(
         Subscription subscription, SubscriptionPlan plan, PlanPriceSet prices, int branches, int users, bool isAdditionalCompany)
     {
@@ -359,10 +375,12 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         // currency's own decimals and add the rounded lines up — the invoice always sums exactly.
         var decimals = SubscriptionPriceList.DecimalsFor(prices.Currency);
         decimal Round(decimal amount) => Math.Round(amount, decimals, MidpointRounding.AwayFromZero);
-        var baseAmount = Round(pricing.BaseAmount);
-        var extraBranchesAmount = Round(pricing.ExtraBranchesAmount);
-        var extraUsersAmount = Round(pricing.ExtraUsersAmount);
-        var discount = Round(pricing.MultiCompanyDiscountAmount);
+        // An annual invoice covers 12 months but is charged as 10 ("two months free"), overage included.
+        var factor = subscription.BillingPeriod == BillingPeriod.Annual ? SubscriptionPriceList.AnnualMonthsCharged : 1;
+        var baseAmount = Round(pricing.BaseAmount * factor);
+        var extraBranchesAmount = Round(pricing.ExtraBranchesAmount * factor);
+        var extraUsersAmount = Round(pricing.ExtraUsersAmount * factor);
+        var discount = Round(pricing.MultiCompanyDiscountAmount * factor);
 
         return new SubscriptionInvoice
         {
@@ -475,7 +493,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
     private static TenantSubscriptionDto MapTenantSubscription(Tenant tenant, Subscription s, SubscriptionPlan plan, int branches, int users, decimal outstanding, int overdueDays) =>
         new(tenant.Id, tenant.CompanyCode, tenant.CompanyNameAr, tenant.CompanyNameEn, tenant.IsActive,
             s.Id, plan.Id, plan.Code, plan.NameAr, s.Status, s.CurrentPeriodStart, s.CurrentPeriodEnd,
-            s.BillingAccountId, s.PaymentProvider, branches, users, outstanding, SubscriptionPriceList.CurrencyFor(tenant.Country), overdueDays);
+            s.BillingAccountId, s.PaymentProvider, branches, users, outstanding, SubscriptionPriceList.CurrencyFor(tenant.Country), overdueDays, s.BillingPeriod);
 
     private static SubscriptionInvoiceDto MapInvoice(SubscriptionInvoice i, string companyNameAr) =>
         new(i.Id, i.TenantId, companyNameAr, i.PlanCode, i.PlanNameAr, i.PeriodStart, i.PeriodEnd,

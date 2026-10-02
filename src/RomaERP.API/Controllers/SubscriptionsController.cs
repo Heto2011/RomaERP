@@ -9,7 +9,9 @@ namespace RomaERP.API.Controllers;
 public record SetPlanRequest(Guid PlanId);
 public record SetBillingAccountRequest(Guid? BillingAccountId);
 public record MarkInvoicePaidRequest(string? PaymentReference);
-public record ActivatePaidRequest(Guid PlanId, string? PaymentReference);
+public record ActivatePaidRequest(Guid PlanId, string? PaymentReference, bool Annual = false);
+
+public record SetBillingPeriodRequest(bool Annual);
 
 /// <summary>Platform-level billing console — spans every tenant, so (like SystemController) it's excluded
 /// from TenantResolutionMiddleware and protected by a system key instead of a JWT/company code.</summary>
@@ -78,7 +80,18 @@ public class SubscriptionsController : ControllerBase
         var keyCheck = CheckSystemKey();
         if (keyCheck is not null) return keyCheck;
 
-        return Ok(await _billing.ActivatePaidAsync(tenantId, request.PlanId, request.PaymentReference, ct));
+        return Ok(await _billing.ActivatePaidAsync(tenantId, request.PlanId, request.PaymentReference,
+            request.Annual ? RomaERP.Domain.Tenancy.BillingPeriod.Annual : RomaERP.Domain.Tenancy.BillingPeriod.Monthly, ct));
+    }
+
+    [HttpPut("tenants/{tenantId:guid}/billing-period")]
+    public async Task<ActionResult<TenantSubscriptionDto>> SetBillingPeriod(Guid tenantId, SetBillingPeriodRequest request, CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        return Ok(await _billing.SetBillingPeriodAsync(tenantId,
+            request.Annual ? RomaERP.Domain.Tenancy.BillingPeriod.Annual : RomaERP.Domain.Tenancy.BillingPeriod.Monthly, ct));
     }
 
     [HttpPost("tenants/{tenantId:guid}/reactivate")]

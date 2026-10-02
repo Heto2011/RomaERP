@@ -11,6 +11,13 @@ public enum SubscriptionStatus
     Cancelled = 4,
 }
 
+public enum BillingPeriod
+{
+    Monthly = 0,
+    /// <summary>Paid once for 12 months, charged as <see cref="SubscriptionPriceList.AnnualMonthsCharged"/> months.</summary>
+    Annual = 1,
+}
+
 /// <summary>One tenant's billing relationship: which plan, current billing period, and how it pays.
 /// <see cref="PaymentProvider"/> starts as "Manual" (admin records bank-transfer payments by hand) and can be
 /// switched to a real gateway (e.g. "PayTabs") once a saved card token exists for auto-charge.</summary>
@@ -25,6 +32,8 @@ public class Subscription : AuditableEntity
     /// <summary>Tenants sharing this id are the same customer's other companies — each invoice after the
     /// first one due in a billing run is discounted per <see cref="SubscriptionPricingConstants.AdditionalCompanyDiscountMultiplier"/>.</summary>
     public Guid? BillingAccountId { get; set; }
+
+    public BillingPeriod BillingPeriod { get; set; } = BillingPeriod.Monthly;
 
     public string PaymentProvider { get; set; } = "Manual";
     public string? PaymentProviderCustomerRef { get; set; }

@@ -17,6 +17,10 @@ public static class SubscriptionPriceList
     public const string PeoplePlanCode = "people";
     public const int PeoplePlanIncludedEmployees = 25;
 
+    /// <summary>Paying a year up front is charged as 10 of the 12 months — "two months free".</summary>
+    public const int AnnualMonthsCharged = 10;
+    public const int AnnualMonthsCovered = 12;
+
     public const string Sar = "SAR";
     public const string Egp = "EGP";
     public const string Gbp = "GBP";

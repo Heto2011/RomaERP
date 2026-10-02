@@ -252,4 +252,71 @@ public class SubscriptionBillingServiceTests
 
         Assert.Equal("people", list.Single().PlanCode);
     }
+
+    [Fact]
+    public async Task ActivatePaid_Annual_ChargesTenMonthsAndCoversTwelve()
+    {
+        var central = NewCentral();
+        var plan = Plan("essential", 3, 10);
+        central.SubscriptionPlans.Add(plan);
+        var (tenant, _) = AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Trialing, DateTime.UtcNow.AddDays(-1), isDemo: true);
+        var service = new TestableBillingService(central, Config());
+
+        var dto = await service.ActivatePaidAsync(tenant.Id, plan.Id, "TRF-ANNUAL", BillingPeriod.Annual);
+
+        var invoice = await central.SubscriptionInvoices.SingleAsync();
+        Assert.Equal(1490m, invoice.TotalAmount); // 149 x 10
+        Assert.Equal(SubscriptionInvoiceStatus.Paid, invoice.Status);
+        Assert.Equal(BillingPeriod.Annual, dto.BillingPeriod);
+        Assert.InRange((dto.CurrentPeriodEnd - dto.CurrentPeriodStart).TotalDays, 364, 366);
+    }
+
+    [Fact]
+    public async Task ActivatePaid_Monthly_IsUnchanged()
+    {
+        var central = NewCentral();
+        var plan = Plan("essential", 3, 10);
+        central.SubscriptionPlans.Add(plan);
+        var (tenant, _) = AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Trialing, DateTime.UtcNow.AddDays(-1), isDemo: true);
+        var service = new TestableBillingService(central, Config());
+
+        var dto = await service.ActivatePaidAsync(tenant.Id, plan.Id, null);
+
+        Assert.Equal(149m, (await central.SubscriptionInvoices.SingleAsync()).TotalAmount);
+        Assert.Equal(BillingPeriod.Monthly, dto.BillingPeriod);
+        Assert.InRange((dto.CurrentPeriodEnd - dto.CurrentPeriodStart).TotalDays, 27, 32);
+    }
+
+    [Fact]
+    public async Task AnnualRenewal_BillsTenMonthsOfBaseAndOverage_AndAdvancesAYear_WithoutTheFoundingOffer()
+    {
+        var central = NewCentral();
+        var plan = Plan("essential", 3, 10);
+        central.SubscriptionPlans.Add(plan);
+        var (_, sub) = AddTenant(central, plan, Country.Egypt, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(-1));
+        sub.BillingPeriod = BillingPeriod.Annual;
+        await central.SaveChangesAsync();
+        var service = new TestableBillingService(central, Config()) { Branches = 3, Users = 12 };
+
+        await service.RunBillingCycleAsync();
+
+        var invoice = await central.SubscriptionInvoices.SingleAsync();
+        Assert.Equal(30000m + 2 * 400m * 10, invoice.TotalAmount); // EGP list 3000 (no founding for annual) x10, 2 extra users x400 x10
+        var advanced = await central.Subscriptions.SingleAsync();
+        Assert.InRange((advanced.CurrentPeriodEnd - advanced.CurrentPeriodStart).TotalDays, 364, 366);
+    }
+
+    [Fact]
+    public async Task SetBillingPeriod_SwitchesTheNextRenewal()
+    {
+        var central = NewCentral();
+        var plan = Plan("essential", 3, 10);
+        central.SubscriptionPlans.Add(plan);
+        var (tenant, _) = AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(20));
+        var service = new TestableBillingService(central, Config());
+
+        var dto = await service.SetBillingPeriodAsync(tenant.Id, BillingPeriod.Annual);
+
+        Assert.Equal(BillingPeriod.Annual, dto.BillingPeriod);
+    }
 }
