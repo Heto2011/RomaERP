@@ -45,15 +45,16 @@ public class MySubscriptionController : ControllerBase
     public async Task<ActionResult<List<SubscriptionInvoiceDto>>> GetMyInvoices(CancellationToken ct)
         => Ok(await _billing.GetInvoicesAsync(_tenantContext.TenantId, ct));
 
-    /// <summary>Egyptian customers pay through InstaPay only; everyone else gets the bank-transfer details
-    /// (InstaPay is an Egypt-only rail, so showing it abroad would just confuse people).</summary>
+    /// <summary>Egyptian customers pay through InstaPay only. Customers elsewhere pay by card through the payment
+    /// gateway (Lemon Squeezy, not built yet), so no bank details are shown to them unless the owner switches on
+    /// <c>Billing:ShowBankTransferAbroad</c> as a temporary fallback.</summary>
     [HttpGet("bank-transfer")]
     public ActionResult<BankTransferInfoDto> GetBankTransferInfo()
     {
         var isEgypt = _tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt;
         var iban = _configuration["BankTransfer:Iban"];
         var instaPayMobile = _configuration["InstaPay:Mobile"];
-        var hasBankTransfer = !isEgypt && !string.IsNullOrWhiteSpace(iban);
+        var hasBankTransfer = !isEgypt && _configuration.GetValue<bool>("Billing:ShowBankTransferAbroad") && !string.IsNullOrWhiteSpace(iban);
         var hasInstaPay = isEgypt && !string.IsNullOrWhiteSpace(instaPayMobile);
 
         if (!hasBankTransfer && !hasInstaPay)
