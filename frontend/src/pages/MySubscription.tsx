@@ -217,7 +217,7 @@ export default function MySubscriptionPage() {
       <div className="card">
         <h3 style={{ marginTop: 0 }}>{t.mySubscription.bankTransferTitle}</h3>
         {!bankInfo?.configured && <div className="text-muted">{t.mySubscription.bankNotConfigured}</div>}
-        {bankInfo?.configured && (
+        {bankInfo?.configured && (bankInfo.iban || bankInfo.accountName) && (
           <table>
             <tbody>
               {([
