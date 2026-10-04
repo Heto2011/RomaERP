@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.API.Contracts;
+using RomaERP.Application.Common;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Domain.Support;
@@ -22,10 +23,13 @@ public class MySubscriptionController : ControllerBase
     private readonly ITenantContext _tenantContext;
     private readonly CentralDbContext _central;
     private readonly IConfiguration _configuration;
+    private readonly IHtmlToPdfRenderer _pdfRenderer;
 
     public MySubscriptionController(
-        ISubscriptionBillingService billing, ITenantContext tenantContext, CentralDbContext central, IConfiguration configuration)
+        ISubscriptionBillingService billing, ITenantContext tenantContext, CentralDbContext central, IConfiguration configuration,
+        IHtmlToPdfRenderer pdfRenderer)
     {
+        _pdfRenderer = pdfRenderer;
         _billing = billing;
         _tenantContext = tenantContext;
         _central = central;
@@ -48,6 +52,24 @@ public class MySubscriptionController : ControllerBase
     /// <summary>Egyptian customers pay through InstaPay only. Customers elsewhere pay by card through the payment
     /// gateway (Lemon Squeezy, not built yet), so no bank details are shown to them unless the owner switches on
     /// <c>Billing:ShowBankTransferAbroad</c> as a temporary fallback.</summary>
+    /// <summary>The invoice as a branded PDF (Roma Group's own invoice to this customer).</summary>
+    [HttpGet("invoices/{invoiceId:guid}/pdf")]
+    public async Task<IActionResult> GetInvoicePdf(Guid invoiceId, [FromQuery] string? lang, CancellationToken ct)
+    {
+        var invoices = await _billing.GetInvoicesAsync(_tenantContext.TenantId, ct);
+        var invoice = invoices.FirstOrDefault(i => i.Id == invoiceId)
+            ?? throw new NotFoundException("SubscriptionInvoice", invoiceId);
+
+        string? logo = null;
+        var logoPath = Path.Combine(AppContext.BaseDirectory, "Assets", "roma-logo.png");
+        if (System.IO.File.Exists(logoPath))
+            logo = Convert.ToBase64String(await System.IO.File.ReadAllBytesAsync(logoPath, ct));
+
+        var html = SubscriptionInvoiceHtmlTemplate.Build(invoice, logo, arabic: !string.Equals(lang, "en", StringComparison.OrdinalIgnoreCase));
+        var pdf = await _pdfRenderer.RenderAsync(html, ct);
+        return File(pdf, "application/pdf", $"{SubscriptionInvoiceHtmlTemplate.NumberFor(invoice)}.pdf");
+    }
+
     [HttpGet("bank-transfer")]
     public ActionResult<BankTransferInfoDto> GetBankTransferInfo()
     {

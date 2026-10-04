@@ -746,6 +746,8 @@ export const MySubscriptionApi = {
   get: () => apiClient.get<TenantSubscription>("/my-subscription"),
   getInvoices: () => apiClient.get<SubscriptionInvoice[]>("/my-subscription/invoices"),
   getBankTransferInfo: () => apiClient.get<BankTransferInfo>("/my-subscription/bank-transfer"),
+  downloadInvoicePdf: (invoiceId: string, lang: string) =>
+    apiClient.get<Blob>(`/my-subscription/invoices/${invoiceId}/pdf`, { params: { lang }, responseType: "blob" }),
   reportPayment: (invoiceId: string, paymentReference: string | null, note: string | null) =>
     apiClient.post<{ ticketId: string; ticketNumber: number }>(
       `/my-subscription/invoices/${invoiceId}/report-payment`,

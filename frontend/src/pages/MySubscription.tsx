@@ -20,7 +20,7 @@ const INVOICE_STATUS_KEY: Record<number, string> = {
 };
 
 export default function MySubscriptionPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [subscription, setSubscription] = useState<TenantSubscription | null>(null);
   const [invoices, setInvoices] = useState<SubscriptionInvoice[]>([]);
   const [bankInfo, setBankInfo] = useState<BankTransferInfo | null>(null);
@@ -57,6 +57,18 @@ export default function MySubscriptionPage() {
       setError(getErrorMessage(err));
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function openInvoicePdf(invoiceId: string) {
+    setError(null);
+    try {
+      const res = await MySubscriptionApi.downloadInvoicePdf(invoiceId, lang);
+      const url = URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      window.open(url, "_blank");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   }
 
@@ -176,7 +188,10 @@ export default function MySubscriptionPage() {
                     </span>
                   </td>
                   <td>{new Date(inv.dueDateUtc).toLocaleDateString()}</td>
-                  <td>
+                  <td style={{ display: "flex", gap: 6 }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => openInvoicePdf(inv.id)}>
+                      {t.mySubscription.invoicePdfBtn}
+                    </button>
                     {inv.status === 0 && (
                       <button className="btn btn-secondary btn-sm" onClick={() => startReport(inv)}>
                         {t.mySubscription.reportPaymentBtn}

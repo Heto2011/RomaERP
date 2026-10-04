@@ -48,7 +48,10 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
     <div className="topnav-shell people-theme">
       <header className="topnav-header">
         <div className="topnav-brand-row">
-          <span className="brand-text">{t.peopleAppName}</span>
+          <span className="brand-text" style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+            <img src="/roma-logo.png" alt="" width={28} height={28} style={{ borderRadius: 8 }} />
+            {t.peopleAppName}
+          </span>
           <div className="topnav-actions">
             <span className="topnav-user">{user?.fullName}</span>
             <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>

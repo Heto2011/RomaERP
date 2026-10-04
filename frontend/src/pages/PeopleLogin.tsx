@@ -42,6 +42,7 @@ export default function PeopleLogin() {
             {t.language}
           </button>
         </div>
+        <img src="/roma-logo.png" alt="Roma Group" className="login-logo" />
         <h1>{t.peopleAppName}</h1>
         <p>{t.peopleSubtitle}</p>
         {error && <div className="alert-error">{error}</div>}
