@@ -43,7 +43,7 @@ export default function PeopleLogin() {
           </button>
         </div>
         <h1>{t.peopleAppName}</h1>
-        <p>{t.login.subtitle}</p>
+        <p>{t.peopleSubtitle}</p>
         {error && <div className="alert-error">{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div className="form-field">
@@ -62,11 +62,11 @@ export default function PeopleLogin() {
             {loading ? t.login.submitting : t.login.submit}
           </button>
         </form>
+        <p style={{ marginTop: 12, fontSize: 13 }}>
+          <Link to="/forgot-password?p=people">{t.login.forgotPassword}</Link>
+        </p>
         <p style={{ marginTop: 16, fontSize: 13 }} className="text-muted">
           {t.poweredByRomaErp}
-        </p>
-        <p style={{ marginTop: 8, fontSize: 13 }} className="text-muted">
-          <Link to="/login">{t.backToRomaErp}</Link>
         </p>
       </div>
     </div>

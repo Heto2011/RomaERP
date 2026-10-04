@@ -14,3 +14,5 @@ public record LinkEmployeeRequest(Guid? EmployeeId);
 public record SetPosPinRequest(string? Pin);
 
 public record ResetPasswordRequest(string NewPassword);
+
+public record RenameUserRequest(string FullName);

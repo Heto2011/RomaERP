@@ -61,6 +61,58 @@ public class EmployeeSelfServiceTests
     }
 
     [Fact]
+    public async Task EnsureMyProfile_ForAnOwnerWithNoProfile_CreatesAndLinksOne()
+    {
+        var (ctx, dept, _) = await SeedAsync();
+        var userId = Guid.NewGuid();
+        var service = new EmployeeService(ctx);
+
+        var created = await service.EnsureMyProfileAsync(userId, "Heto Owner", "owner@example.com");
+
+        Assert.Equal(userId, created.ApplicationUserId);
+        Assert.Equal("Heto Owner", created.FullNameEn);
+        Assert.Equal("EMP-001", created.EmployeeCode);
+        Assert.Equal(dept.Id, created.DepartmentId);
+        Assert.Equal(0m, created.BasicSalary);
+        Assert.NotNull(await service.GetMyProfileAsync(userId));   // attendance can now resolve the employee
+    }
+
+    [Fact]
+    public async Task EnsureMyProfile_CalledTwice_DoesNotCreateADuplicate()
+    {
+        var (ctx, _, _) = await SeedAsync();
+        var userId = Guid.NewGuid();
+        var service = new EmployeeService(ctx);
+
+        var first = await service.EnsureMyProfileAsync(userId, "Owner", null);
+        var second = await service.EnsureMyProfileAsync(userId, "Owner", null);
+
+        Assert.Equal(first.Id, second.Id);
+        Assert.Equal(1, await ctx.Employees.CountAsync());
+    }
+
+    [Fact]
+    public async Task EnsureMyProfile_SkipsCodesAlreadyTaken()
+    {
+        var (ctx, dept, pos) = await SeedAsync();
+        ctx.Employees.Add(NewEmployee(dept, pos, "EMP-002"));   // one employee exists, so the next count-based code would clash
+        await ctx.SaveChangesAsync();
+        var service = new EmployeeService(ctx);
+
+        var created = await service.EnsureMyProfileAsync(Guid.NewGuid(), "Owner", null);
+
+        Assert.Equal("EMP-003", created.EmployeeCode);
+    }
+
+    [Fact]
+    public async Task EnsureMyProfile_WithNoDepartmentOrPosition_ExplainsWhatToAddFirst()
+    {
+        var service = new EmployeeService(CreateContext());
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.EnsureMyProfileAsync(Guid.NewGuid(), "Owner", null));
+    }
+
+    [Fact]
     public async Task GetMyProfile_WhenNotLinked_ReturnsNull()
     {
         var (ctx, dept, pos) = await SeedAsync();

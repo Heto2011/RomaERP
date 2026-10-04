@@ -159,6 +159,10 @@ import type {
 } from "./types";
 
 export const AuthApi = {
+  forgotPassword: (companyCode: string, email: string) =>
+    apiClient.post<{ message: string }>("/auth/forgot-password", { email }, { headers: { "X-Company-Code": companyCode } }),
+  resetPassword: (companyCode: string, email: string, token: string, newPassword: string) =>
+    apiClient.post<{ message: string }>("/auth/reset-password", { email, token, newPassword }, { headers: { "X-Company-Code": companyCode } }),
   login: (companyCode: string, email: string, password: string) =>
     apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[]; productScope: ProductScope }>(
       "/auth/login",
@@ -243,6 +247,7 @@ export const EmployeesApi = {
   getAll: () => apiClient.get<Employee[]>("/employees"),
   getById: (id: string) => apiClient.get<Employee>(`/employees/${id}`),
   getMyProfile: () => apiClient.get<Employee>("/employees/me"),
+  createMyProfile: () => apiClient.post<Employee>("/employees/me"),
   create: (data: Partial<Employee>) => apiClient.post<Employee>("/employees", data),
   update: (id: string, data: Partial<Employee>) => apiClient.put<Employee>(`/employees/${id}`, data),
   remove: (id: string) => apiClient.delete(`/employees/${id}`),
@@ -306,6 +311,13 @@ export const EmployeeContractsApi = {
   updateStatus: (id: string, status: EmployeeContractStatus) =>
     apiClient.put<EmployeeContract>(`/employee-contracts/${id}/status`, { status }),
   remove: (id: string) => apiClient.delete(`/employee-contracts/${id}`),
+  uploadFile: (id: string, file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return apiClient.post(`/employee-contracts/${id}/file`, body, { headers: { "Content-Type": "multipart/form-data" } });
+  },
+  downloadFile: (id: string) => apiClient.get<Blob>(`/employee-contracts/${id}/file`, { responseType: "blob" }),
+  removeFile: (id: string) => apiClient.delete(`/employee-contracts/${id}/file`),
 };
 
 export const SalaryComponentsApi = {
@@ -612,6 +624,7 @@ export const UsersApi = {
   activate: (id: string) => apiClient.post<AppUser>(`/users/${id}/activate`),
   linkEmployee: (id: string, employeeId: string | null) => apiClient.put<AppUser>(`/users/${id}/employee-link`, { employeeId }),
   setPosPin: (id: string, pin: string | null) => apiClient.put<AppUser>(`/users/${id}/pos-pin`, { pin }),
+  rename: (id: string, fullName: string) => apiClient.put(`/users/${id}/name`, { fullName }),
   resetPassword: (id: string, newPassword: string) => apiClient.put(`/users/${id}/password`, { newPassword }),
   remove: (id: string) => apiClient.delete(`/users/${id}`),
 };
@@ -751,8 +764,10 @@ export const SubscriptionsApi = {
     systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/billing-account`, { billingAccountId }, { headers: { "X-System-Key": systemKey } }),
   suspend: (systemKey: string, tenantId: string) =>
     systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/suspend`, null, { headers: { "X-System-Key": systemKey } }),
-  activatePaid: (systemKey: string, tenantId: string, planId: string, paymentReference: string | null) =>
-    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/activate-paid`, { planId, paymentReference }, { headers: { "X-System-Key": systemKey } }),
+  activatePaid: (systemKey: string, tenantId: string, planId: string, paymentReference: string | null, annual = false) =>
+    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/activate-paid`, { planId, paymentReference, annual }, { headers: { "X-System-Key": systemKey } }),
+  setBillingPeriod: (systemKey: string, tenantId: string, annual: boolean) =>
+    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/billing-period`, { annual }, { headers: { "X-System-Key": systemKey } }),
   reactivate: (systemKey: string, tenantId: string) =>
     systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/reactivate`, null, { headers: { "X-System-Key": systemKey } }),
   getInvoices: (systemKey: string, tenantId?: string) =>

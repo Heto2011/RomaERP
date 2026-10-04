@@ -6,6 +6,7 @@ import { EmployeeRequestStatus, EmployeeRequestType, type EmployeeRequest, type 
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { IconCalendar, IconCheck } from "../../components/icons";
+import ManagerOverview from "../../components/ManagerOverview";
 
 export default function PeopleDashboard() {
   const { user } = useAuth();
@@ -28,6 +29,7 @@ export default function PeopleDashboard() {
   }, []);
 
   const nextLeave = upcomingLeave[0];
+  const isManager = !!user && (user.roles.includes("Admin") || user.roles.includes("HR") || user.modules.includes("HR"));
 
   return (
     <div>
@@ -62,9 +64,11 @@ export default function PeopleDashboard() {
       <div className="card" style={{ marginTop: 20 }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 12 }}>
           <h3 style={{ margin: 0 }}>{t.hr.upcomingLeaveTitle}</h3>
-          <Link to="/people/calendar" className="btn btn-secondary btn-sm" style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <IconCalendar /> {t.hr.hrCalendarTitle}
-          </Link>
+          {isManager && (
+            <Link to="/people/calendar" className="btn btn-secondary btn-sm" style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <IconCalendar /> {t.hr.hrCalendarTitle}
+            </Link>
+          )}
         </div>
         {upcomingLeave.length === 0 ? (
           <p className="text-muted" style={{ margin: 0 }}>
@@ -85,6 +89,7 @@ export default function PeopleDashboard() {
           </div>
         )}
       </div>
+      {isManager && <ManagerOverview />}
     </div>
   );
 }

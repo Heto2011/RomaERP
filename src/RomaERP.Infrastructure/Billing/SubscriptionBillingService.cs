@@ -89,7 +89,18 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         return await BuildDtoAsync(tenant, subscription, plan, ct);
     }
 
-    public async Task<TenantSubscriptionDto> ActivatePaidAsync(Guid tenantId, Guid planId, string? paymentReference, CancellationToken ct = default)
+    public async Task<TenantSubscriptionDto> SetBillingPeriodAsync(Guid tenantId, BillingPeriod billingPeriod, CancellationToken ct = default)
+    {
+        var tenant = await GetTenantOrThrowAsync(tenantId, ct);
+        var subscription = await GetOrCreateSubscriptionAsync(tenant, ct);
+        subscription.BillingPeriod = billingPeriod;
+        await _central.SaveChangesAsync(ct);
+
+        var plan = await _central.SubscriptionPlans.AsNoTracking().FirstAsync(p => p.Id == subscription.PlanId, ct);
+        return await BuildDtoAsync(tenant, subscription, plan, ct);
+    }
+
+    public async Task<TenantSubscriptionDto> ActivatePaidAsync(Guid tenantId, Guid planId, string? paymentReference, BillingPeriod billingPeriod = BillingPeriod.Monthly, CancellationToken ct = default)
     {
         var tenant = await GetTenantOrThrowAsync(tenantId, ct);
         var plan = await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Id == planId, ct)
@@ -106,8 +117,9 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         subscription.PlanId = plan.Id;
         subscription.Status = SubscriptionStatus.Active;
         subscription.SuspendedAtUtc = null;
+        subscription.BillingPeriod = billingPeriod;
         subscription.CurrentPeriodStart = now;
-        subscription.CurrentPeriodEnd = now.AddMonths(1);
+        subscription.CurrentPeriodEnd = now.AddMonths(MonthsCovered(billingPeriod));
 
         var (branches, users) = await CountTenantUsageAsync(tenant, ct);
         var priceSet = await ResolvePriceSetAsync(subscription, tenant, plan, ct);
@@ -216,7 +228,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             generated++;
 
             subscription.CurrentPeriodStart = subscription.CurrentPeriodEnd;
-            subscription.CurrentPeriodEnd = subscription.CurrentPeriodEnd.AddMonths(1);
+            subscription.CurrentPeriodEnd = subscription.CurrentPeriodEnd.AddMonths(MonthsCovered(subscription.BillingPeriod));
             subscription.Status = subscription.Status == SubscriptionStatus.Trialing ? SubscriptionStatus.Active : subscription.Status;
 
             if (subscription.PaymentProvider != "Manual" && !string.IsNullOrEmpty(subscription.PaymentProviderTokenRef)
@@ -312,21 +324,32 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             return new PlanPriceSet(SubscriptionPriceList.Sar, plan.MonthlyBasePrice, 0,
                 SubscriptionPricingConstants.ExtraBranchPrice, SubscriptionPricingConstants.ExtraUserPrice);
 
-        if (listed.FoundingBase > 0 && await IsFoundingCustomerAsync(subscription, tenant, ct))
+        // The launch offer is a monthly-billing offer; an annual subscriber already gets two months free.
+        if (listed.FoundingBase > 0 && subscription.BillingPeriod == BillingPeriod.Monthly && await IsFoundingCustomerAsync(subscription, tenant, plan, ct))
             return listed with { Base = listed.FoundingBase };
 
         return listed;
     }
 
-    /// <summary>Egypt launch offer: among the first <see cref="SubscriptionPriceList.FoundingCustomerLimit"/> Egyptian
-    /// subscriptions to be invoiced, for their first <see cref="SubscriptionPriceList.FoundingInvoiceCount"/> invoices.</summary>
-    private async Task<bool> IsFoundingCustomerAsync(Subscription subscription, Tenant tenant, CancellationToken ct)
+    /// <summary>Launch offers: the first <see cref="SubscriptionPriceList.FoundingCustomerLimit"/> subscriptions to be
+    /// invoiced pay the founding price for their first <see cref="SubscriptionPriceList.FoundingInvoiceCount"/> invoices.
+    /// For the ERP tiers that is the Egypt offer (Egyptian tenants only); for ROMA People (HR) it is open to any country.</summary>
+    private async Task<bool> IsFoundingCustomerAsync(Subscription subscription, Tenant tenant, SubscriptionPlan plan, CancellationToken ct)
     {
-        if (tenant.Country != Country.Egypt) return false;
+        IQueryable<SubscriptionInvoice> cohort;
+        if (plan.Code == SubscriptionPriceList.PeoplePlanCode)
+        {
+            cohort = _central.SubscriptionInvoices.Where(i => i.PlanCode == SubscriptionPriceList.PeoplePlanCode);
+        }
+        else
+        {
+            if (tenant.Country != Country.Egypt) return false;
+            var egyptTenantIds = _central.Tenants.Where(t => t.Country == Country.Egypt).Select(t => t.Id);
+            cohort = _central.SubscriptionInvoices.Where(i => egyptTenantIds.Contains(i.TenantId));
+        }
 
-        var egyptTenantIds = _central.Tenants.Where(t => t.Country == Country.Egypt).Select(t => t.Id);
-        var firstInvoices = await _central.SubscriptionInvoices
-            .Where(i => egyptTenantIds.Contains(i.TenantId) && i.Status != SubscriptionInvoiceStatus.Cancelled)
+        var firstInvoices = await cohort
+            .Where(i => i.Status != SubscriptionInvoiceStatus.Cancelled)
             .GroupBy(i => i.SubscriptionId)
             .Select(g => new { SubscriptionId = g.Key, First = g.Min(i => i.CreatedAtUtc), Count = g.Count() })
             .ToListAsync(ct);
@@ -337,6 +360,9 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var ahead = firstInvoices.Count(x => x.First < mine.First);
         return ahead < SubscriptionPriceList.FoundingCustomerLimit && mine.Count < SubscriptionPriceList.FoundingInvoiceCount;
     }
+
+    private static int MonthsCovered(BillingPeriod period)
+        => period == BillingPeriod.Annual ? SubscriptionPriceList.AnnualMonthsCovered : 1;
 
     private static SubscriptionInvoice BuildInvoice(
         Subscription subscription, SubscriptionPlan plan, PlanPriceSet prices, int branches, int users, bool isAdditionalCompany)
@@ -349,10 +375,12 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         // currency's own decimals and add the rounded lines up — the invoice always sums exactly.
         var decimals = SubscriptionPriceList.DecimalsFor(prices.Currency);
         decimal Round(decimal amount) => Math.Round(amount, decimals, MidpointRounding.AwayFromZero);
-        var baseAmount = Round(pricing.BaseAmount);
-        var extraBranchesAmount = Round(pricing.ExtraBranchesAmount);
-        var extraUsersAmount = Round(pricing.ExtraUsersAmount);
-        var discount = Round(pricing.MultiCompanyDiscountAmount);
+        // An annual invoice covers 12 months but is charged as 10 ("two months free"), overage included.
+        var factor = subscription.BillingPeriod == BillingPeriod.Annual ? SubscriptionPriceList.AnnualMonthsCharged : 1;
+        var baseAmount = Round(pricing.BaseAmount * factor);
+        var extraBranchesAmount = Round(pricing.ExtraBranchesAmount * factor);
+        var extraUsersAmount = Round(pricing.ExtraUsersAmount * factor);
+        var discount = Round(pricing.MultiCompanyDiscountAmount * factor);
 
         return new SubscriptionInvoice
         {
@@ -377,10 +405,28 @@ public class SubscriptionBillingService : ISubscriptionBillingService
 
     private async Task<Subscription> GetOrCreateSubscriptionAsync(Tenant tenant, CancellationToken ct)
     {
-        var existing = await _central.Subscriptions.FirstOrDefaultAsync(s => s.TenantId == tenant.Id, ct);
-        if (existing is not null) return existing;
+        var peoplePlan = tenant.ProductScope == ProductScope.PeopleOnly
+            ? await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Code == SubscriptionPriceList.PeoplePlanCode, ct)
+            : null;
 
-        var defaultPlan = await _central.SubscriptionPlans.OrderBy(p => p.SortOrder).FirstAsync(ct);
+        var existing = await _central.Subscriptions.FirstOrDefaultAsync(s => s.TenantId == tenant.Id, ct);
+        if (existing is not null)
+        {
+            // A trial that signed up for ROMA People before it had its own plan was parked on the entry ERP tier —
+            // move it, so the owner sees (and is eventually billed) the HR price, not the ERP one.
+            if (peoplePlan is not null && existing.Status == SubscriptionStatus.Trialing && existing.PlanId != peoplePlan.Id)
+            {
+                var current = await _central.SubscriptionPlans.AsNoTracking().FirstOrDefaultAsync(p => p.Id == existing.PlanId, ct);
+                if (current?.Code == "essential")
+                {
+                    existing.PlanId = peoplePlan.Id;
+                    await _central.SaveChangesAsync(ct);
+                }
+            }
+            return existing;
+        }
+
+        var defaultPlan = peoplePlan ?? await _central.SubscriptionPlans.OrderBy(p => p.SortOrder).FirstAsync(ct);
         var now = DateTime.UtcNow;
 
         var subscription = new Subscription
@@ -433,7 +479,11 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
 
         var branches = await db.Warehouses.CountAsync(w => w.IsActive, ct);
-        var users = await userManager.Users.CountAsync(u => u.IsActive, ct);
+        // ROMA People is priced per employee (25 included), and an employee may not have a login at all — so count the
+        // active employee records there, not the login accounts, or a 59-person company with 3 logins would pay for 3.
+        var users = tenant.ProductScope == ProductScope.PeopleOnly
+            ? await db.Employees.CountAsync(e => !e.IsDeleted && e.EmploymentStatus == RomaERP.Domain.HR.EmploymentStatus.Active, ct)
+            : await userManager.Users.CountAsync(u => u.IsActive, ct);
         return (branches, users);
     }
 
@@ -443,7 +493,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
     private static TenantSubscriptionDto MapTenantSubscription(Tenant tenant, Subscription s, SubscriptionPlan plan, int branches, int users, decimal outstanding, int overdueDays) =>
         new(tenant.Id, tenant.CompanyCode, tenant.CompanyNameAr, tenant.CompanyNameEn, tenant.IsActive,
             s.Id, plan.Id, plan.Code, plan.NameAr, s.Status, s.CurrentPeriodStart, s.CurrentPeriodEnd,
-            s.BillingAccountId, s.PaymentProvider, branches, users, outstanding, SubscriptionPriceList.CurrencyFor(tenant.Country), overdueDays);
+            s.BillingAccountId, s.PaymentProvider, branches, users, outstanding, SubscriptionPriceList.CurrencyFor(tenant.Country), overdueDays, s.BillingPeriod);
 
     private static SubscriptionInvoiceDto MapInvoice(SubscriptionInvoice i, string companyNameAr) =>
         new(i.Id, i.TenantId, companyNameAr, i.PlanCode, i.PlanNameAr, i.PeriodStart, i.PeriodEnd,

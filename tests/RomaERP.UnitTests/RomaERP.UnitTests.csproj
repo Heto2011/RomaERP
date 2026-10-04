@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\RomaERP.Application\RomaERP.Application.csproj" />
     <ProjectReference Include="..\..\src\RomaERP.Domain\RomaERP.Domain.csproj" />
     <ProjectReference Include="..\..\src\RomaERP.Infrastructure\RomaERP.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\src\RomaERP.API\RomaERP.API.csproj" />
   </ItemGroup>
 
 </Project>

@@ -24,6 +24,8 @@ export default function MySubscriptionPage() {
   const [subscription, setSubscription] = useState<TenantSubscription | null>(null);
   const [invoices, setInvoices] = useState<SubscriptionInvoice[]>([]);
   const [bankInfo, setBankInfo] = useState<BankTransferInfo | null>(null);
+  // Egypt pays through InstaPay; every other country pays by card (payment gateway), never by bank details.
+  const outsideEgypt = !!subscription && subscription.currency !== "EGP";
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -215,9 +217,9 @@ export default function MySubscriptionPage() {
       )}
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>{t.mySubscription.bankTransferTitle}</h3>
-        {!bankInfo?.configured && <div className="text-muted">{t.mySubscription.bankNotConfigured}</div>}
-        {bankInfo?.configured && (
+        <h3 style={{ marginTop: 0 }}>{outsideEgypt ? t.mySubscription.cardPaymentTitle : t.mySubscription.bankTransferTitle}</h3>
+        {!bankInfo?.configured && <div className="text-muted">{outsideEgypt ? t.mySubscription.cardPaymentSoon : t.mySubscription.bankNotConfigured}</div>}
+        {bankInfo?.configured && (bankInfo.iban || bankInfo.accountName) && (
           <table>
             <tbody>
               {([

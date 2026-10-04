@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { EmployeeContractsApi, EmployeesApi } from "../../api/services";
 import { ContractType, EmployeeContractStatus, type Employee, type EmployeeContract } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -14,6 +14,13 @@ export default function EmployeeContracts() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [error, setError] = useState<string | null>(null);
+  const [newFile, setNewFile] = useState<File | null>(null);
+  const uploadTarget = useRef<string | null>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  function isPdf(f: File) {
+    return f.name.toLowerCase().endsWith(".pdf");
+  }
 
   async function load() {
     const [contractsRes, employeesRes] = await Promise.all([EmployeeContractsApi.getAll(), EmployeesApi.getAll()]);
@@ -33,16 +40,29 @@ export default function EmployeeContracts() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    if (newFile && !isPdf(newFile)) {
+      setError(t.hr.contractPdfOnly);
+      return;
+    }
     try {
-      await EmployeeContractsApi.create({
+      const created = await EmployeeContractsApi.create({
         employeeId: form.employeeId,
         contractType: form.contractType,
         startDate: form.startDate,
         endDate: form.contractType === ContractType.Permanent ? null : form.endDate || null,
         notes: form.notes || null,
       });
+      if (newFile) {
+        try {
+          await EmployeeContractsApi.uploadFile(created.data.id, newFile);
+        } catch (err) {
+          // The contract itself is saved; only the attachment failed, so say so and let them retry from the table.
+          setError(getErrorMessage(err));
+        }
+      }
       setShowForm(false);
       setForm(emptyForm);
+      setNewFile(null);
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -54,6 +74,47 @@ export default function EmployeeContracts() {
     setError(null);
     try {
       await EmployeeContractsApi.updateStatus(id, EmployeeContractStatus.Terminated);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleViewFile(id: string) {
+    setError(null);
+    try {
+      const res = await EmployeeContractsApi.downloadFile(id);
+      const url = URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      window.open(url, "_blank");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleFilePicked(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    const id = uploadTarget.current;
+    e.target.value = "";
+    if (!file || !id) return;
+    if (!isPdf(file)) {
+      setError(t.hr.contractPdfOnly);
+      return;
+    }
+    setError(null);
+    try {
+      await EmployeeContractsApi.uploadFile(id, file);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleRemoveFile(id: string) {
+    if (!window.confirm(t.hr.confirmRemoveContractFile)) return;
+    setError(null);
+    try {
+      await EmployeeContractsApi.removeFile(id);
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -141,6 +202,11 @@ export default function EmployeeContracts() {
                 <label>{t.hr.reason}</label>
                 <input value={form.notes} onChange={(e) => setForm((f) => ({ ...f, notes: e.target.value }))} />
               </div>
+              <div className="form-field" style={{ gridColumn: "1 / -1" }}>
+                <label>{t.hr.contractFile}</label>
+                <input type="file" accept="application/pdf,.pdf" onChange={(e) => setNewFile(e.target.files?.[0] ?? null)} />
+                <small className="text-muted">{t.hr.contractPdfHint}</small>
+              </div>
             </div>
             <button className="btn" type="submit" style={{ marginTop: 14 }}>
               {t.common.save}
@@ -149,6 +215,7 @@ export default function EmployeeContracts() {
         </div>
       )}
 
+      <input ref={fileInput} type="file" accept="application/pdf,.pdf" hidden onChange={handleFilePicked} />
       <div className="card">
         <table>
           <thead>
@@ -158,13 +225,14 @@ export default function EmployeeContracts() {
               <th>{t.hr.dateFrom}</th>
               <th>{t.hr.terminationDate}</th>
               <th>{t.common.status}</th>
+              <th>{t.hr.contractFile}</th>
               <th></th>
             </tr>
           </thead>
           <tbody>
             {contracts.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
+                <td colSpan={7} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
                   {t.common.noData}
                 </td>
               </tr>
@@ -186,6 +254,28 @@ export default function EmployeeContracts() {
                 </td>
                 <td>
                   <span className={`badge ${statusBadgeClass[c.status]}`}>{statusLabel[c.status]}</span>
+                </td>
+                <td>
+                  {c.hasFile ? (
+                    <div style={{ display: "flex", gap: 6 }}>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleViewFile(c.id)}>
+                        {t.hr.viewContractFile}
+                      </button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleRemoveFile(c.id)}>
+                        {t.hr.removeContractFile}
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => {
+                        uploadTarget.current = c.id;
+                        fileInput.current?.click();
+                      }}
+                    >
+                      {t.hr.uploadContractFile}
+                    </button>
+                  )}
                 </td>
                 <td style={{ display: "flex", gap: 8 }}>
                   {c.status === EmployeeContractStatus.Active && (

@@ -69,7 +69,8 @@ public class EmployeeService : IEmployeeService
             BankAccountNumber = dto.BankAccountNumber,
             Iban = dto.Iban,
             WorkLocationId = dto.WorkLocationId,
-            IsSaudiNational = dto.IsSaudiNational,
+            Nationality = NormalizeNationality(dto.Nationality),
+            IsSaudiNational = ResolveIsSaudi(dto),
             AnnualLeaveDaysPerYear = dto.AnnualLeaveDaysPerYear,
             EmploymentStatus = EmploymentStatus.Active
         };
@@ -103,7 +104,8 @@ public class EmployeeService : IEmployeeService
         employee.BankAccountNumber = dto.BankAccountNumber;
         employee.Iban = dto.Iban;
         employee.WorkLocationId = dto.WorkLocationId;
-        employee.IsSaudiNational = dto.IsSaudiNational;
+        employee.Nationality = NormalizeNationality(dto.Nationality);
+        employee.IsSaudiNational = ResolveIsSaudi(dto);
         employee.AnnualLeaveDaysPerYear = dto.AnnualLeaveDaysPerYear;
         employee.EmploymentStatus = dto.EmploymentStatus;
         employee.TerminationDate = dto.TerminationDate;
@@ -137,6 +139,44 @@ public class EmployeeService : IEmployeeService
         return employee is null ? null : Map(employee);
     }
 
+    public async Task<EmployeeDto> EnsureMyProfileAsync(Guid applicationUserId, string? fullName, string? email, CancellationToken ct = default)
+    {
+        var existing = await GetMyProfileAsync(applicationUserId, ct);
+        if (existing is not null) return existing;
+
+        var position = await _context.Positions
+            .Include(p => p.Department)
+            .Where(p => !p.IsDeleted && p.IsActive && p.Department != null && !p.Department.IsDeleted)
+            .OrderBy(p => p.Code)
+            .FirstOrDefaultAsync(ct)
+            ?? throw new ValidationAppException("لازم يكون فيه قسم ووظيفة الأول — أضفهم من شاشة الأقسام والوظائف وحاول تاني.");
+
+        var name = string.IsNullOrWhiteSpace(fullName) ? (email ?? "Owner").Split('@')[0] : fullName.Trim();
+
+        var next = await _context.Employees.CountAsync(ct) + 1;
+        string code;
+        do { code = $"EMP-{next++:000}"; }
+        while (await _context.Employees.AnyAsync(e => e.EmployeeCode == code, ct));
+
+        var employee = new Employee
+        {
+            EmployeeCode = code,
+            FullNameAr = name,
+            FullNameEn = name,
+            HireDate = DateTime.UtcNow.Date,
+            DepartmentId = position.DepartmentId,
+            PositionId = position.Id,
+            BasicSalary = 0,
+            Email = email,
+            ApplicationUserId = applicationUserId,
+            EmploymentStatus = EmploymentStatus.Active,
+        };
+        _context.Employees.Add(employee);
+        await _context.SaveChangesAsync(ct);
+
+        return await GetByIdAsync(employee.Id, ct);
+    }
+
     public async Task<EmployeeDto> LinkUserAsync(Guid employeeId, Guid? applicationUserId, CancellationToken ct = default)
     {
         var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == employeeId, ct)
@@ -163,6 +203,19 @@ public class EmployeeService : IEmployeeService
         employee.FaceReferencePhotoPath = storedFileName;
         await _context.SaveChangesAsync(ct);
         return await GetByIdAsync(employeeId, ct);
+    }
+
+    private static string? NormalizeNationality(string? code)
+    {
+        var c = code?.Trim().ToUpperInvariant();
+        return string.IsNullOrEmpty(c) ? null : c;
+    }
+
+    // A chosen nationality decides GOSI eligibility; the legacy flag is only honoured when no nationality is sent.
+    private static bool ResolveIsSaudi(CreateEmployeeDto dto)
+    {
+        var n = NormalizeNationality(dto.Nationality);
+        return n is null ? dto.IsSaudiNational : n == "SA";
     }
 
     private async Task ValidateDepartmentAndPosition(Guid departmentId, Guid positionId, CancellationToken ct)
@@ -208,6 +261,7 @@ public class EmployeeService : IEmployeeService
         WorkLocationName = e.WorkLocation?.Name,
         HasFaceReferencePhoto = !string.IsNullOrEmpty(e.FaceReferencePhotoPath),
         IsSaudiNational = e.IsSaudiNational,
+        Nationality = e.Nationality,
         AnnualLeaveDaysPerYear = e.AnnualLeaveDaysPerYear
     };
 }

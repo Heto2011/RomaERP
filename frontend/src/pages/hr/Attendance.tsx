@@ -3,6 +3,7 @@ import { AttendanceApi } from "../../api/services";
 import type { AttendanceRecord } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import OwnEmployeeProfileNotice from "../../components/OwnEmployeeProfileNotice";
 
 type PendingAction = "checkin" | "checkout" | null;
 
@@ -124,6 +125,7 @@ export default function Attendance() {
         <h1>{t.hr.attendanceTitle}</h1>
       </div>
       <p className="text-muted">{t.hr.attendanceIntro}</p>
+      <OwnEmployeeProfileNotice onCreated={() => { setError(null); load(); }} />
 
       {error && <div className="alert-error">{error}</div>}
       {message && (

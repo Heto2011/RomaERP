@@ -287,6 +287,9 @@ namespace RomaERP.Infrastructure.Persistence.CentralMigrations
                     b.Property<Guid?>("BillingAccountId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<int>("BillingPeriod")
+                        .HasColumnType("int");
+
                     b.Property<DateTime>("CreatedAtUtc")
                         .HasColumnType("datetime2");
 

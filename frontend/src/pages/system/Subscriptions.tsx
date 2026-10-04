@@ -93,9 +93,10 @@ export default function SubscriptionsPage() {
     if (!systemKey) return;
     const reference = prompt(`Confirm ${s.companyNameEn}'s first payment. This makes the account permanent (the trial no longer expires) on the plan shown, and records this month's invoice as paid.\n\nPayment reference (bank transfer note, receipt #, etc.) — optional:`);
     if (reference === null) return;
+    const annual = confirm("Is this an ANNUAL payment (12 months for the price of 10)?\n\nOK = Annual (pays 10 months, covers 12)\nCancel = Monthly");
     setError(null);
     try {
-      await SubscriptionsApi.activatePaid(systemKey, s.tenantId, s.planId, reference || null);
+      await SubscriptionsApi.activatePaid(systemKey, s.tenantId, s.planId, reference || null, annual);
       await loadAll();
     } catch (err) {
       setError(getErrorMessage(err));

@@ -32,6 +32,7 @@ public class EmployeeDto
     public string? WorkLocationName { get; set; }
     public bool HasFaceReferencePhoto { get; set; }
     public bool IsSaudiNational { get; set; }
+    public string? Nationality { get; set; }
     public int AnnualLeaveDaysPerYear { get; set; }
 }
 
@@ -55,6 +56,8 @@ public class CreateEmployeeDto
     public string? Iban { get; set; }
     public Guid? WorkLocationId { get; set; }
     public bool IsSaudiNational { get; set; }
+    /// <summary>ISO alpha-2 nationality code. When supplied it wins over IsSaudiNational.</summary>
+    public string? Nationality { get; set; }
     public int AnnualLeaveDaysPerYear { get; set; } = 21;
 }
 

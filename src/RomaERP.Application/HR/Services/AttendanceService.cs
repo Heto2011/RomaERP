@@ -29,7 +29,7 @@ public class AttendanceService : IAttendanceService
         if (alreadyOpen)
             throw new ValidationAppException("عندك حضور مفتوح بالفعل — سجّل انصراف الأول.");
 
-        var withinGeofence = IsWithinGeofence(employee.WorkLocation, latitude, longitude);
+        var withinGeofence = await IsWithinGeofenceAsync(employee.WorkLocation, latitude, longitude, ct);
         var (faceVerified, similarity) = await VerifyFaceAsync(referencePhotoBytes, selfieBytes, ct);
 
         var record = new AttendanceRecord
@@ -62,7 +62,7 @@ public class AttendanceService : IAttendanceService
             .FirstOrDefaultAsync(ct)
             ?? throw new ValidationAppException("مفيش تسجيل حضور مفتوح لهذا الموظف.");
 
-        var withinGeofence = IsWithinGeofence(employee.WorkLocation, latitude, longitude);
+        var withinGeofence = await IsWithinGeofenceAsync(employee.WorkLocation, latitude, longitude, ct);
         var (faceVerified, similarity) = await VerifyFaceAsync(referencePhotoBytes, selfieBytes, ct);
 
         record.CheckOutAtUtc = DateTime.UtcNow;
@@ -100,14 +100,20 @@ public class AttendanceService : IAttendanceService
         return records.Select(r => Map(r, r.Employee)).ToList();
     }
 
-    private static bool IsWithinGeofence(WorkLocation? location, decimal latitude, decimal longitude)
+    /// <summary>An employee with an assigned site must be at that site. One with no assigned site (for example the
+    /// company owner, or anyone not yet given a site) is valid at any of the company's active sites — before this,
+    /// having no site meant every check-in was flagged "outside the range" even when standing at the office.</summary>
+    private async Task<bool> IsWithinGeofenceAsync(WorkLocation? assigned, decimal latitude, decimal longitude, CancellationToken ct)
     {
-        if (location is null)
-            return false;
+        if (assigned is not null)
+            return IsWithin(assigned, latitude, longitude);
 
-        var distance = GeoDistance.Meters(latitude, longitude, location.Latitude, location.Longitude);
-        return distance <= location.GeofenceRadiusMeters;
+        var sites = await _context.WorkLocations.AsNoTracking().Where(w => w.IsActive && !w.IsDeleted).ToListAsync(ct);
+        return sites.Any(site => IsWithin(site, latitude, longitude));
     }
+
+    private static bool IsWithin(WorkLocation location, decimal latitude, decimal longitude)
+        => GeoDistance.Meters(latitude, longitude, location.Latitude, location.Longitude) <= location.GeofenceRadiusMeters;
 
     private async Task<(bool? verified, decimal? similarity)> VerifyFaceAsync(byte[]? referencePhotoBytes, byte[]? selfieBytes, CancellationToken ct)
     {

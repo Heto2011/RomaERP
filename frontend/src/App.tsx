@@ -19,6 +19,8 @@ import SubscriptionsPage from "./pages/system/Subscriptions";
 import SupportTicketsPage from "./pages/system/SupportTickets";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import MyProfile from "./pages/MyProfile";
 import AlertsPage from "./pages/Alerts";
 import SupportPage from "./pages/Support";
@@ -105,9 +107,13 @@ function ProtectedRoute({ children, layout = true, loginPath = "/login" }: { chi
   return layout ? <Layout>{children}</Layout> : <>{children}</>;
 }
 
-function PeopleRoute({ children }: { children: React.ReactNode }) {
+// `managerOnly` pages (employees, payroll, contracts…) are HR/owner tools. An ordinary employee who types the
+// address by hand is sent back to their own home page — the server refuses the data too.
+function PeopleRoute({ children, managerOnly = false }: { children: React.ReactNode; managerOnly?: boolean }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/people-login" replace />;
+  const isManager = user.roles.includes("Admin") || user.roles.includes("HR") || user.modules.includes("HR");
+  if (managerOnly && !isManager) return <Navigate to="/people" replace />;
   return <PeopleLayout>{children}</PeopleLayout>;
 }
 
@@ -156,6 +162,8 @@ export default function App() {
     <Routes>
       <Route path="/login" element={<Login />} />
       <Route path="/people-login" element={<PeopleLogin />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/restaurant-login" element={<RestaurantLogin />} />
       <Route path="/inventory-login" element={<InventoryLogin />} />
       <Route path="/start-trial" element={<StartTrial />} />
@@ -222,19 +230,20 @@ export default function App() {
       <Route path="/hr/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
       <Route path="/hr/employee-requests" element={<ProtectedRoute><EmployeeRequestsAdmin /></ProtectedRoute>} />
       <Route path="/people" element={<PeopleRoute><PeopleDashboard /></PeopleRoute>} />
-      <Route path="/people/calendar" element={<PeopleRoute><PeopleCalendar /></PeopleRoute>} />
+      <Route path="/people/calendar" element={<PeopleRoute managerOnly><PeopleCalendar /></PeopleRoute>} />
       <Route path="/people/attendance" element={<PeopleRoute><Attendance /></PeopleRoute>} />
       <Route path="/people/my-requests" element={<PeopleRoute><MyRequests /></PeopleRoute>} />
-      <Route path="/people/departments" element={<PeopleRoute><Departments /></PeopleRoute>} />
-      <Route path="/people/positions" element={<PeopleRoute><Positions /></PeopleRoute>} />
-      <Route path="/people/employees" element={<PeopleRoute><Employees /></PeopleRoute>} />
-      <Route path="/people/work-locations" element={<PeopleRoute><WorkLocations /></PeopleRoute>} />
-      <Route path="/people/payroll" element={<PeopleRoute><Payroll /></PeopleRoute>} />
-      <Route path="/people/payroll-settings" element={<PeopleRoute><PayrollSettingsPage /></PeopleRoute>} />
-      <Route path="/people/employee-contracts" element={<PeopleRoute><EmployeeContracts /></PeopleRoute>} />
-      <Route path="/people/salary-components" element={<PeopleRoute><SalaryComponentsPage /></PeopleRoute>} />
-      <Route path="/people/labor-report" element={<PeopleRoute><LaborReportPage /></PeopleRoute>} />
-      <Route path="/people/employee-requests" element={<PeopleRoute><EmployeeRequestsAdmin /></PeopleRoute>} />
+      <Route path="/people/departments" element={<PeopleRoute managerOnly><Departments /></PeopleRoute>} />
+      <Route path="/people/positions" element={<PeopleRoute managerOnly><Positions /></PeopleRoute>} />
+      <Route path="/people/employees" element={<PeopleRoute managerOnly><Employees /></PeopleRoute>} />
+      <Route path="/people/users" element={<PeopleRoute managerOnly><Users /></PeopleRoute>} />
+      <Route path="/people/work-locations" element={<PeopleRoute managerOnly><WorkLocations /></PeopleRoute>} />
+      <Route path="/people/payroll" element={<PeopleRoute managerOnly><Payroll /></PeopleRoute>} />
+      <Route path="/people/payroll-settings" element={<PeopleRoute managerOnly><PayrollSettingsPage /></PeopleRoute>} />
+      <Route path="/people/employee-contracts" element={<PeopleRoute managerOnly><EmployeeContracts /></PeopleRoute>} />
+      <Route path="/people/salary-components" element={<PeopleRoute managerOnly><SalaryComponentsPage /></PeopleRoute>} />
+      <Route path="/people/labor-report" element={<PeopleRoute managerOnly><LaborReportPage /></PeopleRoute>} />
+      <Route path="/people/employee-requests" element={<PeopleRoute managerOnly><EmployeeRequestsAdmin /></PeopleRoute>} />
       <Route path="/restaurant/tables" element={<ProtectedRoute><RestaurantTables /></ProtectedRoute>} />
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />
       <Route path="/restaurant/purchase-receiving" element={<ProtectedRoute><PurchaseReceivingPage /></ProtectedRoute>} />

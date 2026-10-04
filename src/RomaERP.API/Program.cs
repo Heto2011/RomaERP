@@ -114,6 +114,11 @@ builder.Services.AddRateLimiter(options =>
 
     // Identity's own lockout only throttles repeated guesses against one account, so this adds a
     // per-IP cap to blunt password spraying across many different tenant accounts from one source.
+    // Each request can send an email, so it is capped tighter than login: 5 a minute per IP.
+    options.AddPolicy("auth-recovery", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+
     options.AddPolicy("auth-login", httpContext => RateLimitPartition.GetFixedWindowLimiter(
         partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         factory: _ => new FixedWindowRateLimiterOptions
@@ -243,19 +248,22 @@ static async Task SeedSubscriptionPlansAsync(CentralDbContext central)
         ("business", 7, 25, false, 2),
         ("professional", 15, 50, false, 3),
         ("enterprise", int.MaxValue, int.MaxValue, true, 4),
+        // The standalone HR product: 25 employees included, branches unlimited. Sorted last so it never becomes the
+        // default plan of an ERP tenant (the billing service picks it for ROMA People tenants explicitly).
+        (RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanCode, int.MaxValue, RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanIncludedEmployees, false, 5),
     };
 
     var existing = await central.SubscriptionPlans.ToListAsync();
     foreach (var (code, branches, users, custom, sort) in tiers)
     {
-        var name = char.ToUpperInvariant(code[0]) + code[1..];
+        var name = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanCode ? "Roma HR" : char.ToUpperInvariant(code[0]) + code[1..];
         var sarPrice = RomaERP.Domain.Tenancy.SubscriptionPriceList.Find(code, RomaERP.Domain.Tenancy.SubscriptionPriceList.Sar)!.Base;
         var plan = existing.FirstOrDefault(p => p.Code == code);
         if (plan is null)
         {
             central.SubscriptionPlans.Add(new RomaERP.Domain.Tenancy.SubscriptionPlan
             {
-                Code = code, NameAr = name, NameEn = name, MonthlyBasePrice = sarPrice,
+                Code = code, NameAr = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanCode ? "روما إتش آر" : name, NameEn = name, MonthlyBasePrice = sarPrice,
                 IncludedBranches = branches, IncludedUsers = users, IsCustomPricing = custom, SortOrder = sort
             });
             continue;

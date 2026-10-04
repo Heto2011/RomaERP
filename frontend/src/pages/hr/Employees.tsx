@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { DepartmentsApi, EmployeesApi, PositionsApi, SalaryComponentsApi, WorkLocationsApi } from "../../api/services";
+import { DepartmentsApi, EmployeesApi, PositionsApi, SalaryComponentsApi, UsersApi, WorkLocationsApi } from "../../api/services";
 import {
   CalculationType,
   EmploymentStatus,
@@ -15,10 +15,15 @@ import {
 } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { COUNTRIES } from "../../utils/countries";
 import { bilingualName } from "../../i18n/bilingual";
+import { useAuth } from "../../context/AuthContext";
+import PasswordInput from "../../components/PasswordInput";
 
 export default function Employees() {
   const { t, lang } = useLanguage();
+  const { user } = useAuth();
+  const canCreateLogin = (user?.roles.includes("Admin") || user?.roles.includes("HR")) ?? false;
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [positions, setPositions] = useState<Position[]>([]);
@@ -41,7 +46,7 @@ export default function Employees() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [workLocationId, setWorkLocationId] = useState("");
-  const [isSaudiNational, setIsSaudiNational] = useState(false);
+  const [nationality, setNationality] = useState("");
   const [annualLeaveDaysPerYear, setAnnualLeaveDaysPerYear] = useState("21");
   const [employmentStatus, setEmploymentStatus] = useState(EmploymentStatus.Active);
   const [terminationDate, setTerminationDate] = useState("");
@@ -52,6 +57,41 @@ export default function Employees() {
   const [newComponentId, setNewComponentId] = useState("");
   const [newComponentValue, setNewComponentValue] = useState("");
   const [componentsError, setComponentsError] = useState<string | null>(null);
+
+  const [loginEmployee, setLoginEmployee] = useState<Employee | null>(null);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginBusy, setLoginBusy] = useState(false);
+
+  function openLoginModal(emp: Employee) {
+    setLoginEmployee(emp);
+    setLoginEmail(emp.email ?? "");
+    setLoginPassword("");
+    setLoginError(null);
+  }
+
+  async function handleCreateLogin(e: React.FormEvent) {
+    e.preventDefault();
+    if (!loginEmployee) return;
+    setLoginBusy(true);
+    setLoginError(null);
+    try {
+      const res = await UsersApi.create({
+        email: loginEmail.trim(),
+        password: loginPassword,
+        fullName: loginEmployee.fullNameEn || loginEmployee.fullNameAr,
+        roles: ["Employee"],
+      });
+      await UsersApi.linkEmployee(res.data.id, loginEmployee.id);
+      setLoginEmployee(null);
+      await load();
+    } catch (err) {
+      setLoginError(getErrorMessage(err));
+    } finally {
+      setLoginBusy(false);
+    }
+  }
 
   async function load() {
     const [empRes, depRes, posRes, compRes, locRes] = await Promise.all([
@@ -88,7 +128,7 @@ export default function Employees() {
     setEmail("");
     setPhone("");
     setWorkLocationId("");
-    setIsSaudiNational(false);
+    setNationality("");
     setAnnualLeaveDaysPerYear("21");
     setEmploymentStatus(EmploymentStatus.Active);
     setTerminationDate("");
@@ -118,7 +158,7 @@ export default function Employees() {
     setEmail(emp.email ?? "");
     setPhone(emp.phone ?? "");
     setWorkLocationId(emp.workLocationId ?? "");
-    setIsSaudiNational(emp.isSaudiNational);
+    setNationality(emp.nationality ?? (emp.isSaudiNational ? "SA" : ""));
     setAnnualLeaveDaysPerYear(String(emp.annualLeaveDaysPerYear));
     setEmploymentStatus(emp.employmentStatus);
     setTerminationDate(emp.terminationDate ? emp.terminationDate.slice(0, 10) : "");
@@ -142,7 +182,8 @@ export default function Employees() {
         email: email || null,
         phone: phone || null,
         workLocationId: workLocationId || null,
-        isSaudiNational,
+        nationality: nationality || null,
+        isSaudiNational: nationality === "SA",
         annualLeaveDaysPerYear: Number(annualLeaveDaysPerYear) || 21,
       };
       if (editingId) {
@@ -336,10 +377,15 @@ export default function Employees() {
                 <input type="number" min={0} value={annualLeaveDaysPerYear} onChange={(e) => setAnnualLeaveDaysPerYear(e.target.value)} />
               </div>
               <div className="form-field">
-                <label>
-                  <input type="checkbox" checked={isSaudiNational} onChange={(e) => setIsSaudiNational(e.target.checked)} style={{ marginInlineEnd: 6 }} />
-                  {t.hr.isSaudiNational}
-                </label>
+                <label>{t.hr.nationality}</label>
+                <select value={nationality} onChange={(e) => setNationality(e.target.value)} required>
+                  <option value="">{t.hr.selectNationality}</option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {lang === "ar" ? c.ar : c.en}
+                    </option>
+                  ))}
+                </select>
               </div>
               {editingId && (
                 <>
@@ -409,6 +455,13 @@ export default function Employees() {
                   <button className="btn btn-secondary btn-sm" onClick={() => openComponentsModal(emp)}>
                     {t.hr.salaryComponentsButton}
                   </button>
+                  {canCreateLogin && (emp.applicationUserId ? (
+                    <span className="badge badge-posted">{t.hr.hasLogin}</span>
+                  ) : (
+                    <button className="btn btn-secondary btn-sm" onClick={() => openLoginModal(emp)}>
+                      {t.hr.createLogin}
+                    </button>
+                  ))}
                   <button className="btn btn-secondary btn-sm" onClick={() => handleDelete(emp.id)}>
                     {t.common.delete}
                   </button>
@@ -426,6 +479,30 @@ export default function Employees() {
         style={{ display: "none" }}
         onChange={(e) => e.target.files?.[0] && handleFacePhotoSelected(e.target.files[0])}
       />
+
+      {loginEmployee && (
+        <div className="modal-overlay" onClick={() => setLoginEmployee(null)}>
+          <div className="card" style={{ maxWidth: 460, margin: "6% auto" }} onClick={(e) => e.stopPropagation()}>
+            <h3>{t.hr.createLoginTitle.replace("{name}", bilingualName(loginEmployee.fullNameAr, loginEmployee.fullNameEn, lang))}</h3>
+            <p className="text-muted">{t.hr.createLoginHint}</p>
+            {loginError && <div className="alert-error">{loginError}</div>}
+            <form onSubmit={handleCreateLogin} className="form-grid">
+              <div className="form-field">
+                <label>{t.hr.loginEmail}</label>
+                <input type="email" value={loginEmail} onChange={(e) => setLoginEmail(e.target.value)} required />
+              </div>
+              <div className="form-field">
+                <label>{t.hr.initialPassword}</label>
+                <PasswordInput value={loginPassword} onChange={setLoginPassword} minLength={8} required />
+              </div>
+              <div style={{ display: "flex", gap: 8 }}>
+                <button className="btn" type="submit" disabled={loginBusy}>{loginBusy ? t.common.loading : t.hr.createLogin}</button>
+                <button className="btn btn-secondary" type="button" onClick={() => setLoginEmployee(null)}>{t.common.cancel}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {componentsEmployee && (
         <div className="modal-overlay" onClick={() => setComponentsEmployee(null)}>

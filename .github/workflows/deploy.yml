@@ -24,6 +24,8 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: root
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          # The default is 10 minutes; a slow frontend build on the small server timed out a deploy once.
+          command_timeout: 25m
           script: |
             set -e
             cd /root/RomaERP
@@ -111,6 +113,19 @@ jobs:
             with open(path) as f:
                 data = json.load(f)
             data.setdefault('Claude', {})['ApiKey'] = os.environ['CLAUDE_API_KEY'].strip()
+            with open(path, 'w') as f:
+                json.dump(data, f, indent=2)
+            "
+            fi
+
+            NEW_RESEND_KEY="${{ secrets.RESEND_API_KEY }}"
+            if [ -n "$NEW_RESEND_KEY" ]; then
+              RESEND_API_KEY="$NEW_RESEND_KEY" python3 -c "
+            import json, os
+            path = 'src/RomaERP.API/appsettings.json'
+            with open(path) as f:
+                data = json.load(f)
+            data.setdefault('Resend', {})['ApiKey'] = os.environ['RESEND_API_KEY'].strip()
             with open(path, 'w') as f:
                 json.dump(data, f, indent=2)
             "

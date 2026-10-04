@@ -3,6 +3,7 @@ import { EmployeeRequestsApi } from "../../api/services";
 import { EmployeeRequestStatus, EmployeeRequestType, type EmployeeRequest, type LeaveBalance } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import OwnEmployeeProfileNotice from "../../components/OwnEmployeeProfileNotice";
 
 const typeLabelKey = {
   [EmployeeRequestType.Leave]: "leaveType",
@@ -57,6 +58,7 @@ export default function MyRequests() {
         </button>
       </div>
       <p className="text-muted">{t.hr.employeeRequestsIntro}</p>
+      <OwnEmployeeProfileNotice onCreated={() => { setError(null); load(); }} />
 
       {leaveBalance && (
         <div className="card" style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>

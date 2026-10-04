@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta name="robots" content="noindex" />
+<title>Terms of Service — Roma Group</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&family=IBM+Plex+Mono:wght@500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f6f4ee;
+    --surface: #ffffff;
+    --ink: #1c2620;
+    --ink-soft: #5b6a60;
+    --border: #e2ddd0;
+    --primary: #0f5c4b;
+    --primary-dark: #0a4438;
+    --primary-tint: #e6f0ec;
+    --accent: #c8862e;
+    --accent-tint: #faf1e2;
+    --danger: #b3452f;
+    --radius: 16px;
+    --shadow: 0 1px 2px rgba(28,38,32,.04), 0 12px 32px -16px rgba(28,38,32,.18);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Tajawal", "Segoe UI", sans-serif;
+    line-height: 1.75;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+  header.hero {
+    padding: 56px 0 40px;
+    text-align: center;
+    background: radial-gradient(60% 100% at 50% 0%, var(--primary-tint) 0%, transparent 70%);
+  }
+  .brand {
+    display: inline-flex; align-items: center; gap: 8px;
+    font-weight: 900; font-size: 20px; color: var(--primary-dark);
+    margin-bottom: 24px; text-decoration: none;
+  }
+  .brand-mark {
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 15px; font-weight: 900;
+  }
+  h1 { font-size: clamp(26px, 4vw, 38px); font-weight: 900; margin: 0 0 12px; text-wrap: balance; }
+  .hero-sub { max-width: 560px; margin: 0 auto; color: var(--ink-soft); font-size: 16px; }
+  .updated-note { margin-top: 18px; font-size: 13px; color: var(--ink-soft); }
+
+  .disclaimer {
+    background: var(--accent-tint); border: 1px dashed var(--accent);
+    border-radius: 12px; padding: 16px 20px; margin: 0 0 36px;
+    font-size: 14px; color: #6b4a19;
+  }
+
+  nav.toc {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px 24px; margin-bottom: 40px;
+    box-shadow: var(--shadow);
+  }
+  nav.toc h2 { font-size: 14px; text-transform: uppercase; letter-spacing: .03em; color: var(--primary); margin: 0 0 12px; }
+  nav.toc ol { margin: 0; padding-inline-start: 20px; columns: 2; gap: 24px; font-size: 14px; }
+  nav.toc li { margin-bottom: 6px; break-inside: avoid; }
+  nav.toc a { color: var(--ink); text-decoration: none; }
+  nav.toc a:hover { color: var(--primary); text-decoration: underline; }
+
+  section.card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 30px 32px; margin-bottom: 20px;
+    box-shadow: var(--shadow); scroll-margin-top: 20px;
+  }
+  section.card h2 {
+    font-size: 20px; font-weight: 900; margin: 0 0 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  section.card h2 .num {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 30px; height: 30px; border-radius: 9px;
+    background: var(--primary-tint); color: var(--primary);
+    font-size: 14px; font-weight: 900; flex-shrink: 0;
+  }
+  section.card p, section.card li { color: var(--ink); font-size: 15px; }
+  section.card p { margin: 0 0 12px; }
+  section.card ul { margin: 0 0 12px; padding-inline-start: 22px; display: flex; flex-direction: column; gap: 6px; }
+  section.card strong { color: var(--primary-dark); }
+  .note {
+    background: var(--primary-tint); border-radius: 10px; padding: 12px 16px;
+    font-size: 13.5px; color: var(--primary-dark); margin-top: 10px;
+  }
+
+  footer { text-align: center; padding: 40px 0 60px; color: var(--ink-soft); font-size: 13px; }
+  footer a { color: var(--primary); text-decoration: none; }
+
+  @media (max-width: 640px) {
+    nav.toc ol { columns: 1; }
+    section.card { padding: 22px 20px; }
+  }
+
+  html[lang="en"] [data-l="ar"], html[lang="ar"] [data-l="en"] { display: none; }
+  html[lang="en"] { direction: ltr; }
+  .ph { background: #fff3a8; padding: 0 3px; border-radius: 3px; }
+  section.card table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 14px; }
+  section.card th, section.card td { border: 1px solid var(--border); padding: 8px 10px; text-align: start; vertical-align: top; }
+  section.card th { background: var(--primary-tint); }
+  .langbtn { position: fixed; top: 14px; inset-inline-end: 14px; background: var(--surface); border: 1px solid var(--border);
+             border-radius: 999px; padding: 6px 14px; font: inherit; font-weight: 700; cursor: pointer; }
+  .draftbar { background: #fff3a8; color: #5a4700; text-align: center; padding: 8px 12px; font-size: 14px; font-weight: 700; }
+</style>
+<script src="/site-lang.js"></script>
+</head>
+<body>
+<div class="draftbar">DRAFT for lawyer review — not yet in force · مسودة قيد المراجعة القانونية</div>
+<button class="langbtn" id="langToggle">العربية</button>
+<div class="wrap">
+  <header class="hero">
+    <a class="brand" href="/roma-group.html"><span class="brand-mark">R</span> Roma Group</a>
+    <h1><span data-l="en">Terms of Service</span><span data-l="ar">الشروط والأحكام</span></h1>
+    <p class="updated-note"><span data-l="en">Last updated: <span class="ph">[DATE]</span></span><span data-l="ar">آخر تحديث: <span class="ph">[التاريخ]</span></span></p>
+  </header>
+  <section class="card" id="service"><div data-l="en"><h2><span class="num">1</span> The service</h2><p>RomaERP and Roma HR (together, the “Service”) are cloud business software (SaaS) provided by <span class="ph">[LEGAL ENTITY NAME AND REGISTERED ADDRESS]</span> (“we”, “us”).</p><p>RomaERP covers accounting, point of sale, inventory and costing, sales and purchasing, HR and payroll, and financial reporting, with a built-in AI assistant. Roma HR is the people-management part of the same platform (employees, attendance, leave requests, payroll), offered on its own.</p><p>You use the Service in a web browser; nothing needs to be installed. Every module is available on every plan. Plans differ only in the number of branches and users included.</p><p>The Service is for businesses and professionals, not for personal or household use.</p></div><div data-l="ar"><h2><span class="num">1</span> الخدمة</h2><p>RomaERP و Roma HR (معًا «الخدمة») برنامج أعمال سحابي (SaaS) تقدّمه <span class="ph">[الاسم القانوني للكيان وعنوانه المسجّل]</span> («نحن»).</p><p>يغطي RomaERP المحاسبة ونقاط البيع والمخزون والتكاليف والمبيعات والمشتريات والموارد البشرية والرواتب والتقارير المالية، مع مساعد ذكاء اصطناعي مدمج. أمّا Roma HR فهو جزء إدارة الأفراد من المنصة نفسها (الموظفون والحضور وطلبات الإجازات والرواتب) ويُقدَّم بشكل مستقل.</p><p>تستخدم الخدمة من المتصفح دون تركيب أي برنامج. جميع الوحدات متاحة في كل الباقات، وتختلف الباقات فقط في عدد الفروع والمستخدمين المشمولين.</p><p>الخدمة موجهة للشركات والمهنيين، وليست للاستخدام الشخصي أو المنزلي.</p></div></section>
+<section class="card" id="trial"><div data-l="en"><h2><span class="num">2</span> Free trial</h2><p>The trial lasts 21 days and is free. No payment card is required and all features are available.</p><p>If you continue, your account and data carry on unchanged from the day we confirm your first payment. If the trial ends and you do not continue, your account is locked, not deleted (see “Data retention and deletion”).</p></div><div data-l="ar"><h2><span class="num">2</span> الفترة التجريبية</h2><p>مدة التجربة ٢١ يومًا مجانًا، دون الحاجة إلى بطاقة دفع، وجميع الإمكانيات متاحة.</p><p>إذا قررت الاستمرار يبقى حسابك وبياناتك كما هما من يوم تأكيدنا لأول دفعة. وإذا انتهت التجربة ولم تستمر يُقفل حسابك ولا يُحذف (انظر «الاحتفاظ بالبيانات وحذفها»).</p></div></section>
+<section class="card" id="payment"><div data-l="en"><h2><span class="num">3</span> Subscription, prices and payment</h2><ul><li>The subscription is monthly. We generate an invoice for each month automatically.</li><li>Prices for each plan are shown on our pricing page in your country’s currency. <span class="ph">[Confirm whether listed prices include VAT/sales tax and how tax is added.]</span></li><li>By default you pay by bank transfer or InstaPay: we send the invoice, you pay it and tell us, we confirm and activate. We do not charge a card automatically unless you yourself enable a card payment method.</li><li>If an invoice is overdue we will contact you first. After notice we may temporarily suspend the account until the invoice is paid. Suspension never deletes your data.</li><li>The price shown when you subscribe stays the same for as long as your subscription continues without a break. Later price changes apply to new subscribers, or to you after advance notice.</li><li>Launch offers (for example a reduced price for early customers for a limited number of months) are limited and described on the pricing page. When an offer ends, the regular price for your plan applies.</li></ul></div><div data-l="ar"><h2><span class="num">3</span> الاشتراك والأسعار والدفع</h2><ul><li>الاشتراك شهري، ونُصدر فاتورة كل شهر تلقائيًا.</li><li>تُعرض أسعار كل باقة في صفحة الأسعار بعملة بلدك. <span class="ph">[تأكيد ما إذا كانت الأسعار المعلنة شاملة ضريبة القيمة المضافة/المبيعات وكيفية إضافتها.]</span></li><li>الدفع الافتراضي بتحويل بنكي أو إنستاباي: نرسل الفاتورة، وتسدّدها وتبلغنا، فنؤكد ونفعّل. لا نخصم من بطاقتك تلقائيًا إلا إذا فعّلت بنفسك وسيلة دفع بالبطاقة.</li><li>إذا تأخر سداد فاتورة فسنتواصل معك أولًا. وبعد الإشعار قد نوقف الحساب مؤقتًا حتى السداد. والإيقاف لا يحذف بياناتك أبدًا.</li><li>السعر المعلن وقت اشتراكك يبقى ثابتًا ما دام اشتراكك مستمرًا دون انقطاع. وأي تغيير لاحق يسري على المشتركين الجدد، أو عليك بعد إشعار مسبق.</li><li>العروض الترويجية (مثل سعر مخفض لأوائل العملاء لعدد محدود من الأشهر) محدودة وموضحة في صفحة الأسعار، وعند انتهائها يسري السعر العادي لباقتك.</li></ul></div></section>
+<section class="card" id="refunds"><div data-l="en"><h2><span class="num">4</span> Refunds</h2><p>We do not refund part of a month that has already been paid. You can cancel at any time and the Service keeps working until the end of the period you have paid for. <span class="ph">[Lawyer: check mandatory consumer/refund rules in each target country.]</span></p></div><div data-l="ar"><h2><span class="num">4</span> الاسترجاع</h2><p>لا نُرجع جزءًا من شهر دُفع بالفعل. يمكنك الإلغاء في أي وقت وتستمر الخدمة حتى نهاية الفترة المدفوعة. <span class="ph">[للمحامي: مراجعة قواعد الاسترجاع الإلزامية في كل دولة مستهدفة.]</span></p></div></section>
+<section class="card" id="data"><div data-l="en"><h2><span class="num">5</span> Your data</h2><p>Your data belongs to you. We store and process it on your behalf to provide the Service. You can ask for a complete export at any time through support.</p><p>For the data about your company, employees and customers that you put into the Service, you decide what is entered and are responsible for having a lawful basis to do so. Section “Roles” of the Privacy Policy explains who is responsible for what.</p></div><div data-l="ar"><h2><span class="num">5</span> بياناتك</h2><p>بياناتك ملك لك. نخزّنها ونعالجها نيابةً عنك لتقديم الخدمة، ويمكنك طلب نسخة كاملة منها في أي وقت عبر الدعم.</p><p>أنت من يقرر ما يُدخَل من بيانات شركتك وموظفيك وعملائك، وأنت مسؤول عن وجود أساس قانوني لذلك. يوضح قسم «الأدوار» في سياسة الخصوصية من المسؤول عن ماذا.</p></div></section>
+<section class="card" id="retention"><div data-l="en"><h2><span class="num">6</span> Data retention and deletion</h2><ul><li>Your data is never deleted automatically. If your account stops (trial ends, non-payment, cancellation) the account is locked and your data is kept until an authorised representative of the account asks us to delete it. The account can be reactivated with its data intact at any time before then.</li><li>We delete data only on a request from the person authorised to act for the account (the account owner or administrator). We first verify who is asking and that they are authorised. Once carried out, deletion is permanent and cannot be undone.</li><li>Each deletion request receives a confirmation number. We keep a record of the request (company name and code, requester’s email, reason, request and completion times, confirmation number) for as long as we need it as proof that the request was received and carried out.</li><li>Backups are taken daily and kept on our server and in our Dropbox storage for up to 7 days, then removed automatically. Dropbox may keep removed files recoverable for a further period under its own settings (up to 30 days on some plans). Data you had deleted therefore disappears from backups on its own within that time; backups are not used to restore deleted data. <span class="ph">[Confirm exact Dropbox plan retention.]</span></li></ul></div><div data-l="ar"><h2><span class="num">6</span> الاحتفاظ بالبيانات وحذفها</h2><ul><li>لا تُحذف بياناتك تلقائيًا أبدًا. إذا توقف حسابك (انتهاء التجربة أو عدم السداد أو الإلغاء) يُقفل الحساب وتبقى بياناتك محفوظة إلى أن يطلب المسؤول المخوّل عن الحساب حذفها. ويمكن إعادة تفعيل الحساب ببياناته كما هي في أي وقت قبل ذلك.</li><li>لا نحذف البيانات إلا بطلب من الشخص المخوّل بالتصرف عن الحساب (مالك الحساب أو مديره). ونتحقق أولًا ممن يطلب ومن صفته وتفويضه. وبعد التنفيذ يكون الحذف نهائيًا ولا يمكن التراجع عنه.</li><li>يحصل كل طلب حذف على رقم تأكيد. ونحتفظ بسجل للطلب (اسم الشركة ورمزها وبريد مقدّم الطلب والسبب ووقتا الطلب والإنجاز ورقم التأكيد) لأطول مدة نحتاجها كإثبات أن الطلب استُلم ونُفّذ.</li><li>تُؤخذ نسخ احتياطية يوميًا وتُحفظ على خادمنا وفي تخزين Dropbox لمدة تصل إلى ٧ أيام ثم تُزال تلقائيًا. وقد يُبقي Dropbox الملفات المحذوفة قابلة للاسترجاع فترة إضافية حسب إعداداته (حتى ٣٠ يومًا في بعض الباقات). لذلك تختفي بياناتك المحذوفة من النسخ الاحتياطية تلقائيًا خلال هذه المدة، ولا تُستخدم النسخ لاسترجاع بيانات محذوفة. <span class="ph">[تأكيد مدة الاحتفاظ في باقة Dropbox المستخدمة.]</span></li></ul></div></section>
+<section class="card" id="sensitive"><div data-l="en"><h2><span class="num">7</span> Location and face verification (attendance)</h2><p>The attendance feature records GPS coordinates when an employee checks in and checks out, to confirm they are at a work location. It does not track location at other times.</p><p>Face verification is optional. It is off unless your company turns it on. When on, a reference photo of the employee is compared with a photo taken at check-in, using Amazon Web Services (Rekognition).</p><p>Your company is responsible for informing employees and for having a lawful basis (and consent where the law requires it) before turning these features on.</p></div><div data-l="ar"><h2><span class="num">7</span> الموقع والتحقق بالوجه (الحضور)</h2><p>تسجّل ميزة الحضور إحداثيات GPS عند تسجيل الدخول والخروج فقط، للتأكد من وجود الموظف في موقع العمل، ولا تتتبع الموقع في غير ذلك.</p><p>التحقق بالوجه اختياري ويكون متوقفًا ما لم تفعّله شركتك. وعند تفعيله تُقارن صورة مرجعية للموظف بصورة تُلتقط وقت الحضور باستخدام خدمة Amazon Web Services (Rekognition).</p><p>شركتك مسؤولة عن إبلاغ موظفيها وعن وجود أساس قانوني (وموافقة حيث يشترط القانون) قبل تفعيل هاتين الميزتين.</p></div></section>
+<section class="card" id="thirdparty"><div data-l="en"><h2><span class="num">8</span> Third-party services</h2><p>We do not sell or rent your data. We share limited data with the service providers listed in our Privacy Policy, only so that the related features work.</p></div><div data-l="ar"><h2><span class="num">8</span> خدمات الأطراف الخارجية</h2><p>لا نبيع بياناتك ولا نؤجرها. نشارك بيانات محدودة مع مزوّدي الخدمة المذكورين في سياسة الخصوصية، وفقط لتعمل الميزات المرتبطة بهم.</p></div></section>
+<section class="card" id="security"><div data-l="en"><h2><span class="num">9</span> Account security</h2><p>You are responsible for keeping your password, and those of the users you add, confidential. Tell us immediately through support if you suspect unauthorised access.</p></div><div data-l="ar"><h2><span class="num">9</span> أمان الحساب</h2><p>أنت مسؤول عن سرية كلمة مرورك وكلمات مرور المستخدمين الذين تضيفهم. أبلغنا فورًا عبر الدعم إذا شككت في وصول غير مصرح به.</p></div></section>
+<section class="card" id="use"><div data-l="en"><h2><span class="num">10</span> Acceptable use</h2><ul><li>Use the Service lawfully and only for your own business.</li><li>Do not try to break, overload, scrape or reverse-engineer the Service, or to access other customers’ data.</li><li>Do not resell or share access outside your organisation without our written agreement.</li><li>The Service can help prepare e-invoices for government systems (for example ZATCA in Saudi Arabia and ETA in Egypt). You remain responsible for your own registration, credentials and legal compliance with tax authorities.</li></ul></div><div data-l="ar"><h2><span class="num">10</span> الاستخدام المقبول</h2><ul><li>استخدم الخدمة بصورة قانونية ولأعمالك أنت فقط.</li><li>لا تحاول اختراق الخدمة أو إرهاقها أو سحب بياناتها آليًا أو فك بنيتها، ولا الوصول إلى بيانات عملاء آخرين.</li><li>لا تعِد بيع الوصول أو تشاركه خارج مؤسستك دون موافقتنا الكتابية.</li><li>قد تساعد الخدمة في إعداد الفواتير الإلكترونية للأنظمة الحكومية (مثل ZATCA في السعودية وETA في مصر)، وتبقى مسؤولًا عن تسجيلك وبيانات اعتمادك وامتثالك للسلطات الضريبية.</li></ul></div></section>
+<section class="card" id="liability"><div data-l="en"><h2><span class="num">11</span> Availability and liability</h2><ul><li>We work to keep the Service available and accurate, but we do not promise uninterrupted service.</li><li>AI features can make mistakes. Their answers are not accounting, tax or legal advice; financial statements and material decisions must be reviewed by your accountant or adviser.</li><li>E-invoicing depends on government systems we do not control.</li><li>To the extent the law allows, we are not liable for indirect or consequential losses, and our total liability is limited to <span class="ph">[amount – e.g. the fees you paid in the previous 12 months]</span>. Nothing here excludes liability that cannot be excluded by law.</li></ul></div><div data-l="ar"><h2><span class="num">11</span> التوافر وحدود المسؤولية</h2><ul><li>نعمل على إبقاء الخدمة متاحة ودقيقة، لكننا لا نعد بخدمة دون انقطاع.</li><li>قد تخطئ ميزات الذكاء الاصطناعي، وإجاباتها ليست استشارة محاسبية أو ضريبية أو قانونية؛ ويجب مراجعة القوائم المالية والقرارات الجوهرية مع محاسبك أو مستشارك.</li><li>تعتمد الفوترة الإلكترونية على أنظمة حكومية خارجة عن سيطرتنا.</li><li>بالقدر الذي يسمح به القانون لا نتحمل الخسائر غير المباشرة أو التبعية، ويقتصر إجمالي مسؤوليتنا على <span class="ph">[المبلغ – مثلًا الرسوم المدفوعة في آخر ١٢ شهرًا]</span>. ولا يستثني هذا أي مسؤولية لا يجوز استثناؤها قانونًا.</li></ul></div></section>
+<section class="card" id="changes"><div data-l="en"><h2><span class="num">12</span> Changes to these terms</h2><p>We may update these terms. We will notify you before a material change takes effect, and continuing to use the Service afterwards means you accept the new version.</p></div><div data-l="ar"><h2><span class="num">12</span> تعديل الشروط</h2><p>قد نعدّل هذه الشروط. سنبلغك قبل سريان أي تعديل جوهري، واستمرارك في استخدام الخدمة بعده يعني موافقتك على النسخة الجديدة.</p></div></section>
+<section class="card" id="law"><div data-l="en"><h2><span class="num">13</span> Governing law</h2><p><span class="ph">[Governing law and courts/arbitration – to be decided with a lawyer according to where the contracting entity is registered and where customers are. The current live page says Egypt as a placeholder.]</span></p></div><div data-l="ar"><h2><span class="num">13</span> القانون الحاكم</h2><p><span class="ph">[القانون الحاكم والمحاكم أو التحكيم – يُحدَّد مع محامٍ بحسب مكان تسجيل الكيان المتعاقد ومكان العملاء. الصفحة الحالية تذكر مصر كبند مبدئي.]</span></p></div></section>
+<section class="card" id="contact"><div data-l="en"><h2><span class="num">14</span> Contact</h2><p>Questions about these terms, or requests to export or delete your data: open a support ticket from inside your account, or contact <span class="ph">[SUPPORT EMAIL]</span> / WhatsApp <span class="ph">[SUPPORT WHATSAPP NUMBER]</span>.</p></div><div data-l="ar"><h2><span class="num">14</span> التواصل</h2><p>للاستفسار عن الشروط أو لطلب تصدير بياناتك أو حذفها: افتح تذكرة دعم من داخل حسابك، أو تواصل عبر <span class="ph">[بريد الدعم]</span> / واتساب <span class="ph">[رقم واتساب الدعم]</span>.</p></div></section>
+</div>
+<footer>© Roma Group — <a href="/privacy.html"><span data-l="en">Privacy Policy</span><span data-l="ar">سياسة الخصوصية</span></a> · <a href="/roma-erp.html#tiers"><span data-l="en">Pricing</span><span data-l="ar">الأسعار</span></a></footer>
+<script>SiteLang.apply({});</script>
+</body>
+</html>

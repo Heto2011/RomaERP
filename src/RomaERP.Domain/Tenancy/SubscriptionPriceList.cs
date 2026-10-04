@@ -13,6 +13,14 @@ public static class SubscriptionPriceList
     public const int FoundingCustomerLimit = 15;
     public const int FoundingInvoiceCount = 3;
 
+    /// <summary>Plan code of the standalone ROMA People (HR) product — mirrors marketing/roma-hr.html.</summary>
+    public const string PeoplePlanCode = "people";
+    public const int PeoplePlanIncludedEmployees = 25;
+
+    /// <summary>Paying a year up front is charged as 10 of the 12 months — "two months free".</summary>
+    public const int AnnualMonthsCharged = 10;
+    public const int AnnualMonthsCovered = 12;
+
     public const string Sar = "SAR";
     public const string Egp = "EGP";
     public const string Gbp = "GBP";
@@ -41,17 +49,25 @@ public static class SubscriptionPriceList
         [("business", Gbp)] = new(Gbp, 99, 0, 5, 3),
         [("professional", Gbp)] = new(Gbp, 179, 0, 5, 3),
         [("enterprise", Gbp)] = new(Gbp, 599, 0, 5, 3),
+
+        // ROMA People (HR only): up to 25 employees, branches unlimited (so no per-branch overage) and a small
+        // per-employee overage. Launch offer: the first FoundingCustomerLimit customers pay FoundingBase for their
+        // first FoundingInvoiceCount invoices (any country). EGP and GBP are independent prices, like the ERP ones.
+        [(PeoplePlanCode, Sar)] = new(Sar, 99, 49.99m, 0, 5),
+        [(PeoplePlanCode, Egp)] = new(Egp, 1999, 999, 0, 100),
+        [(PeoplePlanCode, Gbp)] = new(Gbp, 32, 16, 0, 1.25m),
     };
 
     static SubscriptionPriceList()
     {
         foreach (var (currency, rate, decimals) in GulfCurrencies)
         {
-            foreach (var plan in new[] { "essential", "business", "professional", "enterprise" })
+            foreach (var plan in new[] { "essential", "business", "professional", "enterprise", PeoplePlanCode })
             {
                 var sar = Prices[(plan, Sar)];
                 Prices[(plan, currency)] = new PlanPriceSet(currency,
-                    Math.Round(sar.Base * rate, decimals, MidpointRounding.AwayFromZero), 0,
+                    Math.Round(sar.Base * rate, decimals, MidpointRounding.AwayFromZero),
+                    Math.Round(sar.FoundingBase * rate, decimals, MidpointRounding.AwayFromZero),
                     sar.ExtraBranch * rate, sar.ExtraUser * rate);
             }
         }
@@ -73,7 +89,7 @@ public static class SubscriptionPriceList
 
     /// <summary>How many decimals an invoice amount in this currency is rounded to (matches the public page).</summary>
     public static int DecimalsFor(string currency)
-        => GulfCurrencies.FirstOrDefault(c => c.Currency == currency.ToUpperInvariant()) is { Currency: not null } g ? g.Decimals : 0;
+        => currency.ToUpperInvariant() is Sar or Gbp ? 2 : GulfCurrencies.FirstOrDefault(c => c.Currency == currency.ToUpperInvariant()) is { Currency: not null } g ? g.Decimals : 0;
 
     public static PlanPriceSet? Find(string planCode, string currency)
         => Prices.GetValueOrDefault((planCode.ToLowerInvariant(), currency.ToUpperInvariant()));

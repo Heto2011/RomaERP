@@ -854,6 +854,7 @@ export interface Employee {
   workLocationName: string | null;
   hasFaceReferencePhoto: boolean;
   isSaudiNational: boolean;
+  nationality: string | null;
   annualLeaveDaysPerYear: number;
 }
 
@@ -1025,6 +1026,7 @@ export interface EmployeeContract {
   status: EmployeeContractStatus;
   notes: string | null;
   daysUntilExpiry: number | null;
+  hasFile: boolean;
 }
 
 export interface CreateEmployeeContractInput {
@@ -2002,6 +2004,8 @@ export interface TenantSubscription {
   outstandingAmount: number;
   currency: string;
   overdueDays: number;
+  /** 0 = monthly, 1 = annual (12 months charged as 10). */
+  billingPeriod: number;
 }
 
 export interface SubscriptionInvoice {

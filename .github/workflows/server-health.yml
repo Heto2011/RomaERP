@@ -1,0 +1,89 @@
+name: Server Health Check
+
+# Every 6 hours: is the site up, is the server running out of disk or memory, are services and nightly backups
+# alive? Any problem fails the run and emails support@romagroup.app, so it is caught before customers notice.
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  health:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Public site and API answer
+        run: |
+          curl -fsS -m 20 -o /dev/null https://romagroup.app/ && echo "site: ok"
+          curl -fsS -m 20 -o /dev/null https://romagroup.app/api/health && echo "api: ok"
+
+      - name: Server resources, services and backups
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            PROBLEMS=""
+            add() { PROBLEMS="$PROBLEMS\n - $1"; }
+
+            DISK=$(df --output=pcent / | tail -1 | tr -dc '0-9')
+            echo "disk used: ${DISK}%"
+            [ "$DISK" -lt 80 ] || add "disk is ${DISK}% full"
+
+            MEM_TOTAL=$(awk '/MemTotal/ {print $2}' /proc/meminfo)
+            MEM_AVAIL=$(awk '/MemAvailable/ {print $2}' /proc/meminfo)
+            MEM_FREE_PCT=$(( MEM_AVAIL * 100 / MEM_TOTAL ))
+            echo "memory available: ${MEM_FREE_PCT}%"
+            [ "$MEM_FREE_PCT" -ge 10 ] || add "only ${MEM_FREE_PCT}% of memory is available"
+
+            for SVC in romaerp-api nginx; do
+              STATE=$(systemctl is-active "$SVC" || true)
+              echo "$SVC: $STATE"
+              [ "$STATE" = "active" ] || add "service $SVC is $STATE"
+            done
+
+            SQL_STATE=$(docker inspect -f '{{.State.Running}}' sqlserver 2>/dev/null || echo missing)
+            echo "sqlserver container running: $SQL_STATE"
+            [ "$SQL_STATE" = "true" ] || add "SQL Server container is not running"
+
+            NEWEST=$(ls -1t /root/db-backups/*.bak.gz /root/db-backups/*.bak 2>/dev/null | head -1 || true)
+            if [ -z "$NEWEST" ]; then
+              add "no database backup found on the server"
+            else
+              AGE_H=$(( ( $(date +%s) - $(stat -c %Y "$NEWEST") ) / 3600 ))
+              echo "newest backup: $(basename "$NEWEST") (${AGE_H}h old)"
+              [ "$AGE_H" -le 36 ] || add "newest backup is ${AGE_H} hours old (nightly backup is not running)"
+            fi
+
+            if [ -n "$PROBLEMS" ]; then
+              echo "HEALTH_PROBLEMS:"
+              printf "$PROBLEMS\n"
+              exit 1
+            fi
+            echo "HEALTH_OK"
+
+  alert:
+    needs: health
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Email the owner
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ALERT_TITLE: "Roma server needs attention"
+        run: |
+          if [ -z "$RESEND_API_KEY" ]; then echo "No RESEND_API_KEY secret — cannot email."; exit 0; fi
+          python3 - <<'PY' > /tmp/alert.json
+          import json, os
+          print(json.dumps({
+            "from": "Roma Alerts <no-reply@romagroup.app>",
+            "to": ["support@romagroup.app"],
+            "subject": os.environ["ALERT_TITLE"],
+            "text": os.environ["ALERT_TITLE"] + "\n\nThe automatic health check found a problem (site down, disk or memory nearly full, a service stopped, or backups stale).\nDetails: " + os.environ["RUN_URL"] + "\n",
+          }))
+          PY
+          curl -s -o /dev/null -w "alert email: HTTP %{http_code}\n" -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" -H "Content-Type: application/json" -d @/tmp/alert.json

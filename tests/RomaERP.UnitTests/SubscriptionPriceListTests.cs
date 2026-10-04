@@ -80,9 +80,9 @@ public class SubscriptionPriceListTests
         => Assert.Equal((decimal)expected, SubscriptionPriceList.Find(plan, currency)!.Base);
 
     [Theory]
-    [InlineData("SAR", 0)]
+    [InlineData("SAR", 2)]
     [InlineData("EGP", 0)]
-    [InlineData("GBP", 0)]
+    [InlineData("GBP", 2)]
     [InlineData("AED", 0)]
     [InlineData("QAR", 0)]
     [InlineData("KWD", 1)]
@@ -90,6 +90,24 @@ public class SubscriptionPriceListTests
     [InlineData("OMR", 1)]
     public void InvoiceDecimalsPerCurrency(string currency, int decimals)
         => Assert.Equal(decimals, SubscriptionPriceList.DecimalsFor(currency));
+
+    /// <summary>The standalone HR plan: SAR 99 (matches marketing/roma-hr.html) with a 49.99 launch price, no branch
+    /// overage, and a price in every billing currency.</summary>
+    [Fact]
+    public void PeoplePlanPricesMatchTheHrPage()
+    {
+        var sar = SubscriptionPriceList.Find(SubscriptionPriceList.PeoplePlanCode, "SAR")!;
+        Assert.Equal(99m, sar.Base);
+        Assert.Equal(49.99m, sar.FoundingBase);
+        Assert.Equal(0m, sar.ExtraBranch);
+        foreach (var currency in new[] { "SAR", "EGP", "GBP", "AED", "QAR", "KWD", "BHD", "OMR" })
+        {
+            var p = SubscriptionPriceList.Find(SubscriptionPriceList.PeoplePlanCode, currency);
+            Assert.NotNull(p);
+            Assert.True(p!.FoundingBase > 0 && p.FoundingBase < p.Base, currency);
+        }
+        Assert.Equal(97m, SubscriptionPriceList.Find(SubscriptionPriceList.PeoplePlanCode, "AED")!.Base);
+    }
 
     [Fact]
     public void UnknownPlanHasNoPrice() => Assert.Null(SubscriptionPriceList.Find("nope", "SAR"));

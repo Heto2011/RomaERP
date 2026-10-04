@@ -16,6 +16,8 @@ public class EmployeeContractDto
     /// the stored Status stays whatever it was last set to until someone acts on it (renew or terminate),
     /// so this is how the UI flags an overdue contract without a background job re-stamping rows.</summary>
     public int? DaysUntilExpiry { get; set; }
+    /// <summary>True when a signed PDF of the contract has been uploaded (the file lives on disk, not in the DB).</summary>
+    public bool HasFile { get; set; }
 }
 
 public class CreateEmployeeContractDto

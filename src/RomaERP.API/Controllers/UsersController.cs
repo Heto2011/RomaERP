@@ -13,13 +13,30 @@ namespace RomaERP.API.Controllers;
 
 /// <summary>Manages the users of the current tenant only — UserManager/RoleManager here are bound to this
 /// request's tenant database (see DependencyInjection.AddInfrastructure), so this can never touch another
-/// company's users. Admin-only, since this is account/access management.</summary>
+/// company's users. Admin (the owner/CEO) can do everything; an HR Manager can add people and manage ordinary
+/// accounts (HR/Employee) but can never touch an Admin, hand out the Admin/Accountant roles or module grants,
+/// or delete accounts — otherwise "can create users" would be a way to become Admin.</summary>
 [ApiController]
-[Authorize(Roles = "Admin")]
+[Authorize(Roles = "Admin,HR")]
 [Route("api/users")]
 public class UsersController : ControllerBase
 {
     private static readonly string[] ValidRoles = { "Admin", "Accountant", "HR", "Employee" };
+
+    private static readonly string[] HrManageableRoles = { "HR", "Employee" };
+
+    private bool IsAdmin => User.IsInRole("Admin");
+
+    /// <summary>True when the caller may change this account: Admin always; an HR Manager only for accounts that
+    /// hold nothing beyond the HR/Employee roles (so never an Admin or Accountant).</summary>
+    private async Task<bool> CanManageAsync(ApplicationUser target)
+    {
+        if (IsAdmin) return true;
+        var roles = await _userManager.GetRolesAsync(target);
+        return roles.All(r => HrManageableRoles.Contains(r));
+    }
+
+    private ActionResult AdminOnlyResult() => StatusCode(403, new { error = "الإجراء ده للمدير (Admin) بس." });
 
     private static readonly System.Text.RegularExpressions.Regex PinPattern = new("^[0-9]{4,6}$", System.Text.RegularExpressions.RegexOptions.Compiled);
 
@@ -47,6 +64,8 @@ public class UsersController : ControllerBase
         foreach (var user in users)
         {
             var roles = await _userManager.GetRolesAsync(user);
+            // An HR Manager never sees the Admin (or any other privileged) accounts — those are the owner's alone.
+            if (!IsAdmin && roles.Any(r => !HrManageableRoles.Contains(r))) continue;
             var modules = await GetModulesAsync(user);
             var linkedEmployee = employeeByUserId.GetValueOrDefault(user.Id);
             result.Add(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
@@ -60,6 +79,7 @@ public class UsersController : ControllerBase
     {
         var user = await _userManager.FindByIdAsync(id.ToString())
             ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+        if (!await CanManageAsync(user)) return AdminOnlyResult();
 
         if (request.EmployeeId is { } employeeId)
             await _employeeService.LinkUserAsync(employeeId, id, ct);
@@ -84,6 +104,9 @@ public class UsersController : ControllerBase
         var unknownRole = request.Roles.FirstOrDefault(r => !ValidRoles.Contains(r));
         if (unknownRole is not null)
             return BadRequest(new { error = $"دور غير معروف: {unknownRole}" });
+
+        if (!IsAdmin && request.Roles.Any(r => !HrManageableRoles.Contains(r)))
+            return StatusCode(403, new { error = "تقدر تضيف مستخدمين بدور مدير موارد بشرية أو موظف بس." });
 
         if (await _userManager.FindByEmailAsync(request.Email) is not null)
             return BadRequest(new { error = "البريد الإلكتروني ده مستخدم قبل كده." });
@@ -119,6 +142,9 @@ public class UsersController : ControllerBase
         var user = await _userManager.FindByIdAsync(id.ToString())
             ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
 
+        if (!IsAdmin && (request.Roles.Any(r => !HrManageableRoles.Contains(r)) || !await CanManageAsync(user)))
+            return StatusCode(403, new { error = "تقدر تغيّر أدوار مدير الموارد البشرية والموظفين بس." });
+
         if (id.ToString() == _currentUser.UserId && !request.Roles.Contains("Admin"))
             return BadRequest(new { error = "متقدرش تشيل دور Admin عن نفسك." });
 
@@ -134,6 +160,8 @@ public class UsersController : ControllerBase
     [HttpPut("{id:guid}/modules")]
     public async Task<ActionResult<UserDto>> UpdateModules(Guid id, UpdateUserModulesRequest request, CancellationToken ct)
     {
+        if (!IsAdmin) return AdminOnlyResult();
+
         var unknownModule = request.Modules.FirstOrDefault(m => !ModulePermissions.All.Contains(m));
         if (unknownModule is not null)
             return BadRequest(new { error = $"وحدة صلاحيات غير معروفة: {unknownModule}" });
@@ -164,6 +192,7 @@ public class UsersController : ControllerBase
 
         var user = await _userManager.FindByIdAsync(id.ToString())
             ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+        if (!await CanManageAsync(user)) return AdminOnlyResult();
 
         user.IsActive = false;
         await _userManager.UpdateAsync(user);
@@ -179,6 +208,7 @@ public class UsersController : ControllerBase
     {
         var user = await _userManager.FindByIdAsync(id.ToString())
             ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+        if (!await CanManageAsync(user)) return AdminOnlyResult();
 
         user.IsActive = true;
         await _userManager.UpdateAsync(user);
@@ -192,6 +222,8 @@ public class UsersController : ControllerBase
     [HttpPut("{id:guid}/pos-pin")]
     public async Task<ActionResult<UserDto>> SetPosPin(Guid id, SetPosPinRequest request, CancellationToken ct)
     {
+        if (!IsAdmin) return AdminOnlyResult();
+
         var user = await _userManager.FindByIdAsync(id.ToString())
             ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
 
@@ -224,6 +256,8 @@ public class UsersController : ControllerBase
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {
+        if (!IsAdmin) return StatusCode(403, new { error = "الإجراء ده للمدير (Admin) بس." });
+
         if (id.ToString() == _currentUser.UserId)
             return BadRequest(new { error = "متقدرش تمسح حسابك أنت." });
 
@@ -253,9 +287,32 @@ public class UsersController : ControllerBase
     {
         var user = await _userManager.FindByIdAsync(id.ToString())
             ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+        if (!await CanManageAsync(user)) return StatusCode(403, new { error = "الإجراء ده للمدير (Admin) بس." });
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
         var result = await _userManager.ResetPasswordAsync(user, token, request.NewPassword);
+        if (!result.Succeeded)
+            return BadRequest(new { error = string.Join("، ", result.Errors.Select(e => e.Description)) });
+
+        return NoContent();
+    }
+
+    /// <summary>Changes the display name of an account (same who-may-touch-whom rule as the other actions).</summary>
+    [HttpPut("{id:guid}/name")]
+    public async Task<IActionResult> Rename(Guid id, RenameUserRequest request)
+    {
+        var name = request.FullName?.Trim();
+        if (string.IsNullOrEmpty(name))
+            return BadRequest(new { error = "الاسم مطلوب." });
+        if (name.Length > 200)
+            return BadRequest(new { error = "الاسم طويل جدًا." });
+
+        var user = await _userManager.FindByIdAsync(id.ToString())
+            ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+        if (!await CanManageAsync(user)) return StatusCode(403, new { error = "الإجراء ده للمدير (Admin) بس." });
+
+        user.FullName = name;
+        var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
             return BadRequest(new { error = string.Join("، ", result.Errors.Select(e => e.Description)) });
 

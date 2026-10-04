@@ -1,16 +1,30 @@
 import { useEffect, useState } from "react";
 import { EmployeesApi, UsersApi } from "../api/services";
-import { AppRoles, ModulePermissions, type AppUser, type Employee } from "../api/types";
+import { AppRoles, ModulePermissions, ProductScope, type AppUser, type Employee } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 import { bilingualName } from "../i18n/bilingual";
 import PasswordInput from "../components/PasswordInput";
+import { useAuth } from "../context/AuthContext";
 
 export default function Users() {
   const { t, lang } = useLanguage();
+  const { user: currentUser } = useAuth();
+  // A tenant on ROMA People only has no accounting/sales/POS — don't offer those roles, module grants or the POS PIN.
+  const peopleOnly = currentUser?.productScope === ProductScope.PeopleOnly;
+  // The company Admin can do everything. An HR Manager can add people and manage ordinary (HR/Employee) accounts only —
+  // the server enforces the same limits, this just hides what they can't use.
+  const isAdmin = currentUser?.roles.includes("Admin") ?? false;
+  const hrOnlyRoles = ["HR", "Employee"];
+  const roleOptions = !isAdmin ? AppRoles.filter((r) => hrOnlyRoles.includes(r)) : peopleOnly ? AppRoles.filter((r) => r !== "Accountant") : AppRoles;
+  const canManage = (u: AppUser) => isAdmin || u.roles.every((r) => hrOnlyRoles.includes(r));
+  const hidePin = peopleOnly || !isAdmin;
+  const moduleOptions = peopleOnly ? ModulePermissions.filter((m) => m === "HR") : ModulePermissions;
   const [users, setUsers] = useState<AppUser[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [nameEditingId, setNameEditingId] = useState<string | null>(null);
+  const [nameValue, setNameValue] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const [email, setEmail] = useState("");
@@ -147,6 +161,17 @@ export default function Users() {
     }
   }
 
+  async function saveName(id: string) {
+    setError(null);
+    try {
+      await UsersApi.rename(id, nameValue);
+      setNameEditingId(null);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function saveNewPassword(id: string) {
     setError(null);
     setPasswordResetSuccessId(null);
@@ -191,7 +216,7 @@ export default function Users() {
             <div className="form-field" style={{ marginTop: 14 }}>
               <label>{t.users.roles}</label>
               <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
-                {AppRoles.map((role) => (
+                {roleOptions.map((role) => (
                   <label key={role} style={{ display: "flex", alignItems: "center", gap: 6, fontWeight: "normal" }}>
                     <input type="checkbox" checked={roles.includes(role)} onChange={() => setRoles((prev) => toggleRole(prev, role))} />
                     {t.roles[role]}
@@ -213,9 +238,9 @@ export default function Users() {
               <th>{t.users.fullName}</th>
               <th>{t.users.email}</th>
               <th>{t.users.roles}</th>
-              <th>{t.users.modules}</th>
+              {isAdmin && <th>{t.users.modules}</th>}
               <th>{t.users.linkedEmployee}</th>
-              <th>{t.users.posPin}</th>
+              {!hidePin && <th>{t.users.posPin}</th>}
               <th>{t.users.resetPassword}</th>
               <th>{t.common.status}</th>
               <th>{t.common.actions}</th>
@@ -231,12 +256,33 @@ export default function Users() {
             )}
             {users.map((u) => (
               <tr key={u.id}>
-                <td>{u.fullName}</td>
+                <td>
+                  {nameEditingId === u.id ? (
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <input style={{ width: 140 }} value={nameValue} onChange={(e) => setNameValue(e.target.value)} autoFocus />
+                      <button className="btn btn-sm" onClick={() => saveName(u.id)} disabled={!nameValue.trim()}>{t.common.save}</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => setNameEditingId(null)}>{t.common.cancel}</button>
+                    </div>
+                  ) : (
+                    <span>
+                      {u.fullName}
+                      {canManage(u) && (
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          style={{ marginInlineStart: 8 }}
+                          onClick={() => { setNameEditingId(u.id); setNameValue(u.fullName); }}
+                        >
+                          {t.users.editName}
+                        </button>
+                      )}
+                    </span>
+                  )}
+                </td>
                 <td>{u.email}</td>
                 <td>
                   {editingId === u.id ? (
                     <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      {AppRoles.map((role) => (
+                      {roleOptions.map((role) => (
                         <label key={role} style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: "normal" }}>
                           <input type="checkbox" checked={editingRoles.includes(role)} onChange={() => setEditingRoles((prev) => toggleRole(prev, role))} />
                           {t.roles[role]}
@@ -247,10 +293,10 @@ export default function Users() {
                     u.roles.map((r) => t.roles[r as keyof typeof t.roles] ?? r).join("، ")
                   )}
                 </td>
-                <td>
+                {isAdmin && <td>
                   {editingModulesId === u.id ? (
                     <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-                      {ModulePermissions.map((module) => (
+                      {moduleOptions.map((module) => (
                         <label key={module} style={{ display: "flex", alignItems: "center", gap: 4, fontWeight: "normal" }}>
                           <input
                             type="checkbox"
@@ -266,9 +312,10 @@ export default function Users() {
                   ) : (
                     <span className="text-muted">—</span>
                   )}
-                </td>
+                </td>}
                 <td>
                   <select
+                    disabled={!canManage(u)}
                     value={u.employeeId ?? ""}
                     onChange={(e) => handleLinkEmployee(u.id, e.target.value)}
                   >
@@ -282,7 +329,7 @@ export default function Users() {
                       ))}
                   </select>
                 </td>
-                <td>
+                {!hidePin && <td>
                   {pinEditingId === u.id ? (
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                       <input
@@ -309,7 +356,7 @@ export default function Users() {
                       )}
                     </div>
                   )}
-                </td>
+                </td>}
                 <td>
                   {passwordEditingId === u.id ? (
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
@@ -324,7 +371,7 @@ export default function Users() {
                       <button className="btn btn-secondary btn-sm" onClick={() => { setPasswordEditingId(null); setNewPasswordValue(""); }}>{t.common.cancel}</button>
                     </div>
                   ) : (
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                    !canManage(u) ? <span className="text-muted">—</span> : <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                       <button className="btn btn-secondary btn-sm" onClick={() => { setPasswordEditingId(u.id); setNewPasswordValue(""); setPasswordResetSuccessId(null); }}>
                         {t.users.resetPassword}
                       </button>
@@ -349,15 +396,15 @@ export default function Users() {
                       <button className="btn btn-secondary btn-sm" onClick={() => setEditingModulesId(null)}>{t.common.cancel}</button>
                     </>
                   ) : (
-                    <>
+                    !canManage(u) ? <span className="text-muted">—</span> : <>
                       <button className="btn btn-secondary btn-sm" onClick={() => startEditRoles(u)}>{t.users.editRoles}</button>
-                      <button className="btn btn-secondary btn-sm" onClick={() => startEditModules(u)}>{t.users.editModules}</button>
+                      {isAdmin && <button className="btn btn-secondary btn-sm" onClick={() => startEditModules(u)}>{t.users.editModules}</button>}
                       <button className="btn btn-secondary btn-sm" onClick={() => toggleActive(u)}>
                         {u.isActive ? t.users.deactivate : t.users.activate}
                       </button>
-                      <button className="btn btn-danger btn-sm" onClick={() => handleDeleteUser(u.id)}>
+                      {isAdmin && <button className="btn btn-danger btn-sm" onClick={() => handleDeleteUser(u.id)}>
                         {t.users.deleteUser}
-                      </button>
+                      </button>}
                     </>
                   )}
                 </td>
