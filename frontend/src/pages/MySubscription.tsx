@@ -100,6 +100,27 @@ export default function MySubscriptionPage() {
     }
   }
 
+  // "4 of 3 included — 1 extra × 15 SAR = 15 SAR / month": where the customer stands against the plan's limit.
+  function usageCell(current: number, included: number | null, extraPrice: number, currency: string) {
+    if (included === null) return <>{current} <span className="text-muted">({t.mySubscription.unlimited})</span></>;
+    const extra = Math.max(0, current - included);
+    return (
+      <>
+        {current} <span className="text-muted">/ {included} {t.mySubscription.included}</span>
+        {extra > 0 && extraPrice > 0 && (
+          <div className="text-danger" style={{ fontSize: 12 }}>
+            {extra} {t.mySubscription.extra} × {extraPrice.toLocaleString()} = {(extra * extraPrice).toLocaleString()} {currency} {t.mySubscription.perMonth}
+          </div>
+        )}
+        {extra === 0 && extraPrice > 0 && (
+          <div className="text-muted" style={{ fontSize: 12 }}>
+            {t.mySubscription.eachExtra}: {extraPrice.toLocaleString()} {currency} {t.mySubscription.perMonth}
+          </div>
+        )}
+      </>
+    );
+  }
+
   function copy(field: string, value: string) {
     navigator.clipboard?.writeText(value).then(() => {
       setCopiedField(field);
@@ -147,12 +168,12 @@ export default function MySubscriptionPage() {
               {!peopleOnly && (
                 <tr>
                   <td>{t.mySubscription.branchesUsage}</td>
-                  <td>{subscription.currentBranches}</td>
+                  <td>{usageCell(subscription.currentBranches, subscription.includedBranches, subscription.extraBranchPrice, subscription.currency)}</td>
                 </tr>
               )}
               <tr>
                 <td>{peopleOnly ? t.mySubscription.employeesUsage : t.mySubscription.usersUsage}</td>
-                <td>{subscription.currentUsers}</td>
+                <td>{usageCell(subscription.currentUsers, subscription.includedUsers, subscription.extraUserPrice, subscription.currency)}</td>
               </tr>
               <tr>
                 <td>{t.mySubscription.outstanding}</td>

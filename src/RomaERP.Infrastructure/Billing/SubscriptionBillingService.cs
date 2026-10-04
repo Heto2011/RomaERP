@@ -490,10 +490,21 @@ public class SubscriptionBillingService : ISubscriptionBillingService
     private static SubscriptionPlanDto MapPlan(SubscriptionPlan p) =>
         new(p.Id, p.Code, p.NameAr, p.NameEn, p.MonthlyBasePrice, p.IncludedBranches, p.IncludedUsers, p.IsCustomPricing, p.IsActive);
 
-    private static TenantSubscriptionDto MapTenantSubscription(Tenant tenant, Subscription s, SubscriptionPlan plan, int branches, int users, decimal outstanding, int overdueDays) =>
-        new(tenant.Id, tenant.CompanyCode, tenant.CompanyNameAr, tenant.CompanyNameEn, tenant.IsActive,
+    private static TenantSubscriptionDto MapTenantSubscription(Tenant tenant, Subscription s, SubscriptionPlan plan, int branches, int users, decimal outstanding, int overdueDays)
+    {
+        var currency = SubscriptionPriceList.CurrencyFor(tenant.Country);
+        var prices = SubscriptionPriceList.Find(plan.Code, currency);
+        var decimals = SubscriptionPriceList.DecimalsFor(currency);
+        // Custom-priced (enterprise) plans are quoted per customer, so no overage rates are advertised for them.
+        var showOverage = prices is not null && !plan.IsCustomPricing;
+        return new(tenant.Id, tenant.CompanyCode, tenant.CompanyNameAr, tenant.CompanyNameEn, tenant.IsActive,
             s.Id, plan.Id, plan.Code, plan.NameAr, s.Status, s.CurrentPeriodStart, s.CurrentPeriodEnd,
-            s.BillingAccountId, s.PaymentProvider, branches, users, outstanding, SubscriptionPriceList.CurrencyFor(tenant.Country), overdueDays, s.BillingPeriod);
+            s.BillingAccountId, s.PaymentProvider, branches, users, outstanding, currency, overdueDays, s.BillingPeriod,
+            plan.IncludedBranches == int.MaxValue ? null : plan.IncludedBranches,
+            plan.IncludedUsers == int.MaxValue ? null : plan.IncludedUsers,
+            showOverage ? Math.Round(prices!.ExtraBranch, decimals, MidpointRounding.AwayFromZero) : 0,
+            showOverage ? Math.Round(prices!.ExtraUser, decimals, MidpointRounding.AwayFromZero) : 0);
+    }
 
     private static SubscriptionInvoiceDto MapInvoice(SubscriptionInvoice i, string companyNameAr) =>
         new(i.Id, i.TenantId, companyNameAr, i.PlanCode, i.PlanNameAr, i.PeriodStart, i.PeriodEnd,
