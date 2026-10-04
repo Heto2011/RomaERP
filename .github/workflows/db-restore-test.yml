@@ -1,0 +1,105 @@
+name: Weekly Backup Restore Test
+
+# A backup is only worth something if it can be restored. Every week this restores the newest backup of the
+# central database (plus up to two tenant databases) into a throw-away database on the production SQL Server,
+# checks it is intact, and drops it again. The live databases are never touched: the scratch database has its
+# own name and its own files.
+
+on:
+  schedule:
+    - cron: '0 5 * * 0'
+  workflow_dispatch:
+
+jobs:
+  restore-test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Restore the latest backups into scratch databases and check them
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            set -e
+            BACKUP_DIR_HOST=/root/db-backups
+            SCRATCH=restoretest_scratch
+
+            SQLCMD_BIN=$(docker exec sqlserver bash -c 'if [ -x /opt/mssql-tools18/bin/sqlcmd ]; then echo /opt/mssql-tools18/bin/sqlcmd; elif [ -x /opt/mssql-tools/bin/sqlcmd ]; then echo /opt/mssql-tools/bin/sqlcmd; fi')
+            [ -n "$SQLCMD_BIN" ] || { echo "sqlcmd not found inside the sqlserver container"; exit 1; }
+            SA_PASS=$(docker exec sqlserver printenv MSSQL_SA_PASSWORD)
+            sq() { docker exec sqlserver "$SQLCMD_BIN" -S localhost -U sa -P "$SA_PASS" -C -b "$@"; }
+
+            cleanup() {
+              sq -Q "IF DB_ID(N'$SCRATCH') IS NOT NULL BEGIN ALTER DATABASE [$SCRATCH] SET SINGLE_USER WITH ROLLBACK IMMEDIATE; DROP DATABASE [$SCRATCH]; END" >/dev/null 2>&1 || true
+              docker exec sqlserver bash -c "rm -f /var/opt/mssql/backup/restoretest.bak /var/opt/mssql/data/${SCRATCH}_*" >/dev/null 2>&1 || true
+              rm -f /tmp/restoretest.bak
+            }
+            trap cleanup EXIT
+
+            DBS=$(sq -h -1 -W -Q "SET NOCOUNT ON; SELECT TOP 3 name FROM sys.databases WHERE database_id > 4 AND state = 0 AND name NOT LIKE 'restoretest%' ORDER BY CASE WHEN name = 'RomaERP_Central' THEN 0 ELSE 1 END, name" | tr -d '\r')
+            [ -n "$DBS" ] || { echo "no databases found to test"; exit 1; }
+
+            TESTED=0
+            for DB in $DBS; do
+              FILE=$(ls -1t "$BACKUP_DIR_HOST/${DB}_"*.bak.gz 2>/dev/null | head -1 || true)
+              if [ -z "$FILE" ]; then echo "RESTORE_TEST_FAILED: no backup file found for $DB"; exit 1; fi
+              AGE_H=$(( ( $(date +%s) - $(stat -c %Y "$FILE") ) / 3600 ))
+              echo "Testing $DB from $(basename "$FILE") (${AGE_H}h old)"
+              if [ "$AGE_H" -gt 48 ]; then echo "RESTORE_TEST_FAILED: newest backup of $DB is ${AGE_H}h old — nightly backups are not running"; exit 1; fi
+
+              cleanup
+              gunzip -c "$FILE" > /tmp/restoretest.bak
+              docker exec sqlserver mkdir -p /var/opt/mssql/backup
+              docker cp /tmp/restoretest.bak sqlserver:/var/opt/mssql/backup/restoretest.bak
+              docker exec -u 0 sqlserver chown mssql:root /var/opt/mssql/backup/restoretest.bak
+              rm -f /tmp/restoretest.bak
+
+              # Work out where each file of the backup should go, so the scratch copy never overwrites the live files.
+              MOVES=""
+              N=0
+              while IFS='|' read -r LOGICAL _ TYPE _; do
+                [ -n "$LOGICAL" ] || continue
+                N=$((N+1))
+                if [ "$TYPE" = "L" ]; then EXT=ldf; else EXT=mdf; fi
+                MOVES="$MOVES, MOVE N'$LOGICAL' TO N'/var/opt/mssql/data/${SCRATCH}_${N}.${EXT}'"
+              done < <(sq -h -1 -W -s "|" -Q "SET NOCOUNT ON; RESTORE FILELISTONLY FROM DISK = N'/var/opt/mssql/backup/restoretest.bak'" | tr -d '\r' | grep '|')
+              [ "$N" -gt 0 ] || { echo "RESTORE_TEST_FAILED: could not read the file list of the $DB backup"; exit 1; }
+
+              if ! OUT=$(sq -Q "RESTORE DATABASE [$SCRATCH] FROM DISK = N'/var/opt/mssql/backup/restoretest.bak' WITH CHECKSUM, REPLACE $MOVES" 2>&1); then
+                echo "RESTORE_TEST_FAILED: $DB did not restore:"; echo "$OUT" | tail -15; exit 1
+              fi
+              TABLES=$(sq -h -1 -W -Q "SET NOCOUNT ON; SELECT COUNT(*) FROM [$SCRATCH].sys.tables" | tr -d '\r ')
+              if [ "${TABLES:-0}" -lt 1 ]; then echo "RESTORE_TEST_FAILED: $DB restored but has no tables"; exit 1; fi
+              if ! CHK=$(sq -Q "DBCC CHECKDB([$SCRATCH]) WITH NO_INFOMSGS" 2>&1); then
+                echo "RESTORE_TEST_FAILED: integrity check of restored $DB found problems:"; echo "$CHK" | tail -15; exit 1
+              fi
+              echo "  OK: $DB restored, $TABLES tables, integrity check clean"
+              TESTED=$((TESTED+1))
+            done
+
+            echo "RESTORE_TEST_OK: $TESTED database backup(s) restored and verified."
+
+  alert:
+    needs: restore-test
+    if: failure()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Email the owner that the restore test failed
+        env:
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ALERT_TITLE: "Roma backup restore test FAILED"
+        run: |
+          if [ -z "$RESEND_API_KEY" ]; then echo "No RESEND_API_KEY secret — cannot email."; exit 0; fi
+          python3 - <<'PY' > /tmp/alert.json
+          import json, os
+          print(json.dumps({
+            "from": "Roma Alerts <no-reply@romagroup.app>",
+            "to": ["support@romagroup.app"],
+            "subject": os.environ["ALERT_TITLE"],
+            "text": os.environ["ALERT_TITLE"] + "\n\nA backup could not be restored in the weekly test, so it may not be usable in an emergency.\nDetails: " + os.environ["RUN_URL"] + "\n",
+          }))
+          PY
+          curl -s -o /dev/null -w "alert email: HTTP %{http_code}\n" -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer $RESEND_API_KEY" -H "Content-Type: application/json" -d @/tmp/alert.json
