@@ -25,12 +25,12 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
 
   const selfServiceLinks = [
     { to: "/people", label: t.nav.dashboard, icon: <IconGrid />, end: true },
-    { to: "/people/calendar", label: t.hr.hrCalendarTitle, icon: <IconCalendar /> },
     { to: "/people/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
     { to: "/people/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },
   ];
 
   const managerLinks = [
+    { to: "/people/calendar", label: t.hr.hrCalendarTitle, icon: <IconCalendar /> },
     { to: "/people/employees", label: t.nav.employees, icon: <IconUsers /> },
     ...(isHrManager ? [{ to: "/people/users", label: t.nav.users, icon: <IconShield /> }] : []),
     { to: "/people/departments", label: t.nav.departments, icon: <IconBuilding /> },

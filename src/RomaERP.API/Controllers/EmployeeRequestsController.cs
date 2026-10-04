@@ -46,7 +46,9 @@ public class EmployeeRequestsController : ControllerBase
         return Ok(await _requestService.GetLeaveBalanceAsync(employeeId, ct));
     }
 
+    // Shows every colleague's leave, so it is an HR/owner view — an ordinary employee only sees their own requests.
     [HttpGet("calendar")]
+    [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<List<CalendarEntryDto>>> GetCalendar([FromQuery] DateTime from, [FromQuery] DateTime to, CancellationToken ct)
         => Ok(await _requestService.GetCalendarAsync(from, to, ct));
 
