@@ -90,6 +90,11 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
       <main className="topnav-content">{children}</main>
       <footer style={{ textAlign: "center", padding: "12px 0", fontSize: 12 }} className="text-muted">
         {t.poweredByRomaErp}
+        {localStorage.getItem("companyCode") && (
+          <span dir="ltr" style={{ display: "block", marginTop: 4 }}>
+            {t.login.companyCode}: {localStorage.getItem("companyCode")}
+          </span>
+        )}
       </footer>
     </div>
   );

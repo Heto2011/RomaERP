@@ -12,7 +12,7 @@ const PORTAL_CONFIG: Record<"people" | "restaurant" | "inventory", PortalPwaConf
     manifestHref: "/manifest-people.json",
     themeColor: "#c2703d",
     appleTouchIcon: "/icons/people-apple-touch.png",
-    appTitle: "ROMA People",
+    appTitle: "Roma HR",
   },
   restaurant: {
     manifestHref: "/manifest-restaurant.json",
@@ -66,7 +66,7 @@ function swapMeta(name: string, content: string): () => void {
 }
 
 // Swaps in a portal-specific PWA manifest/icon/theme-color while its layout is mounted, so
-// "Add to Home Screen" installs ROMA People / ROMA Restaurant as their own branded app rather
+// "Add to Home Screen" installs Roma HR / ROMA Restaurant as their own branded app rather
 // than the main RomaERP one. Restores whatever the main app's own tags had on unmount, rather
 // than deleting them outright.
 export function usePortalManifest(portal: "people" | "restaurant" | "inventory") {

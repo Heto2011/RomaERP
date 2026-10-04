@@ -1,7 +1,7 @@
 {
-  "name": "ROMA People",
-  "short_name": "ROMA People",
-  "description": "Human resources and payroll app powered by RomaERP",
+  "name": "Roma HR",
+  "short_name": "Roma HR",
+  "description": "Attendance, leave and payroll — by Roma Group",
   "start_url": "/people",
   "scope": "/",
   "display": "standalone",

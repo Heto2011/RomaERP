@@ -43,7 +43,7 @@ export default function PeopleLogin() {
           </button>
         </div>
         <h1>{t.peopleAppName}</h1>
-        <p>{t.login.subtitle}</p>
+        <p>{t.peopleSubtitle}</p>
         {error && <div className="alert-error">{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           <div className="form-field">
