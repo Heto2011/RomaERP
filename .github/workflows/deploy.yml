@@ -24,6 +24,8 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           username: root
           key: ${{ secrets.DEPLOY_SSH_KEY }}
+          # The default is 10 minutes; a slow frontend build on the small server timed out a deploy once.
+          command_timeout: 25m
           script: |
             set -e
             cd /root/RomaERP
