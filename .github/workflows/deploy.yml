@@ -258,6 +258,7 @@ jobs:
             cp /root/RomaERP/marketing/pricing.html /var/www/romaerp/pricing.html
             cp /root/RomaERP/marketing/terms.html /var/www/romaerp/terms.html
             cp /root/RomaERP/marketing/favicon.svg /var/www/romaerp/favicon.svg
+            cp /root/RomaERP/marketing/roma-logo.png /var/www/romaerp/roma-logo.png
             cp /root/RomaERP/marketing/og-image.png /var/www/romaerp/og-image.png
             cp /root/RomaERP/marketing/roma-group.html /var/www/romaerp/roma-group.html
             cp /root/RomaERP/marketing/roma-hr.html /var/www/romaerp/roma-hr.html
