@@ -9,11 +9,26 @@ internal static class AiUsagePlanLimits
 {
     private static readonly Dictionary<string, (int BusinessQa, int ExpenseCapture)> ByPlanCode = new()
     {
+        // Roma HR has no AI-heavy screens; the small daily numbers are only a burst guard under the monthly cap below.
+        ["people"] = (10, 20),
         ["essential"] = (20, 80),
         ["business"] = (50, 200),
         ["professional"] = (100, 400),
         ["enterprise"] = (300, 1000),
     };
+
+    /// <summary>Calls per calendar month (both AI features together), sized so a customer who uses all of it costs us about
+    /// 5% of what they pay — at roughly one US cent per call. Professional and Enterprise are deliberately absent:
+    /// they are sized by agreement with the first real customer of that size, so only the daily limits apply to them.</summary>
+    private static readonly Dictionary<string, int> MonthlyCalls = new()
+    {
+        ["people"] = 100,
+        ["essential"] = 150,
+        ["business"] = 350,
+    };
+
+    public static int? GetMonthly(string? planCode)
+        => planCode is not null && MonthlyCalls.TryGetValue(planCode, out var calls) ? calls : null;
 
     private static readonly (int BusinessQa, int ExpenseCapture) Fallback = ByPlanCode["essential"];
 

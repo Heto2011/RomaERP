@@ -21,6 +21,12 @@ public static class SubscriptionPriceList
     public const int AnnualMonthsCharged = 10;
     public const int AnnualMonthsCovered = 12;
 
+    /// <summary>Professional and Enterprise sit outside the automatic discounts (annual "pay 10 get 12" and the Egypt
+    /// founding price): they are priced by agreement when a real customer of that size appears.</summary>
+    private static readonly HashSet<string> NoAutomaticDiscountPlans = new(StringComparer.OrdinalIgnoreCase) { "professional", "enterprise" };
+
+    public static bool SupportsAnnual(string planCode) => !NoAutomaticDiscountPlans.Contains(planCode);
+
     public const string Sar = "SAR";
     public const string Egp = "EGP";
     public const string Gbp = "GBP";
@@ -39,10 +45,10 @@ public static class SubscriptionPriceList
         [("professional", Sar)] = new(Sar, 649, 0, 15, 20),
         [("enterprise", Sar)] = new(Sar, 2499, 0, 15, 20),
 
-        // Egypt: Base is the regular list price, FoundingBase the 50%-off launch price.
+        // Egypt: Base is the regular list price, FoundingBase the 50%-off launch price (Essential and Business only).
         [("essential", Egp)] = new(Egp, 3000, 1500, 200, 400),
         [("business", Egp)] = new(Egp, 7000, 3500, 200, 400),
-        [("professional", Egp)] = new(Egp, 12000, 6000, 200, 400),
+        [("professional", Egp)] = new(Egp, 12000, 0, 200, 400), // outside the founding offer, see NoAutomaticDiscountPlans
         [("enterprise", Egp)] = new(Egp, 35000, 0, 200, 400),
 
         [("essential", Gbp)] = new(Gbp, 49, 0, 5, 3),

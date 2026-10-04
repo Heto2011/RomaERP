@@ -93,10 +93,11 @@ public class SubscriptionBillingService : ISubscriptionBillingService
     {
         var tenant = await GetTenantOrThrowAsync(tenantId, ct);
         var subscription = await GetOrCreateSubscriptionAsync(tenant, ct);
+        var plan = await _central.SubscriptionPlans.AsNoTracking().FirstAsync(p => p.Id == subscription.PlanId, ct);
+        EnsureAnnualAllowed(plan, billingPeriod);
         subscription.BillingPeriod = billingPeriod;
         await _central.SaveChangesAsync(ct);
 
-        var plan = await _central.SubscriptionPlans.AsNoTracking().FirstAsync(p => p.Id == subscription.PlanId, ct);
         return await BuildDtoAsync(tenant, subscription, plan, ct);
     }
 
@@ -105,6 +106,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var tenant = await GetTenantOrThrowAsync(tenantId, ct);
         var plan = await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Id == planId, ct)
             ?? throw new NotFoundException(nameof(SubscriptionPlan), planId);
+        EnsureAnnualAllowed(plan, billingPeriod);
         var subscription = await GetOrCreateSubscriptionAsync(tenant, ct);
         var now = DateTime.UtcNow;
 
@@ -228,7 +230,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             generated++;
 
             subscription.CurrentPeriodStart = subscription.CurrentPeriodEnd;
-            subscription.CurrentPeriodEnd = subscription.CurrentPeriodEnd.AddMonths(MonthsCovered(subscription.BillingPeriod));
+            subscription.CurrentPeriodEnd = subscription.CurrentPeriodEnd.AddMonths(MonthsCovered(PeriodFor(subscription, plan)));
             subscription.Status = subscription.Status == SubscriptionStatus.Trialing ? SubscriptionStatus.Active : subscription.Status;
 
             if (subscription.PaymentProvider != "Manual" && !string.IsNullOrEmpty(subscription.PaymentProviderTokenRef)
@@ -325,7 +327,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
                 SubscriptionPricingConstants.ExtraBranchPrice, SubscriptionPricingConstants.ExtraUserPrice);
 
         // The launch offer is a monthly-billing offer; an annual subscriber already gets two months free.
-        if (listed.FoundingBase > 0 && subscription.BillingPeriod == BillingPeriod.Monthly && await IsFoundingCustomerAsync(subscription, tenant, plan, ct))
+        if (listed.FoundingBase > 0 && PeriodFor(subscription, plan) == BillingPeriod.Monthly && await IsFoundingCustomerAsync(subscription, tenant, plan, ct))
             return listed with { Base = listed.FoundingBase };
 
         return listed;
@@ -361,6 +363,17 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         return ahead < SubscriptionPriceList.FoundingCustomerLimit && mine.Count < SubscriptionPriceList.FoundingInvoiceCount;
     }
 
+    /// <summary>Plans outside the automatic discounts (Professional, Enterprise) are always billed monthly at list price,
+    /// even if the subscription still carries an annual setting from a previous plan.</summary>
+    private static BillingPeriod PeriodFor(Subscription subscription, SubscriptionPlan plan)
+        => SubscriptionPriceList.SupportsAnnual(plan.Code) ? subscription.BillingPeriod : BillingPeriod.Monthly;
+
+    private static void EnsureAnnualAllowed(SubscriptionPlan plan, BillingPeriod period)
+    {
+        if (period == BillingPeriod.Annual && !SubscriptionPriceList.SupportsAnnual(plan.Code))
+            throw new ValidationAppException("الباقة دي بتتسعّر باتفاق خاص ومفيهاش خصم الدفع السنوي التلقائي.");
+    }
+
     private static int MonthsCovered(BillingPeriod period)
         => period == BillingPeriod.Annual ? SubscriptionPriceList.AnnualMonthsCovered : 1;
 
@@ -376,7 +389,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var decimals = SubscriptionPriceList.DecimalsFor(prices.Currency);
         decimal Round(decimal amount) => Math.Round(amount, decimals, MidpointRounding.AwayFromZero);
         // An annual invoice covers 12 months but is charged as 10 ("two months free"), overage included.
-        var factor = subscription.BillingPeriod == BillingPeriod.Annual ? SubscriptionPriceList.AnnualMonthsCharged : 1;
+        var factor = PeriodFor(subscription, plan) == BillingPeriod.Annual ? SubscriptionPriceList.AnnualMonthsCharged : 1;
         var baseAmount = Round(pricing.BaseAmount * factor);
         var extraBranchesAmount = Round(pricing.ExtraBranchesAmount * factor);
         var extraUsersAmount = Round(pricing.ExtraUsersAmount * factor);

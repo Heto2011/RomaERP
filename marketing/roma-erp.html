@@ -660,7 +660,9 @@
   // customers (zero customers there so far), limited to LAUNCH_OFFER_LIMIT customers and the first 3
   // months of their subscription, then it returns to egpListPrice. Essential's SAR/Gulf listPrice is a
   // separate, earlier launch-offer decision (not Egypt-specific) and is untouched here.
-  // Business/Professional get an EGP-only egpListPrice (no SAR listPrice) so the launch badge and
+  // Professional and Enterprise are outside every automatic discount (founding offer and the annual "2 months free"):
+  // they are priced by agreement when a real customer of that size appears, so they carry no egpListPrice/noDiscounts.
+  // Business get an EGP-only egpListPrice (no SAR listPrice) so the launch badge and
   // old-price strikethrough only appear when EGP is selected — whether a tier shows the offer is derived
   // from listPrice/egpListPrice existing (see hasLaunchOffer()), not a separate flag.
   //
@@ -687,12 +689,12 @@
     {
       id: "professional", emoji: "🟣", name: "Professional",
       desc: { ar: "نشاط أكبر واحتياج موسّع", en: "Larger operations, wider needs" },
-      base: 649, egpBase: 6000, egpListPrice: 12000, gbpBase: 179, includedBranches: 15, includedUsers: 50,
+      base: 649, egpBase: 12000, gbpBase: 179, includedBranches: 15, includedUsers: 50, noDiscounts: true,
     },
     {
       id: "enterprise", emoji: "🔴", name: "Enterprise",
       desc: { ar: "الشركات الكبيرة", en: "Large enterprises" },
-      base: 2499, egpBase: 35000, gbpBase: 599, includedBranches: Infinity, includedUsers: Infinity, custom: true,
+      base: 2499, egpBase: 35000, gbpBase: 599, includedBranches: Infinity, includedUsers: Infinity, custom: true, noDiscounts: true,
     },
   ];
   const EXTRA_BRANCH_PRICE = 15; // SAR / branch / month, beyond tier's included branches (capped below)
@@ -1260,7 +1262,7 @@
           `}
         </div>
         <div class="tier-price-note">${tier.custom ? t.customPriceNote : t.includesUpTo(tier.includedBranches, tier.includedUsers, branchWord)}</div>
-        ${tier.custom ? "" : `<div class="tier-annual">${t.annualNote}</div>`}
+        ${tier.custom || tier.noDiscounts ? "" : `<div class="tier-annual">${t.annualNote}</div>`}
         <ul class="tier-includes">
           <li>${t.includeAllModules}</li>
           <li>${t.includeSupport}</li>

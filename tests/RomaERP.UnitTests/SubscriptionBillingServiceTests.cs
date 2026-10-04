@@ -1,3 +1,4 @@
+using RomaERP.Application.Common.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -360,5 +361,28 @@ public class SubscriptionBillingServiceTests
         var bigDto = await service.SetBillingPeriodAsync(big.Id, BillingPeriod.Monthly);
         Assert.Null(bigDto.IncludedUsers);
         Assert.Equal(0m, bigDto.ExtraUserPrice);
+    }
+
+    [Fact]
+    public async Task Professional_RefusesAnnualBilling_AndIsAlwaysChargedMonthlyAtList()
+    {
+        var central = NewCentral();
+        var plan = Plan("professional", 15, 50);
+        central.SubscriptionPlans.Add(plan);
+        var (tenant, sub) = AddTenant(central, plan, Country.Egypt, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(-1));
+        var service = new TestableBillingService(central, Config()) { Branches = 1, Users = 1 };
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.SetBillingPeriodAsync(tenant.Id, BillingPeriod.Annual));
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.ActivatePaidAsync(tenant.Id, plan.Id, "ref", BillingPeriod.Annual));
+
+        // A subscription that still carries an annual setting from an earlier plan is billed monthly at list price.
+        sub.BillingPeriod = BillingPeriod.Annual;
+        await central.SaveChangesAsync();
+        await service.RunBillingCycleAsync();
+
+        var invoice = await central.SubscriptionInvoices.SingleAsync();
+        Assert.Equal(12000m, invoice.TotalAmount); // Egypt list price: no founding half-price, no 10-for-12
+        var advanced = await central.Subscriptions.SingleAsync();
+        Assert.InRange((advanced.CurrentPeriodEnd - advanced.CurrentPeriodStart).TotalDays, 27, 32);
     }
 }
