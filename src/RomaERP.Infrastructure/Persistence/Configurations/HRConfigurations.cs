@@ -54,6 +54,7 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.FullNameAr).HasMaxLength(200).IsRequired();
         builder.Property(e => e.FullNameEn).HasMaxLength(200).IsRequired();
         builder.Property(e => e.NationalId).HasMaxLength(20);
+        builder.Property(e => e.Nationality).HasMaxLength(2);
         builder.Property(e => e.Email).HasMaxLength(150);
         builder.Property(e => e.Phone).HasMaxLength(30);
         builder.Property(e => e.BasicSalary).HasPrecision(18, 2);

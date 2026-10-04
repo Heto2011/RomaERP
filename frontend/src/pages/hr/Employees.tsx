@@ -15,6 +15,7 @@ import {
 } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { COUNTRIES } from "../../utils/countries";
 import { bilingualName } from "../../i18n/bilingual";
 import { useAuth } from "../../context/AuthContext";
 import PasswordInput from "../../components/PasswordInput";
@@ -45,7 +46,7 @@ export default function Employees() {
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [workLocationId, setWorkLocationId] = useState("");
-  const [isSaudiNational, setIsSaudiNational] = useState(false);
+  const [nationality, setNationality] = useState("");
   const [annualLeaveDaysPerYear, setAnnualLeaveDaysPerYear] = useState("21");
   const [employmentStatus, setEmploymentStatus] = useState(EmploymentStatus.Active);
   const [terminationDate, setTerminationDate] = useState("");
@@ -127,7 +128,7 @@ export default function Employees() {
     setEmail("");
     setPhone("");
     setWorkLocationId("");
-    setIsSaudiNational(false);
+    setNationality("");
     setAnnualLeaveDaysPerYear("21");
     setEmploymentStatus(EmploymentStatus.Active);
     setTerminationDate("");
@@ -157,7 +158,7 @@ export default function Employees() {
     setEmail(emp.email ?? "");
     setPhone(emp.phone ?? "");
     setWorkLocationId(emp.workLocationId ?? "");
-    setIsSaudiNational(emp.isSaudiNational);
+    setNationality(emp.nationality ?? (emp.isSaudiNational ? "SA" : ""));
     setAnnualLeaveDaysPerYear(String(emp.annualLeaveDaysPerYear));
     setEmploymentStatus(emp.employmentStatus);
     setTerminationDate(emp.terminationDate ? emp.terminationDate.slice(0, 10) : "");
@@ -181,7 +182,8 @@ export default function Employees() {
         email: email || null,
         phone: phone || null,
         workLocationId: workLocationId || null,
-        isSaudiNational,
+        nationality: nationality || null,
+        isSaudiNational: nationality === "SA",
         annualLeaveDaysPerYear: Number(annualLeaveDaysPerYear) || 21,
       };
       if (editingId) {
@@ -375,10 +377,15 @@ export default function Employees() {
                 <input type="number" min={0} value={annualLeaveDaysPerYear} onChange={(e) => setAnnualLeaveDaysPerYear(e.target.value)} />
               </div>
               <div className="form-field">
-                <label>
-                  <input type="checkbox" checked={isSaudiNational} onChange={(e) => setIsSaudiNational(e.target.checked)} style={{ marginInlineEnd: 6 }} />
-                  {t.hr.isSaudiNational}
-                </label>
+                <label>{t.hr.nationality}</label>
+                <select value={nationality} onChange={(e) => setNationality(e.target.value)} required>
+                  <option value="">{t.hr.selectNationality}</option>
+                  {COUNTRIES.map((c) => (
+                    <option key={c.code} value={c.code}>
+                      {lang === "ar" ? c.ar : c.en}
+                    </option>
+                  ))}
+                </select>
               </div>
               {editingId && (
                 <>

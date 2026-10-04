@@ -311,6 +311,13 @@ export const EmployeeContractsApi = {
   updateStatus: (id: string, status: EmployeeContractStatus) =>
     apiClient.put<EmployeeContract>(`/employee-contracts/${id}/status`, { status }),
   remove: (id: string) => apiClient.delete(`/employee-contracts/${id}`),
+  uploadFile: (id: string, file: File) => {
+    const body = new FormData();
+    body.append("file", file);
+    return apiClient.post(`/employee-contracts/${id}/file`, body, { headers: { "Content-Type": "multipart/form-data" } });
+  },
+  downloadFile: (id: string) => apiClient.get<Blob>(`/employee-contracts/${id}/file`, { responseType: "blob" }),
+  removeFile: (id: string) => apiClient.delete(`/employee-contracts/${id}/file`),
 };
 
 export const SalaryComponentsApi = {

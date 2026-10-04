@@ -49,6 +49,11 @@ public class Employee : AuditableEntity
     /// GOSI by accident; must be explicitly set per employee.</summary>
     public bool IsSaudiNational { get; set; }
 
+    /// <summary>ISO 3166-1 alpha-2 country code of the employee's nationality (e.g. "SA", "EG", "GB"). Null for
+    /// records created before nationality was captured. IsSaudiNational is kept in sync (true only for "SA") so
+    /// GOSI logic keeps working unchanged.</summary>
+    public string? Nationality { get; set; }
+
     /// <summary>Annual paid-leave entitlement used to compute the employee's remaining leave balance
     /// (entitlement minus approved Leave-type requests already taken this calendar year). Defaults to 21,
     /// the Saudi Labor Law Article 109 minimum — adjust per employee/contract as needed.</summary>
