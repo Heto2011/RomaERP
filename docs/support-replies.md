@@ -9,8 +9,8 @@ Reply from support@romagroup.app. Use the customer's language. Replace [Name].
 **EN:** Hi [Name], on the login page click "Forgot password", enter your email and company code, and we'll send you a reset link (valid for 2 hours). If it doesn't arrive, check your spam folder, and let me know if you still can't find it.
 
 ## 2. I don't remember my company code
-**AR:** كود الشركة اتبعتلك في إيميل الترحيب لما سجلت، وبيظهر كمان في أسفل صفحة الدخول بعد أول دخول. لو مش لاقيه ابعتلي اسم الشركة والإيميل اللي سجلت بيه وأنا أرسله لك.
-**EN:** Your company code was in the welcome email you received when you signed up, and it also shows at the bottom of the page after your first login. If you can't find it, send me your company name and the email you signed up with and I'll resend it.
+**AR:** كود الشركة بيظهر في أسفل الصفحة بعد ما تدخل، وكان معاك لما سجلت. لو مش لاقيه ابعتلي اسم الشركة والإيميل اللي سجلت بيه وأنا أرسله لك.
+**EN:** Your company code is shown at the bottom of the page once you are signed in, and you were given it when you signed up. If you can't find it, send me your company name and the email you signed up with and I'll resend it.
 
 ## 3. How do my employees log in?
 **AR:** من صفحة الموظفين اضغط "إنشاء حساب دخول" جنب الموظف، واكتب إيميل وباسورد مؤقت. الموظف يدخل من romagroup.app/people-login بكود الشركة والإيميل والباسورد، ويشوف بس رصيد إجازاته وطلباته وحضوره.
@@ -25,9 +25,9 @@ Reply from support@romagroup.app. Use the customer's language. Replace [Name].
 **EN:** Roma HR is 99 SAR per month for up to 25 employees, plus 5 SAR for each additional employee. On the annual plan you pay for 10 months and get 12. There is a 21-day free trial with no card needed. Details: romagroup.app/roma-hr.html
 
 ## 6. How do I pay?
-**AR (مصر):** الدفع بإنستاباي. هتلاقي بيانات التحويل في صفحة "اشتراكي"، حوّل وبعدين اضغط "أكدت التحويل" وأنا أفعّل الاشتراك.
+**AR (مصر):** الدفع بإنستاباي. هتلاقي بيانات التحويل في صفحة "اشتراكي"، حوّل وبعدين اضغط "أبلغ إننا حوّلنا الفلوس" وأنا أفعّل الاشتراك.
 **AR (باقي الدول):** الدفع بالبطاقة عن طريق Lemon Squeezy — هنفعّله قريب، وهتوصلك رسالة لما يبقى جاهز.
-**EN (Egypt):** Pay by InstaPay. The transfer details are on the "My subscription" page; transfer, then click "I've paid" and we'll activate your subscription.
+**EN (Egypt):** Pay by InstaPay. The transfer details are on the "My subscription" page; transfer, then click "Report bank transfer" and we'll activate your subscription.
 **EN (other countries):** Card payment through Lemon Squeezy — coming shortly, and we'll message you as soon as it is ready.
 
 ## 7. I want to cancel
