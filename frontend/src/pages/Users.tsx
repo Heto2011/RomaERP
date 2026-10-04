@@ -23,6 +23,8 @@ export default function Users() {
   const [users, setUsers] = useState<AppUser[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);
+  const [nameEditingId, setNameEditingId] = useState<string | null>(null);
+  const [nameValue, setNameValue] = useState("");
   const [error, setError] = useState<string | null>(null);
 
   const [email, setEmail] = useState("");
@@ -159,6 +161,17 @@ export default function Users() {
     }
   }
 
+  async function saveName(id: string) {
+    setError(null);
+    try {
+      await UsersApi.rename(id, nameValue);
+      setNameEditingId(null);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function saveNewPassword(id: string) {
     setError(null);
     setPasswordResetSuccessId(null);
@@ -243,7 +256,28 @@ export default function Users() {
             )}
             {users.map((u) => (
               <tr key={u.id}>
-                <td>{u.fullName}</td>
+                <td>
+                  {nameEditingId === u.id ? (
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      <input style={{ width: 140 }} value={nameValue} onChange={(e) => setNameValue(e.target.value)} autoFocus />
+                      <button className="btn btn-sm" onClick={() => saveName(u.id)} disabled={!nameValue.trim()}>{t.common.save}</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => setNameEditingId(null)}>{t.common.cancel}</button>
+                    </div>
+                  ) : (
+                    <span>
+                      {u.fullName}
+                      {canManage(u) && (
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          style={{ marginInlineStart: 8 }}
+                          onClick={() => { setNameEditingId(u.id); setNameValue(u.fullName); }}
+                        >
+                          {t.users.editName}
+                        </button>
+                      )}
+                    </span>
+                  )}
+                </td>
                 <td>{u.email}</td>
                 <td>
                   {editingId === u.id ? (

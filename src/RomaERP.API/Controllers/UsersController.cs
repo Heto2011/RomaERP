@@ -297,6 +297,28 @@ public class UsersController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Changes the display name of an account (same who-may-touch-whom rule as the other actions).</summary>
+    [HttpPut("{id:guid}/name")]
+    public async Task<IActionResult> Rename(Guid id, RenameUserRequest request)
+    {
+        var name = request.FullName?.Trim();
+        if (string.IsNullOrEmpty(name))
+            return BadRequest(new { error = "الاسم مطلوب." });
+        if (name.Length > 200)
+            return BadRequest(new { error = "الاسم طويل جدًا." });
+
+        var user = await _userManager.FindByIdAsync(id.ToString())
+            ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+        if (!await CanManageAsync(user)) return StatusCode(403, new { error = "الإجراء ده للمدير (Admin) بس." });
+
+        user.FullName = name;
+        var result = await _userManager.UpdateAsync(user);
+        if (!result.Succeeded)
+            return BadRequest(new { error = string.Join("، ", result.Errors.Select(e => e.Description)) });
+
+        return NoContent();
+    }
+
     private async Task<Application.HR.DTOs.EmployeeDto?> GetLinkedEmployeeAsync(Guid userId, CancellationToken ct)
     {
         var employees = await _employeeService.GetAllAsync(ct);

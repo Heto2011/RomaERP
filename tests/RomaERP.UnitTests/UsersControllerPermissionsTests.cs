@@ -166,4 +166,22 @@ public class UsersControllerPermissionsTests
         Assert.IsType<OkObjectResult>((await c.UpdateModules(hr.Id, new UpdateUserModulesRequest(new List<string> { "Accounting" }), default)).Result);
         Assert.IsType<NoContentResult>(await c.Delete(hr.Id, default));
     }
+
+    [Fact]
+    public async Task Admin_CanRenameAnAccount_ButHrCannotRenameAdmin()
+    {
+        var (sp, um) = await BuildAsync();
+        var admin = await AddUserAsync(um, "ceo@x.com", "Admin");
+        var hr = await AddUserAsync(um, "hr@x.com", "HR");
+
+        var asAdmin = ControllerFor(sp, admin, "Admin");
+        Assert.IsType<NoContentResult>(await asAdmin.Rename(admin.Id, new RenameUserRequest("  Rema  ")));
+        Assert.Equal("Rema", (await um.FindByIdAsync(admin.Id.ToString()))!.FullName);
+        Assert.IsType<BadRequestObjectResult>(await asAdmin.Rename(admin.Id, new RenameUserRequest("   ")));
+
+        var asHr = ControllerFor(sp, hr, "HR");
+        Assert.Equal(403, Status(await asHr.Rename(admin.Id, new RenameUserRequest("Hacked"))));
+        Assert.Equal("Rema", (await um.FindByIdAsync(admin.Id.ToString()))!.FullName);
+        Assert.IsType<NoContentResult>(await asHr.Rename(hr.Id, new RenameUserRequest("HR Manager")));
+    }
 }
