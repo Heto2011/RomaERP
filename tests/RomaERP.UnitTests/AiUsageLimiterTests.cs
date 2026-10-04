@@ -194,10 +194,10 @@ public class AiUsageLimiterTests
     }
 
     [Theory]
-    [InlineData("people", 100)]
-    [InlineData("essential", 150)]
-    [InlineData("business", 350)]
-    [InlineData("professional", 650)]
+    [InlineData("people", 200)]
+    [InlineData("essential", 300)]
+    [InlineData("business", 700)]
+    [InlineData("professional", 1300)]
     public async Task MonthlyCap_BlocksOnceBothFeaturesTogetherReachTheLimit(string plan, int monthlyCap)
     {
         var ctx = CreateAppContext();

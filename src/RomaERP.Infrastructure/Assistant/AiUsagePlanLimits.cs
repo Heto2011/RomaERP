@@ -18,14 +18,14 @@ internal static class AiUsagePlanLimits
     };
 
     /// <summary>Calls per calendar month (both AI features together), sized so a customer who uses all of it costs us about
-    /// 5% of what they pay — at roughly one US cent per call. Enterprise is deliberately absent:
+    /// 7.5% of what they pay (the same proportion on every plan) — at roughly one US cent per call. Enterprise is deliberately absent:
     /// it is sized by agreement with the first real customer of that size, so only the daily limits apply to it.</summary>
     private static readonly Dictionary<string, int> MonthlyCalls = new()
     {
-        ["people"] = 100,
-        ["essential"] = 150,
-        ["business"] = 350,
-        ["professional"] = 650,
+        ["people"] = 200,
+        ["essential"] = 300,
+        ["business"] = 700,
+        ["professional"] = 1300,
     };
 
     public static int? GetMonthly(string? planCode)
