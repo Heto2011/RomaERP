@@ -42,6 +42,7 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
     { to: "/people/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
     { to: "/people/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
     { to: "/people/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },
+    ...(isAdmin ? [{ to: "/people/subscription", label: t.mySubscription.title, icon: <IconDollar /> }] : []),
   ];
 
   return (

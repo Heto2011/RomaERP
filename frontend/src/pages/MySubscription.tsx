@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MySubscriptionApi } from "../api/services";
-import type { TenantSubscription, SubscriptionInvoice, BankTransferInfo } from "../api/types";
+import { ProductScope, type TenantSubscription, type SubscriptionInvoice, type BankTransferInfo } from "../api/types";
+import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -21,6 +22,9 @@ const INVOICE_STATUS_KEY: Record<number, string> = {
 
 export default function MySubscriptionPage() {
   const { t, lang } = useLanguage();
+  const { user } = useAuth();
+  // Roma HR is billed per active employee and has no branches, so that row is hidden for it.
+  const peopleOnly = user?.productScope === ProductScope.PeopleOnly;
   const [subscription, setSubscription] = useState<TenantSubscription | null>(null);
   const [invoices, setInvoices] = useState<SubscriptionInvoice[]>([]);
   const [bankInfo, setBankInfo] = useState<BankTransferInfo | null>(null);
@@ -140,12 +144,14 @@ export default function MySubscriptionPage() {
                 <td>{t.mySubscription.period}</td>
                 <td>{new Date(subscription.currentPeriodStart).toLocaleDateString()} — {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</td>
               </tr>
+              {!peopleOnly && (
+                <tr>
+                  <td>{t.mySubscription.branchesUsage}</td>
+                  <td>{subscription.currentBranches}</td>
+                </tr>
+              )}
               <tr>
-                <td>{t.mySubscription.branchesUsage}</td>
-                <td>{subscription.currentBranches}</td>
-              </tr>
-              <tr>
-                <td>{t.mySubscription.usersUsage}</td>
+                <td>{peopleOnly ? t.mySubscription.employeesUsage : t.mySubscription.usersUsage}</td>
                 <td>{subscription.currentUsers}</td>
               </tr>
               <tr>
