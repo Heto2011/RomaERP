@@ -364,25 +364,35 @@ public class SubscriptionBillingServiceTests
     }
 
     [Fact]
-    public async Task Professional_RefusesAnnualBilling_AndIsAlwaysChargedMonthlyAtList()
+    public async Task Enterprise_RefusesAnnualBilling_AndIsNeverInvoicedAutomatically()
     {
         var central = NewCentral();
-        var plan = Plan("professional", 15, 50);
+        var plan = Plan("enterprise", int.MaxValue, int.MaxValue);
+        plan.IsCustomPricing = true;
         central.SubscriptionPlans.Add(plan);
-        var (tenant, sub) = AddTenant(central, plan, Country.Egypt, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(-1));
-        var service = new TestableBillingService(central, Config()) { Branches = 1, Users = 1 };
+        var (tenant, _) = AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(-1));
+        var service = new TestableBillingService(central, Config()) { Branches = 40, Users = 300 };
 
         await Assert.ThrowsAsync<ValidationAppException>(() => service.SetBillingPeriodAsync(tenant.Id, BillingPeriod.Annual));
         await Assert.ThrowsAsync<ValidationAppException>(() => service.ActivatePaidAsync(tenant.Id, plan.Id, "ref", BillingPeriod.Annual));
 
-        // A subscription that still carries an annual setting from an earlier plan is billed monthly at list price.
-        sub.BillingPeriod = BillingPeriod.Annual;
-        await central.SaveChangesAsync();
-        await service.RunBillingCycleAsync();
+        var result = await service.RunBillingCycleAsync();
 
-        var invoice = await central.SubscriptionInvoices.SingleAsync();
-        Assert.Equal(12000m, invoice.TotalAmount); // Egypt list price: no founding half-price, no 10-for-12
-        var advanced = await central.Subscriptions.SingleAsync();
-        Assert.InRange((advanced.CurrentPeriodEnd - advanced.CurrentPeriodStart).TotalDays, 27, 32);
+        Assert.Equal(0, result.InvoicesGenerated);
+        Assert.Empty(central.SubscriptionInvoices);
+    }
+
+    [Fact]
+    public async Task Professional_KeepsTheAnnualDiscount()
+    {
+        var central = NewCentral();
+        var plan = Plan("professional", 15, 50);
+        central.SubscriptionPlans.Add(plan);
+        var (tenant, _) = AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(20));
+        var service = new TestableBillingService(central, Config());
+
+        var dto = await service.SetBillingPeriodAsync(tenant.Id, BillingPeriod.Annual);
+
+        Assert.Equal(BillingPeriod.Annual, dto.BillingPeriod);
     }
 }

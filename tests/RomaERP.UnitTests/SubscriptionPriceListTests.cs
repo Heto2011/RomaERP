@@ -23,6 +23,7 @@ public class SubscriptionPriceListTests
     [Theory]
     [InlineData("essential", 1500)]
     [InlineData("business", 3500)]
+    [InlineData("professional", 6000)]
     public void EgyptFoundingPriceIsHalfOfList(string plan, int founding)
     {
         var egp = SubscriptionPriceList.Find(plan, "EGP")!;
@@ -111,19 +112,23 @@ public class SubscriptionPriceListTests
     [Fact]
     public void UnknownPlanHasNoPrice() => Assert.Null(SubscriptionPriceList.Find("nope", "SAR"));
 
-    [Theory]
-    [InlineData("professional")]
-    [InlineData("enterprise")]
-    public void ProfessionalAndEnterprise_AreOutsideEveryAutomaticDiscount(string plan)
+    [Fact]
+    public void Enterprise_HasNoPublishedPriceAndNoAutomaticDiscounts()
     {
-        Assert.False(SubscriptionPriceList.SupportsAnnual(plan));
-        Assert.Equal(0, SubscriptionPriceList.Find(plan, "EGP")!.FoundingBase);
+        Assert.False(SubscriptionPriceList.SupportsAnnual("enterprise"));
+        foreach (var currency in new[] { "SAR", "EGP", "GBP", "AED" })
+        {
+            var p = SubscriptionPriceList.Find("enterprise", currency)!;
+            Assert.Equal(0m, p.Base);
+            Assert.Equal(0m, p.FoundingBase);
+        }
     }
 
     [Theory]
     [InlineData("people")]
     [InlineData("essential")]
     [InlineData("business")]
-    public void OtherPlansKeepTheAnnualDiscount(string plan)
+    [InlineData("professional")]
+    public void FirstThreeErpPlansAndHrKeepTheAnnualDiscount(string plan)
         => Assert.True(SubscriptionPriceList.SupportsAnnual(plan));
 }

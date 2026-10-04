@@ -219,6 +219,12 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == subscription.TenantId, ct);
             if (tenant is null) continue;
             var plan = await _central.SubscriptionPlans.FirstAsync(p => p.Id == subscription.PlanId, ct);
+            if (plan.IsCustomPricing)
+            {
+                // Negotiated plans (Enterprise) have no list price, so there is nothing to invoice automatically.
+                notes.Add($"{tenant.CompanyNameEn}: باقة بسعر مخصص — الفاتورة تتعمل يدويًا حسب الاتفاق.");
+                continue;
+            }
             var (branches, users) = await CountTenantUsageAsync(tenant, ct);
 
             var isAdditionalCompany = subscription.BillingAccountId.HasValue && !seenBillingAccounts.Add(subscription.BillingAccountId.Value);

@@ -197,6 +197,7 @@ public class AiUsageLimiterTests
     [InlineData("people", 100)]
     [InlineData("essential", 150)]
     [InlineData("business", 350)]
+    [InlineData("professional", 650)]
     public async Task MonthlyCap_BlocksOnceBothFeaturesTogetherReachTheLimit(string plan, int monthlyCap)
     {
         var ctx = CreateAppContext();
@@ -222,13 +223,13 @@ public class AiUsageLimiterTests
     }
 
     [Fact]
-    public async Task Professional_HasNoMonthlyCap_OnlyTheDailyLimits()
+    public async Task Enterprise_HasNoMonthlyCap_OnlyTheDailyLimits()
     {
         var ctx = CreateAppContext();
         var firstOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
         ctx.AiUsageCounters.Add(new RomaERP.Domain.Assistant.AiUsageCounter { FeatureKey = "ExpenseCapture", UsageDate = firstOfMonth, Count = 5000 });
         await ctx.SaveChangesAsync();
 
-        await CreateLimiter(ctx, "professional").EnsureWithinDailyLimitAsync("BusinessQa"); // does not throw
+        await CreateLimiter(ctx, "enterprise").EnsureWithinDailyLimitAsync("BusinessQa"); // does not throw
     }
 }
