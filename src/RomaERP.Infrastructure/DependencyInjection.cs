@@ -39,6 +39,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantContext>(provider => provider.GetRequiredService<TenantContext>());
         services.AddScoped<ITenantRegistry, TenantRegistry>();
         services.AddScoped<ITenantProvisioningService, TenantProvisioningService>();
+        services.AddScoped<ITenantActivityLog, TenantActivityLog>();
         services.AddScoped<IUserTransferService, UserTransferService>();
         services.AddScoped<ISystemPasswordResetService, SystemPasswordResetService>();
         services.AddScoped<ISubscriptionBillingService, RomaERP.Infrastructure.Billing.SubscriptionBillingService>();

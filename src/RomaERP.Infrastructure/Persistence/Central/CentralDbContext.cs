@@ -20,10 +20,21 @@ public class CentralDbContext : DbContext
     public DbSet<SupportTicketAttachment> SupportTicketAttachments => Set<SupportTicketAttachment>();
     public DbSet<DataDeletionRecord> DataDeletionRecords => Set<DataDeletionRecord>();
     public DbSet<MarketingPageView> MarketingPageViews => Set<MarketingPageView>();
+    public DbSet<TenantActivity> TenantActivities => Set<TenantActivity>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<TenantActivity>(b =>
+        {
+            b.Property(a => a.CompanyCode).HasMaxLength(50).IsRequired();
+            b.Property(a => a.Category).HasMaxLength(40).IsRequired();
+            b.Property(a => a.Action).HasMaxLength(120).IsRequired();
+            b.Property(a => a.Details).HasMaxLength(500);
+            b.Property(a => a.Actor).HasMaxLength(200);
+            b.HasIndex(a => new { a.TenantId, a.OccurredAtUtc });
+        });
 
         builder.Entity<Tenant>(b =>
         {

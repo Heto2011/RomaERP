@@ -110,6 +110,13 @@ public class SystemController : ControllerBase
         if (keyCheck is not null) return keyCheck;
 
         await _passwordReset.ResetPasswordAsync(request, ct);
+
+        var tenant = _central.Tenants.FirstOrDefault(t => t.CompanyCode == request.CompanyCode.Trim().ToLower());
+        if (tenant is not null)
+        {
+            _central.TenantActivities.Add(RomaERP.Infrastructure.Tenancy.TenantActivityLog.Build(tenant.Id, tenant.CompanyCode, "Password", "Password reset from the system console", request.Email, "system console"));
+            await _central.SaveChangesAsync(ct);
+        }
         return NoContent();
     }
 

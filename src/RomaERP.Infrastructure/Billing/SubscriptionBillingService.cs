@@ -64,6 +64,45 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         return result;
     }
 
+    public async Task<(List<TenantSubscriptionDto> Items, int Total)> GetTenantSubscriptionsPageAsync(string? search, int page, int pageSize, CancellationToken ct = default)
+    {
+        pageSize = Math.Clamp(pageSize, 1, 100);
+        page = Math.Max(1, page);
+
+        var query = _central.Tenants.AsNoTracking().AsQueryable();
+        if (!string.IsNullOrWhiteSpace(search))
+        {
+            var term = search.Trim();
+            query = query.Where(t => t.CompanyCode.Contains(term) || t.CompanyNameEn.Contains(term) || t.CompanyNameAr.Contains(term));
+        }
+
+        var total = await query.CountAsync(ct);
+        var tenants = await query.OrderBy(t => t.CompanyNameEn).Skip((page - 1) * pageSize).Take(pageSize).ToListAsync(ct);
+
+        // Usage is counted by opening each company's own database, so only the companies on this page pay that cost.
+        var items = new List<TenantSubscriptionDto>();
+        foreach (var tenant in tenants)
+        {
+            var subscription = await GetOrCreateSubscriptionAsync(tenant, ct);
+            var plan = await _central.SubscriptionPlans.AsNoTracking().FirstAsync(p => p.Id == subscription.PlanId, ct);
+            var (branches, users) = await CountTenantUsageAsync(tenant, ct);
+            var outstanding = await _central.SubscriptionInvoices.AsNoTracking()
+                .Where(i => i.TenantId == tenant.Id && i.Status != SubscriptionInvoiceStatus.Paid && i.Status != SubscriptionInvoiceStatus.Cancelled)
+                .SumAsync(i => (decimal?)i.TotalAmount, ct) ?? 0;
+            items.Add(MapTenantSubscription(tenant, subscription, plan, branches, users, outstanding, await GetOverdueDaysAsync(tenant.Id, ct)));
+        }
+
+        return (items, total);
+    }
+
+    public async Task<List<TenantActivityDto>> GetTenantActivityAsync(Guid tenantId, int take, CancellationToken ct = default)
+        => await _central.TenantActivities.AsNoTracking()
+            .Where(a => a.TenantId == tenantId)
+            .OrderByDescending(a => a.OccurredAtUtc)
+            .Take(Math.Clamp(take, 1, 500))
+            .Select(a => new TenantActivityDto(a.Id, a.OccurredAtUtc, a.Category, a.Action, a.Details, a.Actor))
+            .ToListAsync(ct);
+
     public async Task<TenantSubscriptionDto> SetPlanAsync(Guid tenantId, Guid planId, CancellationToken ct = default)
     {
         var tenant = await GetTenantOrThrowAsync(tenantId, ct);
@@ -72,6 +111,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var subscription = await GetOrCreateSubscriptionAsync(tenant, ct);
 
         subscription.PlanId = plan.Id;
+        Log(tenant, "Subscription", "Plan changed", plan.NameEn);
         await _central.SaveChangesAsync(ct);
 
         return await BuildDtoAsync(tenant, subscription, plan, ct);
@@ -96,6 +136,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var plan = await _central.SubscriptionPlans.AsNoTracking().FirstAsync(p => p.Id == subscription.PlanId, ct);
         EnsureAnnualAllowed(plan, billingPeriod);
         subscription.BillingPeriod = billingPeriod;
+        Log(tenant, "Subscription", "Billing period changed", billingPeriod.ToString());
         await _central.SaveChangesAsync(ct);
 
         return await BuildDtoAsync(tenant, subscription, plan, ct);
@@ -134,6 +175,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         invoice.DueDateUtc = now;
         invoice.PaymentReference = paymentReference;
         _central.SubscriptionInvoices.Add(invoice);
+        Log(tenant, "Billing", "Paid activation confirmed", $"{plan.NameEn} · {billingPeriod} · ref: {paymentReference ?? "-"}");
 
         await _central.SaveChangesAsync(ct);
         return await BuildDtoAsync(tenant, subscription, plan, ct);
@@ -147,6 +189,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         subscription.Status = SubscriptionStatus.Suspended;
         subscription.SuspendedAtUtc = DateTime.UtcNow;
         tenant.IsActive = false;
+        Log(tenant, "Status", "Company suspended");
         await _central.SaveChangesAsync(ct);
 
         var plan = await _central.SubscriptionPlans.AsNoTracking().FirstAsync(p => p.Id == subscription.PlanId, ct);
@@ -161,6 +204,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         subscription.Status = SubscriptionStatus.Active;
         subscription.SuspendedAtUtc = null;
         tenant.IsActive = true;
+        Log(tenant, "Status", "Company reactivated");
         await _central.SaveChangesAsync(ct);
 
         var plan = await _central.SubscriptionPlans.AsNoTracking().FirstAsync(p => p.Id == subscription.PlanId, ct);
@@ -191,9 +235,10 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         if (subscription is not null && subscription.Status == SubscriptionStatus.PastDue)
             subscription.Status = SubscriptionStatus.Active;
 
+        var tenant = await _central.Tenants.AsNoTracking().FirstAsync(t => t.Id == invoice.TenantId, ct);
+        Log(tenant, "Billing", "Invoice marked paid", $"{invoice.TotalAmount} {invoice.Currency} · ref: {paymentReference ?? "-"}");
         await _central.SaveChangesAsync(ct);
 
-        var tenant = await _central.Tenants.AsNoTracking().FirstAsync(t => t.Id == invoice.TenantId, ct);
         return MapInvoice(invoice, tenant.CompanyNameAr);
     }
 
@@ -231,6 +276,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             var priceSet = await ResolvePriceSetAsync(subscription, tenant, plan, ct);
             var invoice = BuildInvoice(subscription, plan, priceSet, branches, users, isAdditionalCompany);
             _central.SubscriptionInvoices.Add(invoice);
+            Log(tenant, "Billing", "Invoice generated", $"{invoice.TotalAmount} {invoice.Currency}", "automatic");
             // Saved per invoice so the founding-customer ranking above sees invoices generated earlier in this same run.
             await _central.SaveChangesAsync(ct);
             generated++;
@@ -313,7 +359,11 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             subscription.Status = SubscriptionStatus.Suspended;
             subscription.SuspendedAtUtc = today;
             var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == subscription.TenantId, ct);
-            if (tenant is not null) tenant.IsActive = false;
+            if (tenant is not null)
+            {
+                tenant.IsActive = false;
+                Log(tenant, "Status", "Company suspended automatically", "unpaid invoice past the grace period", "automatic");
+            }
             suspendedCount++;
         }
 
@@ -379,6 +429,10 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         if (period == BillingPeriod.Annual && !SubscriptionPriceList.SupportsAnnual(plan.Code))
             throw new ValidationAppException("الباقة دي بتتسعّر باتفاق خاص ومفيهاش خصم الدفع السنوي التلقائي.");
     }
+
+    /// <summary>Adds a line to the company's activity trail; it is saved by the caller's own SaveChanges.</summary>
+    private void Log(Tenant tenant, string category, string action, string? details = null, string actor = "system console")
+        => _central.TenantActivities.Add(RomaERP.Infrastructure.Tenancy.TenantActivityLog.Build(tenant.Id, tenant.CompanyCode, category, action, details, actor));
 
     private static int MonthsCovered(BillingPeriod period)
         => period == BillingPeriod.Annual ? SubscriptionPriceList.AnnualMonthsCovered : 1;

@@ -59,6 +59,7 @@ public class TenantProvisioningService : ITenantProvisioningService
         };
 
         _central.Tenants.Add(tenant);
+        _central.TenantActivities.Add(TenantActivityLog.Build(tenant.Id, tenant.CompanyCode, "Company", "Company created", tenant.IsDemo ? "trial" : "paid", "system"));
         await _central.SaveChangesAsync(ct);
 
         var connectionString = _registry.BuildConnectionString(databaseName);
@@ -113,7 +114,10 @@ public class TenantProvisioningService : ITenantProvisioningService
             .ToListAsync(ct);
 
         foreach (var tenant in expired)
+        {
             tenant.IsActive = false;
+            _central.TenantActivities.Add(TenantActivityLog.Build(tenant.Id, tenant.CompanyCode, "Status", "Trial expired — company locked", "data is kept", "automatic"));
+        }
 
         await _central.SaveChangesAsync(ct);
         return expired.Count;
@@ -139,6 +143,7 @@ public class TenantProvisioningService : ITenantProvisioningService
             ProcessedByEmail = request.ProcessedByEmail,
         };
         _central.DataDeletionRecords.Add(record);
+        _central.TenantActivities.Add(TenantActivityLog.Build(tenant.Id, tenant.CompanyCode, "Company", "Data deletion requested", $"ref #{record.ConfirmationNumber}", request.ProcessedByEmail ?? "system console"));
         // Saved before the drop below is even attempted — this proof of the request must exist even if
         // the drop itself fails partway, so support can always show it was received and acted on.
         await _central.SaveChangesAsync(ct);

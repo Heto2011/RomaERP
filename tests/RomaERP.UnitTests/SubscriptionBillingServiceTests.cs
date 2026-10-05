@@ -395,4 +395,44 @@ public class SubscriptionBillingServiceTests
 
         Assert.Equal(BillingPeriod.Annual, dto.BillingPeriod);
     }
+
+    [Fact]
+    public async Task AdminActions_AreWrittenToTheCompanyActivityTrail()
+    {
+        var central = NewCentral();
+        var plan = Plan("essential", 3, 10);
+        var business = Plan("business", 7, 25);
+        central.SubscriptionPlans.AddRange(plan, business);
+        var (tenant, _) = AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(20));
+        var service = new TestableBillingService(central, Config());
+
+        await service.SetPlanAsync(tenant.Id, business.Id);
+        await service.SuspendAsync(tenant.Id);
+        await service.ReactivateAsync(tenant.Id);
+
+        var trail = await service.GetTenantActivityAsync(tenant.Id, 50);
+        Assert.Equal(new[] { "Company reactivated", "Company suspended", "Plan changed" }, trail.Select(a => a.Action).ToArray());
+        Assert.All(trail, a => Assert.Equal("system console", a.Actor));
+    }
+
+    [Fact]
+    public async Task TenantList_CanBeSearchedAndPaged()
+    {
+        var central = NewCentral();
+        var plan = Plan("essential", 3, 10);
+        central.SubscriptionPlans.Add(plan);
+        for (var i = 1; i <= 7; i++)
+            AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(20));
+        var service = new TestableBillingService(central, Config());
+
+        var (page1, total) = await service.GetTenantSubscriptionsPageAsync(null, 1, 3);
+        var (page3, _) = await service.GetTenantSubscriptionsPageAsync(null, 3, 3);
+        var (none, noneTotal) = await service.GetTenantSubscriptionsPageAsync("no-such-company", 1, 3);
+
+        Assert.Equal(7, total);
+        Assert.Equal(3, page1.Count);
+        Assert.Single(page3);
+        Assert.Empty(none);
+        Assert.Equal(0, noneTotal);
+    }
 }

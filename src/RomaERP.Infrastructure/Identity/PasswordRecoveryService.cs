@@ -15,9 +15,12 @@ public class PasswordRecoveryService : IPasswordRecoveryService
     private readonly IConfiguration _configuration;
     private readonly ILogger<PasswordRecoveryService> _logger;
 
+    private readonly ITenantActivityLog? _activity;
+
     public PasswordRecoveryService(UserManager<ApplicationUser> userManager, IEmailSender email, ITenantContext tenant,
-        IConfiguration configuration, ILogger<PasswordRecoveryService> logger)
+        IConfiguration configuration, ILogger<PasswordRecoveryService> logger, ITenantActivityLog? activity = null)
     {
+        _activity = activity;
         _userManager = userManager;
         _email = email;
         _tenant = tenant;
@@ -44,6 +47,8 @@ public class PasswordRecoveryService : IPasswordRecoveryService
         var result = await _email.SendAsync(user.Email, "إعادة تعيين كلمة السر | Reset your password", BuildHtml(user.FullName, link), ct);
         if (!result.Success)
             _logger.LogError("Password reset email to {Email} failed: {Reason}", user.Email, result.FailureReason);
+        if (_activity is not null)
+            await _activity.RecordForCurrentTenantAsync("Password", result.Success ? "Reset link emailed" : "Reset link could not be emailed", user.Email, "customer", ct);
     }
 
     public async Task<string?> ResetAsync(string email, string token, string newPassword, CancellationToken ct = default)
@@ -53,7 +58,12 @@ public class PasswordRecoveryService : IPasswordRecoveryService
         if (user is null || !user.IsActive) return invalid;
 
         var result = await _userManager.ResetPasswordAsync(user, token, newPassword);
-        if (result.Succeeded) return null;
+        if (result.Succeeded)
+        {
+            if (_activity is not null)
+                await _activity.RecordForCurrentTenantAsync("Password", "Password reset with the emailed link", user.Email, user.Email, ct);
+            return null;
+        }
         return result.Errors.Any(e => e.Code == "InvalidToken") ? invalid : string.Join("، ", result.Errors.Select(e => e.Description));
     }
 

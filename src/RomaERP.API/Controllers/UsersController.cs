@@ -36,6 +36,10 @@ public class UsersController : ControllerBase
         return roles.All(r => HrManageableRoles.Contains(r));
     }
 
+    /// <summary>Adds a line to the company's activity trail (visible to the platform owner); never affects the request.</summary>
+    private Task LogAsync(string category, string action, string? details = null)
+        => _activity is null ? Task.CompletedTask : _activity.RecordForCurrentTenantAsync(category, action, details, _currentUser.UserName);
+
     private ActionResult AdminOnlyResult() => StatusCode(403, new { error = "الإجراء ده للمدير (Admin) بس." });
 
     private static readonly System.Text.RegularExpressions.Regex PinPattern = new("^[0-9]{4,6}$", System.Text.RegularExpressions.RegexOptions.Compiled);
@@ -44,9 +48,12 @@ public class UsersController : ControllerBase
     private readonly ICurrentUserService _currentUser;
     private readonly IEmployeeService _employeeService;
     private readonly IPasswordHasher<ApplicationUser> _passwordHasher;
+    private readonly ITenantActivityLog? _activity;
 
-    public UsersController(UserManager<ApplicationUser> userManager, ICurrentUserService currentUser, IEmployeeService employeeService, IPasswordHasher<ApplicationUser> passwordHasher)
+    public UsersController(UserManager<ApplicationUser> userManager, ICurrentUserService currentUser, IEmployeeService employeeService, IPasswordHasher<ApplicationUser> passwordHasher,
+        ITenantActivityLog? activity = null)
     {
+        _activity = activity;
         _userManager = userManager;
         _currentUser = currentUser;
         _employeeService = employeeService;
@@ -125,6 +132,7 @@ public class UsersController : ControllerBase
             return BadRequest(new { error = string.Join("، ", createResult.Errors.Select(e => e.Description)) });
 
         await _userManager.AddToRolesAsync(user, request.Roles);
+        await LogAsync("Users", "User created", $"{user.Email} · {string.Join(", ", request.Roles)}");
 
         return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, Array.Empty<string>(), null, null, false));
     }
@@ -151,6 +159,7 @@ public class UsersController : ControllerBase
         var currentRoles = await _userManager.GetRolesAsync(user);
         await _userManager.RemoveFromRolesAsync(user, currentRoles);
         await _userManager.AddToRolesAsync(user, request.Roles);
+        await LogAsync("Users", "Roles changed", $"{user.Email} → {string.Join(", ", request.Roles)}");
 
         var modules = await GetModulesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
@@ -196,6 +205,7 @@ public class UsersController : ControllerBase
 
         user.IsActive = false;
         await _userManager.UpdateAsync(user);
+        await LogAsync("Users", "User deactivated", user.Email);
 
         var roles = await _userManager.GetRolesAsync(user);
         var modules = await GetModulesAsync(user);
@@ -212,6 +222,7 @@ public class UsersController : ControllerBase
 
         user.IsActive = true;
         await _userManager.UpdateAsync(user);
+        await LogAsync("Users", "User activated", user.Email);
 
         var roles = await _userManager.GetRolesAsync(user);
         var modules = await GetModulesAsync(user);
@@ -271,10 +282,12 @@ public class UsersController : ControllerBase
                 return BadRequest(new { error = "لازم يفضل أدمن واحد على الأقل في الشركة — متقدرش تمسح آخر أدمن." });
         }
 
+        var deletedEmail = user.Email;
         var result = await _userManager.DeleteAsync(user);
         if (!result.Succeeded)
             return BadRequest(new { error = string.Join("، ", result.Errors.Select(e => e.Description)) });
 
+        await LogAsync("Users", "User deleted", deletedEmail);
         return NoContent();
     }
 
@@ -294,6 +307,7 @@ public class UsersController : ControllerBase
         if (!result.Succeeded)
             return BadRequest(new { error = string.Join("، ", result.Errors.Select(e => e.Description)) });
 
+        await LogAsync("Password", "Password changed by an admin", user.Email);
         return NoContent();
     }
 
@@ -315,6 +329,7 @@ public class UsersController : ControllerBase
         var result = await _userManager.UpdateAsync(user);
         if (!result.Succeeded)
             return BadRequest(new { error = string.Join("، ", result.Errors.Select(e => e.Description)) });
+        await LogAsync("Users", "User renamed", $"{user.Email} → {name}");
 
         return NoContent();
     }

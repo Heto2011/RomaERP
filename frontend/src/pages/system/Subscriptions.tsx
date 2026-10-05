@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SubscriptionsApi } from "../../api/services";
-import { SubscriptionStatus, SubscriptionInvoiceStatus, type SubscriptionPlan, type TenantSubscription, type SubscriptionInvoice, type BillingRunResult } from "../../api/types";
+import { SubscriptionStatus, SubscriptionInvoiceStatus, type TenantActivity, type SubscriptionPlan, type TenantSubscription, type SubscriptionInvoice, type BillingRunResult } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 
 const statusLabel: Record<SubscriptionStatus, string> = {
@@ -34,8 +34,26 @@ export default function SubscriptionsPage() {
   const [error, setError] = useState<string | null>(null);
   const [runResult, setRunResult] = useState<BillingRunResult | null>(null);
   const [busy, setBusy] = useState(false);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [activityFor, setActivityFor] = useState<TenantSubscription | null>(null);
+  const [activity, setActivity] = useState<TenantActivity[] | null>(null);
+  const PAGE_SIZE = 25;
 
-  async function loadAll() {
+  async function openActivity(s: TenantSubscription) {
+    if (!systemKey) return;
+    setActivityFor(s);
+    setActivity(null);
+    try {
+      const res = await SubscriptionsApi.getTenantActivity(systemKey, s.tenantId);
+      setActivity(res.data);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function loadAll(nextSearch = search, nextPage = page) {
     if (!systemKey) {
       setError("Enter the system key first.");
       return;
@@ -44,11 +62,12 @@ export default function SubscriptionsPage() {
     try {
       const [plansRes, subsRes, invRes] = await Promise.all([
         SubscriptionsApi.getPlans(systemKey),
-        SubscriptionsApi.getTenantSubscriptions(systemKey),
+        SubscriptionsApi.getTenantSubscriptions(systemKey, nextSearch, nextPage, PAGE_SIZE),
         SubscriptionsApi.getInvoices(systemKey),
       ]);
       setPlans(plansRes.data);
       setSubscriptions(subsRes.data);
+      setTotal(Number(subsRes.headers["x-total-count"] ?? subsRes.data.length));
       setInvoices(invRes.data);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -145,7 +164,7 @@ export default function SubscriptionsPage() {
           <input type="password" value={systemKey} onChange={(e) => setSystemKey(e.target.value)} placeholder="X-System-Key" />
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
-          <button className="btn" onClick={loadAll}>Load</button>
+          <button className="btn" onClick={() => { setPage(1); void loadAll(search, 1); }}>Load</button>
           <button className="btn btn-secondary" onClick={handleRunBillingCycle} disabled={busy}>
             {busy ? "Running…" : "Run Billing Cycle Now"}
           </button>
@@ -189,8 +208,18 @@ export default function SubscriptionsPage() {
 
       {subscriptions && (
         <div className="card" style={{ marginTop: 16 }}>
-          <h3>Tenants</h3>
-          {subscriptions.length === 0 && <div className="text-muted">No tenants yet.</div>}
+          <h3>Tenants <span className="text-muted" style={{ fontSize: 14 }}>({total})</span></h3>
+          <div style={{ display: "flex", gap: 8, marginBottom: 12 }}>
+            <input
+              style={{ maxWidth: 320 }}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { setPage(1); void loadAll(search, 1); } }}
+              placeholder="Search by company name or code"
+            />
+            <button className="btn btn-secondary btn-sm" onClick={() => { setPage(1); void loadAll(search, 1); }}>Search</button>
+          </div>
+          {subscriptions.length === 0 && <div className="text-muted">No tenants found.</div>}
           {subscriptions.length > 0 && (
             <table>
               <thead>
@@ -218,12 +247,47 @@ export default function SubscriptionsPage() {
                       {s.status === SubscriptionStatus.Trialing && (
                         <button className="btn btn-sm" onClick={() => handleActivatePaid(s)}>Confirm first payment</button>
                       )}
+                      <button className="btn btn-secondary btn-sm" onClick={() => openActivity(s)}>Activity</button>
                       {s.tenantIsActive ? (
                         <button className="btn btn-secondary btn-sm" onClick={() => handleSuspend(s.tenantId)}>Suspend</button>
                       ) : (
                         <button className="btn btn-secondary btn-sm" onClick={() => handleReactivate(s.tenantId)}>Reactivate</button>
                       )}
                     </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+          {total > PAGE_SIZE && (
+            <div style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 12 }}>
+              <button className="btn btn-secondary btn-sm" disabled={page <= 1} onClick={() => { setPage(page - 1); void loadAll(search, page - 1); }}>Previous</button>
+              <span className="text-muted">Page {page} of {Math.max(1, Math.ceil(total / PAGE_SIZE))}</span>
+              <button className="btn btn-secondary btn-sm" disabled={page * PAGE_SIZE >= total} onClick={() => { setPage(page + 1); void loadAll(search, page + 1); }}>Next</button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {activityFor && (
+        <div className="card" style={{ marginTop: 16 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ margin: 0 }}>Activity — {activityFor.companyNameEn} <span className="text-muted">({activityFor.companyCode})</span></h3>
+            <button className="btn btn-secondary btn-sm" onClick={() => { setActivityFor(null); setActivity(null); }}>Close</button>
+          </div>
+          {activity === null && <div className="text-muted" style={{ marginTop: 10 }}>Loading…</div>}
+          {activity !== null && activity.length === 0 && <div className="text-muted" style={{ marginTop: 10 }}>Nothing recorded yet for this company.</div>}
+          {activity !== null && activity.length > 0 && (
+            <table style={{ marginTop: 10 }}>
+              <thead><tr><th>When</th><th>Type</th><th>What happened</th><th>Details</th><th>By</th></tr></thead>
+              <tbody>
+                {activity.map((a) => (
+                  <tr key={a.id}>
+                    <td>{new Date(a.occurredAtUtc).toLocaleString()}</td>
+                    <td>{a.category}</td>
+                    <td><b>{a.action}</b></td>
+                    <td>{a.details ?? "—"}</td>
+                    <td>{a.actor ?? "—"}</td>
                   </tr>
                 ))}
               </tbody>

@@ -62,6 +62,8 @@ public record SubscriptionInvoiceDto(
     DateTime? PaidAtUtc,
     string? PaymentReference);
 
+public record TenantActivityDto(Guid Id, DateTime OccurredAtUtc, string Category, string Action, string? Details, string? Actor);
+
 public record BillingRunResultDto(int InvoicesGenerated, int AutoCharged, int Suspended, List<string> Notes);
 
 /// <summary>Owns the recurring monthly billing lifecycle for every tenant: plans, subscriptions, generating
@@ -72,6 +74,9 @@ public interface ISubscriptionBillingService
 {
     Task<List<SubscriptionPlanDto>> GetPlansAsync(CancellationToken ct = default);
     Task<List<TenantSubscriptionDto>> GetTenantSubscriptionsAsync(CancellationToken ct = default);
+    /// <summary>One page of companies (optionally filtered by code/name) — usage is only counted for the companies returned.</summary>
+    Task<(List<TenantSubscriptionDto> Items, int Total)> GetTenantSubscriptionsPageAsync(string? search, int page, int pageSize, CancellationToken ct = default);
+    Task<List<TenantActivityDto>> GetTenantActivityAsync(Guid tenantId, int take, CancellationToken ct = default);
     Task<TenantSubscriptionDto> SetPlanAsync(Guid tenantId, Guid planId, CancellationToken ct = default);
     Task<TenantSubscriptionDto> SetBillingAccountAsync(Guid tenantId, Guid? billingAccountId, CancellationToken ct = default);
     /// <summary>The owner confirms a customer's first payment: turns a trial tenant into a permanent paying one

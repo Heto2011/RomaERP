@@ -2013,6 +2013,15 @@ export interface TenantSubscription {
   extraUserPrice: number;
 }
 
+export interface TenantActivity {
+  id: string;
+  occurredAtUtc: string;
+  category: string;
+  action: string;
+  details: string | null;
+  actor: string | null;
+}
+
 export interface SubscriptionInvoice {
   id: string;
   tenantId: string;

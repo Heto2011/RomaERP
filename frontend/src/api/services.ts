@@ -1,6 +1,7 @@
 import { apiClient, systemApiClient } from "./client";
 import type {
   Account,
+  TenantActivity,
   AppUser,
   BalanceSheet,
   CostCenterAnalysis,
@@ -758,8 +759,14 @@ export const MySubscriptionApi = {
 export const SubscriptionsApi = {
   getPlans: (systemKey: string) =>
     systemApiClient.get<SubscriptionPlan[]>("/system/subscriptions/plans", { headers: { "X-System-Key": systemKey } }),
-  getTenantSubscriptions: (systemKey: string) =>
-    systemApiClient.get<TenantSubscription[]>("/system/subscriptions/tenants", { headers: { "X-System-Key": systemKey } }),
+  /** One page of companies; the total count comes back in the X-Total-Count header. */
+  getTenantSubscriptions: (systemKey: string, search = "", page = 1, pageSize = 25) =>
+    systemApiClient.get<TenantSubscription[]>("/system/subscriptions/tenants", {
+      params: { search: search || undefined, page, pageSize },
+      headers: { "X-System-Key": systemKey },
+    }),
+  getTenantActivity: (systemKey: string, tenantId: string) =>
+    systemApiClient.get<TenantActivity[]>(`/system/subscriptions/tenants/${tenantId}/activity`, { headers: { "X-System-Key": systemKey } }),
   setPlan: (systemKey: string, tenantId: string, planId: string) =>
     systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/plan`, { planId }, { headers: { "X-System-Key": systemKey } }),
   setBillingAccount: (systemKey: string, tenantId: string, billingAccountId: string | null) =>

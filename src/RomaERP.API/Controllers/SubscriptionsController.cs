@@ -38,13 +38,28 @@ public class SubscriptionsController : ControllerBase
         return Ok(await _billing.GetPlansAsync(ct));
     }
 
+    /// <summary>One page of companies; the total count is returned in the X-Total-Count header.</summary>
     [HttpGet("tenants")]
-    public async Task<ActionResult<List<TenantSubscriptionDto>>> GetTenantSubscriptions(CancellationToken ct)
+    public async Task<ActionResult<List<TenantSubscriptionDto>>> GetTenantSubscriptions(
+        [FromQuery] string? search, [FromQuery] int page = 1, [FromQuery] int pageSize = 25, CancellationToken ct = default)
     {
         var keyCheck = CheckSystemKey();
         if (keyCheck is not null) return keyCheck;
 
-        return Ok(await _billing.GetTenantSubscriptionsAsync(ct));
+        var (items, total) = await _billing.GetTenantSubscriptionsPageAsync(search, page, pageSize, ct);
+        Response.Headers["X-Total-Count"] = total.ToString();
+        Response.Headers["Access-Control-Expose-Headers"] = "X-Total-Count";
+        return Ok(items);
+    }
+
+    /// <summary>The company's activity trail (password changes, plan/payment/status changes, user management...), newest first.</summary>
+    [HttpGet("tenants/{tenantId:guid}/activity")]
+    public async Task<ActionResult<List<TenantActivityDto>>> GetTenantActivity(Guid tenantId, [FromQuery] int take = 100, CancellationToken ct = default)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        return Ok(await _billing.GetTenantActivityAsync(tenantId, take, ct));
     }
 
     [HttpPut("tenants/{tenantId:guid}/plan")]
