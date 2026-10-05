@@ -61,6 +61,10 @@ public interface ITenantProvisioningService
     /// this app.</summary>
     Task<DataDeletionRecordDto> ProcessDataDeletionRequestAsync(Guid tenantId, DataDeletionRequest request, CancellationToken ct = default);
 
+    /// <summary>Changes the company's login code (its database keeps its name). Signed-in users must log in
+    /// again with the new code.</summary>
+    Task<TenantDto> ChangeCompanyCodeAsync(Guid tenantId, string newCompanyCode, CancellationToken ct = default);
+
     /// <summary>System-console "delete forever": drops the company's database and removes the company, its
     /// subscription, invoices and activity trail from the central database so its code is free again. Refuses
     /// if the company has paid invoices (accounting records). Leaves one <see cref="DataDeletionRecordDto"/>

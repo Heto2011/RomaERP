@@ -14,6 +14,7 @@ namespace RomaERP.API.Controllers;
 /// <summary>Not tenant-scoped — used to create new tenants in the first place, so it's excluded from
 /// TenantResolutionMiddleware and protected by a system key instead of a JWT/company code.</summary>
 public record DeleteTenantForeverRequest(string ConfirmCompanyCode);
+public record ChangeCompanyCodeRequest(string NewCompanyCode);
 
 [ApiController]
 [Route("api/system")]
@@ -82,6 +83,27 @@ public class SystemController : ControllerBase
         if (keyCheck is not null) return keyCheck;
 
         return Ok(await _provisioning.ProcessDataDeletionRequestAsync(tenantId, request, ct));
+    }
+
+    [HttpPut("tenants/{tenantId:guid}/company-code")]
+    public async Task<ActionResult<TenantDto>> ChangeCompanyCode(Guid tenantId, ChangeCompanyCodeRequest request, CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        var oldCode = (await _central.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == tenantId, ct))?.CompanyCode;
+        var tenant = await _provisioning.ChangeCompanyCodeAsync(tenantId, request.NewCompanyCode, ct);
+
+        // Uploaded contracts live in a per-company folder named after the code.
+        if (oldCode is not null)
+        {
+            string Safe(string c) => new string(c.ToLowerInvariant().Where(ch => char.IsAsciiLetterOrDigit(ch) || ch == '-').ToArray());
+            var root = Path.Combine(_environment.ContentRootPath, "App_Data", "employee-contracts");
+            var from = Path.Combine(root, Safe(oldCode));
+            var to = Path.Combine(root, Safe(tenant.CompanyCode));
+            if (Directory.Exists(from) && !Directory.Exists(to)) Directory.Move(from, to);
+        }
+        return Ok(tenant);
     }
 
     /// <summary>Removes a company completely and for good — database, subscription, invoices, activity trail,

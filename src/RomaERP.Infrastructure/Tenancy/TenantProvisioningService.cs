@@ -174,6 +174,31 @@ public class TenantProvisioningService : ITenantProvisioningService
         return MapDeletionRecord(record);
     }
 
+    public async Task<TenantDto> ChangeCompanyCodeAsync(Guid tenantId, string newCompanyCode, CancellationToken ct = default)
+    {
+        var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, ct)
+            ?? throw new NotFoundException(nameof(Tenant), tenantId);
+
+        var newCode = (newCompanyCode ?? string.Empty).Trim().ToLowerInvariant();
+        if (!CompanyCodePattern.IsMatch(newCode))
+            throw new ValidationAppException("كود الشركة لازم يكون حروف إنجليزية صغيرة وأرقام وشرطات بس، من 3 لـ 50 حرف.");
+        if (newCode == tenant.CompanyCode)
+            throw new ValidationAppException("ده نفس الكود الحالي.");
+        if (await _central.Tenants.AnyAsync(t => t.CompanyCode == newCode, ct))
+            throw new ValidationAppException("كود الشركة ده مستخدم قبل كده.");
+
+        var oldCode = tenant.CompanyCode;
+        // The database keeps its own name (stored on the tenant) — only the login code changes.
+        tenant.CompanyCode = newCode;
+        foreach (var a in _central.TenantActivities.Where(a => a.TenantId == tenantId))
+            a.CompanyCode = newCode;
+        foreach (var t in _central.SupportTickets.Where(t => t.CompanyCode == oldCode))
+            t.CompanyCode = newCode;
+        _central.TenantActivities.Add(TenantActivityLog.Build(tenant.Id, newCode, "Company", "Company code changed", $"{oldCode} → {newCode}", "system console"));
+        await _central.SaveChangesAsync(ct);
+        return MapTenant(tenant);
+    }
+
     public async Task<DataDeletionRecordDto> DeleteTenantPermanentlyAsync(Guid tenantId, string confirmCompanyCode, string processedBy, CancellationToken ct = default)
     {
         var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, ct)

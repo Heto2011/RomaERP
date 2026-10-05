@@ -97,6 +97,19 @@ export default function SubscriptionsPage() {
     }
   }
 
+  async function handleChangeCode(s: TenantSubscription) {
+    if (!systemKey) return;
+    const code = prompt(`New login code for "${s.companyNameEn}" (current: ${s.companyCode}).\nLowercase English letters, numbers and dashes, 3–50 characters.\nEveryone signed in will have to log in again with the new code:`);
+    if (code === null || !code.trim()) return;
+    setError(null);
+    try {
+      await SubscriptionsApi.changeCompanyCode(systemKey, s.tenantId, code);
+      await loadAll();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function handleDeleteForever(s: TenantSubscription) {
     if (!systemKey) return;
     const typed = prompt(`DELETE FOREVER: "${s.companyNameEn}" — its database, users, subscription, invoices and activity will be erased and CANNOT be recovered.\n\nType the company code (${s.companyCode}) to confirm:`);
@@ -267,6 +280,7 @@ export default function SubscriptionsPage() {
                       ) : (
                         <button className="btn btn-secondary btn-sm" onClick={() => handleReactivate(s.tenantId)}>Reactivate</button>
                       )}
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleChangeCode(s)}>Change code</button>
                       <button className="btn btn-sm" style={{ background: "#b42318", color: "#fff" }} onClick={() => handleDeleteForever(s)}>Delete forever</button>
                     </td>
                   </tr>
