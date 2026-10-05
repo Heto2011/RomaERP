@@ -53,6 +53,13 @@ builder.Services.AddHostedService<RomaERP.API.BackgroundServices.DemoTenantExpir
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.SubscriptionBillingBackgroundService>();
 
 var jwtSection = builder.Configuration.GetSection("Jwt");
+// The key in the repo's appsettings.json is public, so a server still running with it would accept forged tokens
+// for any company. Refuse to start rather than run that way (Development keeps the placeholder for local work).
+if (!builder.Environment.IsDevelopment() &&
+    (string.IsNullOrWhiteSpace(jwtSection["Key"]) || jwtSection["Key"] == "CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_KEY_IN_PRODUCTION_ENV"))
+{
+    throw new InvalidOperationException("Jwt:Key is not set to a private secret — set it before starting the API.");
+}
 builder.Services.AddAuthentication(options =>
     {
         options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -111,6 +118,18 @@ builder.Services.AddRateLimiter(options =>
             Window = TimeSpan.FromMinutes(1),
             QueueLimit = 0,
         }));
+
+    // The per-IP limit above can be dodged by rotating addresses, so the PIN endpoint ALSO has a cap per company:
+    // 4-digit PINs have only 10,000 combinations, and this keeps a distributed guesser from walking all of them.
+    // (A second named policy cannot be stacked with an attribute, so this one is applied globally to that path.)
+    options.GlobalLimiter = PartitionedRateLimiter.Create<HttpContext, string>(httpContext =>
+    {
+        if (!httpContext.Request.Path.StartsWithSegments("/api/auth/pos-pin-login", StringComparison.OrdinalIgnoreCase))
+            return RateLimitPartition.GetNoLimiter("other");
+        return RateLimitPartition.GetFixedWindowLimiter(
+            "pin:" + httpContext.Request.Headers["X-Company-Code"].ToString().Trim().ToLowerInvariant(),
+            _ => new FixedWindowRateLimiterOptions { PermitLimit = 20, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 });
+    });
 
     // Identity's own lockout only throttles repeated guesses against one account, so this adds a
     // per-IP cap to blunt password spraying across many different tenant accounts from one source.

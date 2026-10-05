@@ -114,6 +114,21 @@ button {
   flex: 1;
 }
 
+/* The product name and logo in the headers are branding, not content: they cannot be selected, copied or dragged. */
+.brand-text,
+.sidebar-brand,
+.login-logo {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+.brand-text img,
+.login-logo {
+  pointer-events: none;
+  -webkit-user-drag: none;
+}
+
 .sidebar-brand {
   font-size: 20px;
   font-weight: 700;
@@ -801,6 +816,14 @@ tr:hover td {
   border-radius: 12px;
   width: 360px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.login-logo {
+  display: block;
+  width: 64px;
+  height: 64px;
+  border-radius: 16px;
+  margin: 0 auto 14px;
 }
 
 .login-card h1 {

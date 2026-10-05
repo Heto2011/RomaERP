@@ -203,6 +203,10 @@ jobs:
             jwt_key = data.get('Jwt', {}).get('Key', '')
             is_placeholder = jwt_key == 'CHANGE_THIS_TO_A_LONG_RANDOM_SECRET_KEY_IN_PRODUCTION_ENV'
             print(('MISSING (still the public placeholder!)' if is_placeholder else 'SET') + ': Jwt:Key')
+            if is_placeholder:
+                # The placeholder is published in the public repo: a server signing tokens with it would accept
+                # forged logins for any company. Stop BEFORE the restart so nothing is switched over.
+                raise SystemExit('DEPLOY_STOPPED: add the JWT_SIGNING_KEY secret (a long random value) in GitHub, then deploy again.')
             "
 
             dotnet publish src/RomaERP.API/RomaERP.API.csproj -c Release -o /var/www/romaerp-api
@@ -258,6 +262,7 @@ jobs:
             cp /root/RomaERP/marketing/pricing.html /var/www/romaerp/pricing.html
             cp /root/RomaERP/marketing/terms.html /var/www/romaerp/terms.html
             cp /root/RomaERP/marketing/favicon.svg /var/www/romaerp/favicon.svg
+            cp /root/RomaERP/marketing/roma-logo.png /var/www/romaerp/roma-logo.png
             cp /root/RomaERP/marketing/og-image.png /var/www/romaerp/og-image.png
             cp /root/RomaERP/marketing/roma-group.html /var/www/romaerp/roma-group.html
             cp /root/RomaERP/marketing/roma-hr.html /var/www/romaerp/roma-hr.html
@@ -333,6 +338,13 @@ jobs:
                 ssl_certificate /etc/letsencrypt/live/romagroup.app/fullchain.pem;
                 ssl_certificate_key /etc/letsencrypt/live/romagroup.app/privkey.pem;
                 ssl_protocols TLSv1.2 TLSv1.3;
+                server_tokens off;
+                add_header Strict-Transport-Security "max-age=15552000" always;
+                add_header X-Content-Type-Options "nosniff" always;
+                add_header X-Frame-Options "SAMEORIGIN" always;
+                add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+                # Attendance needs the location and the camera (selfie); everything else is switched off.
+                add_header Permissions-Policy "geolocation=(self), camera=(self), microphone=(), payment=()" always;
                 root /var/www/romaerp;
                 index index.html;
                 client_max_body_size 25m;

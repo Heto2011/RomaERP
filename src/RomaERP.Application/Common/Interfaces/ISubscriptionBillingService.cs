@@ -33,7 +33,13 @@ public record TenantSubscriptionDto(
     decimal OutstandingAmount,
     string Currency,
     int OverdueDays,
-    BillingPeriod BillingPeriod);
+    BillingPeriod BillingPeriod,
+    // What the plan includes (null = unlimited) and what each extra costs per month in the tenant's currency, so the
+    // customer can see where they stand against their limit and what going over costs.
+    int? IncludedBranches = null,
+    int? IncludedUsers = null,
+    decimal ExtraBranchPrice = 0,
+    decimal ExtraUserPrice = 0);
 
 public record SubscriptionInvoiceDto(
     Guid Id,

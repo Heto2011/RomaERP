@@ -2006,6 +2006,11 @@ export interface TenantSubscription {
   overdueDays: number;
   /** 0 = monthly, 1 = annual (12 months charged as 10). */
   billingPeriod: number;
+  /** What the plan includes (null = unlimited) and the monthly price of each extra, in `currency`. */
+  includedBranches: number | null;
+  includedUsers: number | null;
+  extraBranchPrice: number;
+  extraUserPrice: number;
 }
 
 export interface SubscriptionInvoice {

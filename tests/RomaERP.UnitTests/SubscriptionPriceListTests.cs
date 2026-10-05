@@ -111,4 +111,24 @@ public class SubscriptionPriceListTests
 
     [Fact]
     public void UnknownPlanHasNoPrice() => Assert.Null(SubscriptionPriceList.Find("nope", "SAR"));
+
+    [Fact]
+    public void Enterprise_HasNoPublishedPriceAndNoAutomaticDiscounts()
+    {
+        Assert.False(SubscriptionPriceList.SupportsAnnual("enterprise"));
+        foreach (var currency in new[] { "SAR", "EGP", "GBP", "AED" })
+        {
+            var p = SubscriptionPriceList.Find("enterprise", currency)!;
+            Assert.Equal(0m, p.Base);
+            Assert.Equal(0m, p.FoundingBase);
+        }
+    }
+
+    [Theory]
+    [InlineData("people")]
+    [InlineData("essential")]
+    [InlineData("business")]
+    [InlineData("professional")]
+    public void FirstThreeErpPlansAndHrKeepTheAnnualDiscount(string plan)
+        => Assert.True(SubscriptionPriceList.SupportsAnnual(plan));
 }

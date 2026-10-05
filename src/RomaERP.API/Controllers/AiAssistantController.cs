@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
+using RomaERP.API.Services;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.Assistant.DTOs;
 using RomaERP.Application.Assistant.Services;
@@ -82,11 +83,12 @@ public class AiAssistantController : ControllerBase
         }
 
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "unknown";
+        var extension = UploadSafety.ProofExtension(file.FileName);
         var response = await _assistantService.StartFromReceiptImageAsync(imageBytes, mediaType, userId, ct);
 
         var uploadsDir = Path.Combine(_environment.ContentRootPath, "App_Data", "expense-proofs");
         Directory.CreateDirectory(uploadsDir);
-        var storedFileName = $"{response.CaptureId}{Path.GetExtension(file.FileName)}";
+        var storedFileName = $"{response.CaptureId}{extension}";
         await using (var stream = System.IO.File.Create(Path.Combine(uploadsDir, storedFileName)))
         {
             await file.CopyToAsync(stream, ct);
@@ -103,10 +105,19 @@ public class AiAssistantController : ControllerBase
         if (file.Length == 0)
             throw new ValidationAppException("الملف المرفوع فارغ.");
 
+        var extension = UploadSafety.ProofExtension(file.FileName);
+        var head = await UploadSafety.ReadHeadAsync(file, 8, ct);
+        var isPdf = extension == ".pdf";
+        if (isPdf ? !UploadSafety.LooksLikePdf(head) : head.Length < 4)
+            throw new ValidationAppException("محتوى الملف مش مطابق لنوعه.");
+
+        // The capture must exist (in this company's database) before anything is written to disk.
+        await _assistantService.AttachProofAsync(id, file.FileName, $"{id}{extension}", ct);
+
         var uploadsDir = Path.Combine(_environment.ContentRootPath, "App_Data", "expense-proofs");
         Directory.CreateDirectory(uploadsDir);
 
-        var storedFileName = $"{id}{Path.GetExtension(file.FileName)}";
+        var storedFileName = $"{id}{extension}";
         var fullPath = Path.Combine(uploadsDir, storedFileName);
 
         await using (var stream = System.IO.File.Create(fullPath))

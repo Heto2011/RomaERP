@@ -91,6 +91,13 @@ public class EmployeesController : ControllerBase
         if (file.ContentType?.ToLowerInvariant() is not ("image/jpeg" or "image/jpg"))
             throw new ValidationAppException("صورة الوجه المرجعية لازم تكون JPEG.");
 
+        // Content-Type is client-supplied, so also check the real JPEG signature.
+        if (!RomaERP.API.Services.UploadSafety.LooksLikeJpeg(await RomaERP.API.Services.UploadSafety.ReadHeadAsync(file, 3, ct)))
+            throw new ValidationAppException("صورة الوجه المرجعية لازم تكون JPEG.");
+
+        // The employee must exist in THIS company before a file is written under its id.
+        await _employeeService.GetByIdAsync(id, ct);
+
         var facesDir = Path.Combine(_environment.ContentRootPath, "App_Data", "employee-faces");
         Directory.CreateDirectory(facesDir);
 

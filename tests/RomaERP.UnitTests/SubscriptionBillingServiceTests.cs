@@ -1,3 +1,4 @@
+using RomaERP.Application.Common.Exceptions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -311,6 +312,81 @@ public class SubscriptionBillingServiceTests
     {
         var central = NewCentral();
         var plan = Plan("essential", 3, 10);
+        central.SubscriptionPlans.Add(plan);
+        var (tenant, _) = AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(20));
+        var service = new TestableBillingService(central, Config());
+
+        var dto = await service.SetBillingPeriodAsync(tenant.Id, BillingPeriod.Annual);
+
+        Assert.Equal(BillingPeriod.Annual, dto.BillingPeriod);
+    }
+
+    [Fact]
+    public async Task Dto_ExposesIncludedLimitsAndExtraPricesInTheTenantsCurrency()
+    {
+        var central = NewCentral();
+        var plan = Plan("essential", 3, 10);
+        central.SubscriptionPlans.Add(plan);
+        var (egypt, _) = AddTenant(central, plan, Country.Egypt, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(20));
+        var service = new TestableBillingService(central, Config());
+
+        var dto = await service.SetBillingPeriodAsync(egypt.Id, BillingPeriod.Monthly);
+
+        Assert.Equal(3, dto.IncludedBranches);
+        Assert.Equal(10, dto.IncludedUsers);
+        Assert.Equal("EGP", dto.Currency);
+        Assert.Equal(200m, dto.ExtraBranchPrice);
+        Assert.Equal(400m, dto.ExtraUserPrice);
+    }
+
+    [Fact]
+    public async Task Dto_UnlimitedBranchesAreNull_AndCustomPlansAdvertiseNoOverage()
+    {
+        var central = NewCentral();
+        var people = new SubscriptionPlan { Code = "people", NameAr = "x", NameEn = "x", MonthlyBasePrice = 99, IncludedBranches = int.MaxValue, IncludedUsers = 25 };
+        central.SubscriptionPlans.Add(people);
+        var (hr, _) = AddTenant(central, people, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(20));
+        var enterprise = Plan("enterprise", int.MaxValue, int.MaxValue);
+        enterprise.IsCustomPricing = true;
+        central.SubscriptionPlans.Add(enterprise);
+        var (big, _) = AddTenant(central, enterprise, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(20));
+        var service = new TestableBillingService(central, Config());
+
+        var hrDto = await service.SetBillingPeriodAsync(hr.Id, BillingPeriod.Monthly);
+        Assert.Null(hrDto.IncludedBranches);
+        Assert.Equal(25, hrDto.IncludedUsers);
+        Assert.Equal(0m, hrDto.ExtraBranchPrice);
+        Assert.Equal(5m, hrDto.ExtraUserPrice);
+
+        var bigDto = await service.SetBillingPeriodAsync(big.Id, BillingPeriod.Monthly);
+        Assert.Null(bigDto.IncludedUsers);
+        Assert.Equal(0m, bigDto.ExtraUserPrice);
+    }
+
+    [Fact]
+    public async Task Enterprise_RefusesAnnualBilling_AndIsNeverInvoicedAutomatically()
+    {
+        var central = NewCentral();
+        var plan = Plan("enterprise", int.MaxValue, int.MaxValue);
+        plan.IsCustomPricing = true;
+        central.SubscriptionPlans.Add(plan);
+        var (tenant, _) = AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(-1));
+        var service = new TestableBillingService(central, Config()) { Branches = 40, Users = 300 };
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.SetBillingPeriodAsync(tenant.Id, BillingPeriod.Annual));
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.ActivatePaidAsync(tenant.Id, plan.Id, "ref", BillingPeriod.Annual));
+
+        var result = await service.RunBillingCycleAsync();
+
+        Assert.Equal(0, result.InvoicesGenerated);
+        Assert.Empty(central.SubscriptionInvoices);
+    }
+
+    [Fact]
+    public async Task Professional_KeepsTheAnnualDiscount()
+    {
+        var central = NewCentral();
+        var plan = Plan("professional", 15, 50);
         central.SubscriptionPlans.Add(plan);
         var (tenant, _) = AddTenant(central, plan, Country.SaudiArabia, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(20));
         var service = new TestableBillingService(central, Config());

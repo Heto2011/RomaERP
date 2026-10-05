@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MySubscriptionApi } from "../api/services";
-import type { TenantSubscription, SubscriptionInvoice, BankTransferInfo } from "../api/types";
+import { ProductScope, type TenantSubscription, type SubscriptionInvoice, type BankTransferInfo } from "../api/types";
+import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -20,7 +21,10 @@ const INVOICE_STATUS_KEY: Record<number, string> = {
 };
 
 export default function MySubscriptionPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
+  const { user } = useAuth();
+  // Roma HR is billed per active employee and has no branches, so that row is hidden for it.
+  const peopleOnly = user?.productScope === ProductScope.PeopleOnly;
   const [subscription, setSubscription] = useState<TenantSubscription | null>(null);
   const [invoices, setInvoices] = useState<SubscriptionInvoice[]>([]);
   const [bankInfo, setBankInfo] = useState<BankTransferInfo | null>(null);
@@ -60,6 +64,18 @@ export default function MySubscriptionPage() {
     }
   }
 
+  async function openInvoicePdf(invoiceId: string) {
+    setError(null);
+    try {
+      const res = await MySubscriptionApi.downloadInvoicePdf(invoiceId, lang);
+      const url = URL.createObjectURL(new Blob([res.data], { type: "application/pdf" }));
+      window.open(url, "_blank");
+      setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   function startReport(invoice: SubscriptionInvoice) {
     setReportingInvoice(invoice);
     setPaymentReference("");
@@ -82,6 +98,27 @@ export default function MySubscriptionPage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  // "4 of 3 included — 1 extra × 15 SAR = 15 SAR / month": where the customer stands against the plan's limit.
+  function usageCell(current: number, included: number | null, extraPrice: number, currency: string) {
+    if (included === null) return <>{current} <span className="text-muted">({t.mySubscription.unlimited})</span></>;
+    const extra = Math.max(0, current - included);
+    return (
+      <>
+        {current} <span className="text-muted">/ {included} {t.mySubscription.included}</span>
+        {extra > 0 && extraPrice > 0 && (
+          <div className="text-danger" style={{ fontSize: 12 }}>
+            {extra} {t.mySubscription.extra} × {extraPrice.toLocaleString()} = {(extra * extraPrice).toLocaleString()} {currency} {t.mySubscription.perMonth}
+          </div>
+        )}
+        {extra === 0 && extraPrice > 0 && (
+          <div className="text-muted" style={{ fontSize: 12 }}>
+            {t.mySubscription.eachExtra}: {extraPrice.toLocaleString()} {currency} {t.mySubscription.perMonth}
+          </div>
+        )}
+      </>
+    );
   }
 
   function copy(field: string, value: string) {
@@ -128,13 +165,15 @@ export default function MySubscriptionPage() {
                 <td>{t.mySubscription.period}</td>
                 <td>{new Date(subscription.currentPeriodStart).toLocaleDateString()} — {new Date(subscription.currentPeriodEnd).toLocaleDateString()}</td>
               </tr>
+              {!peopleOnly && (
+                <tr>
+                  <td>{t.mySubscription.branchesUsage}</td>
+                  <td>{usageCell(subscription.currentBranches, subscription.includedBranches, subscription.extraBranchPrice, subscription.currency)}</td>
+                </tr>
+              )}
               <tr>
-                <td>{t.mySubscription.branchesUsage}</td>
-                <td>{subscription.currentBranches}</td>
-              </tr>
-              <tr>
-                <td>{t.mySubscription.usersUsage}</td>
-                <td>{subscription.currentUsers}</td>
+                <td>{peopleOnly ? t.mySubscription.employeesUsage : t.mySubscription.usersUsage}</td>
+                <td>{usageCell(subscription.currentUsers, subscription.includedUsers, subscription.extraUserPrice, subscription.currency)}</td>
               </tr>
               <tr>
                 <td>{t.mySubscription.outstanding}</td>
@@ -176,7 +215,10 @@ export default function MySubscriptionPage() {
                     </span>
                   </td>
                   <td>{new Date(inv.dueDateUtc).toLocaleDateString()}</td>
-                  <td>
+                  <td style={{ display: "flex", gap: 6 }}>
+                    <button className="btn btn-secondary btn-sm" onClick={() => openInvoicePdf(inv.id)}>
+                      {t.mySubscription.invoicePdfBtn}
+                    </button>
                     {inv.status === 0 && (
                       <button className="btn btn-secondary btn-sm" onClick={() => startReport(inv)}>
                         {t.mySubscription.reportPaymentBtn}

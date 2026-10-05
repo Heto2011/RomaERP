@@ -16,6 +16,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Content Include="Assets\roma-logo.png" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\RomaERP.Application\RomaERP.Application.csproj" />
     <ProjectReference Include="..\RomaERP.Infrastructure\RomaERP.Infrastructure.csproj" />
   </ItemGroup>

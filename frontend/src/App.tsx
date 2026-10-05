@@ -109,11 +109,13 @@ function ProtectedRoute({ children, layout = true, loginPath = "/login" }: { chi
 
 // `managerOnly` pages (employees, payroll, contracts…) are HR/owner tools. An ordinary employee who types the
 // address by hand is sent back to their own home page — the server refuses the data too.
-function PeopleRoute({ children, managerOnly = false }: { children: React.ReactNode; managerOnly?: boolean }) {
+function PeopleRoute({ children, managerOnly = false, adminOnly = false }: { children: React.ReactNode; managerOnly?: boolean; adminOnly?: boolean }) {
   const { user } = useAuth();
   if (!user) return <Navigate to="/people-login" replace />;
   const isManager = user.roles.includes("Admin") || user.roles.includes("HR") || user.modules.includes("HR");
   if (managerOnly && !isManager) return <Navigate to="/people" replace />;
+  // Billing belongs to the company owner (Admin) only — an HR Manager never sees the subscription.
+  if (adminOnly && !user.roles.includes("Admin")) return <Navigate to="/people" replace />;
   return <PeopleLayout>{children}</PeopleLayout>;
 }
 
@@ -243,6 +245,7 @@ export default function App() {
       <Route path="/people/employee-contracts" element={<PeopleRoute managerOnly><EmployeeContracts /></PeopleRoute>} />
       <Route path="/people/salary-components" element={<PeopleRoute managerOnly><SalaryComponentsPage /></PeopleRoute>} />
       <Route path="/people/labor-report" element={<PeopleRoute managerOnly><LaborReportPage /></PeopleRoute>} />
+      <Route path="/people/subscription" element={<PeopleRoute adminOnly><MySubscriptionPage /></PeopleRoute>} />
       <Route path="/people/employee-requests" element={<PeopleRoute managerOnly><EmployeeRequestsAdmin /></PeopleRoute>} />
       <Route path="/restaurant/tables" element={<ProtectedRoute><RestaurantTables /></ProtectedRoute>} />
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />

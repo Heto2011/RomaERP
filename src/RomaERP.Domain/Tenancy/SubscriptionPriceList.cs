@@ -21,6 +21,12 @@ public static class SubscriptionPriceList
     public const int AnnualMonthsCharged = 10;
     public const int AnnualMonthsCovered = 12;
 
+    /// <summary>Enterprise has no published price and no automatic discounts (annual "pay 10 get 12", Egypt founding price):
+    /// it is quoted and invoiced by agreement when a real customer of that size appears.</summary>
+    private static readonly HashSet<string> NoAutomaticDiscountPlans = new(StringComparer.OrdinalIgnoreCase) { "enterprise" };
+
+    public static bool SupportsAnnual(string planCode) => !NoAutomaticDiscountPlans.Contains(planCode);
+
     public const string Sar = "SAR";
     public const string Egp = "EGP";
     public const string Gbp = "GBP";
@@ -37,18 +43,19 @@ public static class SubscriptionPriceList
         [("essential", Sar)] = new(Sar, 149, 0, 15, 20),
         [("business", Sar)] = new(Sar, 349, 0, 15, 20),
         [("professional", Sar)] = new(Sar, 649, 0, 15, 20),
-        [("enterprise", Sar)] = new(Sar, 2499, 0, 15, 20),
+        // Enterprise: no published price (0) — quoted per customer, see NoAutomaticDiscountPlans.
+        [("enterprise", Sar)] = new(Sar, 0, 0, 0, 0),
 
-        // Egypt: Base is the regular list price, FoundingBase the 50%-off launch price.
+        // Egypt: Base is the regular list price, FoundingBase the 50%-off launch price (Essential, Business and Professional).
         [("essential", Egp)] = new(Egp, 3000, 1500, 200, 400),
         [("business", Egp)] = new(Egp, 7000, 3500, 200, 400),
         [("professional", Egp)] = new(Egp, 12000, 6000, 200, 400),
-        [("enterprise", Egp)] = new(Egp, 35000, 0, 200, 400),
+        [("enterprise", Egp)] = new(Egp, 0, 0, 0, 0),
 
         [("essential", Gbp)] = new(Gbp, 49, 0, 5, 3),
         [("business", Gbp)] = new(Gbp, 99, 0, 5, 3),
         [("professional", Gbp)] = new(Gbp, 179, 0, 5, 3),
-        [("enterprise", Gbp)] = new(Gbp, 599, 0, 5, 3),
+        [("enterprise", Gbp)] = new(Gbp, 0, 0, 0, 0),
 
         // ROMA People (HR only): up to 25 employees, branches unlimited (so no per-branch overage) and a small
         // per-employee overage. Launch offer: the first FoundingCustomerLimit customers pay FoundingBase for their

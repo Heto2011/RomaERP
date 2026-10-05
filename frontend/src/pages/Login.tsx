@@ -37,6 +37,7 @@ export default function Login() {
             {t.language}
           </button>
         </div>
+        <img src="/roma-logo.png" alt="Roma Group" className="login-logo" />
         <h1>{t.login.title}</h1>
         <p>{t.login.subtitle}</p>
         {error && <div className="alert-error">{error}</div>}

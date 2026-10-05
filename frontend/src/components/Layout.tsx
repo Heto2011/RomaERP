@@ -272,7 +272,10 @@ export default function Layout({ children }: { children: ReactNode }) {
     <div className="topnav-shell">
       <header className="topnav-header">
         <div className="topnav-brand-row">
-          <span className="brand-text">{t.appName}</span>
+          <span className="brand-text" style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+            <img src="/roma-logo.png" alt="" width={28} height={28} style={{ borderRadius: 8 }} />
+            {t.appName}
+          </span>
           <div className="topnav-search-wrap">
             <GlobalSearch />
           </div>

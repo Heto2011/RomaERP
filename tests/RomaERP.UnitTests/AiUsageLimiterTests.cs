@@ -192,4 +192,44 @@ public class AiUsageLimiterTests
         Assert.Contains("English", AiLanguage.ReplyDirective(prefersArabic: false));
         Assert.Equal(string.Empty, AiLanguage.ReplyDirective(prefersArabic: true));
     }
+
+    [Theory]
+    [InlineData("people", 200)]
+    [InlineData("essential", 300)]
+    [InlineData("business", 700)]
+    [InlineData("professional", 1300)]
+    public async Task MonthlyCap_BlocksOnceBothFeaturesTogetherReachTheLimit(string plan, int monthlyCap)
+    {
+        var ctx = CreateAppContext();
+        var firstOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+        // Spread across earlier days of this month and both features, each day well under its daily limit.
+        ctx.AiUsageCounters.Add(new RomaERP.Domain.Assistant.AiUsageCounter { FeatureKey = "BusinessQa", UsageDate = firstOfMonth, Count = monthlyCap / 2 });
+        ctx.AiUsageCounters.Add(new RomaERP.Domain.Assistant.AiUsageCounter { FeatureKey = "ExpenseCapture", UsageDate = firstOfMonth, Count = monthlyCap - monthlyCap / 2 });
+        await ctx.SaveChangesAsync();
+        var limiter = CreateLimiter(ctx, plan);
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => limiter.EnsureWithinDailyLimitAsync("BusinessQa"));
+    }
+
+    [Fact]
+    public async Task MonthlyCap_ResetsWithTheNewMonth()
+    {
+        var ctx = CreateAppContext();
+        var lastMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1).AddDays(-1);
+        ctx.AiUsageCounters.Add(new RomaERP.Domain.Assistant.AiUsageCounter { FeatureKey = "BusinessQa", UsageDate = lastMonth, Count = 5000 });
+        await ctx.SaveChangesAsync();
+
+        await CreateLimiter(ctx, "essential").EnsureWithinDailyLimitAsync("BusinessQa"); // does not throw
+    }
+
+    [Fact]
+    public async Task Enterprise_HasNoMonthlyCap_OnlyTheDailyLimits()
+    {
+        var ctx = CreateAppContext();
+        var firstOfMonth = new DateTime(DateTime.UtcNow.Year, DateTime.UtcNow.Month, 1);
+        ctx.AiUsageCounters.Add(new RomaERP.Domain.Assistant.AiUsageCounter { FeatureKey = "ExpenseCapture", UsageDate = firstOfMonth, Count = 5000 });
+        await ctx.SaveChangesAsync();
+
+        await CreateLimiter(ctx, "enterprise").EnsureWithinDailyLimitAsync("BusinessQa"); // does not throw
+    }
 }
