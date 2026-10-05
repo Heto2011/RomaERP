@@ -106,6 +106,9 @@ public class AuthController : ControllerBase
             if (_passwordHasher.VerifyHashedPassword(user, user.PosPinHash!, request.Pin) == PasswordVerificationResult.Success)
             {
                 var roles = await _userManager.GetRolesAsync(user);
+                // A short PIN must never open an owner/admin session — the Admin signs in with the password.
+                if (roles.Contains("Admin"))
+                    continue;
                 var modules = await GetModulesAsync(user);
                 var token = _tokenService.GenerateToken(user.Id, user.UserName!, user.Email!, _tenantContext.CompanyCode, roles, modules);
                 await RecordLoginAsync(user.Id.ToString(), user.Email!, success: true, method: "PosPin", CancellationToken.None);

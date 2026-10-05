@@ -17,6 +17,20 @@ jobs:
           curl -fsS -m 20 -o /dev/null https://romagroup.app/ && echo "site: ok"
           curl -fsS -m 20 -o /dev/null https://romagroup.app/api/health && echo "api: ok"
 
+      - name: Database and API ports are not reachable from the internet
+        env:
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          BAD=""
+          for PORT in 1433 5000 14330; do
+            if timeout 6 bash -c "exec 3<>/dev/tcp/$HOST/$PORT" 2>/dev/null; then BAD="$BAD $PORT"; fi
+          done
+          if [ -n "$BAD" ]; then
+            echo "EXPOSED_PORTS:$BAD is open to the internet — close it in the DigitalOcean firewall (only 22, 80 and 443 should be public)."
+            exit 1
+          fi
+          echo "ports 1433, 5000 and 14330 are closed from outside: ok"
+
       - name: Server resources, services and backups
         uses: appleboy/ssh-action@v1.0.3
         with:
