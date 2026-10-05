@@ -13,6 +13,8 @@ namespace RomaERP.API.Controllers;
 
 /// <summary>Not tenant-scoped — used to create new tenants in the first place, so it's excluded from
 /// TenantResolutionMiddleware and protected by a system key instead of a JWT/company code.</summary>
+public record DeleteTenantForeverRequest(string ConfirmCompanyCode);
+
 [ApiController]
 [Route("api/system")]
 [EnableRateLimiting("system-key")]
@@ -23,14 +25,17 @@ public class SystemController : ControllerBase
     private readonly ISystemPasswordResetService _passwordReset;
     private readonly IConfiguration _configuration;
     private readonly CentralDbContext _central;
+    private readonly IWebHostEnvironment _environment;
 
     public SystemController(
         ITenantProvisioningService provisioning,
         IUserTransferService userTransfer,
         ISystemPasswordResetService passwordReset,
         IConfiguration configuration,
-        CentralDbContext central)
+        CentralDbContext central,
+        IWebHostEnvironment environment)
     {
+        _environment = environment;
         _provisioning = provisioning;
         _userTransfer = userTransfer;
         _passwordReset = passwordReset;
@@ -77,6 +82,25 @@ public class SystemController : ControllerBase
         if (keyCheck is not null) return keyCheck;
 
         return Ok(await _provisioning.ProcessDataDeletionRequestAsync(tenantId, request, ct));
+    }
+
+    /// <summary>Removes a company completely and for good — database, subscription, invoices, activity trail,
+    /// uploaded contracts. The caller must re-type the company code. Refused if it has paid invoices.</summary>
+    [HttpPost("tenants/{tenantId:guid}/delete-forever")]
+    public async Task<ActionResult<DataDeletionRecordDto>> DeleteTenantForever(Guid tenantId, DeleteTenantForeverRequest request, CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        var record = await _provisioning.DeleteTenantPermanentlyAsync(tenantId, request.ConfirmCompanyCode, "system console", ct);
+
+        var folder = new string(record.CompanyCode.ToLowerInvariant().Where(ch => char.IsAsciiLetterOrDigit(ch) || ch == '-').ToArray());
+        if (folder.Length > 0)
+        {
+            var contracts = Path.Combine(_environment.ContentRootPath, "App_Data", "employee-contracts", folder);
+            if (Directory.Exists(contracts)) Directory.Delete(contracts, true);
+        }
+        return Ok(record);
     }
 
     [HttpGet("data-deletion-records")]

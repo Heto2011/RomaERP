@@ -174,6 +174,57 @@ public class TenantProvisioningService : ITenantProvisioningService
         return MapDeletionRecord(record);
     }
 
+    public async Task<DataDeletionRecordDto> DeleteTenantPermanentlyAsync(Guid tenantId, string confirmCompanyCode, string processedBy, CancellationToken ct = default)
+    {
+        var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, ct)
+            ?? throw new NotFoundException(nameof(Tenant), tenantId);
+
+        if (!string.Equals(confirmCompanyCode?.Trim(), tenant.CompanyCode, StringComparison.OrdinalIgnoreCase))
+            throw new ValidationAppException("كود الشركة المكتوب مش مطابق — اتلغى الحذف.");
+
+        // Paid invoices are accounting records the business has to keep — never wipe those.
+        if (await _central.SubscriptionInvoices.AnyAsync(i => i.TenantId == tenantId && i.Status == SubscriptionInvoiceStatus.Paid, ct))
+            throw new ValidationAppException("الشركة دي ليها فواتير مدفوعة — لازم تتحفظ للمحاسبة، فمينفعش تتمسح بالكامل. اعمل لها Suspend بدل ما تمسحها.");
+
+        if (!DatabaseNamePattern.IsMatch(tenant.DatabaseName))
+            throw new ValidationAppException("اسم قاعدة البيانات غير متوقع — راجع الدعم الفني قبل الحذف.");
+
+        var record = new DataDeletionRecord
+        {
+            TenantId = tenant.Id,
+            CompanyCode = tenant.CompanyCode,
+            CompanyNameAr = tenant.CompanyNameAr,
+            CompanyNameEn = tenant.CompanyNameEn,
+            RequestedByEmail = processedBy,
+            Reason = "Company removed permanently from the system console",
+            RequestedAtUtc = DateTime.UtcNow,
+            ProcessedByEmail = processedBy,
+        };
+        _central.DataDeletionRecords.Add(record);
+        // Saved first, so a durable trace exists even if the drop below fails.
+        await _central.SaveChangesAsync(ct);
+
+        try
+        {
+            await DropTenantDatabaseAsync(tenant.DatabaseName, ct);
+        }
+        catch (Exception ex)
+        {
+            record.FailureReason = ex.Message;
+            await _central.SaveChangesAsync(ct);
+            throw new ValidationAppException($"حذف قاعدة بيانات الشركة فشل: {ex.Message} — محدش اتمسح من السجلات.");
+        }
+
+        _central.SubscriptionInvoices.RemoveRange(_central.SubscriptionInvoices.Where(i => i.TenantId == tenantId));
+        _central.Subscriptions.RemoveRange(_central.Subscriptions.Where(s => s.TenantId == tenantId));
+        _central.TenantActivities.RemoveRange(_central.TenantActivities.Where(a => a.TenantId == tenantId));
+        _central.Tenants.Remove(tenant);
+        record.CompletedAtUtc = DateTime.UtcNow;
+        await _central.SaveChangesAsync(ct);
+
+        return MapDeletionRecord(record);
+    }
+
     public async Task<List<DataDeletionRecordDto>> GetDataDeletionRecordsAsync(CancellationToken ct = default)
     {
         var records = await _central.DataDeletionRecords.AsNoTracking().OrderByDescending(r => r.RequestedAtUtc).ToListAsync(ct);

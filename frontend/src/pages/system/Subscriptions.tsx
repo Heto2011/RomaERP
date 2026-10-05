@@ -97,6 +97,20 @@ export default function SubscriptionsPage() {
     }
   }
 
+  async function handleDeleteForever(s: TenantSubscription) {
+    if (!systemKey) return;
+    const typed = prompt(`DELETE FOREVER: "${s.companyNameEn}" — its database, users, subscription, invoices and activity will be erased and CANNOT be recovered.\n\nType the company code (${s.companyCode}) to confirm:`);
+    if (typed === null) return;
+    setError(null);
+    try {
+      await SubscriptionsApi.deleteForever(systemKey, s.tenantId, typed);
+      if (activityFor?.tenantId === s.tenantId) { setActivityFor(null); setActivity(null); }
+      await loadAll();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function handleReactivate(tenantId: string) {
     if (!systemKey) return;
     setError(null);
@@ -253,6 +267,7 @@ export default function SubscriptionsPage() {
                       ) : (
                         <button className="btn btn-secondary btn-sm" onClick={() => handleReactivate(s.tenantId)}>Reactivate</button>
                       )}
+                      <button className="btn btn-sm" style={{ background: "#b42318", color: "#fff" }} onClick={() => handleDeleteForever(s)}>Delete forever</button>
                     </td>
                   </tr>
                 ))}

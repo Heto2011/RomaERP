@@ -61,5 +61,11 @@ public interface ITenantProvisioningService
     /// this app.</summary>
     Task<DataDeletionRecordDto> ProcessDataDeletionRequestAsync(Guid tenantId, DataDeletionRequest request, CancellationToken ct = default);
 
+    /// <summary>System-console "delete forever": drops the company's database and removes the company, its
+    /// subscription, invoices and activity trail from the central database so its code is free again. Refuses
+    /// if the company has paid invoices (accounting records). Leaves one <see cref="DataDeletionRecordDto"/>
+    /// behind as proof. Irreversible.</summary>
+    Task<DataDeletionRecordDto> DeleteTenantPermanentlyAsync(Guid tenantId, string confirmCompanyCode, string processedBy, CancellationToken ct = default);
+
     Task<List<DataDeletionRecordDto>> GetDataDeletionRecordsAsync(CancellationToken ct = default);
 }
