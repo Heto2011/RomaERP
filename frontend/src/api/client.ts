@@ -27,7 +27,10 @@ apiClient.interceptors.request.use((config) => {
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
+    // A 401 from the login/recovery calls just means "wrong email or password" — the form shows that message itself.
+    // Reloading the page here (as for an expired session) wiped the message, so a failed login looked like nothing happened.
+    const isAuthForm = typeof error.config?.url === "string" && error.config.url.includes("/auth/");
+    if (error.response?.status === 401 && !isAuthForm) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
       window.location.href = "/login";
