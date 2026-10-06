@@ -199,6 +199,21 @@ public class TenantProvisioningService : ITenantProvisioningService
         return MapTenant(tenant);
     }
 
+    public async Task<TenantDto> ChangeProductScopeAsync(Guid tenantId, ProductScope scope, CancellationToken ct = default)
+    {
+        var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, ct)
+            ?? throw new NotFoundException(nameof(Tenant), tenantId);
+        if (tenant.ProductScope == scope)
+            return MapTenant(tenant);
+
+        var before = tenant.ProductScope;
+        tenant.ProductScope = scope;
+        _central.TenantActivities.Add(TenantActivityLog.Build(tenant.Id, tenant.CompanyCode, "Company", "Product access changed",
+            $"{(before == ProductScope.PeopleOnly ? "Roma HR only" : "Full ERP + HR")} → {(scope == ProductScope.PeopleOnly ? "Roma HR only" : "Full ERP + HR")}", "system console"));
+        await _central.SaveChangesAsync(ct);
+        return MapTenant(tenant);
+    }
+
     public async Task<DataDeletionRecordDto> DeleteTenantPermanentlyAsync(Guid tenantId, string confirmCompanyCode, string processedBy, CancellationToken ct = default)
     {
         var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, ct)

@@ -576,7 +576,8 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             plan.IncludedBranches == int.MaxValue ? null : plan.IncludedBranches,
             plan.IncludedUsers == int.MaxValue ? null : plan.IncludedUsers,
             showOverage ? Math.Round(prices!.ExtraBranch, decimals, MidpointRounding.AwayFromZero) : 0,
-            showOverage ? Math.Round(prices!.ExtraUser, decimals, MidpointRounding.AwayFromZero) : 0);
+            showOverage ? Math.Round(prices!.ExtraUser, decimals, MidpointRounding.AwayFromZero) : 0,
+            tenant.ProductScope);
     }
 
     private static SubscriptionInvoiceDto MapInvoice(SubscriptionInvoice i, string companyNameAr) =>

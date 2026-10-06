@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { SubscriptionsApi } from "../../api/services";
-import { SubscriptionStatus, SubscriptionInvoiceStatus, type TenantActivity, type SubscriptionPlan, type TenantSubscription, type SubscriptionInvoice, type BillingRunResult } from "../../api/types";
+import { ProductScope, SubscriptionStatus, SubscriptionInvoiceStatus, type TenantActivity, type SubscriptionPlan, type TenantSubscription, type SubscriptionInvoice, type BillingRunResult } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 
 const statusLabel: Record<SubscriptionStatus, string> = {
@@ -91,6 +91,21 @@ export default function SubscriptionsPage() {
     setError(null);
     try {
       await SubscriptionsApi.suspend(systemKey, tenantId);
+      await loadAll();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleToggleScope(s: TenantSubscription) {
+    if (!systemKey) return;
+    const toFull = s.productScope === ProductScope.PeopleOnly;
+    if (!confirm(toFull
+      ? `Give "${s.companyNameEn}" the FULL ERP + HR? Everyone signed in must log in again to see it.`
+      : `Limit "${s.companyNameEn}" to Roma HR only? Everyone signed in must log in again.`)) return;
+    setError(null);
+    try {
+      await SubscriptionsApi.changeProductScope(systemKey, s.tenantId, toFull ? ProductScope.Full : ProductScope.PeopleOnly);
       await loadAll();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -257,7 +272,8 @@ export default function SubscriptionsPage() {
               <tbody>
                 {subscriptions.map((s) => (
                   <tr key={s.tenantId}>
-                    <td>{s.companyNameEn} <span className="text-muted">({s.companyCode})</span></td>
+                    <td>{s.companyNameEn} <span className="text-muted">({s.companyCode})</span>
+                      <div className="text-muted">{s.productScope === ProductScope.PeopleOnly ? "Roma HR only" : "Full ERP + HR"}</div></td>
                     <td>
                       <select value={s.planId} onChange={(e) => handleSetPlan(s.tenantId, e.target.value)}>
                         {(plans ?? []).map((p) => <option key={p.id} value={p.id}>{p.nameEn}</option>)}
@@ -280,6 +296,7 @@ export default function SubscriptionsPage() {
                       ) : (
                         <button className="btn btn-secondary btn-sm" onClick={() => handleReactivate(s.tenantId)}>Reactivate</button>
                       )}
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleToggleScope(s)}>{s.productScope === ProductScope.PeopleOnly ? "Open full ERP" : "HR only"}</button>
                       <button className="btn btn-secondary btn-sm" onClick={() => handleChangeCode(s)}>Change code</button>
                       <button className="btn btn-sm" style={{ background: "#b42318", color: "#fff" }} onClick={() => handleDeleteForever(s)}>Delete forever</button>
                     </td>

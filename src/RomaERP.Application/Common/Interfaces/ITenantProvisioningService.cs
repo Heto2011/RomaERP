@@ -65,6 +65,9 @@ public interface ITenantProvisioningService
     /// again with the new code.</summary>
     Task<TenantDto> ChangeCompanyCodeAsync(Guid tenantId, string newCompanyCode, CancellationToken ct = default);
 
+    /// <summary>Switches a company between Roma HR only and the full ERP + HR. Signed-in users pick it up on their next login.</summary>
+    Task<TenantDto> ChangeProductScopeAsync(Guid tenantId, ProductScope scope, CancellationToken ct = default);
+
     /// <summary>System-console "delete forever": drops the company's database and removes the company, its
     /// subscription, invoices and activity trail from the central database so its code is free again. Refuses
     /// if the company has paid invoices (accounting records). Leaves one <see cref="DataDeletionRecordDto"/>

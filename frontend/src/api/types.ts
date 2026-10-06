@@ -2011,6 +2011,8 @@ export interface TenantSubscription {
   includedUsers: number | null;
   extraBranchPrice: number;
   extraUserPrice: number;
+  /** 1 = full ERP + HR, 2 = Roma HR only. */
+  productScope: ProductScope;
 }
 
 export interface TenantActivity {

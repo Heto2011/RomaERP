@@ -767,6 +767,8 @@ export const SubscriptionsApi = {
     }),
   getTenantActivity: (systemKey: string, tenantId: string) =>
     systemApiClient.get<TenantActivity[]>(`/system/subscriptions/tenants/${tenantId}/activity`, { headers: { "X-System-Key": systemKey } }),
+  changeProductScope: (systemKey: string, tenantId: string, productScope: number) =>
+    systemApiClient.put(`/system/tenants/${tenantId}/product-scope`, { productScope }, { headers: { "X-System-Key": systemKey } }),
   changeCompanyCode: (systemKey: string, tenantId: string, newCompanyCode: string) =>
     systemApiClient.put(`/system/tenants/${tenantId}/company-code`, { newCompanyCode }, { headers: { "X-System-Key": systemKey } }),
   deleteForever: (systemKey: string, tenantId: string, confirmCompanyCode: string) =>

@@ -39,7 +39,8 @@ public record TenantSubscriptionDto(
     int? IncludedBranches = null,
     int? IncludedUsers = null,
     decimal ExtraBranchPrice = 0,
-    decimal ExtraUserPrice = 0);
+    decimal ExtraUserPrice = 0,
+    RomaERP.Domain.Tenancy.ProductScope ProductScope = RomaERP.Domain.Tenancy.ProductScope.Full);
 
 public record SubscriptionInvoiceDto(
     Guid Id,

@@ -15,6 +15,7 @@ namespace RomaERP.API.Controllers;
 /// TenantResolutionMiddleware and protected by a system key instead of a JWT/company code.</summary>
 public record DeleteTenantForeverRequest(string ConfirmCompanyCode);
 public record ChangeCompanyCodeRequest(string NewCompanyCode);
+public record ChangeProductScopeRequest(RomaERP.Domain.Tenancy.ProductScope ProductScope);
 
 [ApiController]
 [Route("api/system")]
@@ -83,6 +84,15 @@ public class SystemController : ControllerBase
         if (keyCheck is not null) return keyCheck;
 
         return Ok(await _provisioning.ProcessDataDeletionRequestAsync(tenantId, request, ct));
+    }
+
+    [HttpPut("tenants/{tenantId:guid}/product-scope")]
+    public async Task<ActionResult<TenantDto>> ChangeProductScope(Guid tenantId, ChangeProductScopeRequest request, CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        return Ok(await _provisioning.ChangeProductScopeAsync(tenantId, request.ProductScope, ct));
     }
 
     [HttpPut("tenants/{tenantId:guid}/company-code")]
