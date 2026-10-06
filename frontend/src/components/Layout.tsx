@@ -7,6 +7,7 @@ import { useLanguage } from "../i18n/LanguageContext";
 import GlobalSearch from "./GlobalSearch";
 import UsageIndicator from "./UsageIndicator";
 import {
+  IconArchive,
   IconBell,
   IconGrid,
   IconUser,
@@ -127,15 +128,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: "", label: t.inventory.navRecipeVsActualUsage, comingSoon: true },
   ];
 
-  // Inventory lives under Sales (same pages as the standalone ROMA Inventory portal).
-  const inventorySubItems: NavSubGroupItem["subItems"] = [
-    { to: "/inventory/items", label: t.nav.items },
-    { to: "/inventory/warehouses", label: t.nav.warehouses },
-    { to: "/inventory/movements", label: t.nav.stockMovements },
-    { to: "/inventory/physical-stock-counts", label: t.inventory.physicalStockCountsTitle },
-    { to: "/inventory/waste-entries", label: t.inventory.wasteEntriesTitle },
-    { to: "/inventory/manufacturing", label: t.inventory.manufacturingTitle },
-    { to: "/inventory/expiring-stock", label: t.inventory.expiringStockTitle },
+  const inventoryReportItems: NavSubGroupItem["subItems"] = [
     { to: "/inventory/reports/stock-valuation", label: t.inventory.stockValuationTitle },
     { to: "/inventory/reports/movement-analysis", label: t.inventory.inventoryReports },
     { to: "/inventory/reports/waste-analysis", label: t.inventory.wasteAnalysisTitle },
@@ -233,8 +226,20 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/sales/invoices", label: t.nav.salesInvoices, icon: <IconFile /> },
         { to: "/sales/notes", label: t.nav.salesNotes, icon: <IconEdit /> },
         { to: "/sales/aging", label: t.nav.arAging, icon: <IconClock /> },
-        { subGroup: t.nav.inventory, icon: <IconBox />, subItems: inventorySubItems },
         ...(canManageHr ? [{ subGroup: t.nav.hr, icon: <IconUsers />, subItems: hrSubItems }] : []),
+      ],
+    },
+    {
+      section: t.nav.inventory,
+      items: [
+        { to: "/inventory/items", label: t.nav.items, icon: <IconBox /> },
+        { to: "/inventory/warehouses", label: t.nav.warehouses, icon: <IconArchive /> },
+        { to: "/inventory/movements", label: t.nav.stockMovements, icon: <IconSwap /> },
+        { to: "/inventory/physical-stock-counts", label: t.inventory.physicalStockCountsTitle, icon: <IconCheck /> },
+        { to: "/inventory/waste-entries", label: t.inventory.wasteEntriesTitle, icon: <IconTrendDown /> },
+        { to: "/inventory/manufacturing", label: t.inventory.manufacturingTitle, icon: <IconRefresh /> },
+        { to: "/inventory/expiring-stock", label: t.inventory.expiringStockTitle, icon: <IconClock /> },
+        { subGroup: t.inventory.inventoryReports, icon: <IconBarChart />, subItems: inventoryReportItems },
       ],
     },
     {
@@ -274,6 +279,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     [t.nav.reports]: { module: "Reports", fallbackRoles: ["Accountant"] },
     [t.nav.sales]: { module: "Sales", fallbackRoles: ["Accountant"] },
     [t.nav.purchasing]: { module: "Purchasing", fallbackRoles: ["Accountant"] },
+    [t.nav.inventory]: { module: "Inventory", fallbackRoles: ["Accountant"] },
     [t.nav.restaurant]: { module: "POS", fallbackRoles: ["Accountant", "Employee"] },
   };
   function canSeeSection(section: string) {
