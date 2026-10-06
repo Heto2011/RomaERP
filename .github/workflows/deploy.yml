@@ -13,6 +13,11 @@ on:
           - recover
         default: none
 
+# Deploys share one small server — never run two at once (they starve each other and the site goes down).
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 jobs:
   deploy:
     if: ${{ inputs.sql_mode == 'none' }}
