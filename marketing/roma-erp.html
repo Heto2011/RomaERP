@@ -246,7 +246,7 @@
   .integrations-note { text-align: center; color: var(--ink-soft); font-size: 13px; max-width: 620px; margin: 20px auto 0; }
 
   /* Tiers */
-  .tiers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 18px; }
+  .tiers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
   .tier { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 26px 22px; box-shadow: var(--shadow); display: flex; flex-direction: column; position: relative; }
   .tier.is-recommended { border-color: var(--primary); box-shadow: 0 1px 2px rgba(28,38,32,.04), 0 20px 40px -18px rgba(15,92,75,.4); }
   .tier-badge { position: absolute; top: -13px; inset-inline-end: 22px; background: var(--primary); color: #fff; font-size: 12px; font-weight: 700; padding: 5px 12px; border-radius: 999px; }
@@ -660,8 +660,8 @@
   // customers (zero customers there so far), limited to LAUNCH_OFFER_LIMIT customers and the first 3
   // months of their subscription, then it returns to egpListPrice. Essential's SAR/Gulf listPrice is a
   // separate, earlier launch-offer decision (not Egypt-specific) and is untouched here.
-  // Enterprise has no published price and no automatic discount (founding offer, annual "2 months free"): it is quoted
-  // by agreement when a real customer of that size appears, hence base 0 + custom + noDiscounts.
+  // There is deliberately no public "Enterprise"/custom-price tier: Lemon Squeezy doesn't allow custom pricing
+  // on the website. A very large customer is handled privately (an Enterprise plan exists only in the admin console).
   // Business/Professional get an EGP-only egpListPrice (no SAR listPrice) so the launch badge and
   // old-price strikethrough only appear when EGP is selected — whether a tier shows the offer is derived
   // from listPrice/egpListPrice existing (see hasLaunchOffer()), not a separate flag.
@@ -690,11 +690,6 @@
       id: "professional", emoji: "🟣", name: "Professional",
       desc: { ar: "نشاط أكبر واحتياج موسّع", en: "Larger operations, wider needs" },
       base: 649, egpBase: 6000, egpListPrice: 12000, gbpBase: 179, includedBranches: 15, includedUsers: 50,
-    },
-    {
-      id: "enterprise", emoji: "🔴", name: "Enterprise",
-      desc: { ar: "الشركات الكبيرة", en: "Large enterprises" },
-      base: 0, egpBase: 0, gbpBase: 0, includedBranches: Infinity, includedUsers: Infinity, custom: true, noDiscounts: true,
     },
   ];
   const EXTRA_BRANCH_PRICE = 15; // SAR / branch / month, beyond tier's included branches (capped below)
@@ -1290,8 +1285,11 @@
       if (!best || perCompany < best.perCompany) best = { tier: t, extraBranches, extraUsers, perCompany };
     }
     if (best) return best;
-    const enterprise = TIERS[TIERS.length - 1];
-    return { tier: enterprise, extraBranches: 0, extraUsers: 0, perCompany: enterprise[priceSet.baseKey] };
+    // Beyond every tier's overage cap: price it on the top published tier, with every extra at the listed rate.
+    const top = TIERS[TIERS.length - 1];
+    const extraBranches = Math.max(0, branches - top.includedBranches);
+    const extraUsers = Math.max(0, users - top.includedUsers);
+    return { tier: top, extraBranches, extraUsers, perCompany: top[priceSet.baseKey] + extraBranches * priceSet.extraBranch + extraUsers * priceSet.extraUser };
   }
 
   function computePrice(companies, branches, users, priceSet) {
