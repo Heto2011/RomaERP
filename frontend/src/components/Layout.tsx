@@ -127,6 +127,20 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: "", label: t.inventory.navRecipeVsActualUsage, comingSoon: true },
   ];
 
+  // Inventory lives under Sales (same pages as the standalone ROMA Inventory portal).
+  const inventorySubItems: NavSubGroupItem["subItems"] = [
+    { to: "/inventory/items", label: t.nav.items },
+    { to: "/inventory/warehouses", label: t.nav.warehouses },
+    { to: "/inventory/movements", label: t.nav.stockMovements },
+    { to: "/inventory/physical-stock-counts", label: t.inventory.physicalStockCountsTitle },
+    { to: "/inventory/waste-entries", label: t.inventory.wasteEntriesTitle },
+    { to: "/inventory/manufacturing", label: t.inventory.manufacturingTitle },
+    { to: "/inventory/expiring-stock", label: t.inventory.expiringStockTitle },
+    { to: "/inventory/reports/stock-valuation", label: t.inventory.stockValuationTitle },
+    { to: "/inventory/reports/movement-analysis", label: t.inventory.inventoryReports },
+    { to: "/inventory/reports/waste-analysis", label: t.inventory.wasteAnalysisTitle },
+  ];
+
   // A user whose only role is Employee is a cashier — the nav collapses to just what a cashier needs,
   // so they never see accounting/HR/purchasing data even if they bypass the standalone POS login and
   // land in the regular app shell.
@@ -204,6 +218,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/sales/invoices", label: t.nav.salesInvoices, icon: <IconFile /> },
         { to: "/sales/notes", label: t.nav.salesNotes, icon: <IconEdit /> },
         { to: "/sales/aging", label: t.nav.arAging, icon: <IconClock /> },
+        { subGroup: t.nav.inventory, icon: <IconBox />, subItems: inventorySubItems },
       ],
     },
     {
