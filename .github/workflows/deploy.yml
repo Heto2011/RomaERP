@@ -33,6 +33,12 @@ jobs:
           command_timeout: 25m
           script: |
             set -e
+            # A cancelled or timed-out earlier deploy can leave its build processes running on this small
+            # server (they starve everything, including the live site). Stop only build tooling — never the API.
+            pkill -f 'dotnet.*(publish|build|MSBuild)' 2>/dev/null || true
+            pkill -f 'npm (ci|run build)' 2>/dev/null || true
+            pkill -f 'node.*vite' 2>/dev/null || true
+            dotnet build-server shutdown >/dev/null 2>&1 || true
             cd /root/RomaERP
             git fetch origin
             git checkout claude/project-continuation-gjlk3b
