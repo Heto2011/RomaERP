@@ -230,25 +230,6 @@ export default function Layout({ children }: { children: ReactNode }) {
         { subGroup: t.inventory.inventoryReports, icon: <IconBarChart />, subItems: inventoryReportItems },
       ],
     },
-    ...(canManageHr
-      ? [
-          {
-            section: t.nav.hr,
-            items: [
-              { to: "/hr/employees", label: t.nav.employees, icon: <IconUsers /> },
-              { to: "/hr/departments", label: t.nav.departments, icon: <IconBuilding /> },
-              { to: "/hr/positions", label: t.nav.positions, icon: <IconBriefcase /> },
-              { to: "/hr/employee-contracts", label: t.hr.employeeContractsTitle, icon: <IconFile /> },
-              { to: "/hr/salary-components", label: t.hr.salaryComponentsTitle, icon: <IconWallet /> },
-              { to: "/hr/payroll", label: t.nav.payroll, icon: <IconDollar /> },
-              { to: "/hr/payroll-settings", label: t.hr.payrollSettingsTitle, icon: <IconWallet /> },
-              { to: "/hr/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
-              { to: "/hr/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
-              { to: "/hr/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },
-            ],
-          },
-        ]
-      : []),
     {
       section: t.nav.restaurant,
       items: [
@@ -269,6 +250,25 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/purchasing/aging", label: t.nav.apAging, icon: <IconClock /> },
       ],
     },
+    ...(canManageHr
+      ? [
+          {
+            section: t.nav.hr,
+            items: [
+              { to: "/hr/employees", label: t.nav.employees, icon: <IconUsers /> },
+              { to: "/hr/departments", label: t.nav.departments, icon: <IconBuilding /> },
+              { to: "/hr/positions", label: t.nav.positions, icon: <IconBriefcase /> },
+              { to: "/hr/employee-contracts", label: t.hr.employeeContractsTitle, icon: <IconFile /> },
+              { to: "/hr/salary-components", label: t.hr.salaryComponentsTitle, icon: <IconWallet /> },
+              { to: "/hr/payroll", label: t.nav.payroll, icon: <IconDollar /> },
+              { to: "/hr/payroll-settings", label: t.hr.payrollSettingsTitle, icon: <IconWallet /> },
+              { to: "/hr/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
+              { to: "/hr/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
+              { to: "/hr/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },
+            ],
+          },
+        ]
+      : []),
     ...(user?.roles.includes("Admin")
       ? [
           {
