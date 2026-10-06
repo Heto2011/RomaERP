@@ -141,6 +141,21 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: "/inventory/reports/waste-analysis", label: t.inventory.wasteAnalysisTitle },
   ];
 
+  // HR management lives under Sales too (same pages as the Roma HR portal); employees only see their own pages in General.
+  const canManageHr = (user?.roles.includes("Admin") ?? false) || (user?.modules.includes("HR") ?? false);
+  const hrSubItems: NavSubGroupItem["subItems"] = [
+    { to: "/hr/employees", label: t.nav.employees },
+    { to: "/hr/departments", label: t.nav.departments },
+    { to: "/hr/positions", label: t.nav.positions },
+    { to: "/hr/employee-contracts", label: t.hr.employeeContractsTitle },
+    { to: "/hr/salary-components", label: t.hr.salaryComponentsTitle },
+    { to: "/hr/payroll", label: t.nav.payroll },
+    { to: "/hr/payroll-settings", label: t.hr.payrollSettingsTitle },
+    { to: "/hr/labor-report", label: t.hr.laborReportTitle },
+    { to: "/hr/work-locations", label: t.hr.workLocationsTitle },
+    { to: "/hr/employee-requests", label: t.hr.employeeRequestsTitle },
+  ];
+
   // A user whose only role is Employee is a cashier — the nav collapses to just what a cashier needs,
   // so they never see accounting/HR/purchasing data even if they bypass the standalone POS login and
   // land in the regular app shell.
@@ -219,6 +234,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/sales/notes", label: t.nav.salesNotes, icon: <IconEdit /> },
         { to: "/sales/aging", label: t.nav.arAging, icon: <IconClock /> },
         { subGroup: t.nav.inventory, icon: <IconBox />, subItems: inventorySubItems },
+        ...(canManageHr ? [{ subGroup: t.nav.hr, icon: <IconUsers />, subItems: hrSubItems }] : []),
       ],
     },
     {
