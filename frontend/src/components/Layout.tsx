@@ -8,6 +8,8 @@ import GlobalSearch from "./GlobalSearch";
 import UsageIndicator from "./UsageIndicator";
 import {
   IconArchive,
+  IconBuilding,
+  IconBriefcase,
   IconBell,
   IconGrid,
   IconUser,
@@ -134,20 +136,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: "/inventory/reports/waste-analysis", label: t.inventory.wasteAnalysisTitle },
   ];
 
-  // HR management lives under Sales too (same pages as the Roma HR portal); employees only see their own pages in General.
   const canManageHr = (user?.roles.includes("Admin") ?? false) || (user?.modules.includes("HR") ?? false);
-  const hrSubItems: NavSubGroupItem["subItems"] = [
-    { to: "/hr/employees", label: t.nav.employees },
-    { to: "/hr/departments", label: t.nav.departments },
-    { to: "/hr/positions", label: t.nav.positions },
-    { to: "/hr/employee-contracts", label: t.hr.employeeContractsTitle },
-    { to: "/hr/salary-components", label: t.hr.salaryComponentsTitle },
-    { to: "/hr/payroll", label: t.nav.payroll },
-    { to: "/hr/payroll-settings", label: t.hr.payrollSettingsTitle },
-    { to: "/hr/labor-report", label: t.hr.laborReportTitle },
-    { to: "/hr/work-locations", label: t.hr.workLocationsTitle },
-    { to: "/hr/employee-requests", label: t.hr.employeeRequestsTitle },
-  ];
 
   // A user whose only role is Employee is a cashier — the nav collapses to just what a cashier needs,
   // so they never see accounting/HR/purchasing data even if they bypass the standalone POS login and
@@ -226,7 +215,6 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/sales/invoices", label: t.nav.salesInvoices, icon: <IconFile /> },
         { to: "/sales/notes", label: t.nav.salesNotes, icon: <IconEdit /> },
         { to: "/sales/aging", label: t.nav.arAging, icon: <IconClock /> },
-        ...(canManageHr ? [{ subGroup: t.nav.hr, icon: <IconUsers />, subItems: hrSubItems }] : []),
       ],
     },
     {
@@ -240,6 +228,37 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/inventory/manufacturing", label: t.inventory.manufacturingTitle, icon: <IconRefresh /> },
         { to: "/inventory/expiring-stock", label: t.inventory.expiringStockTitle, icon: <IconClock /> },
         { subGroup: t.inventory.inventoryReports, icon: <IconBarChart />, subItems: inventoryReportItems },
+      ],
+    },
+    ...(canManageHr
+      ? [
+          {
+            section: t.nav.hr,
+            items: [
+              { to: "/hr/employees", label: t.nav.employees, icon: <IconUsers /> },
+              { to: "/hr/departments", label: t.nav.departments, icon: <IconBuilding /> },
+              { to: "/hr/positions", label: t.nav.positions, icon: <IconBriefcase /> },
+              { to: "/hr/employee-contracts", label: t.hr.employeeContractsTitle, icon: <IconFile /> },
+              { to: "/hr/salary-components", label: t.hr.salaryComponentsTitle, icon: <IconWallet /> },
+              { to: "/hr/payroll", label: t.nav.payroll, icon: <IconDollar /> },
+              { to: "/hr/payroll-settings", label: t.hr.payrollSettingsTitle, icon: <IconWallet /> },
+              { to: "/hr/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
+              { to: "/hr/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
+              { to: "/hr/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },
+            ],
+          },
+        ]
+      : []),
+    {
+      section: t.nav.restaurant,
+      items: [
+        { to: "/restaurant/pos", label: t.nav.restaurantPos, icon: <IconCart /> },
+        { to: "/restaurant/kitchen", label: t.nav.kitchenDisplay, icon: <IconClock /> },
+        { to: "/restaurant/tables", label: t.nav.restaurantTables, icon: <IconGrid /> },
+        { to: "/restaurant/menu", label: t.nav.restaurantMenu, icon: <IconBook /> },
+        { to: "/restaurant/purchase-receiving", label: t.restaurant.purchaseReceivingTitle, icon: <IconTruck /> },
+        { to: "/restaurant/delivery-reconciliation", label: t.inventory.deliveryReconciliationTitle, icon: <IconSwap /> },
+        { to: "/restaurant/delivery-platforms", label: t.restaurant.deliveryPlatformsTitle, icon: <IconRefresh /> },
       ],
     },
     {
