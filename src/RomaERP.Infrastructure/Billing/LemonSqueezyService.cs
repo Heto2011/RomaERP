@@ -40,18 +40,19 @@ public class LemonSqueezyService : ILemonSqueezyService
         !string.IsNullOrWhiteSpace(ApiKey) && !string.IsNullOrWhiteSpace(StoreId) && !string.IsNullOrWhiteSpace(WebhookSecret)
         && _configuration.GetSection("Lemon:Variants").GetChildren().Any(c => !string.IsNullOrWhiteSpace(c.Value));
 
-    private static string VariantKey(string planCode, bool annual) => $"{planCode.ToLowerInvariant()}-{(annual ? "annual" : "monthly")}";
+    public static string VariantKey(string planCode, bool annual, bool uk = false)
+        => $"{planCode.ToLowerInvariant()}-{(annual ? "annual" : "monthly")}{(uk ? "-uk" : "")}";
 
-    private string? VariantId(string planCode, bool annual)
-        => _configuration[$"Lemon:Variants:{VariantKey(planCode, annual)}"] is { Length: > 0 } v ? v.Trim() : null;
+    private string? VariantId(string planCode, bool annual, bool uk)
+        => _configuration[$"Lemon:Variants:{VariantKey(planCode, annual, uk)}"] is { Length: > 0 } v ? v.Trim() : null;
 
-    public bool HasVariant(string planCode, bool annual) => VariantId(planCode, annual) is not null;
+    public bool HasVariant(string planCode, bool annual, bool uk = false) => VariantId(planCode, annual, uk) is not null;
 
     public async Task<string> CreateCheckoutAsync(LemonCheckoutRequest request, CancellationToken ct = default)
     {
         if (!IsConfigured)
             throw new ValidationAppException("الدفع بالبطاقة لسه مش مفعّل.");
-        var variant = VariantId(request.PlanCode, request.Annual)
+        var variant = VariantId(request.PlanCode, request.Annual, request.Uk)
             ?? throw new ValidationAppException("الباقة دي مش متاحة للدفع بالبطاقة حاليًا.");
 
         var body = new

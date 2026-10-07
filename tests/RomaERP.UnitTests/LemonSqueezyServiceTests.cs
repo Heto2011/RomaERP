@@ -26,6 +26,7 @@ public class LemonSqueezyServiceTests
             values["Lemon:StoreId"] = "1";
             values["Lemon:WebhookSecret"] = Secret;
             values["Lemon:Variants:essential-monthly"] = "111";
+            values["Lemon:Variants:business-monthly-uk"] = "222";
         }
         var config = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
         return new LemonSqueezyService(new HttpClient(), central, config, NullLogger<LemonSqueezyService>.Instance);
@@ -134,6 +135,18 @@ public class LemonSqueezyServiceTests
         await service.HandleWebhookAsync(Payload("subscription_created", Guid.NewGuid(), "sub-x", "\"customer_id\":1"));
 
         Assert.Equal(SubscriptionStatus.Trialing, (await central.Subscriptions.SingleAsync()).Status);
+    }
+
+    [Fact]
+    public void UkCustomersHaveTheirOwnVariantsAndNeverFallBackToTheGulfPrices()
+    {
+        var service = NewService(NewCentral());
+
+        Assert.True(service.HasVariant("essential", annual: false));
+        Assert.False(service.HasVariant("essential", annual: false, uk: true));
+        Assert.True(service.HasVariant("business", annual: false, uk: true));
+        Assert.False(service.HasVariant("business", annual: false));
+        Assert.Equal("people-annual-uk", LemonSqueezyService.VariantKey("People", annual: true, uk: true));
     }
 
     [Fact]

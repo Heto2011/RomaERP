@@ -55,7 +55,7 @@ public class MySubscriptionController : ControllerBase
             return Ok(new CardPaymentOptionsDto(false, new List<CardPlanOptionDto>()));
 
         var plans = AllowedCardPlans()
-            .Select(p => new CardPlanOptionDto(p, _lemon.HasVariant(p, false), _lemon.HasVariant(p, true)))
+            .Select(p => new CardPlanOptionDto(p, _lemon.HasVariant(p, false, IsUk()), _lemon.HasVariant(p, true, IsUk())))
             .Where(p => p.Monthly || p.Annual)
             .ToList();
         return Ok(new CardPaymentOptionsDto(plans.Count > 0, plans));
@@ -68,15 +68,18 @@ public class MySubscriptionController : ControllerBase
         if (_tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt)
             throw new ValidationAppException("الدفع في مصر بيتم عن طريق إنستاباي.");
         var planCode = (request.PlanCode ?? string.Empty).Trim().ToLowerInvariant();
-        if (!AllowedCardPlans().Contains(planCode) || !_lemon.HasVariant(planCode, request.Annual))
+        if (!AllowedCardPlans().Contains(planCode) || !_lemon.HasVariant(planCode, request.Annual, IsUk()))
             throw new ValidationAppException("الباقة دي مش متاحة للدفع بالبطاقة.");
 
         var baseUrl = (_configuration["App:PublicBaseUrl"] ?? "https://romagroup.app").TrimEnd('/');
         var returnPath = _tenantContext.ProductScope == RomaERP.Domain.Tenancy.ProductScope.PeopleOnly ? "/people/subscription" : "/my-subscription";
         var url = await _lemon.CreateCheckoutAsync(new LemonCheckoutRequest(
-            _tenantContext.TenantId, _tenantContext.CompanyCode, CurrentEmail(), CurrentName(), planCode, request.Annual, baseUrl + returnPath + "?paid=1"), ct);
+            _tenantContext.TenantId, _tenantContext.CompanyCode, CurrentEmail(), CurrentName(), planCode, request.Annual, baseUrl + returnPath + "?paid=1", IsUk()), ct);
         return Ok(new CardCheckoutDto(url));
     }
+
+    // UK and Guernsey customers are priced in sterling on the website, so their card checkout uses their own USD price set.
+    private bool IsUk() => _tenantContext.Country is RomaERP.Domain.Tenancy.Country.UnitedKingdom or RomaERP.Domain.Tenancy.Country.Guernsey;
 
     private string[] AllowedCardPlans()
         => _tenantContext.ProductScope == RomaERP.Domain.Tenancy.ProductScope.PeopleOnly
