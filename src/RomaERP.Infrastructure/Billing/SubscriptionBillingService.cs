@@ -270,6 +270,8 @@ public class SubscriptionBillingService : ISubscriptionBillingService
                 notes.Add($"{tenant.CompanyNameEn}: باقة بسعر مخصص — الفاتورة تتعمل يدويًا حسب الاتفاق.");
                 continue;
             }
+            if (subscription.PaymentProvider == LemonSqueezyService.ProviderName)
+                continue; // Lemon Squeezy bills and renews this one itself and tells us through webhooks.
             var (branches, users) = await CountTenantUsageAsync(tenant, ct);
 
             var isAdditionalCompany = subscription.BillingAccountId.HasValue && !seenBillingAccounts.Add(subscription.BillingAccountId.Value);

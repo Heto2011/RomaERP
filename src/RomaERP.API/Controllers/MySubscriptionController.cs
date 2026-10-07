@@ -24,11 +24,13 @@ public class MySubscriptionController : ControllerBase
     private readonly CentralDbContext _central;
     private readonly IConfiguration _configuration;
     private readonly IHtmlToPdfRenderer _pdfRenderer;
+    private readonly ILemonSqueezyService _lemon;
 
     public MySubscriptionController(
         ISubscriptionBillingService billing, ITenantContext tenantContext, CentralDbContext central, IConfiguration configuration,
-        IHtmlToPdfRenderer pdfRenderer)
+        IHtmlToPdfRenderer pdfRenderer, ILemonSqueezyService lemon)
     {
+        _lemon = lemon;
         _pdfRenderer = pdfRenderer;
         _billing = billing;
         _tenantContext = tenantContext;
@@ -44,6 +46,42 @@ public class MySubscriptionController : ControllerBase
             ?? throw new NotFoundException("Subscription", _tenantContext.TenantId);
         return Ok(mine);
     }
+
+    /// <summary>Which plans this company can pay for by card (outside Egypt only — Egypt pays through InstaPay).</summary>
+    [HttpGet("card-payments")]
+    public ActionResult<CardPaymentOptionsDto> GetCardPaymentOptions()
+    {
+        if (_tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt || !_lemon.IsConfigured)
+            return Ok(new CardPaymentOptionsDto(false, new List<CardPlanOptionDto>()));
+
+        var plans = AllowedCardPlans()
+            .Select(p => new CardPlanOptionDto(p, _lemon.HasVariant(p, false), _lemon.HasVariant(p, true)))
+            .Where(p => p.Monthly || p.Annual)
+            .ToList();
+        return Ok(new CardPaymentOptionsDto(plans.Count > 0, plans));
+    }
+
+    /// <summary>Starts a hosted card checkout for the chosen plan and returns its URL (the browser then redirects to it).</summary>
+    [HttpPost("checkout")]
+    public async Task<ActionResult<CardCheckoutDto>> StartCheckout(StartCheckoutRequest request, CancellationToken ct)
+    {
+        if (_tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt)
+            throw new ValidationAppException("الدفع في مصر بيتم عن طريق إنستاباي.");
+        var planCode = (request.PlanCode ?? string.Empty).Trim().ToLowerInvariant();
+        if (!AllowedCardPlans().Contains(planCode) || !_lemon.HasVariant(planCode, request.Annual))
+            throw new ValidationAppException("الباقة دي مش متاحة للدفع بالبطاقة.");
+
+        var baseUrl = (_configuration["App:PublicBaseUrl"] ?? "https://romagroup.app").TrimEnd('/');
+        var returnPath = _tenantContext.ProductScope == RomaERP.Domain.Tenancy.ProductScope.PeopleOnly ? "/people/subscription" : "/my-subscription";
+        var url = await _lemon.CreateCheckoutAsync(new LemonCheckoutRequest(
+            _tenantContext.TenantId, _tenantContext.CompanyCode, CurrentEmail(), CurrentName(), planCode, request.Annual, baseUrl + returnPath + "?paid=1"), ct);
+        return Ok(new CardCheckoutDto(url));
+    }
+
+    private string[] AllowedCardPlans()
+        => _tenantContext.ProductScope == RomaERP.Domain.Tenancy.ProductScope.PeopleOnly
+            ? new[] { "people" }
+            : new[] { "essential", "business", "professional" };
 
     [HttpGet("invoices")]
     public async Task<ActionResult<List<SubscriptionInvoiceDto>>> GetMyInvoices(CancellationToken ct)

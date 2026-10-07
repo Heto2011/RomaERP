@@ -28,6 +28,11 @@ export default function MySubscriptionPage() {
   const [subscription, setSubscription] = useState<TenantSubscription | null>(null);
   const [invoices, setInvoices] = useState<SubscriptionInvoice[]>([]);
   const [bankInfo, setBankInfo] = useState<BankTransferInfo | null>(null);
+  const [cardOptions, setCardOptions] = useState<{ enabled: boolean; plans: { planCode: string; monthly: boolean; annual: boolean }[] } | null>(null);
+  const [cardPlan, setCardPlan] = useState("");
+  const [cardAnnual, setCardAnnual] = useState(false);
+  const [startingCheckout, setStartingCheckout] = useState(false);
+  const justPaid = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("paid") === "1";
   // Egypt pays through InstaPay; every other country pays by card (payment gateway), never by bank details.
   const outsideEgypt = !!subscription && subscription.currency !== "EGP";
   const [error, setError] = useState<string | null>(null);
@@ -57,6 +62,13 @@ export default function MySubscriptionPage() {
       setSubscription(subRes.data);
       setInvoices(invRes.data);
       setBankInfo(bankRes.data);
+      try {
+        const card = await MySubscriptionApi.getCardPaymentOptions();
+        setCardOptions(card.data);
+        setCardPlan((current) => current || card.data.plans.find((p) => p.planCode === subRes.data.planCode)?.planCode || card.data.plans[0]?.planCode || "");
+      } catch {
+        setCardOptions(null);
+      }
     } catch (err) {
       setError(getErrorMessage(err));
     } finally {
@@ -126,6 +138,18 @@ export default function MySubscriptionPage() {
       setCopiedField(field);
       setTimeout(() => setCopiedField(null), 1500);
     });
+  }
+
+  async function startCardCheckout() {
+    setError(null);
+    setStartingCheckout(true);
+    try {
+      const res = await MySubscriptionApi.startCheckout(cardPlan, cardAnnual);
+      window.location.href = res.data.url;
+    } catch (err) {
+      setError(getErrorMessage(err));
+      setStartingCheckout(false);
+    }
   }
 
   if (loading) return <div className="text-muted" style={{ padding: 40 }}>{t.common.loading}</div>;
@@ -260,7 +284,28 @@ export default function MySubscriptionPage() {
 
       <div className="card">
         <h3 style={{ marginTop: 0 }}>{outsideEgypt ? t.mySubscription.cardPaymentTitle : t.mySubscription.bankTransferTitle}</h3>
-        {!bankInfo?.configured && <div className="text-muted">{outsideEgypt ? t.mySubscription.cardPaymentSoon : t.mySubscription.bankNotConfigured}</div>}
+        {justPaid && <div className="alert-success" style={{ marginBottom: 12 }}>{t.mySubscription.cardPaid}</div>}
+        {outsideEgypt && cardOptions?.enabled && (() => {
+          const selected = cardOptions.plans.find((p) => p.planCode === cardPlan) ?? cardOptions.plans[0];
+          return (
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginBottom: 12 }}>
+              <select value={selected?.planCode ?? ""} onChange={(e) => setCardPlan(e.target.value)}>
+                {cardOptions.plans.map((p) => (
+                  <option key={p.planCode} value={p.planCode}>{t.mySubscription.cardPlanNames[p.planCode as keyof typeof t.mySubscription.cardPlanNames] ?? p.planCode}</option>
+                ))}
+              </select>
+              <select value={cardAnnual && selected?.annual ? "annual" : "monthly"} onChange={(e) => setCardAnnual(e.target.value === "annual")}>
+                {selected?.monthly && <option value="monthly">{t.mySubscription.cardMonthly}</option>}
+                {selected?.annual && <option value="annual">{t.mySubscription.cardAnnual}</option>}
+              </select>
+              <button className="btn" type="button" disabled={startingCheckout || !selected} onClick={startCardCheckout}>
+                {startingCheckout ? t.common.loading : t.mySubscription.cardPay}
+              </button>
+              <div className="text-muted" style={{ flexBasis: "100%" }}>{t.mySubscription.cardNote}</div>
+            </div>
+          );
+        })()}
+        {!bankInfo?.configured && !(outsideEgypt && cardOptions?.enabled) && <div className="text-muted">{outsideEgypt ? t.mySubscription.cardPaymentSoon : t.mySubscription.bankNotConfigured}</div>}
         {bankInfo?.configured && (bankInfo.iban || bankInfo.accountName) && (
           <table>
             <tbody>

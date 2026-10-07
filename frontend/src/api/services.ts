@@ -747,6 +747,9 @@ export const MySubscriptionApi = {
   get: () => apiClient.get<TenantSubscription>("/my-subscription"),
   getInvoices: () => apiClient.get<SubscriptionInvoice[]>("/my-subscription/invoices"),
   getBankTransferInfo: () => apiClient.get<BankTransferInfo>("/my-subscription/bank-transfer"),
+  getCardPaymentOptions: () =>
+    apiClient.get<{ enabled: boolean; plans: { planCode: string; monthly: boolean; annual: boolean }[] }>("/my-subscription/card-payments"),
+  startCheckout: (planCode: string, annual: boolean) => apiClient.post<{ url: string }>("/my-subscription/checkout", { planCode, annual }),
   downloadInvoicePdf: (invoiceId: string, lang: string) =>
     apiClient.get<Blob>(`/my-subscription/invoices/${invoiceId}/pdf`, { params: { lang }, responseType: "blob" }),
   reportPayment: (invoiceId: string, paymentReference: string | null, note: string | null) =>
