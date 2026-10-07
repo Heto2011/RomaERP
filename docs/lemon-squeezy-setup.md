@@ -16,14 +16,14 @@ Lemon Squeezy charges in **USD**, owns the recurring charge, and tells us throug
 | Professional | 173 | 1,730 | `professional-monthly` / `professional-annual` |
 | Roma HR | 26 | 260 | `people-monthly` / `people-annual` |
 
-**UK and Guernsey** (the sterling list £49 / £99 / £179 / £32 at about 1.35 USD per GBP — the rate was 1.3559 on 9 Sep 2026):
+**UK and Guernsey** (the sterling list £49 / £99 / £179 / £49 for Roma HR at about 1.35 USD per GBP — the rate was 1.3559 on 9 Sep 2026):
 
 | Plan | Monthly (USD) | Annual (USD, 10 months) | Variant keys |
 |---|---|---|---|
 | Essential | 66 | 660 | `essential-monthly-uk` / `essential-annual-uk` |
 | Business | 134 | 1,340 | `business-monthly-uk` / `business-annual-uk` |
 | Professional | 242 | 2,420 | `professional-monthly-uk` / `professional-annual-uk` |
-| Roma HR | 43 | 430 | `people-monthly-uk` / `people-annual-uk` |
+| Roma HR | 66 | 660 | `people-monthly-uk` / `people-annual-uk` |
 
    (Change prices freely; the app just opens whichever variant you map. Lemon's fee is about 5% + $0.50, plus 0.5% for subscriptions and 1.5% for international cards or PayPal.)
    Roma HR launch offer: make it a Lemon **discount code** (50%, repeating for 3 months), not a lower price — a variant's price never changes by itself.

@@ -62,7 +62,7 @@ public static class SubscriptionPriceList
         // first FoundingInvoiceCount invoices (any country). EGP and GBP are independent prices, like the ERP ones.
         [(PeoplePlanCode, Sar)] = new(Sar, 99, 49.99m, 0, 5),
         [(PeoplePlanCode, Egp)] = new(Egp, 1999, 999, 0, 100),
-        [(PeoplePlanCode, Gbp)] = new(Gbp, 32, 16, 0, 1.25m),
+        [(PeoplePlanCode, Gbp)] = new(Gbp, 49, 24.5m, 0, 1.25m),
     };
 
     static SubscriptionPriceList()
