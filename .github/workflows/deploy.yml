@@ -157,7 +157,8 @@ jobs:
                 data = json.load(f)
             lemon = data.setdefault('Lemon', {})
             lemon['ApiKey'] = os.environ['LEMON_KEY'].strip()
-            lemon['StoreId'] = os.environ['LEMON_STORE'].strip()
+            if os.environ['LEMON_STORE'].strip():
+                lemon['StoreId'] = os.environ['LEMON_STORE'].strip()
             lemon['WebhookSecret'] = os.environ['LEMON_WEBHOOK'].strip()
             try:
                 lemon['Variants'] = {k: str(v) for k, v in json.loads(os.environ['LEMON_VARIANTS'] or '{}').items()}

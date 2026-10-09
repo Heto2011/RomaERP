@@ -23,7 +23,6 @@ public class LemonSqueezyServiceTests
         if (configured)
         {
             values["Lemon:ApiKey"] = "key";
-            values["Lemon:StoreId"] = "1";
             values["Lemon:WebhookSecret"] = Secret;
             values["Lemon:Variants:essential-monthly"] = "111";
             values["Lemon:Variants:business-monthly-uk"] = "222";

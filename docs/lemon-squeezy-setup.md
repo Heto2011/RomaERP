@@ -37,7 +37,7 @@ Lemon Squeezy charges in **USD**, owns the recurring charge, and tells us throug
 | Secret | Value |
 |---|---|
 | `LEMON_API_KEY` | the API key |
-| `LEMON_STORE_ID` | the store id |
+| `LEMON_STORE_ID` | optional — leave unset and the app finds the account's store from the API key |
 | `LEMON_WEBHOOK_SECRET` | the signing secret from step 4 |
 | `LEMON_VARIANTS` | JSON, e.g. `{"essential-monthly":"111","essential-annual":"112","people-monthly":"130"}` — only list variants that exist |
 

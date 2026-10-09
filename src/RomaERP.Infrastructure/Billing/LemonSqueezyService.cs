@@ -36,8 +36,11 @@ public class LemonSqueezyService : ILemonSqueezyService
     private string? StoreId => _configuration["Lemon:StoreId"];
     private string? WebhookSecret => _configuration["Lemon:WebhookSecret"];
 
+    // The store id is optional: when it isn't configured the API key's own (only) store is looked up once and remembered.
+    private static string? _discoveredStoreId;
+
     public bool IsConfigured =>
-        !string.IsNullOrWhiteSpace(ApiKey) && !string.IsNullOrWhiteSpace(StoreId) && !string.IsNullOrWhiteSpace(WebhookSecret)
+        !string.IsNullOrWhiteSpace(ApiKey) && !string.IsNullOrWhiteSpace(WebhookSecret)
         && _configuration.GetSection("Lemon:Variants").GetChildren().Any(c => !string.IsNullOrWhiteSpace(c.Value));
 
     public static string VariantKey(string planCode, bool annual, bool uk = false)
@@ -54,6 +57,8 @@ public class LemonSqueezyService : ILemonSqueezyService
             throw new ValidationAppException("الدفع بالبطاقة لسه مش مفعّل.");
         var variant = VariantId(request.PlanCode, request.Annual, request.Uk)
             ?? throw new ValidationAppException("الباقة دي مش متاحة للدفع بالبطاقة حاليًا.");
+
+        var storeId = !string.IsNullOrWhiteSpace(StoreId) ? StoreId.Trim() : await DiscoverStoreIdAsync(ct);
 
         var body = new
         {
@@ -78,7 +83,7 @@ public class LemonSqueezyService : ILemonSqueezyService
                 },
                 relationships = new
                 {
-                    store = new { data = new { type = "stores", id = StoreId!.Trim() } },
+                    store = new { data = new { type = "stores", id = storeId } },
                     variant = new { data = new { type = "variants", id = variant } },
                 },
             },
@@ -102,6 +107,29 @@ public class LemonSqueezyService : ILemonSqueezyService
         using var doc = JsonDocument.Parse(text);
         var url = doc.RootElement.GetProperty("data").GetProperty("attributes").GetProperty("url").GetString();
         return string.IsNullOrWhiteSpace(url) ? throw new ValidationAppException("تعذر فتح صفحة الدفع دلوقتي.") : url;
+    }
+
+    private async Task<string> DiscoverStoreIdAsync(CancellationToken ct)
+    {
+        if (_discoveredStoreId is not null) return _discoveredStoreId;
+
+        using var message = new HttpRequestMessage(HttpMethod.Get, "https://api.lemonsqueezy.com/v1/stores?page[size]=1");
+        message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.api+json"));
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey!.Trim());
+        using var response = await _http.SendAsync(message, ct);
+        var text = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+        {
+            _logger.LogWarning("Lemon Squeezy store lookup failed: {Status} {Body}", (int)response.StatusCode, text.Length > 300 ? text[..300] : text);
+            throw new ValidationAppException("تعذر الاتصال بنظام الدفع دلوقتي — جرّب تاني بعد شوية أو كلّم الدعم.");
+        }
+
+        using var doc = JsonDocument.Parse(text);
+        var first = doc.RootElement.GetProperty("data").EnumerateArray().FirstOrDefault();
+        var id = first.ValueKind == JsonValueKind.Object && first.TryGetProperty("id", out var idEl) ? idEl.ToString() : null;
+        if (string.IsNullOrWhiteSpace(id))
+            throw new ValidationAppException("مفيش متجر مرتبط بمفتاح الدفع.");
+        return _discoveredStoreId = id;
     }
 
     public bool VerifySignature(string rawBody, string? signature)
