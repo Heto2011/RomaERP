@@ -49,15 +49,17 @@ public class MySubscriptionController : ControllerBase
 
     /// <summary>Which plans this company can pay for by card (outside Egypt only — Egypt pays through InstaPay).</summary>
     [HttpGet("card-payments")]
-    public ActionResult<CardPaymentOptionsDto> GetCardPaymentOptions()
+    public async Task<ActionResult<CardPaymentOptionsDto>> GetCardPaymentOptions(CancellationToken ct)
     {
         if (_tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt || !_lemon.IsConfigured)
             return Ok(new CardPaymentOptionsDto(false, new List<CardPlanOptionDto>()));
 
-        var plans = AllowedCardPlans()
-            .Select(p => new CardPlanOptionDto(p, _lemon.HasVariant(p, false, IsUk()), _lemon.HasVariant(p, true, IsUk())))
-            .Where(p => p.Monthly || p.Annual)
-            .ToList();
+        var plans = new List<CardPlanOptionDto>();
+        foreach (var code in AllowedCardPlans())
+        {
+            var option = new CardPlanOptionDto(code, await _lemon.HasVariantAsync(code, false, IsUk(), ct), await _lemon.HasVariantAsync(code, true, IsUk(), ct));
+            if (option.Monthly || option.Annual) plans.Add(option);
+        }
         return Ok(new CardPaymentOptionsDto(plans.Count > 0, plans));
     }
 
@@ -68,7 +70,7 @@ public class MySubscriptionController : ControllerBase
         if (_tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt)
             throw new ValidationAppException("الدفع في مصر بيتم عن طريق إنستاباي.");
         var planCode = (request.PlanCode ?? string.Empty).Trim().ToLowerInvariant();
-        if (!AllowedCardPlans().Contains(planCode) || !_lemon.HasVariant(planCode, request.Annual, IsUk()))
+        if (!AllowedCardPlans().Contains(planCode) || !await _lemon.HasVariantAsync(planCode, request.Annual, IsUk(), ct))
             throw new ValidationAppException("الباقة دي مش متاحة للدفع بالبطاقة.");
 
         var baseUrl = (_configuration["App:PublicBaseUrl"] ?? "https://romagroup.app").TrimEnd('/');

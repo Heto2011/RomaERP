@@ -39,23 +39,96 @@ public class LemonSqueezyService : ILemonSqueezyService
     // The store id is optional: when it isn't configured the API key's own (only) store is looked up once and remembered.
     private static string? _discoveredStoreId;
 
-    public bool IsConfigured =>
-        !string.IsNullOrWhiteSpace(ApiKey) && !string.IsNullOrWhiteSpace(WebhookSecret)
-        && _configuration.GetSection("Lemon:Variants").GetChildren().Any(c => !string.IsNullOrWhiteSpace(c.Value));
+    public bool IsConfigured => !string.IsNullOrWhiteSpace(ApiKey) && !string.IsNullOrWhiteSpace(WebhookSecret);
 
     public static string VariantKey(string planCode, bool annual, bool uk = false)
         => $"{planCode.ToLowerInvariant()}-{(annual ? "annual" : "monthly")}{(uk ? "-uk" : "")}";
 
-    private string? VariantId(string planCode, bool annual, bool uk)
-        => _configuration[$"Lemon:Variants:{VariantKey(planCode, annual, uk)}"] is { Length: > 0 } v ? v.Trim() : null;
+    // Variant ids found from the Lemon account itself (so nobody has to copy ids by hand). A Lemon:Variants entry
+    // in the configuration, if present, overrides what was found. Refreshed every ten minutes.
+    private static readonly object CacheLock = new();
+    private static Dictionary<string, string> _discovered = new();
+    private static DateTime _discoveredAt = DateTime.MinValue;
 
-    public bool HasVariant(string planCode, bool annual, bool uk = false) => VariantId(planCode, annual, uk) is not null;
+    private async Task<string?> VariantIdAsync(string planCode, bool annual, bool uk, CancellationToken ct)
+    {
+        var key = VariantKey(planCode, annual, uk);
+        if (_configuration[$"Lemon:Variants:{key}"] is { Length: > 0 } configured) return configured.Trim();
+
+        Dictionary<string, string> map;
+        lock (CacheLock) map = _discovered;
+        if (map.Count == 0 || DateTime.UtcNow - _discoveredAt > TimeSpan.FromMinutes(10))
+        {
+            try
+            {
+                map = await DiscoverVariantsAsync(ct);
+                lock (CacheLock) { _discovered = map; _discoveredAt = DateTime.UtcNow; }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not list the Lemon Squeezy variants.");
+            }
+        }
+        return map.TryGetValue(key, out var id) ? id : null;
+    }
+
+    private async Task<Dictionary<string, string>> DiscoverVariantsAsync(CancellationToken ct)
+    {
+        var products = new Dictionary<string, string>(); // product id -> plan code
+        using (var doc = await GetJsonAsync("https://api.lemonsqueezy.com/v1/products?page[size]=100", ct))
+        {
+            foreach (var p in doc.RootElement.GetProperty("data").EnumerateArray())
+            {
+                var name = Str(p.GetProperty("attributes"), "name")?.ToLowerInvariant() ?? "";
+                var code = name.Contains("essential") ? "essential"
+                    : name.Contains("business") ? "business"
+                    : name.Contains("professional") ? "professional"
+                    : name.Contains("hr") || name.Contains("people") ? "people" : null;
+                if (code is not null) products[p.GetProperty("id").ToString()] = code;
+            }
+        }
+
+        var map = new Dictionary<string, string>();
+        using var variants = await GetJsonAsync("https://api.lemonsqueezy.com/v1/variants?page[size]=100", ct);
+        foreach (var v in variants.RootElement.GetProperty("data").EnumerateArray())
+        {
+            var attrs = v.GetProperty("attributes");
+            var productId = Str(attrs, "product_id");
+            if (productId is null || !products.TryGetValue(productId, out var code)) continue;
+            var variantName = Str(attrs, "name")?.Trim().ToLowerInvariant();
+            var suffix = variantName switch
+            {
+                "monthly" => "monthly",
+                "annual" => "annual",
+                "uk monthly" => "monthly-uk",
+                "uk annual" => "annual-uk",
+                _ => null,
+            };
+            if (suffix is not null) map[$"{code}-{suffix}"] = v.GetProperty("id").ToString();
+        }
+        return map;
+    }
+
+    private async Task<JsonDocument> GetJsonAsync(string url, CancellationToken ct)
+    {
+        using var message = new HttpRequestMessage(HttpMethod.Get, url);
+        message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.api+json"));
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey!.Trim());
+        using var response = await _http.SendAsync(message, ct);
+        var text = await response.Content.ReadAsStringAsync(ct);
+        if (!response.IsSuccessStatusCode)
+            throw new InvalidOperationException($"Lemon Squeezy {(int)response.StatusCode}: {(text.Length > 200 ? text[..200] : text)}");
+        return JsonDocument.Parse(text);
+    }
+
+    public async Task<bool> HasVariantAsync(string planCode, bool annual, bool uk = false, CancellationToken ct = default)
+        => IsConfigured && await VariantIdAsync(planCode, annual, uk, ct) is not null;
 
     public async Task<string> CreateCheckoutAsync(LemonCheckoutRequest request, CancellationToken ct = default)
     {
         if (!IsConfigured)
             throw new ValidationAppException("الدفع بالبطاقة لسه مش مفعّل.");
-        var variant = VariantId(request.PlanCode, request.Annual, request.Uk)
+        var variant = await VariantIdAsync(request.PlanCode, request.Annual, request.Uk, ct)
             ?? throw new ValidationAppException("الباقة دي مش متاحة للدفع بالبطاقة حاليًا.");
 
         var storeId = !string.IsNullOrWhiteSpace(StoreId) ? StoreId.Trim() : await DiscoverStoreIdAsync(ct);

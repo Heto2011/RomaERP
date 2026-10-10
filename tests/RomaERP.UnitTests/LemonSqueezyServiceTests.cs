@@ -137,14 +137,14 @@ public class LemonSqueezyServiceTests
     }
 
     [Fact]
-    public void UkCustomersHaveTheirOwnVariantsAndNeverFallBackToTheGulfPrices()
+    public async Task UkCustomersHaveTheirOwnVariantsAndNeverFallBackToTheGulfPrices()
     {
         var service = NewService(NewCentral());
 
-        Assert.True(service.HasVariant("essential", annual: false));
-        Assert.False(service.HasVariant("essential", annual: false, uk: true));
-        Assert.True(service.HasVariant("business", annual: false, uk: true));
-        Assert.False(service.HasVariant("business", annual: false));
+        Assert.True(await service.HasVariantAsync("essential", annual: false));
+        Assert.False(await service.HasVariantAsync("essential", annual: false, uk: true));
+        Assert.True(await service.HasVariantAsync("business", annual: false, uk: true));
+        Assert.False(await service.HasVariantAsync("business", annual: false));
         Assert.Equal("people-annual-uk", LemonSqueezyService.VariantKey("People", annual: true, uk: true));
     }
 

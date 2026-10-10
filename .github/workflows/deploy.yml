@@ -144,7 +144,7 @@ jobs:
             fi
 
             # Lemon Squeezy card payments (outside Egypt). All four must be set for the "pay by card" button to appear.
-            # LEMON_VARIANTS is JSON like {"essential-monthly":"123","essential-annual":"124","people-monthly":"130"}.
+            # LEMON_VARIANTS is optional now (variants are found from the products' names); JSON like {"essential-monthly":"123","essential-annual":"124","people-monthly":"130"}.
             NEW_LEMON_KEY="${{ secrets.LEMON_API_KEY }}"
             NEW_LEMON_STORE="${{ secrets.LEMON_STORE_ID }}"
             NEW_LEMON_WEBHOOK="${{ secrets.LEMON_WEBHOOK_SECRET }}"

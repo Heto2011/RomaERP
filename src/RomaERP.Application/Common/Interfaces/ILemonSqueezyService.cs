@@ -7,12 +7,13 @@ public record LemonCheckoutRequest(Guid TenantId, string CompanyCode, string Ema
 /// subscription, record each payment as a paid invoice, and lock the company if the subscription expires.</summary>
 public interface ILemonSqueezyService
 {
-    /// <summary>True once the API key, store id, webhook secret and at least one plan variant are configured.</summary>
+    /// <summary>True once the API key and webhook secret are configured. Plan variants are found automatically from the
+    /// products in the Lemon account (named "Roma ERP — Essential" ... with variants Monthly / Annual / UK Monthly / UK Annual).</summary>
     bool IsConfigured { get; }
 
     /// <summary>Whether a Lemon product variant exists for this plan and billing period. UK and Guernsey customers have
     /// their own (higher) USD price set, keyed with a "-uk" suffix; they never fall back to the Gulf prices.</summary>
-    bool HasVariant(string planCode, bool annual, bool uk = false);
+    Task<bool> HasVariantAsync(string planCode, bool annual, bool uk = false, CancellationToken ct = default);
 
     /// <summary>Creates a hosted checkout and returns its URL. The tenant, plan and period travel as custom data
     /// and come back on every webhook, which is how a payment is tied to a company.</summary>
