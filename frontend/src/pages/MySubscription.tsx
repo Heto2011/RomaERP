@@ -159,7 +159,7 @@ export default function MySubscriptionPage() {
       <div className="page-header">
         <h1>{t.mySubscription.title}</h1>
       </div>
-      <p className="text-muted">{t.mySubscription.intro}</p>
+      <p className="text-muted">{outsideEgypt && cardOptions?.enabled ? t.mySubscription.introCard : t.mySubscription.intro}</p>
 
       {error && <div className="alert-error">{error}</div>}
       {successMessage && (

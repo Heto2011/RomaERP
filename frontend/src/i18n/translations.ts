@@ -1258,7 +1258,8 @@ const ar = {
   },
   mySubscription: {
     title: "اشتراكي وفواتيري",
-    intro: "تفاصيل باقتك الحالية وفواتيرك. مفيش دفع إلكتروني مباشر لسه — تحوّل المبلغ بنكيًا وتبلغنا، وفريقنا بيراجع ويأكد خلال يوم شغل.",
+    intro: "تفاصيل باقتك الحالية وفواتيرك. تحوّل المبلغ وتبلغنا، وفريقنا بيراجع ويأكد خلال يوم شغل.",
+    introCard: "تفاصيل باقتك الحالية وفواتيرك. تقدر تدفع بالبطاقة من قسم «الدفع» تحت، وبيتفعّل اشتراكك على طول.",
     currentPlan: "الباقة الحالية",
     statusTrialing: "تجربة مجانية",
     statusActive: "نشطة",
@@ -2726,7 +2727,8 @@ const en: typeof ar = {
   },
   mySubscription: {
     title: "My Subscription & Invoices",
-    intro: "Your current plan and invoices. There's no direct online payment yet — wire the amount and report it, and our team reviews and confirms within one business day.",
+    intro: "Your current plan and invoices. Pay the amount and report it, and our team reviews and confirms within one business day.",
+    introCard: "Your current plan and invoices. You can pay by card in the Payment section below, and your subscription is activated right away.",
     currentPlan: "Current plan",
     statusTrialing: "Free trial",
     statusActive: "Active",
