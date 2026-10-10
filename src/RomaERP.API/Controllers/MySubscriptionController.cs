@@ -25,11 +25,13 @@ public class MySubscriptionController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly IHtmlToPdfRenderer _pdfRenderer;
     private readonly ILemonSqueezyService _lemon;
+    private readonly IPlanLimitGuard _planLimits;
 
     public MySubscriptionController(
         ISubscriptionBillingService billing, ITenantContext tenantContext, CentralDbContext central, IConfiguration configuration,
-        IHtmlToPdfRenderer pdfRenderer, ILemonSqueezyService lemon)
+        IHtmlToPdfRenderer pdfRenderer, ILemonSqueezyService lemon, IPlanLimitGuard planLimits)
     {
+        _planLimits = planLimits;
         _lemon = lemon;
         _pdfRenderer = pdfRenderer;
         _billing = billing;
@@ -87,6 +89,63 @@ public class MySubscriptionController : ControllerBase
         => _tenantContext.ProductScope == RomaERP.Domain.Tenancy.ProductScope.PeopleOnly
             ? new[] { "people" }
             : new[] { "essential", "business", "professional" };
+
+    // Monthly USD price of one extra, per price set: Gulf/other vs Europe (UK, Guernsey). An extra Roma HR employee costs the same as an extra user.
+    private decimal BranchPrice() => IsUk() ? 7m : 4m;
+    private decimal UserPrice() => IsUk() ? 4m : 5m;
+
+    private static readonly string[] PlanOrder = { "essential", "business", "professional" };
+
+    /// <summary>What the company's plan includes, how many paid extras it has, and what it can still buy (card-paid companies only).</summary>
+    [HttpGet("extras")]
+    public async Task<ActionResult<ExtrasInfoDto>> GetExtras(CancellationToken ct)
+    {
+        var usage = await _planLimits.GetUsageAsync(ct);
+        if (usage is null || !_lemon.IsConfigured)
+            return Ok(new ExtrasInfoDto(false, false, "", "", 0, 0, 0, 0, 0, 0, 0, 0, false, false, new List<string>()));
+
+        var upgrades = new List<string>();
+        var from = Array.IndexOf(PlanOrder, usage.PlanCode.ToLowerInvariant());
+        if (from >= 0)
+            for (var i = from + 1; i < PlanOrder.Length; i++)
+                if (await _lemon.HasVariantAsync(PlanOrder[i], false, IsUk(), ct)) upgrades.Add(PlanOrder[i]);
+
+        return Ok(new ExtrasInfoDto(true, usage.IsHr, usage.PlanCode, usage.PlanName,
+            usage.IncludedBranches, usage.PaidBranches, usage.UsedBranches,
+            usage.IncludedUsers, usage.PaidUsers, usage.UsedUsers,
+            BranchPrice(), UserPrice(),
+            !usage.IsHr && await _lemon.HasVariantAsync("extra-branch", false, IsUk(), ct),
+            await _lemon.HasVariantAsync("extra-user", false, IsUk(), ct),
+            upgrades));
+    }
+
+    /// <summary>Adds or removes paid extras. The first extra returns a checkout URL; later changes are applied (and charged pro rata) immediately.</summary>
+    [HttpPost("extras")]
+    public async Task<ActionResult<ExtrasChangeResultDto>> ChangeExtras(ChangeExtrasRequest request, CancellationToken ct)
+    {
+        var usage = await _planLimits.GetUsageAsync(ct)
+            ?? throw new ValidationAppException("الإضافات متاحة للشركات اللي بتدفع بالبطاقة بس.");
+        var kind = string.Equals(request.Kind, "branch", StringComparison.OrdinalIgnoreCase) ? ExtraKind.Branch
+            : string.Equals(request.Kind, "user", StringComparison.OrdinalIgnoreCase) ? ExtraKind.User
+            : throw new ValidationAppException("نوع الإضافة غير معروف.");
+        if (kind == ExtraKind.Branch && usage.IsHr) throw new ValidationAppException("Roma HR مفيهاش فروع.");
+        if (request.Delta == 0 || Math.Abs(request.Delta) > 100) throw new ValidationAppException("العدد غير صحيح.");
+
+        var used = kind == ExtraKind.Branch ? usage.UsedBranches - usage.IncludedBranches : usage.UsedUsers - usage.IncludedUsers;
+        var baseUrl = (_configuration["App:PublicBaseUrl"] ?? "https://romagroup.app").TrimEnd('/');
+        var returnPath = usage.IsHr ? "/people/subscription" : "/my-subscription";
+        var result = await _lemon.ChangeExtrasAsync(_tenantContext.TenantId, kind, request.Delta, Math.Max(0, used),
+            CurrentEmail(), CurrentName(), baseUrl + returnPath + "?extras=1", IsUk(), ct);
+        return Ok(new ExtrasChangeResultDto(result.CheckoutUrl, result.NewQuantity));
+    }
+
+    /// <summary>Upgrades a card-paid company to a higher plan right away — no support ticket needed.</summary>
+    [HttpPost("upgrade")]
+    public async Task<IActionResult> Upgrade(UpgradePlanRequest request, CancellationToken ct)
+    {
+        await _lemon.ChangePlanAsync(_tenantContext.TenantId, request.PlanCode ?? "", IsUk(), ct);
+        return NoContent();
+    }
 
     [HttpGet("invoices")]
     public async Task<ActionResult<List<SubscriptionInvoiceDto>>> GetMyInvoices(CancellationToken ct)

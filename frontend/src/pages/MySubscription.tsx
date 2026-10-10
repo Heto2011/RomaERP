@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { MySubscriptionApi } from "../api/services";
+import { MySubscriptionApi, type ExtrasInfo } from "../api/services";
 import { ProductScope, type TenantSubscription, type SubscriptionInvoice, type BankTransferInfo } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../api/client";
@@ -32,6 +32,10 @@ export default function MySubscriptionPage() {
   const [cardPlan, setCardPlan] = useState("");
   const [cardAnnual, setCardAnnual] = useState(false);
   const [startingCheckout, setStartingCheckout] = useState(false);
+  const [extras, setExtras] = useState<ExtrasInfo | null>(null);
+  const [extrasBusy, setExtrasBusy] = useState(false);
+  const [extrasMessage, setExtrasMessage] = useState<string | null>(null);
+  const extrasPaid = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("extras") === "1";
   const justPaid = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("paid") === "1";
   // Egypt pays through InstaPay; every other country pays by card (payment gateway), never by bank details.
   const outsideEgypt = !!subscription && subscription.currency !== "EGP";
@@ -68,6 +72,12 @@ export default function MySubscriptionPage() {
         setCardPlan((current) => current || card.data.plans.find((p) => p.planCode === subRes.data.planCode)?.planCode || card.data.plans[0]?.planCode || "");
       } catch {
         setCardOptions(null);
+      }
+      try {
+        const ex = await MySubscriptionApi.getExtras();
+        setExtras(ex.data.enabled ? ex.data : null);
+      } catch {
+        setExtras(null);
       }
     } catch (err) {
       setError(getErrorMessage(err));
@@ -152,6 +162,64 @@ export default function MySubscriptionPage() {
     }
   }
 
+  async function changeExtra(kind: "branch" | "user", delta: number) {
+    setError(null);
+    setExtrasMessage(null);
+    setExtrasBusy(true);
+    try {
+      const res = await MySubscriptionApi.changeExtras(kind, delta);
+      if (res.data.checkoutUrl) {
+        window.location.href = res.data.checkoutUrl;
+        return;
+      }
+      setExtrasMessage(t.mySubscription.extrasDone);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setExtrasBusy(false);
+    }
+  }
+
+  async function upgradeTo(planCode: string) {
+    if (!window.confirm(t.mySubscription.upgradeConfirm)) return;
+    setError(null);
+    setExtrasMessage(null);
+    setExtrasBusy(true);
+    try {
+      await MySubscriptionApi.upgradePlan(planCode);
+      setExtrasMessage(t.mySubscription.upgradeDone);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setExtrasBusy(false);
+    }
+  }
+
+  function extraRow(kind: "branch" | "user", label: string, used: number, included: number, paid: number, price: number, available: boolean) {
+    const unlimited = included >= 1_000_000;
+    return (
+      <tr key={kind}>
+        <td><strong>{label}</strong></td>
+        <td>
+          {used} <span className="text-muted">/ {unlimited ? t.mySubscription.unlimited : `${included} ${t.mySubscription.extraIncluded}`}{paid > 0 ? ` + ${paid} ${t.mySubscription.extraPaidCount}` : ""}</span>
+        </td>
+        <td className="mono">${price} <span className="text-muted">{t.mySubscription.extraPriceNote}</span></td>
+        <td style={{ whiteSpace: "nowrap" }}>
+          {available ? (
+            <>
+              <button className="btn btn-secondary" type="button" disabled={extrasBusy || paid <= 0 || used - included >= paid} onClick={() => changeExtra(kind, -1)}>− {t.mySubscription.extraRemove}</button>{" "}
+              <button className="btn" type="button" disabled={extrasBusy} onClick={() => changeExtra(kind, 1)}>+ {t.mySubscription.extraAdd}</button>
+            </>
+          ) : (
+            <span className="text-muted">{t.mySubscription.extraUnavailable}</span>
+          )}
+        </td>
+      </tr>
+    );
+  }
+
   if (loading) return <div className="text-muted" style={{ padding: 40 }}>{t.common.loading}</div>;
 
   return (
@@ -192,12 +260,12 @@ export default function MySubscriptionPage() {
               {!peopleOnly && (
                 <tr>
                   <td>{t.mySubscription.branchesUsage}</td>
-                  <td>{usageCell(subscription.currentBranches, subscription.includedBranches, subscription.extraBranchPrice, subscription.currency)}</td>
+                  <td>{usageCell(subscription.currentBranches, subscription.includedBranches, extras ? 0 : subscription.extraBranchPrice, subscription.currency)}</td>
                 </tr>
               )}
               <tr>
                 <td>{peopleOnly ? t.mySubscription.employeesUsage : t.mySubscription.usersUsage}</td>
-                <td>{usageCell(subscription.currentUsers, subscription.includedUsers, subscription.extraUserPrice, subscription.currency)}</td>
+                <td>{usageCell(subscription.currentUsers, subscription.includedUsers, extras ? 0 : subscription.extraUserPrice, subscription.currency)}</td>
               </tr>
               <tr>
                 <td>{t.mySubscription.outstanding}</td>
@@ -279,6 +347,31 @@ export default function MySubscriptionPage() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+
+      {extras && outsideEgypt && (
+        <div className="card">
+          <h3 style={{ marginTop: 0 }}>{t.mySubscription.extrasTitle}</h3>
+          <p className="text-muted">{t.mySubscription.extrasIntro}</p>
+          {extrasPaid && <div className="alert-success" style={{ marginBottom: 12 }}>{t.mySubscription.extrasCheckoutDone}</div>}
+          {extrasMessage && <div className="alert-success" style={{ marginBottom: 12 }}>{extrasMessage}</div>}
+          <table>
+            <tbody>
+              {!extras.isHr && extraRow("branch", t.mySubscription.extraBranches, extras.usedBranches, extras.includedBranches, extras.paidBranches, extras.branchPrice, extras.branchAvailable)}
+              {extraRow("user", extras.isHr ? t.mySubscription.extraEmployees : t.mySubscription.extraUsers, extras.usedUsers, extras.includedUsers, extras.paidUsers, extras.userPrice, extras.userAvailable)}
+            </tbody>
+          </table>
+          {extras.upgradePlans.length > 0 && (
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap", alignItems: "center", marginTop: 16 }}>
+              <strong>{t.mySubscription.upgradeTitle}:</strong>
+              {extras.upgradePlans.map((code) => (
+                <button key={code} className="btn btn-secondary" type="button" disabled={extrasBusy} onClick={() => upgradeTo(code)}>
+                  {t.mySubscription.upgradeBtn} {t.mySubscription.cardPlanNames[code as keyof typeof t.mySubscription.cardPlanNames] ?? code}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

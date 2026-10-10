@@ -743,12 +743,34 @@ export const MarketingApi = {
 };
 
 /// Customer-facing (JWT-authenticated, Admin role) view of the tenant's own subscription/invoices.
+export interface ExtrasInfo {
+  enabled: boolean;
+  isHr: boolean;
+  planCode: string;
+  planName: string;
+  includedBranches: number;
+  paidBranches: number;
+  usedBranches: number;
+  includedUsers: number;
+  paidUsers: number;
+  usedUsers: number;
+  branchPrice: number;
+  userPrice: number;
+  branchAvailable: boolean;
+  userAvailable: boolean;
+  upgradePlans: string[];
+}
+
 export const MySubscriptionApi = {
   get: () => apiClient.get<TenantSubscription>("/my-subscription"),
   getInvoices: () => apiClient.get<SubscriptionInvoice[]>("/my-subscription/invoices"),
   getBankTransferInfo: () => apiClient.get<BankTransferInfo>("/my-subscription/bank-transfer"),
   getCardPaymentOptions: () =>
     apiClient.get<{ enabled: boolean; plans: { planCode: string; monthly: boolean; annual: boolean }[] }>("/my-subscription/card-payments"),
+  getExtras: () => apiClient.get<ExtrasInfo>("/my-subscription/extras"),
+  changeExtras: (kind: "branch" | "user", delta: number) =>
+    apiClient.post<{ checkoutUrl: string | null; newQuantity: number }>("/my-subscription/extras", { kind, delta }),
+  upgradePlan: (planCode: string) => apiClient.post("/my-subscription/upgrade", { planCode }),
   startCheckout: (planCode: string, annual: boolean) => apiClient.post<{ url: string }>("/my-subscription/checkout", { planCode, annual }),
   downloadInvoicePdf: (invoiceId: string, lang: string) =>
     apiClient.get<Blob>(`/my-subscription/invoices/${invoiceId}/pdf`, { params: { lang }, responseType: "blob" }),

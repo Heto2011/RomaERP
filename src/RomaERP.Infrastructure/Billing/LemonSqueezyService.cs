@@ -80,7 +80,9 @@ public class LemonSqueezyService : ILemonSqueezyService
             foreach (var p in doc.RootElement.GetProperty("data").EnumerateArray())
             {
                 var name = Str(p.GetProperty("attributes"), "name")?.ToLowerInvariant() ?? "";
-                var code = name.Contains("essential") ? "essential"
+                var code = name.Contains("extra") && name.Contains("branch") ? "extra-branch"
+                    : name.Contains("extra") && name.Contains("user") ? "extra-user"
+                    : name.Contains("essential") ? "essential"
                     : name.Contains("business") ? "business"
                     : name.Contains("professional") ? "professional"
                     : name.Contains("hr") || name.Contains("people") ? "people" : null;
@@ -131,13 +133,26 @@ public class LemonSqueezyService : ILemonSqueezyService
         var variant = await VariantIdAsync(request.PlanCode, request.Annual, request.Uk, ct)
             ?? throw new ValidationAppException("الباقة دي مش متاحة للدفع بالبطاقة حاليًا.");
 
-        var storeId = !string.IsNullOrWhiteSpace(StoreId) ? StoreId.Trim() : await DiscoverStoreIdAsync(ct);
-
         // The Roma HR launch offer (50% off the first 3 monthly payments) is a Lemon discount code applied for the customer,
         // so nobody has to know or type it. Annual payments don't get it.
         var foundingCode = _configuration["Lemon:FoundingDiscountCode"]?.Trim();
         var applyFounding = !string.IsNullOrEmpty(foundingCode) && !request.Annual
             && string.Equals(request.PlanCode, "people", StringComparison.OrdinalIgnoreCase);
+
+        return await PostCheckoutAsync(variant, request.Email, request.Name, request.RedirectUrl, applyFounding ? foundingCode : null, 1,
+            new Dictionary<string, string>
+            {
+                ["tenant_id"] = request.TenantId.ToString(),
+                ["company_code"] = request.CompanyCode,
+                ["plan_code"] = request.PlanCode.ToLowerInvariant(),
+                ["period"] = request.Annual ? "annual" : "monthly",
+            }, ct);
+    }
+
+    private async Task<string> PostCheckoutAsync(string variant, string email, string name, string redirectUrl, string? discountCode, int quantity,
+        Dictionary<string, string> custom, CancellationToken ct)
+    {
+        var storeId = !string.IsNullOrWhiteSpace(StoreId) ? StoreId.Trim() : await DiscoverStoreIdAsync(ct);
 
         var body = new
         {
@@ -148,18 +163,13 @@ public class LemonSqueezyService : ILemonSqueezyService
                 {
                     checkout_data = new
                     {
-                        email = request.Email,
-                        name = request.Name,
-                        discount_code = applyFounding ? foundingCode : null,
-                        custom = new Dictionary<string, string>
-                        {
-                            ["tenant_id"] = request.TenantId.ToString(),
-                            ["company_code"] = request.CompanyCode,
-                            ["plan_code"] = request.PlanCode.ToLowerInvariant(),
-                            ["period"] = request.Annual ? "annual" : "monthly",
-                        },
+                        email,
+                        name,
+                        discount_code = discountCode,
+                        variant_quantities = quantity > 1 ? new[] { new { variant_id = long.Parse(variant, CultureInfo.InvariantCulture), quantity } } : null,
+                        custom,
                     },
-                    product_options = new { redirect_url = request.RedirectUrl },
+                    product_options = new { redirect_url = redirectUrl },
                 },
                 relationships = new
                 {
@@ -187,6 +197,130 @@ public class LemonSqueezyService : ILemonSqueezyService
         using var doc = JsonDocument.Parse(text);
         var url = doc.RootElement.GetProperty("data").GetProperty("attributes").GetProperty("url").GetString();
         return string.IsNullOrWhiteSpace(url) ? throw new ValidationAppException("تعذر فتح صفحة الدفع دلوقتي.") : url;
+    }
+
+    // ---- Paid extras (branches / users / HR employees) and plan upgrades -------------------------------------------
+
+    private static string ExtraProduct(ExtraKind kind) => kind == ExtraKind.Branch ? "extra-branch" : "extra-user";
+
+    public async Task<ExtraChangeResult> ChangeExtrasAsync(Guid tenantId, ExtraKind kind, int delta, int minimumQuantity, string email, string name, string redirectUrl, bool uk, CancellationToken ct = default)
+    {
+        if (!IsConfigured) throw new ValidationAppException("الدفع بالبطاقة لسه مش مفعّل.");
+        var sub = await _central.Subscriptions.FirstOrDefaultAsync(s => s.TenantId == tenantId, ct)
+            ?? throw new ValidationAppException("مفيش اشتراك للشركة.");
+        if (sub.PaymentProvider != ProviderName)
+            throw new ValidationAppException("الإضافات بالبطاقة متاحة للشركات اللي بتدفع بالبطاقة بس.");
+
+        var current = kind == ExtraKind.Branch ? sub.ExtraBranchesPaid : sub.ExtraUsersPaid;
+        var existingId = kind == ExtraKind.Branch ? sub.ExtraBranchesLemonSubscriptionId : sub.ExtraUsersLemonSubscriptionId;
+        var target = current + delta;
+        if (target < Math.Max(0, minimumQuantity))
+            throw new ValidationAppException("مش هتقدر تقلل الإضافات عن اللي مستخدمه فعلًا — امسح الأول فرع/مستخدم زيادة.");
+        if (target > 500) throw new ValidationAppException("العدد كبير — كلّم الدعم.");
+        if (target == current) return new ExtraChangeResult(null, current);
+
+        var kindLabel = kind == ExtraKind.Branch ? "branches" : "users";
+        var tenant = await _central.Tenants.FirstAsync(t => t.Id == tenantId, ct);
+
+        if (string.IsNullOrEmpty(existingId))
+        {
+            if (target <= 0) return new ExtraChangeResult(null, 0);
+            var variant = await VariantIdAsync(ExtraProduct(kind), false, uk, ct)
+                ?? throw new ValidationAppException("الإضافة دي مش متاحة للدفع بالبطاقة حاليًا.");
+            var url = await PostCheckoutAsync(variant, email, name, redirectUrl, null, target,
+                new Dictionary<string, string>
+                {
+                    ["tenant_id"] = tenantId.ToString(),
+                    ["company_code"] = tenant.CompanyCode,
+                    ["kind"] = kind == ExtraKind.Branch ? "extra_branch" : "extra_user",
+                }, ct);
+            return new ExtraChangeResult(url, current);
+        }
+
+        if (target == 0)
+        {
+            await SendAsync(HttpMethod.Delete, $"https://api.lemonsqueezy.com/v1/subscriptions/{existingId}", null, ct);
+            if (kind == ExtraKind.Branch) { sub.ExtraBranchesPaid = 0; sub.ExtraBranchesLemonSubscriptionId = null; }
+            else { sub.ExtraUsersPaid = 0; sub.ExtraUsersLemonSubscriptionId = null; }
+            Log(tenant, "Billing", $"Extra {kindLabel} removed", "all extras cancelled (stay paid until the period ends)");
+            await _central.SaveChangesAsync(ct);
+            return new ExtraChangeResult(null, 0);
+        }
+
+        string itemId;
+        using (var items = await GetJsonAsync($"https://api.lemonsqueezy.com/v1/subscription-items?filter[subscription_id]={existingId}", ct))
+        {
+            var first = items.RootElement.GetProperty("data").EnumerateArray().FirstOrDefault();
+            itemId = first.ValueKind == JsonValueKind.Object ? first.GetProperty("id").ToString() : "";
+        }
+        if (itemId.Length == 0) throw new ValidationAppException("تعذر تعديل الإضافة دلوقتي — جرّب تاني بعد شوية.");
+
+        await SendAsync(new HttpMethod("PATCH"), $"https://api.lemonsqueezy.com/v1/subscription-items/{itemId}", new
+        {
+            data = new
+            {
+                type = "subscription-items",
+                id = itemId,
+                attributes = new { quantity = target, invoice_immediately = true },
+            },
+        }, ct);
+
+        if (kind == ExtraKind.Branch) sub.ExtraBranchesPaid = target; else sub.ExtraUsersPaid = target;
+        Log(tenant, "Billing", $"Extra {kindLabel} changed", $"{current} → {target}");
+        await _central.SaveChangesAsync(ct);
+        return new ExtraChangeResult(null, target);
+    }
+
+    private static readonly string[] PlanOrder = { "essential", "business", "professional" };
+
+    public async Task ChangePlanAsync(Guid tenantId, string newPlanCode, bool uk, CancellationToken ct = default)
+    {
+        if (!IsConfigured) throw new ValidationAppException("الدفع بالبطاقة لسه مش مفعّل.");
+        var sub = await _central.Subscriptions.FirstOrDefaultAsync(s => s.TenantId == tenantId, ct)
+            ?? throw new ValidationAppException("مفيش اشتراك للشركة.");
+        if (sub.PaymentProvider != ProviderName || string.IsNullOrEmpty(sub.PaymentProviderTokenRef))
+            throw new ValidationAppException("الترقية الأوتوماتيك متاحة للشركات اللي بتدفع بالبطاقة بس.");
+
+        var currentPlan = await _central.SubscriptionPlans.AsNoTracking().FirstAsync(p => p.Id == sub.PlanId, ct);
+        var newCode = newPlanCode.Trim().ToLowerInvariant();
+        var from = Array.IndexOf(PlanOrder, currentPlan.Code.ToLowerInvariant());
+        var to = Array.IndexOf(PlanOrder, newCode);
+        if (from < 0 || to < 0) throw new ValidationAppException("الباقة دي مش متاحة للترقية الأوتوماتيك.");
+        if (to <= from) throw new ValidationAppException("الترقية لباقة أعلى بس. للتخفيض كلّم الدعم.");
+
+        var newPlan = await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Code == newCode, ct)
+            ?? throw new ValidationAppException("الباقة مش موجودة.");
+        var annual = sub.BillingPeriod == BillingPeriod.Annual;
+        var variant = await VariantIdAsync(newCode, annual, uk, ct)
+            ?? throw new ValidationAppException("الباقة دي مش متاحة للدفع بالبطاقة حاليًا.");
+
+        await SendAsync(new HttpMethod("PATCH"), $"https://api.lemonsqueezy.com/v1/subscriptions/{sub.PaymentProviderTokenRef}", new
+        {
+            data = new
+            {
+                type = "subscriptions",
+                id = sub.PaymentProviderTokenRef,
+                attributes = new { variant_id = long.Parse(variant, CultureInfo.InvariantCulture), invoice_immediately = true },
+            },
+        }, ct);
+
+        sub.PlanId = newPlan.Id;
+        var tenant = await _central.Tenants.FirstAsync(t => t.Id == tenantId, ct);
+        Log(tenant, "Billing", "Plan upgraded (card)", $"{currentPlan.Code} → {newCode}");
+        await _central.SaveChangesAsync(ct);
+    }
+
+    private async Task SendAsync(HttpMethod method, string url, object? body, CancellationToken ct)
+    {
+        using var message = new HttpRequestMessage(method, url);
+        message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.api+json"));
+        message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey!.Trim());
+        if (body is not null) message.Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/vnd.api+json");
+        using var response = await _http.SendAsync(message, ct);
+        if (response.IsSuccessStatusCode) return;
+        var text = await response.Content.ReadAsStringAsync(ct);
+        _logger.LogWarning("Lemon Squeezy {Method} {Url} failed: {Status} {Body}", method, url, (int)response.StatusCode, text.Length > 500 ? text[..500] : text);
+        throw new ValidationAppException("تعذر تنفيذ العملية دلوقتي — جرّب تاني بعد شوية أو كلّم الدعم.");
     }
 
     private async Task<string> DiscoverStoreIdAsync(CancellationToken ct)
@@ -248,6 +382,17 @@ public class LemonSqueezyService : ILemonSqueezyService
         }
 
         var tag = testMode ? " (test mode)" : "";
+
+        // Events of the add-on subscriptions ("Extra Branch" / "Extra User") are told apart by the kind we put in the
+        // checkout, or by the id we stored when that add-on was first paid for.
+        var extra = ExtraKindOf(custom, subscription, lemonSubscriptionId);
+        if (extra is { } extraKind)
+        {
+            if (await HandleExtraAsync(tenant, subscription, extraKind, eventName, attrs, dataId, lemonSubscriptionId, tag, ct))
+                await _central.SaveChangesAsync(ct);
+            return;
+        }
+
         switch (eventName)
         {
             case "subscription_created":
@@ -298,6 +443,105 @@ public class LemonSqueezyService : ILemonSqueezyService
         await _central.SaveChangesAsync(ct);
     }
 
+    private static ExtraKind? ExtraKindOf(JsonElement custom, Subscription subscription, string lemonSubscriptionId)
+    {
+        switch (custom.ValueKind == JsonValueKind.Object ? Str(custom, "kind") : null)
+        {
+            case "extra_branch": return ExtraKind.Branch;
+            case "extra_user": return ExtraKind.User;
+        }
+        if (lemonSubscriptionId.Length == 0) return null;
+        if (lemonSubscriptionId == subscription.ExtraBranchesLemonSubscriptionId) return ExtraKind.Branch;
+        if (lemonSubscriptionId == subscription.ExtraUsersLemonSubscriptionId) return ExtraKind.User;
+        return null;
+    }
+
+    private static int ItemQuantity(JsonElement attrs)
+        => attrs.TryGetProperty("first_subscription_item", out var item) && item.ValueKind == JsonValueKind.Object
+            && item.TryGetProperty("quantity", out var q) && q.TryGetInt32(out var n) ? Math.Max(0, n) : 0;
+
+    /// <summary>Applies a webhook of an add-on subscription. Returns true when something changed and must be saved.</summary>
+    private async Task<bool> HandleExtraAsync(Tenant tenant, Subscription sub, ExtraKind kind, string eventName, JsonElement attrs, string dataId,
+        string lemonSubscriptionId, string tag, CancellationToken ct)
+    {
+        var branches = kind == ExtraKind.Branch;
+        var label = branches ? "branches" : "users";
+        var storedId = branches ? sub.ExtraBranchesLemonSubscriptionId : sub.ExtraUsersLemonSubscriptionId;
+
+        void SetPaid(int quantity, string? id)
+        {
+            if (branches) { sub.ExtraBranchesPaid = quantity; sub.ExtraBranchesLemonSubscriptionId = id; }
+            else { sub.ExtraUsersPaid = quantity; sub.ExtraUsersLemonSubscriptionId = id; }
+        }
+
+        // An add-on that was removed and bought again has a new Lemon id; late events of the old one must not touch it.
+        if (eventName != "subscription_created" && !string.IsNullOrEmpty(storedId) && storedId != lemonSubscriptionId) return false;
+        if (eventName != "subscription_created" && string.IsNullOrEmpty(storedId) && eventName != "subscription_payment_success") return false;
+
+        switch (eventName)
+        {
+            case "subscription_created":
+            {
+                var quantity = Math.Max(1, ItemQuantity(attrs));
+                SetPaid(quantity, dataId);
+                Log(tenant, "Billing", $"Extra {label} added", $"{quantity} paid{tag}");
+                return true;
+            }
+            case "subscription_updated":
+            {
+                var status = Str(attrs, "status");
+                if (status is "expired" or "cancelled") return false; // the end is handled by the cancelled / expired events
+                var quantity = ItemQuantity(attrs);
+                if (quantity <= 0 || quantity == (branches ? sub.ExtraBranchesPaid : sub.ExtraUsersPaid)) return false;
+                SetPaid(quantity, storedId);
+                Log(tenant, "Billing", $"Extra {label} changed", $"{quantity} paid{tag}");
+                return true;
+            }
+            case "subscription_expired":
+                SetPaid(0, null);
+                Log(tenant, "Billing", $"Extra {label} ended", tag.Trim());
+                return true;
+            case "subscription_cancelled":
+                Log(tenant, "Billing", $"Extra {label} cancelled", $"paid until {ParseDate(attrs, "ends_at"):yyyy-MM-dd}{tag}");
+                return true;
+            case "subscription_payment_failed":
+                Log(tenant, "Billing", $"Extra {label} payment failed", tag.Trim());
+                return true;
+            case "subscription_payment_refunded":
+                Log(tenant, "Billing", $"Extra {label} payment refunded", $"{Money(attrs)}{tag}");
+                return true;
+            case "subscription_payment_success":
+            {
+                var reference = $"lemon-inv:{dataId}";
+                if (await _central.SubscriptionInvoices.AnyAsync(i => i.TenantId == tenant.Id && i.PaymentReference == reference, ct)) return false;
+                var cents = attrs.TryGetProperty("total", out var t) && t.TryGetInt64(out var c) ? c : 0;
+                var amount = Math.Round(cents / 100m, 2);
+                var now = DateTime.UtcNow;
+                _central.SubscriptionInvoices.Add(new SubscriptionInvoice
+                {
+                    TenantId = tenant.Id,
+                    SubscriptionId = sub.Id,
+                    PlanCode = branches ? "extra-branch" : "extra-user",
+                    PlanNameAr = branches ? "فروع إضافية" : "مستخدمين إضافيين",
+                    PeriodStart = now,
+                    PeriodEnd = now.AddMonths(1),
+                    BaseAmount = amount,
+                    TotalAmount = amount,
+                    Currency = (Str(attrs, "currency") ?? "USD").ToUpperInvariant(),
+                    Status = SubscriptionInvoiceStatus.Paid,
+                    DueDateUtc = now,
+                    PaidAtUtc = now,
+                    PaymentReference = reference,
+                    Notes = $"Extra {label} via Lemon Squeezy" + tag,
+                });
+                Log(tenant, "Billing", $"Extra {label} payment received", $"{Money(attrs)}{tag}");
+                return true;
+            }
+            default:
+                return false;
+        }
+    }
+
     private async Task<(Tenant?, Subscription?)> ResolveAsync(JsonElement custom, string lemonSubscriptionId, CancellationToken ct)
     {
         Tenant? tenant = null;
@@ -311,7 +555,9 @@ public class LemonSqueezyService : ILemonSqueezyService
         if (subscription is null && lemonSubscriptionId.Length > 0)
         {
             subscription = await _central.Subscriptions.FirstOrDefaultAsync(
-                s => s.PaymentProvider == ProviderName && s.PaymentProviderTokenRef == lemonSubscriptionId, ct);
+                s => (s.PaymentProvider == ProviderName && s.PaymentProviderTokenRef == lemonSubscriptionId)
+                    || s.ExtraBranchesLemonSubscriptionId == lemonSubscriptionId
+                    || s.ExtraUsersLemonSubscriptionId == lemonSubscriptionId, ct);
             if (subscription is not null)
                 tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == subscription.TenantId, ct);
         }

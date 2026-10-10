@@ -50,3 +50,19 @@ Pay for a trial company → it becomes Active, an invoice appears as Paid (USD),
 ## Known limits
 - Extra branches/users beyond the plan are **not** billed through Lemon yet (the card charge is the plan's flat price).
 - Plan changes for a card customer are done in Lemon's customer portal / by the owner.
+
+## Paid extras (extra branches / users / Roma HR employees)
+
+Card-paid companies buy extras themselves from **My Subscription → Extras & upgrade**; no support ticket is needed.
+Create two more subscription products in Lemon (same store, same mode):
+
+| Product name | Variant `Monthly` | Variant `UK Monthly` |
+|---|---|---|
+| Roma ERP — Extra Branch | $4 | $7 |
+| Roma ERP — Extra User | $5 | $4 |
+
+An extra Roma HR employee uses the **Extra User** product (same price as an extra user).
+Each is a normal monthly subscription priced per unit; the app sets the quantity (first purchase through a checkout,
+later changes by updating the quantity with `invoice_immediately`, which charges the difference pro rata).
+Variants are discovered by product/variant name, like the plans. Upgrades (Essential → Business → Professional)
+switch the plan's variant on the existing subscription, also pro rata.

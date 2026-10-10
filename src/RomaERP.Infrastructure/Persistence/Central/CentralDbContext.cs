@@ -62,6 +62,8 @@ public class CentralDbContext : DbContext
             b.Property(s => s.PaymentProvider).HasMaxLength(50).IsRequired();
             b.Property(s => s.PaymentProviderCustomerRef).HasMaxLength(200);
             b.Property(s => s.PaymentProviderTokenRef).HasMaxLength(200);
+            b.Property(s => s.ExtraBranchesLemonSubscriptionId).HasMaxLength(200);
+            b.Property(s => s.ExtraUsersLemonSubscriptionId).HasMaxLength(200);
             b.HasOne<Tenant>().WithMany().HasForeignKey(s => s.TenantId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne<SubscriptionPlan>().WithMany().HasForeignKey(s => s.PlanId).OnDelete(DeleteBehavior.Restrict);
             b.HasQueryFilter(s => !s.IsDeleted);

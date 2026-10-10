@@ -22,14 +22,14 @@ public class PlanLimitGuardTests
         public bool IsResolved => true;
     }
 
-    private static (PlanLimitGuard Guard, ApplicationDbContext Db) Build(string provider, int includedBranches, bool custom = false, ProductScope scope = ProductScope.Full)
+    private static (PlanLimitGuard Guard, ApplicationDbContext Db) Build(string provider, int includedBranches, bool custom = false, ProductScope scope = ProductScope.Full, int extraBranchesPaid = 0)
     {
         var central = new CentralDbContext(new DbContextOptionsBuilder<CentralDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var tenant = new FakeTenant { ProductScope = scope };
         var plan = new SubscriptionPlan { Code = "essential", NameAr = "الأساسية", NameEn = "Essential", MonthlyBasePrice = 149, IncludedBranches = includedBranches, IncludedUsers = 10, IsCustomPricing = custom };
         central.SubscriptionPlans.Add(plan);
-        central.Subscriptions.Add(new Subscription { TenantId = tenant.TenantId, PlanId = plan.Id, Status = SubscriptionStatus.Active, PaymentProvider = provider });
+        central.Subscriptions.Add(new Subscription { TenantId = tenant.TenantId, PlanId = plan.Id, Status = SubscriptionStatus.Active, PaymentProvider = provider, ExtraBranchesPaid = extraBranchesPaid });
         central.SaveChanges();
         return (new PlanLimitGuard(central, tenant, db, null!), db);
     }
@@ -72,5 +72,16 @@ public class PlanLimitGuardTests
         var (hr, db2) = Build("LemonSqueezy", includedBranches: 1, scope: ProductScope.PeopleOnly);
         AddBranches(db2, 5);
         await hr.EnsureCanAddBranchAsync();
+    }
+
+    [Fact]
+    public async Task PaidExtras_RaiseTheLimit()
+    {
+        var (guard, db) = Build("LemonSqueezy", includedBranches: 3, extraBranchesPaid: 2);
+        AddBranches(db, 4);
+        await guard.EnsureCanAddBranchAsync(); // 3 included + 2 paid = 5, the 5th is allowed
+
+        AddBranches(db, 1);
+        await Assert.ThrowsAsync<ValidationAppException>(() => guard.EnsureCanAddBranchAsync());
     }
 }

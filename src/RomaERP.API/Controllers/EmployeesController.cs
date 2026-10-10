@@ -17,8 +17,11 @@ public class EmployeesController : ControllerBase
     private readonly ICurrentUserService _currentUser;
     private readonly IWebHostEnvironment _environment;
 
-    public EmployeesController(IEmployeeService employeeService, ICurrentUserService currentUser, IWebHostEnvironment environment)
+    private readonly IPlanLimitGuard? _planLimits;
+
+    public EmployeesController(IEmployeeService employeeService, ICurrentUserService currentUser, IWebHostEnvironment environment, IPlanLimitGuard? planLimits = null)
     {
+        _planLimits = planLimits;
         _employeeService = employeeService;
         _currentUser = currentUser;
         _environment = environment;
@@ -63,6 +66,7 @@ public class EmployeesController : ControllerBase
     [Authorize(Policy = ModulePermissions.HRPolicy)]
     public async Task<ActionResult<EmployeeDto>> Create(CreateEmployeeDto dto, CancellationToken ct)
     {
+        if (_planLimits is not null) await _planLimits.EnsureCanAddEmployeeAsync(ct);
         var result = await _employeeService.CreateAsync(dto, ct);
         return CreatedAtAction(nameof(GetById), new { id = result.Id }, result);
     }

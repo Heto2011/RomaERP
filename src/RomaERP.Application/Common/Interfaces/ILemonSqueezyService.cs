@@ -1,5 +1,11 @@
 namespace RomaERP.Application.Common.Interfaces;
 
+public enum ExtraKind { Branch, User }
+
+/// <summary>Result of changing the number of paid extras: either a hosted checkout to pay for the first extra
+/// (<see cref="CheckoutUrl"/>), or the new quantity when the existing add-on subscription was updated in place.</summary>
+public record ExtraChangeResult(string? CheckoutUrl, int NewQuantity);
+
 public record LemonCheckoutRequest(Guid TenantId, string CompanyCode, string Email, string Name, string PlanCode, bool Annual, string RedirectUrl, bool Uk = false);
 
 /// <summary>Card payments through Lemon Squeezy (merchant of record) for customers outside Egypt. Lemon owns the
@@ -23,4 +29,12 @@ public interface ILemonSqueezyService
     bool VerifySignature(string rawBody, string? signature);
 
     Task HandleWebhookAsync(string rawBody, CancellationToken ct = default);
+
+    /// <summary>Adds or removes paid extras (branches or users/employees) on a card-paid company. The first extra needs a
+    /// hosted checkout; after that the add-on subscription's quantity is changed in place and billed pro rata.
+    /// <paramref name="minimumQuantity"/> is how many extras are actually in use, so nobody pays less than they use.</summary>
+    Task<ExtraChangeResult> ChangeExtrasAsync(Guid tenantId, ExtraKind kind, int delta, int minimumQuantity, string email, string name, string redirectUrl, bool uk, CancellationToken ct = default);
+
+    /// <summary>Moves a card-paid company to a higher plan right away (Lemon charges the difference pro rata).</summary>
+    Task ChangePlanAsync(Guid tenantId, string newPlanCode, bool uk, CancellationToken ct = default);
 }

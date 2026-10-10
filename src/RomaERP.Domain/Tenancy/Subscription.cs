@@ -39,5 +39,12 @@ public class Subscription : AuditableEntity
     public string? PaymentProviderCustomerRef { get; set; }
     public string? PaymentProviderTokenRef { get; set; }
 
+    /// <summary>Extra branches / users this company pays for on top of its plan (card payment through Lemon Squeezy:
+    /// each is its own small monthly subscription whose quantity is the number of extras).</summary>
+    public int ExtraBranchesPaid { get; set; }
+    public int ExtraUsersPaid { get; set; }
+    public string? ExtraBranchesLemonSubscriptionId { get; set; }
+    public string? ExtraUsersLemonSubscriptionId { get; set; }
+
     public DateTime? SuspendedAtUtc { get; set; }
 }

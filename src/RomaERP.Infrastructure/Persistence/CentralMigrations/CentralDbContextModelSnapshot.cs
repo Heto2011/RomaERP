@@ -344,6 +344,20 @@ namespace RomaERP.Infrastructure.Persistence.CentralMigrations
                     b.Property<DateTime>("CurrentPeriodStart")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("ExtraBranchesLemonSubscriptionId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("ExtraBranchesPaid")
+                        .HasColumnType("int");
+
+                    b.Property<string>("ExtraUsersLemonSubscriptionId")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("ExtraUsersPaid")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
