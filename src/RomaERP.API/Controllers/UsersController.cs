@@ -49,10 +49,12 @@ public class UsersController : ControllerBase
     private readonly IEmployeeService _employeeService;
     private readonly IPasswordHasher<ApplicationUser> _passwordHasher;
     private readonly ITenantActivityLog? _activity;
+    private readonly IPlanLimitGuard? _planLimits;
 
     public UsersController(UserManager<ApplicationUser> userManager, ICurrentUserService currentUser, IEmployeeService employeeService, IPasswordHasher<ApplicationUser> passwordHasher,
-        ITenantActivityLog? activity = null)
+        ITenantActivityLog? activity = null, IPlanLimitGuard? planLimits = null)
     {
+        _planLimits = planLimits;
         _activity = activity;
         _userManager = userManager;
         _currentUser = currentUser;
@@ -100,8 +102,9 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<ActionResult<UserDto>> CreateUser(CreateUserRequest request)
+    public async Task<ActionResult<UserDto>> CreateUser(CreateUserRequest request, CancellationToken ct = default)
     {
+        if (_planLimits is not null) await _planLimits.EnsureCanAddUserAsync(ct);
         if (string.IsNullOrWhiteSpace(request.Email) || string.IsNullOrWhiteSpace(request.FullName))
             return BadRequest(new { error = "البريد الإلكتروني والاسم مطلوبين." });
 
@@ -220,6 +223,7 @@ public class UsersController : ControllerBase
             ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
         if (!await CanManageAsync(user)) return AdminOnlyResult();
 
+        if (!user.IsActive && _planLimits is not null) await _planLimits.EnsureCanAddUserAsync(ct);
         user.IsActive = true;
         await _userManager.UpdateAsync(user);
         await LogAsync("Users", "User activated", user.Email);

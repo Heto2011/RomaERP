@@ -1,3 +1,4 @@
+using RomaERP.Application.Common.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using RomaERP.Application.Inventory.DTOs;
@@ -11,10 +12,12 @@ namespace RomaERP.API.Controllers;
 public class WarehousesController : ControllerBase
 {
     private readonly IWarehouseService _warehouseService;
+    private readonly IPlanLimitGuard? _planLimits;
 
-    public WarehousesController(IWarehouseService warehouseService)
+    public WarehousesController(IWarehouseService warehouseService, IPlanLimitGuard? planLimits = null)
     {
         _warehouseService = warehouseService;
+        _planLimits = planLimits;
     }
 
     [HttpGet]
@@ -24,7 +27,10 @@ public class WarehousesController : ControllerBase
     [HttpPost]
     [Authorize(Roles = "Admin,Accountant")]
     public async Task<ActionResult<WarehouseDto>> Create(CreateWarehouseDto dto, CancellationToken ct)
-        => Ok(await _warehouseService.CreateAsync(dto, ct));
+    {
+        if (_planLimits is not null) await _planLimits.EnsureCanAddBranchAsync(ct);
+        return Ok(await _warehouseService.CreateAsync(dto, ct));
+    }
 
     [HttpDelete("{id:guid}")]
     [Authorize(Roles = "Admin,Accountant")]
