@@ -17,7 +17,7 @@ public class LemonSqueezyServiceTests
     private static CentralDbContext NewCentral()
         => new(new DbContextOptionsBuilder<CentralDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
 
-    private static LemonSqueezyService NewService(CentralDbContext central, bool configured = true)
+    private static LemonSqueezyService NewService(CentralDbContext central, bool configured = true, HttpMessageHandler? handler = null, string? foundingCode = null)
     {
         var values = new Dictionary<string, string?>();
         if (configured)
@@ -26,9 +26,13 @@ public class LemonSqueezyServiceTests
             values["Lemon:WebhookSecret"] = Secret;
             values["Lemon:Variants:essential-monthly"] = "111";
             values["Lemon:Variants:business-monthly-uk"] = "222";
+            values["Lemon:Variants:people-monthly"] = "333";
+            values["Lemon:Variants:people-annual"] = "334";
+            if (foundingCode is not null) values["Lemon:FoundingDiscountCode"] = foundingCode;
+            if (handler is not null) values["Lemon:StoreId"] = "1";
         }
         var config = new ConfigurationBuilder().AddInMemoryCollection(values).Build();
-        return new LemonSqueezyService(new HttpClient(), central, config, NullLogger<LemonSqueezyService>.Instance);
+        return new LemonSqueezyService(handler is null ? new HttpClient() : new HttpClient(handler), central, config, NullLogger<LemonSqueezyService>.Instance);
     }
 
     private static (Tenant Tenant, Subscription Sub, SubscriptionPlan Plan) Seed(CentralDbContext central)
@@ -146,6 +150,46 @@ public class LemonSqueezyServiceTests
         Assert.True(await service.HasVariantAsync("business", annual: false, uk: true));
         Assert.False(await service.HasVariantAsync("business", annual: false));
         Assert.Equal("people-annual-uk", LemonSqueezyService.VariantKey("People", annual: true, uk: true));
+    }
+
+    private class CapturingHandler : HttpMessageHandler
+    {
+        public string? Body;
+        protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct)
+        {
+            Body = request.Content is null ? null : await request.Content.ReadAsStringAsync(ct);
+            return new HttpResponseMessage(System.Net.HttpStatusCode.Created)
+            {
+                Content = new StringContent("{\"data\":{\"attributes\":{\"url\":\"https://pay.example/checkout\"}}}"),
+            };
+        }
+    }
+
+    [Theory]
+    [InlineData("people", false, true)]   // Roma HR monthly: the launch offer is applied
+    [InlineData("people", true, false)]   // annual: no offer
+    public async Task Checkout_AppliesTheFoundingCodeOnlyToRomaHrMonthly(string plan, bool annual, bool expectCode)
+    {
+        var handler = new CapturingHandler();
+        var service = NewService(NewCentral(), handler: handler, foundingCode: "FOUNDING50");
+
+        var url = await service.CreateCheckoutAsync(new RomaERP.Application.Common.Interfaces.LemonCheckoutRequest(
+            Guid.NewGuid(), "acme", "a@b.co", "A", plan, annual, "https://x/return"));
+
+        Assert.Equal("https://pay.example/checkout", url);
+        Assert.Equal(expectCode, handler.Body!.Contains("FOUNDING50"));
+    }
+
+    [Fact]
+    public async Task Checkout_NeverAddsTheFoundingCodeToErpPlans()
+    {
+        var handler = new CapturingHandler();
+        var service = NewService(NewCentral(), handler: handler, foundingCode: "FOUNDING50");
+
+        await service.CreateCheckoutAsync(new RomaERP.Application.Common.Interfaces.LemonCheckoutRequest(
+            Guid.NewGuid(), "acme", "a@b.co", "A", "essential", false, "https://x/return"));
+
+        Assert.DoesNotContain("FOUNDING50", handler.Body!);
     }
 
     [Fact]

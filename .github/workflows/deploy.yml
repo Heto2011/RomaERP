@@ -149,8 +149,9 @@ jobs:
             NEW_LEMON_STORE="${{ secrets.LEMON_STORE_ID }}"
             NEW_LEMON_WEBHOOK="${{ secrets.LEMON_WEBHOOK_SECRET }}"
             NEW_LEMON_VARIANTS='${{ secrets.LEMON_VARIANTS }}'
+            NEW_LEMON_FOUNDING="${{ secrets.LEMON_FOUNDING_CODE }}"
             if [ -n "$NEW_LEMON_KEY" ]; then
-              LEMON_KEY="$NEW_LEMON_KEY" LEMON_STORE="$NEW_LEMON_STORE" LEMON_WEBHOOK="$NEW_LEMON_WEBHOOK" LEMON_VARIANTS="$NEW_LEMON_VARIANTS" python3 -c "
+              LEMON_KEY="$NEW_LEMON_KEY" LEMON_STORE="$NEW_LEMON_STORE" LEMON_WEBHOOK="$NEW_LEMON_WEBHOOK" LEMON_VARIANTS="$NEW_LEMON_VARIANTS" LEMON_FOUNDING="$NEW_LEMON_FOUNDING" python3 -c "
             import json, os
             path = 'src/RomaERP.API/appsettings.json'
             with open(path) as f:
@@ -160,6 +161,8 @@ jobs:
             if os.environ['LEMON_STORE'].strip():
                 lemon['StoreId'] = os.environ['LEMON_STORE'].strip()
             lemon['WebhookSecret'] = os.environ['LEMON_WEBHOOK'].strip()
+            if os.environ['LEMON_FOUNDING'].strip():
+                lemon['FoundingDiscountCode'] = os.environ['LEMON_FOUNDING'].strip()
             try:
                 lemon['Variants'] = {k: str(v) for k, v in json.loads(os.environ['LEMON_VARIANTS'] or '{}').items()}
             except Exception:

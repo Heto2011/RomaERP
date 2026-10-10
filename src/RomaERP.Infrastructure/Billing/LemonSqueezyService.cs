@@ -133,6 +133,12 @@ public class LemonSqueezyService : ILemonSqueezyService
 
         var storeId = !string.IsNullOrWhiteSpace(StoreId) ? StoreId.Trim() : await DiscoverStoreIdAsync(ct);
 
+        // The Roma HR launch offer (50% off the first 3 monthly payments) is a Lemon discount code applied for the customer,
+        // so nobody has to know or type it. Annual payments don't get it.
+        var foundingCode = _configuration["Lemon:FoundingDiscountCode"]?.Trim();
+        var applyFounding = !string.IsNullOrEmpty(foundingCode) && !request.Annual
+            && string.Equals(request.PlanCode, "people", StringComparison.OrdinalIgnoreCase);
+
         var body = new
         {
             data = new
@@ -144,6 +150,7 @@ public class LemonSqueezyService : ILemonSqueezyService
                     {
                         email = request.Email,
                         name = request.Name,
+                        discount_code = applyFounding ? foundingCode : null,
                         custom = new Dictionary<string, string>
                         {
                             ["tenant_id"] = request.TenantId.ToString(),
@@ -164,7 +171,7 @@ public class LemonSqueezyService : ILemonSqueezyService
 
         using var message = new HttpRequestMessage(HttpMethod.Post, "https://api.lemonsqueezy.com/v1/checkouts")
         {
-            Content = new StringContent(JsonSerializer.Serialize(body), Encoding.UTF8, "application/vnd.api+json"),
+            Content = new StringContent(JsonSerializer.Serialize(body, new JsonSerializerOptions { DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull }), Encoding.UTF8, "application/vnd.api+json"),
         };
         message.Headers.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.api+json"));
         message.Headers.Authorization = new AuthenticationHeaderValue("Bearer", ApiKey!.Trim());
