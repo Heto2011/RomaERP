@@ -270,19 +270,26 @@ static async Task SeedSubscriptionPlansAsync(CentralDbContext central)
         // The standalone HR product: 25 employees included, branches unlimited. Sorted last so it never becomes the
         // default plan of an ERP tenant (the billing service picks it for ROMA People tenants explicitly).
         (RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanCode, int.MaxValue, RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanIncludedEmployees, false, 5),
+        // The Egypt-only entry plan. Sorted after Roma HR so it is never the default plan of a new trial.
+        (RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanCode, RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanIncludedBranches, RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanIncludedUsers, false, 6),
     };
 
     var existing = await central.SubscriptionPlans.ToListAsync();
     foreach (var (code, branches, users, custom, sort) in tiers)
     {
-        var name = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanCode ? "Roma HR" : char.ToUpperInvariant(code[0]) + code[1..];
-        var sarPrice = RomaERP.Domain.Tenancy.SubscriptionPriceList.Find(code, RomaERP.Domain.Tenancy.SubscriptionPriceList.Sar)!.Base;
+        var isHr = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanCode;
+        var isMini = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanCode;
+        var name = isHr ? "Roma HR" : char.ToUpperInvariant(code[0]) + code[1..];
+        // Mini exists only in Egypt, so it has no SAR price; its base price column holds the EGP figure.
+        var sarPrice = (isMini
+            ? RomaERP.Domain.Tenancy.SubscriptionPriceList.Find(code, RomaERP.Domain.Tenancy.SubscriptionPriceList.Egp)
+            : RomaERP.Domain.Tenancy.SubscriptionPriceList.Find(code, RomaERP.Domain.Tenancy.SubscriptionPriceList.Sar))!.Base;
         var plan = existing.FirstOrDefault(p => p.Code == code);
         if (plan is null)
         {
             central.SubscriptionPlans.Add(new RomaERP.Domain.Tenancy.SubscriptionPlan
             {
-                Code = code, NameAr = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanCode ? "روما إتش آر" : name, NameEn = name, MonthlyBasePrice = sarPrice,
+                Code = code, NameAr = isHr ? "روما إتش آر" : isMini ? "ميني" : name, NameEn = name, MonthlyBasePrice = sarPrice,
                 IncludedBranches = branches, IncludedUsers = users, IsCustomPricing = custom, SortOrder = sort
             });
             continue;

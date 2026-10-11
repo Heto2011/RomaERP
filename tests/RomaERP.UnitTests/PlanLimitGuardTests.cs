@@ -17,17 +17,17 @@ public class PlanLimitGuardTests
         public Guid TenantId { get; init; } = Guid.NewGuid();
         public string CompanyCode => "t";
         public string ConnectionString => "";
-        public Country Country => Country.SaudiArabia;
+        public Country Country { get; init; } = Country.SaudiArabia;
         public ProductScope ProductScope { get; init; } = ProductScope.Full;
         public bool IsResolved => true;
     }
 
-    private static (PlanLimitGuard Guard, ApplicationDbContext Db) Build(string provider, int includedBranches, bool custom = false, ProductScope scope = ProductScope.Full, int extraBranchesPaid = 0)
+    private static (PlanLimitGuard Guard, ApplicationDbContext Db) Build(string provider, int includedBranches, bool custom = false, ProductScope scope = ProductScope.Full, int extraBranchesPaid = 0, Country country = Country.SaudiArabia, string planCode = "essential")
     {
         var central = new CentralDbContext(new DbContextOptionsBuilder<CentralDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
-        var tenant = new FakeTenant { ProductScope = scope };
-        var plan = new SubscriptionPlan { Code = "essential", NameAr = "الأساسية", NameEn = "Essential", MonthlyBasePrice = 149, IncludedBranches = includedBranches, IncludedUsers = 10, IsCustomPricing = custom };
+        var tenant = new FakeTenant { ProductScope = scope, Country = country };
+        var plan = new SubscriptionPlan { Code = planCode, NameAr = "الأساسية", NameEn = "Essential", MonthlyBasePrice = 149, IncludedBranches = includedBranches, IncludedUsers = 10, IsCustomPricing = custom };
         central.SubscriptionPlans.Add(plan);
         central.Subscriptions.Add(new Subscription { TenantId = tenant.TenantId, PlanId = plan.Id, Status = SubscriptionStatus.Active, PaymentProvider = provider, ExtraBranchesPaid = extraBranchesPaid });
         central.SaveChanges();
@@ -83,5 +83,34 @@ public class PlanLimitGuardTests
 
         AddBranches(db, 1);
         await Assert.ThrowsAsync<ValidationAppException>(() => guard.EnsureCanAddBranchAsync());
+    }
+
+    [Fact]
+    public async Task EgyptEssential_AllowsOneExtraBranch_ThenAsksToMoveUp()
+    {
+        var (guard, db) = Build("Manual", includedBranches: 3, country: Country.Egypt);
+        AddBranches(db, 3);
+        await guard.EnsureCanAddBranchAsync(); // the 4th (+1 extra) is allowed
+
+        AddBranches(db, 1);
+        await Assert.ThrowsAsync<ValidationAppException>(() => guard.EnsureCanAddBranchAsync()); // a 5th is not
+    }
+
+    [Fact]
+    public async Task EgyptMini_HasNoExtras()
+    {
+        var (guard, db) = Build("Manual", includedBranches: 1, country: Country.Egypt, planCode: "mini");
+        await guard.EnsureCanAddBranchAsync(); // the first branch is included
+
+        AddBranches(db, 1);
+        await Assert.ThrowsAsync<ValidationAppException>(() => guard.EnsureCanAddBranchAsync());
+    }
+
+    [Fact]
+    public async Task OtherCountries_AreNotCappedByTheEgyptRule()
+    {
+        var (gulf, db1) = Build("Manual", includedBranches: 3, country: Country.SaudiArabia);
+        AddBranches(db1, 9);
+        await gulf.EnsureCanAddBranchAsync();
     }
 }

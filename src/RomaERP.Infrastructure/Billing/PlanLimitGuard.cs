@@ -26,7 +26,12 @@ public class PlanLimitGuard : IPlanLimitGuard
     public async Task EnsureCanAddBranchAsync(CancellationToken ct = default)
     {
         var card = await CardPlanAsync(ct);
-        if (card is null || _tenant.ProductScope == ProductScope.PeopleOnly) return;
+        if (card is null)
+        {
+            await EnsureWithinEgyptCapAsync(branches: true, ct);
+            return;
+        }
+        if (_tenant.ProductScope == ProductScope.PeopleOnly) return;
         var (plan, sub) = card.Value;
         if (plan.IncludedBranches == int.MaxValue) return;
 
@@ -40,7 +45,12 @@ public class PlanLimitGuard : IPlanLimitGuard
     public async Task EnsureCanAddUserAsync(CancellationToken ct = default)
     {
         var card = await CardPlanAsync(ct);
-        if (card is null || _tenant.ProductScope == ProductScope.PeopleOnly) return; // Roma HR counts employees, not logins
+        if (card is null)
+        {
+            await EnsureWithinEgyptCapAsync(branches: false, ct);
+            return;
+        }
+        if (_tenant.ProductScope == ProductScope.PeopleOnly) return; // Roma HR counts employees, not logins
         var (plan, sub) = card.Value;
         if (plan.IncludedUsers == int.MaxValue) return;
 
@@ -63,6 +73,31 @@ public class PlanLimitGuard : IPlanLimitGuard
         if (current >= allowed)
             throw new ValidationAppException(
                 $"باقتك بتشمل {plan.IncludedUsers} موظف{(sub.ExtraUsersPaid > 0 ? $" + {sub.ExtraUsersPaid} إضافي" : "")}، وده العدد الحالي. من «اشتراكي» ← «الإضافات» تقدر تشتري موظفين زيادة.");
+    }
+
+    /// <summary>Egypt (invoice-billed) companies on Mini or Essential have a hard ceiling: Mini none beyond what it includes,
+    /// Essential +1 branch and +4 users (see <see cref="SubscriptionPriceList.EgyptExtrasCap"/>). Beyond that they move up a plan.</summary>
+    private async Task EnsureWithinEgyptCapAsync(bool branches, CancellationToken ct)
+    {
+        if (!_tenant.IsResolved || _tenant.Country != Country.Egypt || _tenant.ProductScope == ProductScope.PeopleOnly) return;
+
+        var plan = await (from s in _central.Subscriptions.AsNoTracking()
+                          join p in _central.SubscriptionPlans.AsNoTracking() on s.PlanId equals p.Id
+                          where s.TenantId == _tenant.TenantId
+                          select p).FirstOrDefaultAsync(ct);
+        if (plan is null || plan.IsCustomPricing) return;
+        if (SubscriptionPriceList.EgyptExtrasCap(plan.Code, plan.IncludedBranches, plan.IncludedUsers) is not { } cap) return;
+
+        var included = branches ? plan.IncludedBranches : plan.IncludedUsers;
+        var allowed = included + (branches ? cap.Branches : cap.Users);
+        var current = branches ? await _db.Warehouses.CountAsync(w => w.IsActive, ct) : await _users.Users.CountAsync(u => u.IsActive, ct);
+        if (current < allowed) return;
+
+        var what = branches ? "فروع" : "مستخدمين";
+        var extras = branches ? cap.Branches : cap.Users;
+        throw new ValidationAppException(extras == 0
+            ? $"باقتك ({plan.NameAr}) بتشمل {included} {what} ومفيهاش إضافات. لزيادة {what} رقّي الباقة للأساسية — كلّمنا من «الدعم»."
+            : $"باقتك ({plan.NameAr}) بتشمل {included} {what} + {extras} إضافي كحد أقصى، وده العدد الحالي. لزيادة {what} أكتر رقّي الباقة — كلّمنا من «الدعم».");
     }
 
     public async Task<PlanUsageDto?> GetUsageAsync(CancellationToken ct = default)

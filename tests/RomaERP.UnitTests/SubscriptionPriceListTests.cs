@@ -11,24 +11,39 @@ public class SubscriptionPriceListTests
     [InlineData("essential", "SAR", 149)]
     [InlineData("business", "SAR", 349)]
     [InlineData("professional", "SAR", 649)]
-    [InlineData("essential", "EGP", 3000)]
-    [InlineData("business", "EGP", 7000)]
-    [InlineData("professional", "EGP", 12000)]
+    [InlineData("mini", "EGP", 499)]
+    [InlineData("essential", "EGP", 999)]
+    [InlineData("business", "EGP", 2499)]
+    [InlineData("professional", "EGP", 4499)]
     [InlineData("essential", "GBP", 49)]
     [InlineData("business", "GBP", 99)]
     [InlineData("professional", "GBP", 179)]
     public void PublishedBasePrices(string plan, string currency, int expected)
         => Assert.Equal(expected, SubscriptionPriceList.Find(plan, currency)!.Base);
 
-    [Theory]
-    [InlineData("essential", 1500)]
-    [InlineData("business", 3500)]
-    [InlineData("professional", 6000)]
-    public void EgyptFoundingPriceIsHalfOfList(string plan, int founding)
+    [Fact]
+    public void EgyptErpPlansHaveNoLaunchDiscount_ButRomaHrKeepsIt()
     {
-        var egp = SubscriptionPriceList.Find(plan, "EGP")!;
-        Assert.Equal(founding, egp.FoundingBase);
-        Assert.Equal(egp.Base / 2, egp.FoundingBase);
+        foreach (var plan in new[] { "mini", "essential", "business", "professional" })
+            Assert.Equal(0, SubscriptionPriceList.Find(plan, "EGP")!.FoundingBase);
+        var hr = SubscriptionPriceList.Find(SubscriptionPriceList.PeoplePlanCode, "EGP")!;
+        Assert.Equal(799, hr.Base);
+        Assert.Equal(400, hr.FoundingBase);
+    }
+
+    [Theory]
+    [InlineData("mini", 1, 5, 0, 0)]                      // Mini: nothing beyond what it includes
+    [InlineData("essential", 3, 10, 1, 4)]                // 40% of what it includes: +1 branch, +4 users (14 users in total)
+    [InlineData("business", 7, 25, 3, 10)]
+    [InlineData("professional", 15, 50, 6, 20)]
+    public void EgyptExtrasCap_IsZeroForMini_AndFortyPercentForTheOthers(string plan, int branches, int users, int maxBranches, int maxUsers)
+        => Assert.Equal((maxBranches, maxUsers), SubscriptionPriceList.EgyptExtrasCap(plan, branches, users));
+
+    [Fact]
+    public void EgyptExtrasCap_DoesNotApplyToRomaHrOrEnterprise()
+    {
+        Assert.Null(SubscriptionPriceList.EgyptExtrasCap(SubscriptionPriceList.PeoplePlanCode, int.MaxValue, 25));
+        Assert.Null(SubscriptionPriceList.EgyptExtrasCap("enterprise", int.MaxValue, int.MaxValue));
     }
 
     [Fact]

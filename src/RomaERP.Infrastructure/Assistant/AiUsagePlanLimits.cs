@@ -11,6 +11,8 @@ internal static class AiUsagePlanLimits
     {
         // Roma HR has no AI-heavy screens; the small daily numbers are only a burst guard under the monthly cap below.
         ["people"] = (10, 20),
+        // Mini (Egypt entry plan): half of Essential.
+        ["mini"] = (10, 40),
         ["essential"] = (20, 80),
         ["business"] = (50, 200),
         ["professional"] = (100, 400),
@@ -23,6 +25,7 @@ internal static class AiUsagePlanLimits
     private static readonly Dictionary<string, int> MonthlyCalls = new()
     {
         ["people"] = 200,
+        ["mini"] = 100,
         ["essential"] = 300,
         ["business"] = 700,
         ["professional"] = 1300,

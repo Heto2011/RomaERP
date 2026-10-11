@@ -94,7 +94,7 @@ public class SubscriptionBillingServiceTests
     }
 
     [Fact]
-    public async Task ActivatePaid_EgyptianCustomerGetsFoundingPriceInEgp()
+    public async Task ActivatePaid_EgyptianCustomerIsInvoicedInEgp_AtTheListPrice()
     {
         var central = NewCentral();
         var plan = Plan("essential", 3, 10);
@@ -106,7 +106,7 @@ public class SubscriptionBillingServiceTests
 
         var invoice = await central.SubscriptionInvoices.SingleAsync();
         Assert.Equal("EGP", invoice.Currency);
-        Assert.Equal(1500m, invoice.TotalAmount);   // 50% launch price for an early Egyptian customer
+        Assert.Equal(999m, invoice.TotalAmount);    // Egypt Essential list price; no launch discount on the ERP plans
     }
 
     [Fact]
@@ -302,7 +302,7 @@ public class SubscriptionBillingServiceTests
         await service.RunBillingCycleAsync();
 
         var invoice = await central.SubscriptionInvoices.SingleAsync();
-        Assert.Equal(30000m + 2 * 400m * 10, invoice.TotalAmount); // EGP list 3000 (no founding for annual) x10, 2 extra users x400 x10
+        Assert.Equal(9990m + 2 * 100m * 10, invoice.TotalAmount); // EGP list 999 x10 (annual: 10 of 12 months), 2 extra users x100 x10
         var advanced = await central.Subscriptions.SingleAsync();
         Assert.InRange((advanced.CurrentPeriodEnd - advanced.CurrentPeriodStart).TotalDays, 364, 366);
     }
@@ -336,7 +336,7 @@ public class SubscriptionBillingServiceTests
         Assert.Equal(10, dto.IncludedUsers);
         Assert.Equal("EGP", dto.Currency);
         Assert.Equal(200m, dto.ExtraBranchPrice);
-        Assert.Equal(400m, dto.ExtraUserPrice);
+        Assert.Equal(100m, dto.ExtraUserPrice);
     }
 
     [Fact]

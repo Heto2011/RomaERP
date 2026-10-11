@@ -17,6 +17,22 @@ public static class SubscriptionPriceList
     public const string PeoplePlanCode = "people";
     public const int PeoplePlanIncludedEmployees = 25;
 
+    /// <summary>Egypt-only entry plan: one branch, five users, no extras (more means moving up to Essential).</summary>
+    public const string MiniPlanCode = "mini";
+    public const int MiniPlanIncludedBranches = 1;
+    public const int MiniPlanIncludedUsers = 5;
+
+    /// <summary>Egypt: how many paid extras a plan allows on top of what it includes. Mini allows none; every other
+    /// plan allows 40% of its included branches/users (the same rule the public price calculator uses), e.g. Essential
+    /// allows +1 branch and +4 users. Null = no cap (not Egypt, or an uncapped plan such as Enterprise or Roma HR).</summary>
+    public static (int Branches, int Users)? EgyptExtrasCap(string planCode, int includedBranches, int includedUsers)
+    {
+        if (string.Equals(planCode, MiniPlanCode, StringComparison.OrdinalIgnoreCase)) return (0, 0);
+        if (includedBranches == int.MaxValue || includedUsers == int.MaxValue) return null;
+        if (planCode.ToLowerInvariant() is not ("essential" or "business" or "professional")) return null;
+        return ((int)Math.Round(includedBranches * 0.4, MidpointRounding.AwayFromZero), (int)Math.Round(includedUsers * 0.4, MidpointRounding.AwayFromZero));
+    }
+
     /// <summary>Paying a year up front is charged as 10 of the 12 months — "two months free".</summary>
     public const int AnnualMonthsCharged = 10;
     public const int AnnualMonthsCovered = 12;
@@ -46,10 +62,11 @@ public static class SubscriptionPriceList
         // Enterprise: no published price (0) — quoted per customer, see NoAutomaticDiscountPlans.
         [("enterprise", Sar)] = new(Sar, 0, 0, 0, 0),
 
-        // Egypt: Base is the regular list price, FoundingBase the 50%-off launch price (Essential, Business and Professional).
-        [("essential", Egp)] = new(Egp, 3000, 1500, 200, 400),
-        [("business", Egp)] = new(Egp, 7000, 3500, 200, 400),
-        [("professional", Egp)] = new(Egp, 12000, 6000, 200, 400),
+        // Egypt: its own price list (not a conversion). No launch discount on the ERP plans — the Mini plan is the entry price.
+        [(MiniPlanCode, Egp)] = new(Egp, 499, 0, 0, 0),
+        [("essential", Egp)] = new(Egp, 999, 0, 200, 100),
+        [("business", Egp)] = new(Egp, 2499, 0, 200, 100),
+        [("professional", Egp)] = new(Egp, 4499, 0, 200, 100),
         [("enterprise", Egp)] = new(Egp, 0, 0, 0, 0),
 
         [("essential", Gbp)] = new(Gbp, 49, 0, 5, 3),
@@ -61,7 +78,7 @@ public static class SubscriptionPriceList
         // per-employee overage. Launch offer: the first FoundingCustomerLimit customers pay FoundingBase for their
         // first FoundingInvoiceCount invoices (any country). EGP and GBP are independent prices, like the ERP ones.
         [(PeoplePlanCode, Sar)] = new(Sar, 99, 49.99m, 0, 5),
-        [(PeoplePlanCode, Egp)] = new(Egp, 1999, 999, 0, 100),
+        [(PeoplePlanCode, Egp)] = new(Egp, 799, 400, 0, 100),
         [(PeoplePlanCode, Gbp)] = new(Gbp, 49, 24.5m, 0, 1.25m),
     };
 
