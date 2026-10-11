@@ -61,6 +61,12 @@ public class VatSummaryDto
     public decimal OutputVat { get; set; }
     public decimal InputVat { get; set; }
     public decimal NetVatPayable { get; set; }
+    /// <summary>Sales invoices (plus debit notes, minus credit notes) in the period, before VAT, in the company's own currency.</summary>
+    public decimal TotalSalesExVat { get; set; }
+    /// <summary>Purchase invoices in the period, before VAT, in the company's own currency.</summary>
+    public decimal TotalPurchasesExVat { get; set; }
+    /// <summary>True for a company in the United Kingdom, whose page also shows the 9-box VAT return layout.</summary>
+    public bool IsUk { get; set; }
 }
 
 public class CashFlowLineDto

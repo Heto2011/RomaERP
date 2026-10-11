@@ -3,7 +3,9 @@ using RomaERP.Application.Accounting.Services;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Restaurant;
+using RomaERP.Domain.Purchasing;
 using RomaERP.Domain.Sales;
+using RomaERP.Domain.Tenancy;
 using RomaERP.Infrastructure.Persistence;
 using Xunit;
 
@@ -900,5 +902,28 @@ public class FinancialReportServiceTests
         var cashierLine = report.SalesByEmployee.Single(l => l.EmployeeId == cashierEmp.Id);
         Assert.Equal(500, cashierLine.SalesTotal);
         Assert.Equal(1, cashierLine.OrderCount);
+    }
+
+    [Fact]
+    public async Task VatSummary_ReportsSalesAndPurchasesBeforeVat_AndFlagsAUkCompany()
+    {
+        var ctx = CreateContext();
+        ctx.CompanySettings.Add(new CompanySettings { CompanyNameAr = "ش", CompanyNameEn = "Co", Country = Country.UnitedKingdom });
+        var customerId = Guid.NewGuid();
+        var invoice = new SalesInvoice { InvoiceNumber = "S-1", InvoiceDate = new DateTime(2026, 8, 10), CustomerId = customerId, SubTotal = 1000m, ExchangeRateToFunctional = 1m };
+        var euroInvoice = new SalesInvoice { InvoiceNumber = "S-2", InvoiceDate = new DateTime(2026, 8, 12), CustomerId = customerId, SubTotal = 100m, ExchangeRateToFunctional = 0.85m, CurrencyCode = "EUR" };
+        var outside = new SalesInvoice { InvoiceNumber = "S-3", InvoiceDate = new DateTime(2026, 9, 1), CustomerId = customerId, SubTotal = 5000m, ExchangeRateToFunctional = 1m };
+        var credit = new SalesNote { NoteNumber = "C-1", NoteType = SalesNoteType.Credit, NoteDate = new DateTime(2026, 8, 15), CustomerId = customerId, SubTotal = 200m };
+        var purchase = new PurchaseInvoice { InvoiceNumber = "P-1", InvoiceDate = new DateTime(2026, 8, 11), VendorId = Guid.NewGuid(), SubTotal = 400m, ExchangeRateToFunctional = 1m };
+        ctx.SalesInvoices.AddRange(invoice, euroInvoice, outside);
+        ctx.SalesNotes.Add(credit);
+        ctx.PurchaseInvoices.Add(purchase);
+        await ctx.SaveChangesAsync();
+
+        var report = await new FinancialReportService(ctx).GetVatSummaryAsync(new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+
+        Assert.Equal(885m, report.TotalSalesExVat);      // 1000 + 100 x 0.85 - 200 credit note; September is outside the period
+        Assert.Equal(400m, report.TotalPurchasesExVat);
+        Assert.True(report.IsUk);
     }
 }

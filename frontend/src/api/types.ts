@@ -183,6 +183,9 @@ export interface VatSummary {
   outputVat: number;
   inputVat: number;
   netVatPayable: number;
+  totalSalesExVat: number;
+  totalPurchasesExVat: number;
+  isUk: boolean;
 }
 
 export interface CashFlowLine {

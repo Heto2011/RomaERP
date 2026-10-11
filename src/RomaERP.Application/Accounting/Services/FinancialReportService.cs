@@ -158,13 +158,30 @@ public class FinancialReportService : IFinancialReportService
         var outputVat = lines.Where(l => l.Account!.Code == AccountingConstants.OutputVatAccountCode).Sum(l => l.Credit - l.Debit);
         var inputVat = lines.Where(l => l.Account!.Code == AccountingConstants.InputVatAccountCode).Sum(l => l.Debit - l.Credit);
 
+        // Value of sales and purchases before VAT (boxes 6 and 7 of the UK VAT return), in the company's own currency.
+        var sales = await _context.SalesInvoices.AsNoTracking()
+            .Where(i => !i.IsDeleted && i.InvoiceDate >= fromDate && i.InvoiceDate <= toDate)
+            .Select(i => new { i.SubTotal, i.ExchangeRateToFunctional }).ToListAsync(ct);
+        var notes = await _context.SalesNotes.AsNoTracking()
+            .Where(n => !n.IsDeleted && n.NoteDate >= fromDate && n.NoteDate <= toDate)
+            .Select(n => new { n.NoteType, n.SubTotal }).ToListAsync(ct);
+        var purchases = await _context.PurchaseInvoices.AsNoTracking()
+            .Where(i => !i.IsDeleted && i.InvoiceDate >= fromDate && i.InvoiceDate <= toDate)
+            .Select(i => new { i.SubTotal, i.ExchangeRateToFunctional }).ToListAsync(ct);
+        var isUk = (await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct))?.Country == RomaERP.Domain.Tenancy.Country.UnitedKingdom;
+
         return new VatSummaryDto
         {
             FromDate = fromDate,
             ToDate = toDate,
             OutputVat = outputVat,
             InputVat = inputVat,
-            NetVatPayable = outputVat - inputVat
+            NetVatPayable = outputVat - inputVat,
+            TotalSalesExVat = Math.Round(sales.Sum(i => i.SubTotal * i.ExchangeRateToFunctional)
+                + notes.Where(n => n.NoteType == RomaERP.Domain.Sales.SalesNoteType.Debit).Sum(n => n.SubTotal)
+                - notes.Where(n => n.NoteType == RomaERP.Domain.Sales.SalesNoteType.Credit).Sum(n => n.SubTotal), 2),
+            TotalPurchasesExVat = Math.Round(purchases.Sum(i => i.SubTotal * i.ExchangeRateToFunctional), 2),
+            IsUk = isUk
         };
     }
 

@@ -67,6 +67,32 @@ export default function VatSummaryPage() {
             </tbody>
           </table>
           </div>
+          {report.isUk && (
+            <div className="card">
+              <h3 style={{ marginTop: 0 }}>{t.accounting.ukVatReturnTitle}</h3>
+              <table style={{ maxWidth: 720 }}>
+                <tbody>
+                  {([
+                    [t.accounting.ukVatBox1, report.outputVat],
+                    [t.accounting.ukVatBox2, 0],
+                    [t.accounting.ukVatBox3, report.outputVat],
+                    [t.accounting.ukVatBox4, report.inputVat],
+                    [t.accounting.ukVatBox5, Math.abs(report.netVatPayable)],
+                    [t.accounting.ukVatBox6, report.totalSalesExVat],
+                    [t.accounting.ukVatBox7, report.totalPurchasesExVat],
+                    [t.accounting.ukVatBox8, 0],
+                    [t.accounting.ukVatBox9, 0],
+                  ] as [string, number][]).map(([label, value]) => (
+                    <tr key={label}>
+                      <td>{label}</td>
+                      <td style={{ textAlign: "end" }}>{value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              <p className="text-muted" style={{ fontSize: 13 }}>{t.accounting.ukVatReturnNote}</p>
+            </div>
+          )}
         </>
       )}
     </div>
