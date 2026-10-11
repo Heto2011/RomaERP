@@ -68,6 +68,11 @@ public static class PayslipHtmlTemplate
             ? $"<div>{L("رقم التأمين الوطني", "NI number")}: <b>{Enc(employee.UkNationalInsuranceNumber)}</b> · {L("كود الضريبة", "Tax code")}: <b>{Enc(string.IsNullOrWhiteSpace(employee.UkTaxCode) ? "1257L" : employee.UkTaxCode)}</b></div>"
             : string.Empty;
 
+        var isGg = settings.Country == Country.Guernsey;
+        var ggLine = isGg && (!string.IsNullOrWhiteSpace(employee.GgSocialSecurityNumber) || !string.IsNullOrWhiteSpace(employee.GgTaxReference))
+            ? $"<div>{L("رقم الضمان الاجتماعي", "Social security no.")}: <b>{Enc(employee.GgSocialSecurityNumber)}</b> · {L("المرجع الضريبي", "Tax reference")}: <b>{Enc(employee.GgTaxReference)}</b></div>"
+            : string.Empty;
+
         var dir = arabic ? "rtl" : "ltr";
         var align = arabic ? "right" : "left";
         return $$"""
@@ -110,6 +115,7 @@ public static class PayslipHtmlTemplate
                   <div><b>{{Enc(arabic ? employee.FullNameAr : (string.IsNullOrWhiteSpace(employee.FullNameEn) ? employee.FullNameAr : employee.FullNameEn))}}</b></div>
                   <div>{{L("كود الموظف", "Employee code")}}: {{Enc(employee.EmployeeCode)}}</div>
                   {{niLine}}
+                  {{ggLine}}
                 </div>
                 <h3>{{L("الاستحقاقات", "Earnings")}} ({{currency}})</h3>
                 <table>{{earnings}}</table>

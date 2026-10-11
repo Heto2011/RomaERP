@@ -42,6 +42,8 @@ public class EmployeeDto
     public bool UkPensionEnrolled { get; set; }
     public decimal UkPensionEmployeePercent { get; set; } = 5m;
     public decimal UkPensionEmployerPercent { get; set; } = 3m;
+    public string? GgSocialSecurityNumber { get; set; }
+    public string? GgTaxReference { get; set; }
 }
 
 public class CreateEmployeeDto
@@ -75,6 +77,8 @@ public class CreateEmployeeDto
     public bool UkPensionEnrolled { get; set; }
     public decimal UkPensionEmployeePercent { get; set; } = 5m;
     public decimal UkPensionEmployerPercent { get; set; } = 3m;
+    public string? GgSocialSecurityNumber { get; set; }
+    public string? GgTaxReference { get; set; }
 }
 
 public class UpdateEmployeeDto : CreateEmployeeDto

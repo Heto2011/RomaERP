@@ -530,4 +530,26 @@ public class PayrollServiceTests
 
         Assert.Equal(expected, (await ctx.CompanySettings.SingleAsync()).GosiEnabled);
     }
+
+    [Fact]
+    public async Task GuernseyPayslip_ShowsTheEmployeesSocialSecurityNumberAndTaxReference()
+    {
+        var ctx = CreateContext();
+        var employee = CreateEmployee(basicSalary: 3000);
+        employee.GgSocialSecurityNumber = "SS-12345";
+        employee.GgTaxReference = "TR-9876";
+        var period = new FiscalPeriod { Name = "September 2026", PeriodNumber = 9, StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2026, 9, 30) };
+        ctx.Employees.Add(employee);
+        ctx.FiscalPeriods.Add(period);
+        ctx.CompanySettings.Add(new CompanySettings { CompanyNameAr = "ش", CompanyNameEn = "Co", Country = Country.Guernsey, PayrollDaysPerMonth = 30 });
+        await ctx.SaveChangesAsync();
+        var renderer = new CapturingRenderer();
+        var service = new PayrollService(ctx, renderer);
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = period.Id, RunDate = new DateTime(2026, 9, 30) });
+
+        await service.GetPayslipPdfAsync(run.Id, employee.Id, arabic: false, publishedOnly: false);
+
+        Assert.Contains("SS-12345", renderer.Html);
+        Assert.Contains("TR-9876", renderer.Html);
+    }
 }

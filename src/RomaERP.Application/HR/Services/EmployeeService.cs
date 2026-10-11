@@ -228,6 +228,9 @@ public class EmployeeService : IEmployeeService
         employee.UkPensionEnrolled = dto.UkPensionEnrolled;
         employee.UkPensionEmployeePercent = dto.UkPensionEmployeePercent;
         employee.UkPensionEmployerPercent = dto.UkPensionEmployerPercent;
+
+        employee.GgSocialSecurityNumber = string.IsNullOrWhiteSpace(dto.GgSocialSecurityNumber) ? null : dto.GgSocialSecurityNumber.Trim();
+        employee.GgTaxReference = string.IsNullOrWhiteSpace(dto.GgTaxReference) ? null : dto.GgTaxReference.Trim();
     }
 
     private static string? NormalizeNationality(string? code)
@@ -295,6 +298,8 @@ public class EmployeeService : IEmployeeService
         UkPostgraduateLoan = e.UkPostgraduateLoan,
         UkPensionEnrolled = e.UkPensionEnrolled,
         UkPensionEmployeePercent = e.UkPensionEmployeePercent,
-        UkPensionEmployerPercent = e.UkPensionEmployerPercent
+        UkPensionEmployerPercent = e.UkPensionEmployerPercent,
+        GgSocialSecurityNumber = e.GgSocialSecurityNumber,
+        GgTaxReference = e.GgTaxReference
     };
 }

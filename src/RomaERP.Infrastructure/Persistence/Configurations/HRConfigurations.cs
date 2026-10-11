@@ -58,6 +58,8 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.UkNationalInsuranceNumber).HasMaxLength(13);
         builder.Property(e => e.UkTaxCode).HasMaxLength(12);
         builder.Property(e => e.UkNiCategory).HasMaxLength(1);
+        builder.Property(e => e.GgSocialSecurityNumber).HasMaxLength(20);
+        builder.Property(e => e.GgTaxReference).HasMaxLength(20);
         builder.Property(e => e.UkPensionEmployeePercent).HasPrecision(5, 2);
         builder.Property(e => e.UkPensionEmployerPercent).HasPrecision(5, 2);
         builder.Property(e => e.Email).HasMaxLength(150);

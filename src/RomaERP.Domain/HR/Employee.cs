@@ -73,5 +73,11 @@ public class Employee : AuditableEntity
     public decimal UkPensionEmployeePercent { get; set; } = 5m;
     public decimal UkPensionEmployerPercent { get; set; } = 3m;
 
+    // ---- Guernsey payroll (used only when the company is in Guernsey) ----
+    /// <summary>Social security number issued by the Guernsey Social Security Department.</summary>
+    public string? GgSocialSecurityNumber { get; set; }
+    /// <summary>Income tax reference issued by the Guernsey Revenue Service.</summary>
+    public string? GgTaxReference { get; set; }
+
     public ICollection<EmployeeSalaryComponent> SalaryComponents { get; set; } = new List<EmployeeSalaryComponent>();
 }

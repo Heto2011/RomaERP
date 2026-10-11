@@ -49,6 +49,9 @@ export default function Employees() {
   const [workLocationId, setWorkLocationId] = useState("");
   const [nationality, setNationality] = useState("");
   const [isUk, setIsUk] = useState(false);
+  const [isGuernsey, setIsGuernsey] = useState(false);
+  const [ggSsNumber, setGgSsNumber] = useState("");
+  const [ggTaxReference, setGgTaxReference] = useState("");
   const [ukNiNumber, setUkNiNumber] = useState("");
   const [ukTaxCode, setUkTaxCode] = useState("");
   const [ukNiCategory, setUkNiCategory] = useState("A");
@@ -117,9 +120,12 @@ export default function Employees() {
     setAllComponents(compRes.data);
     setWorkLocations(locRes.data);
     try {
-      setIsUk((await PayrollApi.getSettings()).data.isUkPayroll);
+      const settingsRes = (await PayrollApi.getSettings()).data;
+      setIsUk(settingsRes.isUkPayroll);
+      setIsGuernsey(settingsRes.isGuernseyPayroll);
     } catch {
-      setIsUk(false); // payroll settings are not available to every role; the UK section just stays hidden
+      setIsUk(false);
+      setIsGuernsey(false); // payroll settings are not available to every role; the UK section just stays hidden
     }
   }
 
@@ -144,6 +150,8 @@ export default function Employees() {
     setPhone("");
     setWorkLocationId("");
     setNationality("");
+    setGgSsNumber("");
+    setGgTaxReference("");
     setUkNiNumber("");
     setUkTaxCode("");
     setUkNiCategory("A");
@@ -182,6 +190,8 @@ export default function Employees() {
     setPhone(emp.phone ?? "");
     setWorkLocationId(emp.workLocationId ?? "");
     setNationality(emp.nationality ?? (emp.isSaudiNational ? "SA" : ""));
+    setGgSsNumber(emp.ggSocialSecurityNumber ?? "");
+    setGgTaxReference(emp.ggTaxReference ?? "");
     setUkNiNumber(emp.ukNationalInsuranceNumber ?? "");
     setUkTaxCode(emp.ukTaxCode ?? "");
     setUkNiCategory(emp.ukNiCategory ?? "A");
@@ -216,6 +226,8 @@ export default function Employees() {
         nationality: nationality || null,
         isSaudiNational: nationality === "SA",
         annualLeaveDaysPerYear: Number(annualLeaveDaysPerYear) || 21,
+        ggSocialSecurityNumber: ggSsNumber || null,
+        ggTaxReference: ggTaxReference || null,
         ukNationalInsuranceNumber: ukNiNumber || null,
         ukTaxCode: ukTaxCode || null,
         ukNiCategory: ukNiCategory || null,
@@ -426,6 +438,18 @@ export default function Employees() {
                   ))}
                 </select>
               </div>
+              {isGuernsey && (
+                <>
+                  <div className="form-field">
+                    <label>{t.hr.ggSsNumber}</label>
+                    <input value={ggSsNumber} maxLength={20} onChange={(e) => setGgSsNumber(e.target.value)} />
+                  </div>
+                  <div className="form-field">
+                    <label>{t.hr.ggTaxReference}</label>
+                    <input value={ggTaxReference} maxLength={20} onChange={(e) => setGgTaxReference(e.target.value)} />
+                  </div>
+                </>
+              )}
               {isUk && (
                 <div className="form-field" style={{ gridColumn: "1 / -1" }}>
                   <h4 style={{ margin: "8px 0 2px" }}>{t.hr.ukSectionTitle}</h4>
