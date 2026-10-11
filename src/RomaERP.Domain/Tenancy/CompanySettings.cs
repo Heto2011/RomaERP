@@ -40,7 +40,7 @@ public class CompanySettings : AuditableEntity
     public decimal GgIncomeTaxRatePercent { get; set; } = 20m;
     /// <summary>Tax-free personal allowance per year, applied to every employee (single-person figure).</summary>
     public decimal GgPersonalAllowanceAnnual { get; set; } = 15_200m;
-    public decimal GgEmployeeSocialRatePercent { get; set; } = 7.5m;
+    public decimal GgEmployeeSocialRatePercent { get; set; } = 7m;
     public decimal GgEmployerSocialRatePercent { get; set; } = 7.1m;
     /// <summary>Monthly pay above which no more social insurance is charged (zero = no ceiling).</summary>
     public decimal GgSocialMonthlyUpperLimit { get; set; } = 15_717m;
