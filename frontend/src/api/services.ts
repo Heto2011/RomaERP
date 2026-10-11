@@ -156,6 +156,8 @@ import type {
   SetOrderDiscountInput,
   SetLineKitchenStatusInput,
   SplitOrderInput,
+  MoveOrderTableInput,
+  MergeOrdersInput,
   SplitOrderResult,
 } from "./types";
 
@@ -610,6 +612,10 @@ export const RestaurantApi = {
     apiClient.put<RestaurantOrder>(`/restaurant/orders/${orderId}/lines/${lineId}/kitchen-status`, data),
   splitOrder: (orderId: string, data: SplitOrderInput) =>
     apiClient.post<SplitOrderResult>(`/restaurant/orders/${orderId}/split`, data),
+  moveOrderTable: (orderId: string, data: MoveOrderTableInput) =>
+    apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/move-table`, data),
+  mergeOrders: (targetOrderId: string, data: MergeOrdersInput) =>
+    apiClient.post<RestaurantOrder>(`/restaurant/orders/${targetOrderId}/merge`, data),
   cancelOrder: (orderId: string) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/cancel`),
   billOrder: (orderId: string, data: BillOrderInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/bill`, data),
   voidOrder: (orderId: string, data: VoidOrderInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/void`, data),

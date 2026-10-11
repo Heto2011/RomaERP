@@ -405,17 +405,85 @@ public class RestaurantService : IRestaurantService
         return new SplitOrderResultDto { OriginalOrder = originalDto, NewOrder = newOrderDto };
     }
 
+    /// <summary>Moves a whole open dine-in order to another table: the diners keep their order, the new table becomes occupied and the old one
+    /// is freed (unless a split-off check is still open on it). The target must be free.</summary>
+    public async Task<RestaurantOrderDto> MoveOrderToTableAsync(Guid orderId, MoveOrderTableDto dto, CancellationToken ct = default)
+    {
+        var order = await LoadOrderAsync(orderId, ct);
+        EnsureOpen(order);
+        if (order.OrderType != RestaurantOrderType.DineIn || order.TableId is null)
+            throw new ValidationAppException("نقل الطاولة متاح لطلبات الصالة بس.");
+        if (order.TableId == dto.TargetTableId)
+            throw new ValidationAppException("الطلب ده أصلًا على الطاولة دي.");
+
+        var target = await _context.RestaurantTables.FirstOrDefaultAsync(t => t.Id == dto.TargetTableId && !t.IsDeleted, ct)
+            ?? throw new NotFoundException(nameof(RestaurantTable), dto.TargetTableId);
+        if (target.Status != RestaurantTableStatus.Available)
+            throw new ValidationAppException("الطاولة الجديدة مش متاحة دلوقتي.");
+
+        var oldTableId = order.TableId;
+        order.TableId = target.Id;
+        target.Status = RestaurantTableStatus.Occupied;
+        await _context.SaveChangesAsync(ct);
+
+        await ReleaseTableIfIdleAsync(oldTableId, order.Id, ct);
+        await _context.SaveChangesAsync(ct);
+        return await GetOrderAsync(order.Id, ct);
+    }
+
+    /// <summary>Merges the source order into the target: every line moves over (renumbered after the target's own), the source's order-level
+    /// discount is added to the target's, and the source order is closed with a note pointing to the target. Both must be open dine-in
+    /// orders from the same warehouse (stock is issued from one place per order). The source's table is freed unless another check is open on it.</summary>
+    public async Task<RestaurantOrderDto> MergeOrdersAsync(Guid targetOrderId, MergeOrdersDto dto, CancellationToken ct = default)
+    {
+        if (dto.SourceOrderId == targetOrderId)
+            throw new ValidationAppException("مينفعش تدمج الطلب مع نفسه.");
+
+        var target = await LoadOrderAsync(targetOrderId, ct);
+        var source = await LoadOrderAsync(dto.SourceOrderId, ct);
+        EnsureOpen(target);
+        EnsureOpen(source);
+        if (target.OrderType != RestaurantOrderType.DineIn || source.OrderType != RestaurantOrderType.DineIn)
+            throw new ValidationAppException("الدمج متاح لطلبات الصالة بس.");
+        if (target.WarehouseId != source.WarehouseId)
+            throw new ValidationAppException("الطلبين لازم يكونوا على نفس المخزن.");
+
+        var nextLineNumber = target.Lines.Count == 0 ? 1 : target.Lines.Max(l => l.LineNumber) + 1;
+        foreach (var line in source.Lines.OrderBy(l => l.LineNumber).ToList())
+        {
+            line.RestaurantOrderId = target.Id;
+            line.LineNumber = nextLineNumber++;
+        }
+
+        target.DiscountAmount += source.DiscountAmount;
+        source.DiscountAmount = 0;
+        source.Status = RestaurantOrderStatus.Cancelled;
+        source.Notes = string.IsNullOrWhiteSpace(source.Notes) ? $"مدمج في {target.OrderNumber}" : $"{source.Notes} — مدمج في {target.OrderNumber}";
+        await _context.SaveChangesAsync(ct);
+
+        await ReleaseTableIfIdleAsync(source.TableId, source.Id, ct);
+        await _context.SaveChangesAsync(ct);
+        return await GetOrderAsync(target.Id, ct);
+    }
+
+    /// <summary>A table goes back to Available only when no other open order is still seated at it (a split-off check keeps it occupied).</summary>
+    private async Task ReleaseTableIfIdleAsync(Guid? tableId, Guid exceptOrderId, CancellationToken ct)
+    {
+        if (tableId is not { } id) return;
+        var stillBusy = await _context.RestaurantOrders.AnyAsync(
+            o => o.TableId == id && o.Id != exceptOrderId && o.Status == RestaurantOrderStatus.Open && !o.IsDeleted, ct);
+        if (stillBusy) return;
+        var table = await _context.RestaurantTables.FirstOrDefaultAsync(t => t.Id == id, ct);
+        if (table is not null) table.Status = RestaurantTableStatus.Available;
+    }
+
     public async Task<RestaurantOrderDto> CancelOrderAsync(Guid orderId, CancellationToken ct = default)
     {
         var order = await LoadOrderAsync(orderId, ct);
         EnsureOpen(order);
 
         order.Status = RestaurantOrderStatus.Cancelled;
-        if (order.TableId is { } tableId)
-        {
-            var table = await _context.RestaurantTables.FirstAsync(t => t.Id == tableId, ct);
-            table.Status = RestaurantTableStatus.Available;
-        }
+        await ReleaseTableIfIdleAsync(order.TableId, order.Id, ct);
 
         await _context.SaveChangesAsync(ct);
         return await GetOrderAsync(orderId, ct);
@@ -575,11 +643,7 @@ public class RestaurantService : IRestaurantService
         order.Status = RestaurantOrderStatus.Billed;
         order.SalesInvoiceId = invoice.Id;
         order.CashierShiftId = dto.CashierShiftId;
-        if (order.TableId is { } tableId)
-        {
-            var table = await _context.RestaurantTables.FirstAsync(t => t.Id == tableId, ct);
-            table.Status = RestaurantTableStatus.Available;
-        }
+        await ReleaseTableIfIdleAsync(order.TableId, order.Id, ct);
 
         await _context.SaveChangesAsync(ct);
         return await GetOrderAsync(order.Id, ct);

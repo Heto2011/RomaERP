@@ -1813,6 +1813,14 @@ export interface SplitOrderInput {
   lineIds: string[];
 }
 
+export interface MoveOrderTableInput {
+  targetTableId: string;
+}
+
+export interface MergeOrdersInput {
+  sourceOrderId: string;
+}
+
 export interface SplitOrderResult {
   originalOrder: RestaurantOrder;
   newOrder: RestaurantOrder;

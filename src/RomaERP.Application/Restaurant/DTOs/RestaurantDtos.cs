@@ -186,3 +186,16 @@ public class VoidOrderDto
 {
     public string Reason { get; set; } = string.Empty;
 }
+
+/// <summary>Moves a whole open dine-in order (and the diners with it) to another, currently free, table.</summary>
+public class MoveOrderTableDto
+{
+    public Guid TargetTableId { get; set; }
+}
+
+/// <summary>Merges another open dine-in order into this one (two tables joining, or two checks becoming one): every line of the
+/// source order moves to this order and the source order is closed.</summary>
+public class MergeOrdersDto
+{
+    public Guid SourceOrderId { get; set; }
+}

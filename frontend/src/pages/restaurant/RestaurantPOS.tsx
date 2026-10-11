@@ -58,6 +58,11 @@ export default function RestaurantPOS() {
   const [showSplitDialog, setShowSplitDialog] = useState(false);
   const [splitLineIds, setSplitLineIds] = useState<Set<string>>(new Set());
 
+  const [showMoveDialog, setShowMoveDialog] = useState(false);
+  const [moveTargetTableId, setMoveTargetTableId] = useState("");
+  const [showMergeDialog, setShowMergeDialog] = useState(false);
+  const [mergeSourceOrderId, setMergeSourceOrderId] = useState("");
+
   const selectedOrder = useMemo(() => orders.find((o) => o.id === selectedOrderId) ?? null, [orders, selectedOrderId]);
   const availableTables = tables.filter((tb) => tb.status === RestaurantTableStatus.Available);
 
@@ -248,6 +253,52 @@ export default function RestaurantPOS() {
       const res = await RestaurantApi.splitOrder(selectedOrder.id, { lineIds: Array.from(splitLineIds) });
       setShowSplitDialog(false);
       setSelectedOrderId(res.data.originalOrder.id);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  function openMoveDialog() {
+    setMoveTargetTableId("");
+    setShowMoveDialog(true);
+  }
+
+  async function handleMoveTable(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedOrder || !moveTargetTableId) return;
+    setError(null);
+    try {
+      await RestaurantApi.moveOrderTable(selectedOrder.id, { targetTableId: moveTargetTableId });
+      setShowMoveDialog(false);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  const mergeCandidates = selectedOrder
+    ? orders.filter(
+        (o) =>
+          o.id !== selectedOrder.id &&
+          o.status === RestaurantOrderStatus.Open &&
+          o.orderType === RestaurantOrderType.DineIn &&
+          o.warehouseId === selectedOrder.warehouseId
+      )
+    : [];
+
+  function openMergeDialog() {
+    setMergeSourceOrderId("");
+    setShowMergeDialog(true);
+  }
+
+  async function handleMergeOrders(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedOrder || !mergeSourceOrderId) return;
+    setError(null);
+    try {
+      await RestaurantApi.mergeOrders(selectedOrder.id, { sourceOrderId: mergeSourceOrderId });
+      setShowMergeDialog(false);
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -518,6 +569,16 @@ export default function RestaurantPOS() {
                       ⑂
                     </button>
                   )}
+                  {selectedOrder.status === RestaurantOrderStatus.Open && selectedOrder.orderType === RestaurantOrderType.DineIn && (
+                    <>
+                      <button className="btn btn-secondary btn-sm" onClick={openMoveDialog} title={t.restaurant.moveTable}>
+                        ⇄
+                      </button>
+                      <button className="btn btn-secondary btn-sm" onClick={openMergeDialog} title={t.restaurant.mergeOrders}>
+                        ⊕
+                      </button>
+                    </>
+                  )}
                   {selectedOrder.status === RestaurantOrderStatus.Open && (
                     <button className="btn btn-secondary btn-sm" onClick={handleCancelOrder} title={t.restaurant.cancelOrder}>
                       ✕
@@ -704,6 +765,58 @@ export default function RestaurantPOS() {
                   {t.restaurant.splitBillConfirm}
                 </button>
                 <button className="btn btn-secondary" type="button" onClick={() => setShowSplitDialog(false)}>{t.common.cancel}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showMoveDialog && selectedOrder && (
+        <div className="modal-overlay" onClick={() => setShowMoveDialog(false)}>
+          <div className="card" style={{ maxWidth: 420, margin: "10% auto" }} onClick={(e) => e.stopPropagation()}>
+            <h3>{t.restaurant.moveTable} — {selectedOrder.orderNumber}</h3>
+            <p className="text-muted" style={{ marginTop: 0 }}>{t.restaurant.moveTableHint}</p>
+            <form onSubmit={handleMoveTable}>
+              {availableTables.length === 0 ? (
+                <div className="text-muted">{t.restaurant.moveTableNoFree}</div>
+              ) : (
+                <select value={moveTargetTableId} onChange={(e) => setMoveTargetTableId(e.target.value)} required>
+                  <option value="">—</option>
+                  {availableTables.map((tb) => (
+                    <option key={tb.id} value={tb.id}>{t.restaurant.table} {tb.number}</option>
+                  ))}
+                </select>
+              )}
+              <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+                <button className="btn" type="submit" disabled={!moveTargetTableId}>{t.restaurant.moveTableConfirm}</button>
+                <button className="btn btn-secondary" type="button" onClick={() => setShowMoveDialog(false)}>{t.common.cancel}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showMergeDialog && selectedOrder && (
+        <div className="modal-overlay" onClick={() => setShowMergeDialog(false)}>
+          <div className="card" style={{ maxWidth: 420, margin: "10% auto" }} onClick={(e) => e.stopPropagation()}>
+            <h3>{t.restaurant.mergeOrders} — {selectedOrder.orderNumber}</h3>
+            <p className="text-muted" style={{ marginTop: 0 }}>{t.restaurant.mergeOrdersHint}</p>
+            <form onSubmit={handleMergeOrders}>
+              {mergeCandidates.length === 0 ? (
+                <div className="text-muted">{t.restaurant.mergeOrdersNone}</div>
+              ) : (
+                <select value={mergeSourceOrderId} onChange={(e) => setMergeSourceOrderId(e.target.value)} required>
+                  <option value="">—</option>
+                  {mergeCandidates.map((o) => (
+                    <option key={o.id} value={o.id}>
+                      {t.restaurant.table} {o.tableNumber} — {o.orderNumber} ({o.totalAmount.toLocaleString()})
+                    </option>
+                  ))}
+                </select>
+              )}
+              <div style={{ display: "flex", gap: 10, marginTop: 14 }}>
+                <button className="btn" type="submit" disabled={!mergeSourceOrderId}>{t.restaurant.mergeOrdersConfirm}</button>
+                <button className="btn btn-secondary" type="button" onClick={() => setShowMergeDialog(false)}>{t.common.cancel}</button>
               </div>
             </form>
           </div>

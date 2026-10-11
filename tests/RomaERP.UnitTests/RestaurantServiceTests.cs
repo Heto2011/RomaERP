@@ -432,4 +432,118 @@ public class RestaurantServiceTests
 
         await Assert.ThrowsAsync<ValidationAppException>(() => service.VoidOrderAsync(order.Id, new VoidOrderDto { Reason = "سبب" }));
     }
+
+    // ---------- Table move / merge ----------
+
+    private static async Task<RestaurantTable> AddTableAsync(ApplicationDbContext ctx, string number)
+    {
+        var table = new RestaurantTable { Number = number, SectionName = "الصالة", Capacity = 4 };
+        ctx.RestaurantTables.Add(table);
+        await ctx.SaveChangesAsync();
+        return table;
+    }
+
+    private static async Task<RestaurantOrderDto> OpenDineInAsync(RestaurantService service, SeedResult seed, RestaurantTable table, params (Item Item, decimal Qty)[] lines)
+    {
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.DineIn, TableId = table.Id, WarehouseId = seed.Warehouse.Id });
+        foreach (var (item, qty) in lines)
+            order = await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = item.Id, Quantity = qty });
+        return order;
+    }
+
+    [Fact]
+    public async Task MoveOrderToTable_OccupiesTheNewTable_AndFreesTheOldOne()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+        var t2 = await AddTableAsync(seed.Ctx, "T2");
+        var order = await OpenDineInAsync(service, seed, seed.Table, (seed.Water, 2));
+
+        var moved = await service.MoveOrderToTableAsync(order.Id, new MoveOrderTableDto { TargetTableId = t2.Id });
+
+        Assert.Equal(t2.Id, moved.TableId);
+        Assert.Equal(RestaurantTableStatus.Available, (await seed.Ctx.RestaurantTables.AsNoTracking().SingleAsync(t => t.Id == seed.Table.Id)).Status);
+        Assert.Equal(RestaurantTableStatus.Occupied, (await seed.Ctx.RestaurantTables.AsNoTracking().SingleAsync(t => t.Id == t2.Id)).Status);
+        Assert.Single(moved.Lines);
+    }
+
+    [Fact]
+    public async Task MoveOrderToTable_RefusesABusyTable_ASameTable_AndTakeaway()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+        var t2 = await AddTableAsync(seed.Ctx, "T2");
+        var first = await OpenDineInAsync(service, seed, seed.Table, (seed.Water, 1));
+        await OpenDineInAsync(service, seed, t2, (seed.Water, 1));
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.MoveOrderToTableAsync(first.Id, new MoveOrderTableDto { TargetTableId = t2.Id }));
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.MoveOrderToTableAsync(first.Id, new MoveOrderTableDto { TargetTableId = seed.Table.Id }));
+
+        var takeaway = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.Takeaway, WarehouseId = seed.Warehouse.Id });
+        var t3 = await AddTableAsync(seed.Ctx, "T3");
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.MoveOrderToTableAsync(takeaway.Id, new MoveOrderTableDto { TargetTableId = t3.Id }));
+    }
+
+    [Fact]
+    public async Task MergeOrders_MovesEveryLineAndTheDiscount_ClosesTheSource_AndFreesItsTable()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+        var t2 = await AddTableAsync(seed.Ctx, "T2");
+        var target = await OpenDineInAsync(service, seed, seed.Table, (seed.Water, 2));
+        var source = await OpenDineInAsync(service, seed, t2, (seed.Water, 1), (seed.Pizza, 1));
+        await service.SetOrderDiscountAsync(source.Id, new SetOrderDiscountDto { DiscountAmount = 5 });
+
+        var merged = await service.MergeOrdersAsync(target.Id, new MergeOrdersDto { SourceOrderId = source.Id });
+
+        Assert.Equal(3, merged.Lines.Count);
+        Assert.Equal(new[] { 1, 2, 3 }, merged.Lines.Select(l => l.LineNumber).OrderBy(n => n).ToArray());
+        Assert.Equal(5m, merged.DiscountAmount);
+        Assert.Equal(20m + 10m + 100m, merged.GrossSubTotal);
+        var closed = await service.GetOrderAsync(source.Id);
+        Assert.Equal(RestaurantOrderStatus.Cancelled, closed.Status);
+        Assert.Empty(closed.Lines);
+        Assert.Contains(target.OrderNumber, closed.Notes);
+        Assert.Equal(RestaurantTableStatus.Available, (await seed.Ctx.RestaurantTables.AsNoTracking().SingleAsync(t => t.Id == t2.Id)).Status);
+        Assert.Equal(RestaurantTableStatus.Occupied, (await seed.Ctx.RestaurantTables.AsNoTracking().SingleAsync(t => t.Id == seed.Table.Id)).Status);
+    }
+
+    [Fact]
+    public async Task MergeOrders_RefusesItselfAClosedOrderAndAnotherWarehouse()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+        var t2 = await AddTableAsync(seed.Ctx, "T2");
+        var a = await OpenDineInAsync(service, seed, seed.Table, (seed.Water, 1));
+        var b = await OpenDineInAsync(service, seed, t2, (seed.Water, 1));
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.MergeOrdersAsync(a.Id, new MergeOrdersDto { SourceOrderId = a.Id }));
+
+        var otherWarehouse = new Warehouse { Code = "WH-2", NameAr = "مخزن 2", NameEn = "Second" };
+        seed.Ctx.Warehouses.Add(otherWarehouse);
+        await seed.Ctx.SaveChangesAsync();
+        (await seed.Ctx.RestaurantOrders.SingleAsync(o => o.Id == b.Id)).WarehouseId = otherWarehouse.Id;
+        await seed.Ctx.SaveChangesAsync();
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.MergeOrdersAsync(a.Id, new MergeOrdersDto { SourceOrderId = b.Id }));
+
+        (await seed.Ctx.RestaurantOrders.SingleAsync(o => o.Id == b.Id)).WarehouseId = seed.Warehouse.Id;
+        await seed.Ctx.SaveChangesAsync();
+        await service.CancelOrderAsync(b.Id);
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.MergeOrdersAsync(a.Id, new MergeOrdersDto { SourceOrderId = b.Id }));
+    }
+
+    [Fact]
+    public async Task CancellingOneOfTwoChecksOnATable_KeepsTheTableOccupied()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+        var order = await OpenDineInAsync(service, seed, seed.Table, (seed.Water, 1), (seed.Pizza, 1));
+        var split = await service.SplitOrderAsync(order.Id, new SplitOrderDto { LineIds = new List<Guid> { order.Lines[0].Id } });
+
+        await service.CancelOrderAsync(split.NewOrder.Id);
+        Assert.Equal(RestaurantTableStatus.Occupied, (await seed.Ctx.RestaurantTables.AsNoTracking().SingleAsync(t => t.Id == seed.Table.Id)).Status);
+
+        await service.CancelOrderAsync(order.Id);
+        Assert.Equal(RestaurantTableStatus.Available, (await seed.Ctx.RestaurantTables.AsNoTracking().SingleAsync(t => t.Id == seed.Table.Id)).Status);
+    }
 }
