@@ -218,7 +218,10 @@ public static class TenantBaselineSeeder
             Country = country,
             TaxRegistrationNumber = taxRegistrationNumber,
             VatRate = taxDefaults.VatRate,
-            DefaultCurrency = taxDefaults.Currency
+            DefaultCurrency = taxDefaults.Currency,
+            // A new Saudi company starts with GOSI payroll deductions on (at the standard rates, which the company
+            // should confirm in Payroll Settings); every other country starts with it off.
+            GosiEnabled = country == Country.SaudiArabia
         });
 
         await context.SaveChangesAsync();

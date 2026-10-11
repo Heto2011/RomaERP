@@ -517,4 +517,17 @@ public class PayrollServiceTests
         var posted = await ctx.PayrollRuns.SingleAsync(r => r.Id == run.Id);
         Assert.True((await ctx.JournalEntries.Include(e => e.Lines).SingleAsync(e => e.Id == posted.JournalEntryId)).IsBalanced);
     }
+
+    [Theory]
+    [InlineData(Country.SaudiArabia, true)]
+    [InlineData(Country.Egypt, false)]
+    [InlineData(Country.UnitedKingdom, false)]
+    public async Task NewCompany_HasGosiOnlyWhenItIsSaudi(Country country, bool expected)
+    {
+        var ctx = CreateContext();
+
+        await RomaERP.Infrastructure.Persistence.Seed.TenantBaselineSeeder.SeedCompanySettingsAsync(ctx, country, "ش", "Co", null);
+
+        Assert.Equal(expected, (await ctx.CompanySettings.SingleAsync()).GosiEnabled);
+    }
 }
