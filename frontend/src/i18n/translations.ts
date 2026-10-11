@@ -876,6 +876,7 @@ const ar = {
     ukLoansColumn: "قروض الطالب",
     ukPensionColumn: "معاش (موظف)",
     ukDownloadSummary: "تقرير المحاسب (جدول)",
+    payslip: "كشف الراتب",
 
     payrollSettingsTitle: "إعدادات الرواتب",
     payrollSettingsIntro: "إعدادات عامة تؤثر على كل دورات الرواتب الجاية.",
@@ -2381,6 +2382,7 @@ const en: typeof ar = {
     ukLoansColumn: "Student loans",
     ukPensionColumn: "Pension (employee)",
     ukDownloadSummary: "Accountant report (spreadsheet)",
+    payslip: "Payslip",
 
     payrollSettingsTitle: "Payroll Settings",
     payrollSettingsIntro: "Company-wide settings that affect every future payroll run.",

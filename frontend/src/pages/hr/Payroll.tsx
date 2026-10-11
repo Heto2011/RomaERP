@@ -5,7 +5,7 @@ import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function Payroll() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const statusLabel: Record<PayrollRunStatus, { text: string; cls: string }> = {
     [PayrollRunStatus.Draft]: { text: t.accounting.draft, cls: "badge-draft" },
     [PayrollRunStatus.Approved]: { text: t.hr.approved, cls: "badge-posted" },
@@ -32,6 +32,21 @@ export default function Payroll() {
       setIsUk((await PayrollApi.getSettings()).data.isUkPayroll);
     } catch {
       setIsUk(false);
+    }
+  }
+
+  async function downloadPayslip(runId: string, employeeId: string) {
+    setError(null);
+    try {
+      const res = await PayrollApi.downloadPayslip(runId, employeeId, lang);
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `payslip-${employeeId.slice(0, 8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(getErrorMessage(err));
     }
   }
 
@@ -248,6 +263,7 @@ export default function Payroll() {
                                 <th>{t.hr.gosiEmployerColumn}</th>
                               </>
                             )}
+                            <th></th>
                             {run.status === PayrollRunStatus.Draft && <th></th>}
                           </tr>
                         </thead>
@@ -303,6 +319,11 @@ export default function Payroll() {
                                     <td>{line.gosiEmployerContributionAmount > 0 ? line.gosiEmployerContributionAmount.toLocaleString() : "-"}</td>
                                   </>
                                 )}
+                                <td>
+                                  <button className="btn btn-secondary btn-sm" onClick={() => downloadPayslip(run.id, line.employeeId)}>
+                                    {t.hr.payslip}
+                                  </button>
+                                </td>
                                 {run.status === PayrollRunStatus.Draft && (
                                   <td style={{ display: "flex", gap: 4 }}>
                                     {isEditing ? (

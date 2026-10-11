@@ -1075,6 +1075,7 @@ export interface PayrollRun {
 }
 
 export interface MyPayslip {
+  runId: string;
   runDate: string;
   status: PayrollRunStatus;
   description: string | null;

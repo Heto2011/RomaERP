@@ -88,6 +88,7 @@ public class UpdatePayrollLineDto
 
 public class MyPayslipDto
 {
+    public Guid RunId { get; set; }
     public DateTime RunDate { get; set; }
     public PayrollRunStatus Status { get; set; }
     public string? Description { get; set; }

@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Accounting;
 using RomaERP.Application.Common.Exceptions;
+using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.HR.DTOs;
 using RomaERP.Application.HR.Services;
 using RomaERP.Domain.Accounting;
@@ -418,5 +419,67 @@ public class PayrollServiceTests
         Assert.Contains("Ehab Salah,EMP-001,QQ123456C,1257L,A,3000.00,3000.00,390.20,156.16,387.45", csv);
         Assert.Contains("Owed to HMRC for this run (income tax + employee NI + employer NI + student loans),933.81", csv); // 390.20 + 156.16 + 387.45
         Assert.Contains("does not submit anything to HMRC", csv);
+    }
+
+    private class CapturingRenderer : IHtmlToPdfRenderer
+    {
+        public string? Html;
+        public Task<byte[]> RenderAsync(string html, CancellationToken ct = default)
+        {
+            Html = html;
+            return Task.FromResult(new byte[] { 1, 2, 3 });
+        }
+    }
+
+    [Fact]
+    public async Task Payslip_ShowsEarningsDeductionsNetPayAndEmployerCosts_AndEncodesNames()
+    {
+        var (ctx, employee, april, _, _) = await SeedUkAsync(e => { e.FullNameEn = "<b>Eve</b>"; e.UkNationalInsuranceNumber = "QQ123456C"; });
+        var renderer = new CapturingRenderer();
+        var service = new PayrollService(ctx, renderer);
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = april.Id, RunDate = new DateTime(2026, 4, 28) });
+
+        var pdf = await service.GetPayslipPdfAsync(run.Id, employee.Id, arabic: false, publishedOnly: false);
+
+        Assert.Equal(3, pdf.Length);
+        Assert.Contains("Payslip", renderer.Html);
+        Assert.Contains("2,453.64", renderer.Html);        // net pay
+        Assert.Contains("390.20", renderer.Html);          // income tax
+        Assert.Contains("387.45", renderer.Html);          // employer National Insurance
+        Assert.Contains("QQ123456C", renderer.Html);
+        Assert.DoesNotContain("<b>Eve</b>", renderer.Html); // names are HTML-encoded
+    }
+
+    [Fact]
+    public async Task Payslip_IsNotAvailableToTheEmployeeWhileTheRunIsStillADraft()
+    {
+        var (ctx, employee, april, _, _) = await SeedUkAsync();
+        var service = new PayrollService(ctx, new CapturingRenderer());
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = april.Id, RunDate = new DateTime(2026, 4, 28) });
+
+        await Assert.ThrowsAsync<NotFoundException>(() => service.GetPayslipPdfAsync(run.Id, employee.Id, arabic: true, publishedOnly: true));
+    }
+
+    [Fact]
+    public async Task Gosi_IsCappedAtTheMonthlyCeiling()
+    {
+        var ctx = CreateContext();
+        var employee = CreateEmployee(basicSalary: 60000);
+        employee.IsSaudiNational = true;
+        var period = new FiscalPeriod { Name = "September 2026", PeriodNumber = 9, StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2026, 9, 30) };
+        ctx.Employees.Add(employee);
+        ctx.FiscalPeriods.Add(period);
+        ctx.CompanySettings.Add(new CompanySettings
+        {
+            CompanyNameAr = "شركة", CompanyNameEn = "Co", PayrollDaysPerMonth = 30,
+            GosiEnabled = true, GosiEmployeeRatePercent = 10m, GosiEmployerAnnuitiesRatePercent = 10m, GosiEmployerHazardsRatePercent = 2m
+        });
+        await ctx.SaveChangesAsync();
+
+        var run = await new PayrollService(ctx).CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = period.Id, RunDate = new DateTime(2026, 9, 30) });
+
+        var line = Assert.Single(run.Lines);
+        Assert.Equal(4500m, line.GosiEmployeeDeductionAmount);      // 10% of the 45,000 ceiling, not of 60,000
+        Assert.Equal(5400m, line.GosiEmployerContributionAmount);   // 12% of 45,000
     }
 }

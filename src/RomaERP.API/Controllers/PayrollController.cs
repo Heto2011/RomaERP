@@ -45,6 +45,28 @@ public class PayrollController : ControllerBase
     public async Task<ActionResult<PayrollRunDto>> GetById(Guid id, CancellationToken ct)
         => Ok(await _payrollService.GetByIdAsync(id, ct));
 
+    /// <summary>One employee's payslip as a PDF, for HR and accounting.</summary>
+    [HttpGet("{id:guid}/payslip/{employeeId:guid}")]
+    [Authorize(Roles = "Admin,HR,Accountant")]
+    public async Task<IActionResult> GetPayslip(Guid id, Guid employeeId, [FromQuery] string? lang, CancellationToken ct)
+    {
+        var pdf = await _payrollService.GetPayslipPdfAsync(id, employeeId, !string.Equals(lang, "en", StringComparison.OrdinalIgnoreCase), false, ct);
+        return File(pdf, "application/pdf", $"payslip-{id.ToString()[..8]}-{employeeId.ToString()[..8]}.pdf");
+    }
+
+    /// <summary>The signed-in employee's own payslip for a published (approved or posted) run.</summary>
+    [HttpGet("me/{id:guid}/pdf")]
+    public async Task<IActionResult> GetMyPayslip(Guid id, [FromQuery] string? lang, CancellationToken ct)
+    {
+        if (_currentUser.UserId is not { } userId || !Guid.TryParse(userId, out var applicationUserId))
+            return Unauthorized();
+        var profile = await _employeeService.GetMyProfileAsync(applicationUserId, ct);
+        if (profile is null) return NotFound();
+
+        var pdf = await _payrollService.GetPayslipPdfAsync(id, profile.Id, !string.Equals(lang, "en", StringComparison.OrdinalIgnoreCase), true, ct);
+        return File(pdf, "application/pdf", $"payslip-{id.ToString()[..8]}.pdf");
+    }
+
     /// <summary>UK companies: the pay run as a spreadsheet for the accountant (the system does not file with HMRC).</summary>
     [HttpGet("{id:guid}/uk-summary")]
     [Authorize(Roles = "Admin,HR,Accountant")]

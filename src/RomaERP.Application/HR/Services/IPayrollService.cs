@@ -15,6 +15,8 @@ public interface IPayrollService
     Task<List<MyPayslipDto>> GetMyPayslipsAsync(Guid employeeId, CancellationToken ct = default);
     /// <summary>The accountant's summary of a UK pay run as a CSV (one row per employee plus totals), for filing with HMRC outside the system.</summary>
     Task<string> BuildUkSummaryCsvAsync(Guid runId, CancellationToken ct = default);
+    /// <summary>One employee's payslip as a PDF. When <paramref name="publishedOnly"/> is true (employee self-service) a draft run is not available.</summary>
+    Task<byte[]> GetPayslipPdfAsync(Guid runId, Guid employeeId, bool arabic, bool publishedOnly, CancellationToken ct = default);
     Task<PayrollSettingsDto> GetSettingsAsync(CancellationToken ct = default);
     Task<PayrollSettingsDto> UpdateSettingsAsync(PayrollSettingsDto dto, CancellationToken ct = default);
 }

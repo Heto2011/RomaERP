@@ -27,6 +27,20 @@ export default function MyProfile() {
     })();
   }, []);
 
+  async function downloadPayslip(runId: string) {
+    try {
+      const res = await PayrollApi.downloadMyPayslip(runId, lang);
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `payslip-${runId.slice(0, 8)}.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      /* the payslip is only available once the run is approved */
+    }
+  }
+
   const statusLabel: Record<PayrollRunStatus, string> = {
     [PayrollRunStatus.Draft]: t.accounting.draft,
     [PayrollRunStatus.Approved]: t.hr.approved,
@@ -97,12 +111,13 @@ export default function MyProfile() {
                   <th>{t.hr.deductions}</th>
                   <th>{t.hr.netSalary}</th>
                   <th>{t.common.status}</th>
+                  <th></th>
                 </tr>
               </thead>
               <tbody>
                 {payslips.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
+                    <td colSpan={7} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
                       {t.common.noData}
                     </td>
                   </tr>
@@ -118,6 +133,11 @@ export default function MyProfile() {
                       <span className={`badge ${p.status === PayrollRunStatus.Posted ? "badge-posted" : "badge-draft"}`}>
                         {statusLabel[p.status]}
                       </span>
+                    </td>
+                    <td>
+                      <button className="btn btn-secondary btn-sm" onClick={() => downloadPayslip(p.runId)}>
+                        {t.hr.payslip}
+                      </button>
                     </td>
                   </tr>
                 ))}

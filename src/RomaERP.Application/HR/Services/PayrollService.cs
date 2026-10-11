@@ -12,11 +12,16 @@ namespace RomaERP.Application.HR.Services;
 
 public class PayrollService : IPayrollService
 {
-    private readonly IApplicationDbContext _context;
+    /// <summary>The most monthly salary GOSI contributions are charged on.</summary>
+    private const decimal GosiMaxContributoryWage = 45_000m;
 
-    public PayrollService(IApplicationDbContext context)
+    private readonly IApplicationDbContext _context;
+    private readonly IHtmlToPdfRenderer? _pdfRenderer;
+
+    public PayrollService(IApplicationDbContext context, IHtmlToPdfRenderer? pdfRenderer = null)
     {
         _context = context;
+        _pdfRenderer = pdfRenderer;
     }
 
     public async Task<List<PayrollRunDto>> GetAllAsync(CancellationToken ct = default)
@@ -123,17 +128,19 @@ public class PayrollService : IPayrollService
             decimal gosiEmployeeAmount = 0, gosiEmployerAmount = 0;
             if (settings?.GosiEnabled == true)
             {
+                // GOSI contributions are calculated on salary up to a ceiling (SAR 45,000 a month).
+                var gosiBase = Math.Min(employee.BasicSalary, GosiMaxContributoryWage);
                 if (employee.IsSaudiNational)
                 {
-                    gosiEmployeeAmount = Math.Round(employee.BasicSalary * settings.GosiEmployeeRatePercent / 100m, 2);
-                    gosiEmployerAmount = Math.Round(employee.BasicSalary * (settings.GosiEmployerAnnuitiesRatePercent + settings.GosiEmployerHazardsRatePercent) / 100m, 2);
+                    gosiEmployeeAmount = Math.Round(gosiBase * settings.GosiEmployeeRatePercent / 100m, 2);
+                    gosiEmployerAmount = Math.Round(gosiBase * (settings.GosiEmployerAnnuitiesRatePercent + settings.GosiEmployerHazardsRatePercent) / 100m, 2);
                     deductions += gosiEmployeeAmount;
                 }
                 else
                 {
                     // Non-Saudi/resident employees: no Annuities branch (employee pays nothing), only the
                     // employer-paid Occupational Hazards branch, at its own (usually lower) rate.
-                    gosiEmployerAmount = Math.Round(employee.BasicSalary * settings.GosiNonSaudiEmployerHazardsRatePercent / 100m, 2);
+                    gosiEmployerAmount = Math.Round(gosiBase * settings.GosiNonSaudiEmployerHazardsRatePercent / 100m, 2);
                 }
             }
 
@@ -411,6 +418,7 @@ public class PayrollService : IPayrollService
 
         return lines.Select(l => new MyPayslipDto
         {
+            RunId = l.PayrollRunId,
             RunDate = l.PayrollRun!.RunDate,
             Status = l.PayrollRun.Status,
             Description = l.PayrollRun.Description,
@@ -459,6 +467,25 @@ public class PayrollService : IPayrollService
         sb.AppendLine($"Owed to the pension scheme (employee + employer),{Money(eePension + erPension)}");
         sb.AppendLine("Prepared by Roma HR for your accountant. Roma HR does not submit anything to HMRC; check these figures before filing.");
         return sb.ToString();
+    }
+
+    public async Task<byte[]> GetPayslipPdfAsync(Guid runId, Guid employeeId, bool arabic, bool publishedOnly, CancellationToken ct = default)
+    {
+        var renderer = _pdfRenderer ?? throw new ValidationAppException("إنشاء ملف PDF غير متاح حاليًا.");
+        var run = await _context.PayrollRuns
+            .AsNoTracking()
+            .Include(r => r.Lines.Where(l => l.EmployeeId == employeeId)).ThenInclude(l => l.Employee)
+            .FirstOrDefaultAsync(r => r.Id == runId, ct)
+            ?? throw new NotFoundException(nameof(PayrollRun), runId);
+        if (publishedOnly && run.Status == PayrollRunStatus.Draft)
+            throw new NotFoundException(nameof(PayrollRun), runId);
+
+        var line = run.Lines.FirstOrDefault()
+            ?? throw new NotFoundException(nameof(PayrollRunLine), employeeId);
+        var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct)
+            ?? throw new ValidationAppException("إعدادات الشركة غير موجودة.");
+
+        return await renderer.RenderAsync(PayslipHtmlTemplate.Build(run, line, settings, arabic), ct);
     }
 
     public async Task<PayrollSettingsDto> GetSettingsAsync(CancellationToken ct = default)
