@@ -1911,6 +1911,9 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
 
+                    b.Property<int>("LeadTimeDays")
+                        .HasColumnType("int");
+
                     b.Property<decimal>("QuantityOnHand")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");

@@ -14,6 +14,10 @@ public class Item : AuditableEntity
     public ItemCategory? ItemCategory { get; set; }
 
     public decimal ReorderLevel { get; set; }
+
+    /// <summary>Days between placing a purchase order for this item and receiving it — used with the daily
+    /// consumption rate to raise the "order now" alert before stock actually runs out.</summary>
+    public int LeadTimeDays { get; set; } = 2;
     public bool IsActive { get; set; } = true;
 
     /// <summary>Running quantity on hand across all warehouses, maintained by InventoryService on each posted movement.</summary>

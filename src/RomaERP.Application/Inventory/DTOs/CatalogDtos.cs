@@ -42,6 +42,7 @@ public class ItemDto
     public Guid ItemCategoryId { get; set; }
     public string ItemCategoryName { get; set; } = string.Empty;
     public decimal ReorderLevel { get; set; }
+    public int LeadTimeDays { get; set; } = 2;
     public decimal QuantityOnHand { get; set; }
     public decimal AverageCost { get; set; }
     public bool IsActive { get; set; }
@@ -58,6 +59,7 @@ public class CreateItemDto
     public string UnitOfMeasure { get; set; } = string.Empty;
     public Guid ItemCategoryId { get; set; }
     public decimal ReorderLevel { get; set; }
+    public int LeadTimeDays { get; set; } = 2;
     public bool IsLotTracked { get; set; }
 }
 
@@ -69,5 +71,6 @@ public class UpdateItemDto
     public string UnitOfMeasure { get; set; } = string.Empty;
     public Guid ItemCategoryId { get; set; }
     public decimal ReorderLevel { get; set; }
+    public int LeadTimeDays { get; set; } = 2;
     public bool IsLotTracked { get; set; }
 }

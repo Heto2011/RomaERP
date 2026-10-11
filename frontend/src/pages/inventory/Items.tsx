@@ -26,6 +26,7 @@ export default function Items() {
   const [unitOfMeasure, setUnitOfMeasure] = useState("");
   const [itemCategoryId, setItemCategoryId] = useState("");
   const [reorderLevel, setReorderLevel] = useState("0");
+  const [leadTimeDays, setLeadTimeDays] = useState("2");
   const [isLotTracked, setIsLotTracked] = useState(false);
 
   const [categoryCode, setCategoryCode] = useState("");
@@ -56,6 +57,7 @@ export default function Items() {
     setUnitOfMeasure("");
     setItemCategoryId("");
     setReorderLevel("0");
+    setLeadTimeDays("2");
     setIsLotTracked(false);
   }
 
@@ -67,6 +69,7 @@ export default function Items() {
     setUnitOfMeasure(item.unitOfMeasure);
     setItemCategoryId(item.itemCategoryId);
     setReorderLevel(String(item.reorderLevel));
+    setLeadTimeDays(String(item.leadTimeDays ?? 2));
     setIsLotTracked(item.isLotTracked);
     setShowForm(true);
   }
@@ -75,7 +78,7 @@ export default function Items() {
     e.preventDefault();
     setError(null);
     try {
-      const payload = { nameAr, nameEn, unitOfMeasure, itemCategoryId, reorderLevel: Number(reorderLevel) || 0, isLotTracked };
+      const payload = { nameAr, nameEn, unitOfMeasure, itemCategoryId, reorderLevel: Number(reorderLevel) || 0, leadTimeDays: Math.max(0, Math.round(Number(leadTimeDays) || 0)), isLotTracked };
       if (editingId) await ItemsApi.update(editingId, payload);
       else await ItemsApi.create({ ...payload, code });
       resetForm();
@@ -244,6 +247,10 @@ export default function Items() {
               <div className="form-field">
                 <label>{t.inventory.reorderLevel}</label>
                 <input type="number" step="0.01" value={reorderLevel} onChange={(e) => setReorderLevel(e.target.value)} />
+              </div>
+              <div className="form-field">
+                <label>{t.inventory.leadTimeDays}</label>
+                <input type="number" min={0} step="1" value={leadTimeDays} onChange={(e) => setLeadTimeDays(e.target.value)} />
               </div>
             </div>
             <div className="form-field" style={{ marginTop: 10 }}>

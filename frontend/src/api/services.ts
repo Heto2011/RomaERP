@@ -19,6 +19,7 @@ import type {
   StockValuationReport,
   InventoryMovementReport,
   PurchasePriceVarianceReport,
+  ReorderSuggestionReport,
   RecipeCostReport,
   WasteAnalysisReport,
   AlertsReport,
@@ -483,6 +484,8 @@ export const InventoryReportsApi = {
   stockValuation: () => apiClient.get<StockValuationReport>("/inventoryreports/stock-valuation"),
   movementAnalysis: (fromDate: string, toDate: string) =>
     apiClient.get<InventoryMovementReport>("/inventoryreports/movement-analysis", { params: { fromDate, toDate } }),
+  reorderSuggestions: (lookbackDays = 30) =>
+    apiClient.get<ReorderSuggestionReport>("/inventoryreports/reorder-suggestions", { params: { lookbackDays } }),
   purchasePriceVariance: (fromDate: string, toDate: string) =>
     apiClient.get<PurchasePriceVarianceReport>("/inventoryreports/purchase-price-variance", { params: { fromDate, toDate } }),
   recipeCost: () => apiClient.get<RecipeCostReport>("/inventoryreports/recipe-cost"),

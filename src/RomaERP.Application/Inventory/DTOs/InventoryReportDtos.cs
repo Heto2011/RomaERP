@@ -139,3 +139,47 @@ public class WasteAnalysisReportDto
     public List<WasteByReasonLineDto> ByReason { get; set; } = new();
     public List<WasteTrendPointDto> WeeklyTrend { get; set; } = new();
 }
+
+public static class ReorderUrgency
+{
+    /// <summary>Stock will run out before a new order could arrive (days left &lt;= lead time), or it's already at zero.</summary>
+    public const string Critical = "Critical";
+    /// <summary>Stock is at/below the reorder point — order now to avoid running out.</summary>
+    public const string Warning = "Warning";
+}
+
+public class ReorderSuggestionLineDto
+{
+    public Guid ItemId { get; set; }
+    public string ItemCode { get; set; } = string.Empty;
+    public string ItemName { get; set; } = string.Empty;
+    public string UnitOfMeasure { get; set; } = string.Empty;
+    public decimal QuantityOnHand { get; set; }
+    public decimal ReorderLevel { get; set; }
+    public int LeadTimeDays { get; set; }
+    /// <summary>Average quantity issued per day over the look-back window (sales, recipe consumption, manual issues).</summary>
+    public decimal DailyConsumption { get; set; }
+    public decimal? DaysOfStockRemaining { get; set; }
+    /// <summary>The stock level at which to order: the larger of the fixed ReorderLevel and
+    /// daily consumption x (lead time + safety days).</summary>
+    public decimal ReorderPoint { get; set; }
+    /// <summary>Quantity that brings stock back to cover lead time + safety + the cover period at the current consumption rate.</summary>
+    public decimal SuggestedOrderQuantity { get; set; }
+    public decimal EstimatedCost { get; set; }
+    public string Urgency { get; set; } = ReorderUrgency.Warning;
+    /// <summary>True when the alert was raised by consumption speed rather than the fixed reorder level alone.</summary>
+    public bool DrivenByConsumption { get; set; }
+    public Guid? LastVendorId { get; set; }
+    public string? LastVendorName { get; set; }
+    public decimal? LastUnitPrice { get; set; }
+}
+
+public class ReorderSuggestionReportDto
+{
+    public DateTime AsOf { get; set; }
+    public int LookbackDays { get; set; }
+    public int SafetyDays { get; set; }
+    public int CoverDays { get; set; }
+    public decimal TotalEstimatedCost { get; set; }
+    public List<ReorderSuggestionLineDto> Items { get; set; } = new();
+}

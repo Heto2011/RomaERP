@@ -39,6 +39,7 @@ export default function InventoryPortalLayout({ children }: { children: ReactNod
     { to: "/inventory-portal/physical-stock-counts", label: t.inventory.physicalStockCountsTitle, icon: <IconCheck /> },
     { to: "/inventory-portal/waste-entries", label: t.inventory.wasteEntriesTitle, icon: <IconTrendDown /> },
     { to: "/inventory-portal/reports/stock-valuation", label: t.inventory.stockValuationTitle, icon: <IconBarChart /> },
+    { to: "/inventory-portal/reports/reorder-suggestions", label: t.inventory.reorderSuggestionsTitle, icon: <IconBarChart /> },
     { to: "/inventory-portal/reports/movement-analysis", label: t.inventory.inventoryReports, icon: <IconBarChart /> },
     { to: "/inventory-portal/reports/purchase-price-variance", label: t.inventory.purchasePriceVarianceTitle, icon: <IconBarChart /> },
     { to: "/inventory-portal/reports/recipe-cost", label: t.inventory.navRealProductCost, icon: <IconBarChart /> },

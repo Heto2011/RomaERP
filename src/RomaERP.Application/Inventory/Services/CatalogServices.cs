@@ -148,6 +148,7 @@ public class ItemService : IItemService
             UnitOfMeasure = dto.UnitOfMeasure.Trim(),
             ItemCategoryId = dto.ItemCategoryId,
             ReorderLevel = dto.ReorderLevel,
+            LeadTimeDays = Math.Max(0, dto.LeadTimeDays),
             IsActive = true,
             QuantityOnHand = 0,
             AverageCost = 0,
@@ -174,6 +175,7 @@ public class ItemService : IItemService
         item.UnitOfMeasure = dto.UnitOfMeasure.Trim();
         item.ItemCategoryId = dto.ItemCategoryId;
         item.ReorderLevel = dto.ReorderLevel;
+        item.LeadTimeDays = Math.Max(0, dto.LeadTimeDays);
         item.IsLotTracked = dto.IsLotTracked;
 
         await _context.SaveChangesAsync(ct);
@@ -203,6 +205,7 @@ public class ItemService : IItemService
         ItemCategoryId = i.ItemCategoryId,
         ItemCategoryName = i.ItemCategory?.NameAr ?? string.Empty,
         ReorderLevel = i.ReorderLevel,
+        LeadTimeDays = i.LeadTimeDays,
         QuantityOnHand = i.QuantityOnHand,
         AverageCost = i.AverageCost,
         IsActive = i.IsActive,

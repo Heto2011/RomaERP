@@ -233,4 +233,62 @@ public class InventoryReportServiceTests
         Assert.NotEmpty(report.WeeklyTrend);
         Assert.Equal(56, report.WeeklyTrend.Sum(p => p.TotalCost));
     }
+
+    [Fact]
+    public async Task GetReorderSuggestions_UsesDailyConsumptionAndLeadTime()
+    {
+        var ctx = CreateContext();
+        var category = new ItemCategory { NameAr = "عام", NameEn = "General" };
+        var warehouse = new Warehouse { Code = "WH-MAIN", NameAr = "المخزن الرئيسي", NameEn = "Main Warehouse" };
+        var asOf = new DateTime(2026, 9, 30);
+
+        // 30 issued over 30 days = 1/day; lead 3 + 2 safety = reorder point 5; 4 on hand -> reorder, 4 days left > 3 lead -> Warning.
+        var fastWarning = new Item { Code = "FAST-W", NameAr = "سريع", NameEn = "Fast", UnitOfMeasure = "كجم", ItemCategory = category, QuantityOnHand = 4, AverageCost = 10, LeadTimeDays = 3 };
+        // 2 on hand at 1/day with lead 3 -> will run out before arrival -> Critical.
+        var fastCritical = new Item { Code = "FAST-C", NameAr = "حرج", NameEn = "Critical", UnitOfMeasure = "كجم", ItemCategory = category, QuantityOnHand = 2, AverageCost = 10, LeadTimeDays = 3 };
+        // plenty of stock -> no suggestion.
+        var healthy = new Item { Code = "OK", NameAr = "سليم", NameEn = "Healthy", UnitOfMeasure = "كجم", ItemCategory = category, QuantityOnHand = 100, AverageCost = 10, LeadTimeDays = 3 };
+        // no consumption but under the fixed reorder level -> still flagged, not consumption driven.
+        var fixedLevel = new Item { Code = "FIXED", NameAr = "ثابت", NameEn = "Fixed", UnitOfMeasure = "كجم", ItemCategory = category, QuantityOnHand = 1, ReorderLevel = 5, AverageCost = 10 };
+        // never consumed and no reorder level -> ignored.
+        var untracked = new Item { Code = "NONE", NameAr = "بدون", NameEn = "None", UnitOfMeasure = "كجم", ItemCategory = category, QuantityOnHand = 0 };
+
+        ctx.ItemCategories.Add(category);
+        ctx.Warehouses.Add(warehouse);
+        ctx.Items.AddRange(fastWarning, fastCritical, healthy, fixedLevel, untracked);
+        await ctx.SaveChangesAsync();
+
+        var n = 0;
+        foreach (var item in new[] { fastWarning, fastCritical, healthy })
+        {
+            ctx.StockMovements.Add(new StockMovement
+            {
+                MovementNumber = $"SM-{++n}", MovementDate = asOf.AddDays(-5), MovementType = StockMovementType.Issue,
+                ItemId = item.Id, WarehouseId = warehouse.Id, Quantity = 30, UnitCost = 10, TotalCost = 300
+            });
+        }
+        await ctx.SaveChangesAsync();
+
+        var report = await new InventoryReportService(ctx).GetReorderSuggestionsAsync(30, asOf);
+
+        Assert.Equal(new[] { "FAST-C", "FAST-W", "FIXED" }, report.Items.Select(l => l.ItemCode).ToArray());
+
+        var critical = report.Items[0];
+        Assert.Equal(ReorderUrgency.Critical, critical.Urgency);
+        Assert.Equal(1m, critical.DailyConsumption);
+        Assert.Equal(2m, critical.DaysOfStockRemaining);
+        Assert.Equal(5m, critical.ReorderPoint);
+        // target = 1 * (3 + 2 + 14) = 19, minus 2 on hand
+        Assert.Equal(17m, critical.SuggestedOrderQuantity);
+        Assert.Equal(170m, critical.EstimatedCost);
+        Assert.True(critical.DrivenByConsumption);
+
+        Assert.Equal(ReorderUrgency.Warning, report.Items[1].Urgency);
+
+        var fixedLine = report.Items[2];
+        Assert.False(fixedLine.DrivenByConsumption);
+        Assert.Equal(ReorderUrgency.Warning, fixedLine.Urgency);
+        Assert.Null(fixedLine.DaysOfStockRemaining);
+        Assert.True(fixedLine.SuggestedOrderQuantity >= 4m);
+    }
 }

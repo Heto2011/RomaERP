@@ -1,5 +1,6 @@
 using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Alerts.DTOs;
+using RomaERP.Application.Inventory.DTOs;
 using RomaERP.Application.HR.Services;
 using RomaERP.Application.Inventory.Services;
 using RomaERP.Application.Purchasing.Services;
@@ -46,15 +47,20 @@ public class AlertsService : IAlertsService
         var alerts = new List<AlertDto>();
 
         var movement = await _inventoryReportService.GetInventoryMovementAsync(windowStart, now, ct);
-        var atRiskItems = movement.Items.Where(i => i.IsAtRiskOfStockout).ToList();
-        if (atRiskItems.Count > 0)
+        var reorder = await _inventoryReportService.GetReorderSuggestionsAsync(MovementWindowDays, now, ct);
+        if (reorder.Items.Count > 0)
         {
+            var criticalCount = reorder.Items.Count(i => i.Urgency == ReorderUrgency.Critical);
             alerts.Add(new AlertDto
             {
                 Category = "Inventory",
-                Severity = AlertSeverity.Warning,
-                Title = $"{atRiskItems.Count} item(s) at risk of stockout",
-                Detail = string.Join(", ", atRiskItems.Take(5).Select(i => $"{i.ItemCode} ({i.QuantityOnHand:0.##} left)"))
+                Severity = criticalCount > 0 ? AlertSeverity.Critical : AlertSeverity.Warning,
+                Title = criticalCount > 0
+                    ? $"{reorder.Items.Count} item(s) need reordering, {criticalCount} will run out before a new order can arrive"
+                    : $"{reorder.Items.Count} item(s) at or below their reorder point",
+                Detail = string.Join(", ", reorder.Items.Take(5).Select(i => i.DaysOfStockRemaining.HasValue
+                    ? $"{i.ItemCode} ({i.QuantityOnHand:0.##} left, ~{i.DaysOfStockRemaining:0.#} days; order {i.SuggestedOrderQuantity:0.##})"
+                    : $"{i.ItemCode} ({i.QuantityOnHand:0.##} left; order {i.SuggestedOrderQuantity:0.##})"))
             });
         }
 

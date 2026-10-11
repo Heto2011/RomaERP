@@ -132,6 +132,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const inventoryReportItems: NavSubGroupItem["subItems"] = [
     { to: "/inventory/reports/stock-valuation", label: t.inventory.stockValuationTitle },
+    { to: "/inventory/reports/reorder-suggestions", label: t.inventory.reorderSuggestionsTitle },
     { to: "/inventory/reports/movement-analysis", label: t.inventory.inventoryReports },
     { to: "/inventory/reports/waste-analysis", label: t.inventory.wasteAnalysisTitle },
   ];

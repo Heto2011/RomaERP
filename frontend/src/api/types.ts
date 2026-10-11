@@ -354,6 +354,35 @@ export interface InventoryMovementReport {
   items: InventoryMovementLine[];
 }
 
+export interface ReorderSuggestionLine {
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  unitOfMeasure: string;
+  quantityOnHand: number;
+  reorderLevel: number;
+  leadTimeDays: number;
+  dailyConsumption: number;
+  daysOfStockRemaining: number | null;
+  reorderPoint: number;
+  suggestedOrderQuantity: number;
+  estimatedCost: number;
+  urgency: "Critical" | "Warning";
+  drivenByConsumption: boolean;
+  lastVendorId: string | null;
+  lastVendorName: string | null;
+  lastUnitPrice: number | null;
+}
+
+export interface ReorderSuggestionReport {
+  asOf: string;
+  lookbackDays: number;
+  safetyDays: number;
+  coverDays: number;
+  totalEstimatedCost: number;
+  items: ReorderSuggestionLine[];
+}
+
 export interface PurchasePriceVarianceLine {
   itemId: string;
   itemCode: string;
@@ -1128,6 +1157,7 @@ export interface Item {
   itemCategoryId: string;
   itemCategoryName: string;
   reorderLevel: number;
+  leadTimeDays: number;
   quantityOnHand: number;
   averageCost: number;
   isActive: boolean;

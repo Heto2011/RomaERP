@@ -8,6 +8,8 @@ namespace RomaERP.Application.Inventory.Services;
 public class InventoryReportService : IInventoryReportService
 {
     private const decimal ExcessStockDaysThreshold = 90m;
+    private const int ReorderSafetyDays = 2;
+    private const int ReorderCoverDays = 14;
 
     private readonly IApplicationDbContext _context;
 
@@ -93,6 +95,94 @@ public class InventoryReportService : IInventoryReportService
         .ToList();
 
         return new InventoryMovementReportDto { FromDate = fromDate, ToDate = toDate, Items = lines };
+    }
+
+    public async Task<ReorderSuggestionReportDto> GetReorderSuggestionsAsync(int lookbackDays = 30, DateTime? asOf = null, CancellationToken ct = default)
+    {
+        lookbackDays = Math.Clamp(lookbackDays, 7, 180);
+        var now = asOf ?? DateTime.UtcNow;
+        var from = now.AddDays(-lookbackDays);
+
+        var items = await _context.Items
+            .AsNoTracking()
+            .Where(i => !i.IsDeleted && i.IsActive && !i.RecipeLines.Any())
+            .ToListAsync(ct);
+
+        var issued = await _context.StockMovements
+            .AsNoTracking()
+            .Where(m => m.MovementType == StockMovementType.Issue && m.MovementDate >= from && m.MovementDate <= now)
+            .GroupBy(m => m.ItemId)
+            .Select(g => new { ItemId = g.Key, Quantity = g.Sum(m => m.Quantity) })
+            .ToDictionaryAsync(x => x.ItemId, x => x.Quantity, ct);
+
+        var lastPurchases = await _context.PurchaseInvoiceLines
+            .AsNoTracking()
+            .Where(l => l.ItemId != null)
+            .Select(l => new { ItemId = l.ItemId!.Value, l.UnitPrice, l.PurchaseInvoice!.InvoiceDate, l.PurchaseInvoice.VendorId, VendorName = l.PurchaseInvoice.Vendor!.NameAr })
+            .ToListAsync(ct);
+        var lastPurchaseByItem = lastPurchases
+            .GroupBy(l => l.ItemId)
+            .ToDictionary(g => g.Key, g => g.OrderByDescending(l => l.InvoiceDate).First());
+
+        var lines = new List<ReorderSuggestionLineDto>();
+        foreach (var item in items)
+        {
+            issued.TryGetValue(item.Id, out var issuedQty);
+            var daily = Math.Round(issuedQty / lookbackDays, 4);
+            decimal? daysRemaining = daily > 0 ? Math.Round(item.QuantityOnHand / daily, 1) : null;
+
+            var consumptionPoint = daily * (item.LeadTimeDays + ReorderSafetyDays);
+            var reorderPoint = Math.Round(Math.Max(item.ReorderLevel, consumptionPoint), 2);
+            if (reorderPoint <= 0) continue; // never tracked: no reorder level and no consumption
+
+            if (item.QuantityOnHand > reorderPoint) continue;
+
+            var targetLevel = daily * (item.LeadTimeDays + ReorderSafetyDays + ReorderCoverDays);
+            targetLevel = Math.Max(targetLevel, item.ReorderLevel * 2);
+            var suggested = Math.Ceiling(Math.Max(0, targetLevel - item.QuantityOnHand));
+            if (suggested <= 0) suggested = Math.Ceiling(Math.Max(1, reorderPoint - item.QuantityOnHand));
+
+            lastPurchaseByItem.TryGetValue(item.Id, out var last);
+            var unitPrice = last?.UnitPrice ?? item.AverageCost;
+
+            var critical = item.QuantityOnHand <= 0 || (daysRemaining.HasValue && daysRemaining.Value <= item.LeadTimeDays);
+            var belowFixedLevel = item.ReorderLevel > 0 && item.QuantityOnHand <= item.ReorderLevel;
+
+            lines.Add(new ReorderSuggestionLineDto
+            {
+                ItemId = item.Id,
+                ItemCode = item.Code,
+                ItemName = item.NameAr,
+                UnitOfMeasure = item.UnitOfMeasure,
+                QuantityOnHand = item.QuantityOnHand,
+                ReorderLevel = item.ReorderLevel,
+                LeadTimeDays = item.LeadTimeDays,
+                DailyConsumption = daily,
+                DaysOfStockRemaining = daysRemaining,
+                ReorderPoint = reorderPoint,
+                SuggestedOrderQuantity = suggested,
+                EstimatedCost = Math.Round(suggested * unitPrice, 2),
+                Urgency = critical ? ReorderUrgency.Critical : ReorderUrgency.Warning,
+                DrivenByConsumption = !belowFixedLevel,
+                LastVendorId = last?.VendorId,
+                LastVendorName = last?.VendorName,
+                LastUnitPrice = last?.UnitPrice
+            });
+        }
+
+        return new ReorderSuggestionReportDto
+        {
+            AsOf = now,
+            LookbackDays = lookbackDays,
+            SafetyDays = ReorderSafetyDays,
+            CoverDays = ReorderCoverDays,
+            TotalEstimatedCost = lines.Sum(l => l.EstimatedCost),
+            Items = lines
+                .OrderBy(l => l.Urgency == ReorderUrgency.Critical ? 0 : 1)
+                .ThenBy(l => l.DaysOfStockRemaining ?? decimal.MaxValue)
+                .ThenBy(l => l.ItemCode)
+                .ToList()
+        };
     }
 
     public async Task<PurchasePriceVarianceReportDto> GetPurchasePriceVarianceAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)

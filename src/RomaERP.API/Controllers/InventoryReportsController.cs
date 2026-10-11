@@ -27,6 +27,10 @@ public class InventoryReportsController : ControllerBase
         [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
         => Ok(await _service.GetInventoryMovementAsync(fromDate, toDate, ct));
 
+    [HttpGet("reorder-suggestions")]
+    public async Task<ActionResult<ReorderSuggestionReportDto>> GetReorderSuggestions([FromQuery] int lookbackDays = 30, CancellationToken ct = default)
+        => Ok(await _service.GetReorderSuggestionsAsync(lookbackDays, null, ct));
+
     [HttpGet("purchase-price-variance")]
     public async Task<ActionResult<PurchasePriceVarianceReportDto>> GetPurchasePriceVariance(
         [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)

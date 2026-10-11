@@ -81,6 +81,7 @@ import StockMovements from "./pages/inventory/StockMovements";
 import StockValuationPage from "./pages/inventory/StockValuation";
 import InventoryMovementPage from "./pages/inventory/InventoryMovement";
 import PurchasePriceVariancePage from "./pages/inventory/PurchasePriceVariance";
+import ReorderSuggestionsPage from "./pages/inventory/ReorderSuggestions";
 import RecipeCostPage from "./pages/inventory/RecipeCost";
 import PhysicalStockCountsPage from "./pages/inventory/PhysicalStockCounts";
 import WasteEntriesPage from "./pages/inventory/WasteEntries";
@@ -267,6 +268,7 @@ export default function App() {
       <Route path="/inventory/expiring-stock" element={<ProtectedRoute><ExpiringStock /></ProtectedRoute>} />
       <Route path="/inventory/movements" element={<ProtectedRoute><StockMovements /></ProtectedRoute>} />
       <Route path="/inventory/reports/stock-valuation" element={<ProtectedRoute><StockValuationPage /></ProtectedRoute>} />
+      <Route path="/inventory/reports/reorder-suggestions" element={<ProtectedRoute><ReorderSuggestionsPage /></ProtectedRoute>} />
       <Route path="/inventory/reports/movement-analysis" element={<ProtectedRoute><InventoryMovementPage /></ProtectedRoute>} />
       <Route path="/inventory/reports/purchase-price-variance" element={<ProtectedRoute><PurchasePriceVariancePage /></ProtectedRoute>} />
       <Route path="/inventory/reports/recipe-cost" element={<ProtectedRoute><RecipeCostPage /></ProtectedRoute>} />
@@ -282,6 +284,7 @@ export default function App() {
       <Route path="/inventory-portal/physical-stock-counts" element={<InventoryPortalRoute><PhysicalStockCountsPage /></InventoryPortalRoute>} />
       <Route path="/inventory-portal/waste-entries" element={<InventoryPortalRoute><WasteEntriesPage /></InventoryPortalRoute>} />
       <Route path="/inventory-portal/reports/stock-valuation" element={<InventoryPortalRoute><StockValuationPage /></InventoryPortalRoute>} />
+      <Route path="/inventory-portal/reports/reorder-suggestions" element={<InventoryPortalRoute><ReorderSuggestionsPage /></InventoryPortalRoute>} />
       <Route path="/inventory-portal/reports/movement-analysis" element={<InventoryPortalRoute><InventoryMovementPage /></InventoryPortalRoute>} />
       <Route path="/inventory-portal/reports/purchase-price-variance" element={<InventoryPortalRoute><PurchasePriceVariancePage /></InventoryPortalRoute>} />
       <Route path="/inventory-portal/reports/recipe-cost" element={<InventoryPortalRoute><RecipeCostPage /></InventoryPortalRoute>} />
