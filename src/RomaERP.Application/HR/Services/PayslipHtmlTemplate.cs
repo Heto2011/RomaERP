@@ -21,7 +21,7 @@ public static class PayslipHtmlTemplate
         var currency = Enc(settings.DefaultCurrency);
         var isUk = settings.Country == Country.UnitedKingdom;
 
-        var statutory = line.GosiEmployeeDeductionAmount + line.EgEmployeeInsurance + line.EgIncomeTax + line.UkIncomeTax + line.UkEmployeeNi + line.UkStudentLoan + line.UkPostgraduateLoan + line.UkPensionEmployee;
+        var statutory = line.GosiEmployeeDeductionAmount + line.EgEmployeeInsurance + line.EgIncomeTax + line.GgEmployeeSocial + line.GgIncomeTax + line.UkIncomeTax + line.UkEmployeeNi + line.UkStudentLoan + line.UkPostgraduateLoan + line.UkPensionEmployee;
         var otherDeductions = Math.Max(0, line.TotalDeductions - line.UnpaidLeaveDeductionAmount - statutory);
 
         var earnings = new StringBuilder();
@@ -42,6 +42,8 @@ public static class PayslipHtmlTemplate
         Deduct(L("التأمينات الاجتماعية (حصة الموظف)", "Social insurance (employee)"), line.GosiEmployeeDeductionAmount, line.GosiEmployeeDeductionAmount != 0);
         Deduct(L("التأمينات الاجتماعية (حصة الموظف)", "Social insurance (employee)"), line.EgEmployeeInsurance, line.EgEmployeeInsurance != 0);
         Deduct(L("ضريبة كسب العمل", "Salary income tax"), line.EgIncomeTax, line.EgIncomeTax != 0);
+        Deduct(L("التأمين الاجتماعي (حصة الموظف)", "Social security (employee)"), line.GgEmployeeSocial, line.GgEmployeeSocial != 0);
+        Deduct(L("ضريبة الدخل", "Income tax"), line.GgIncomeTax, line.GgIncomeTax != 0);
         Deduct(L("ضريبة الدخل (PAYE)", "Income tax (PAYE)"), line.UkIncomeTax, line.UkIncomeTax != 0);
         Deduct(L("التأمين الوطني (حصة الموظف)", "National Insurance (employee)"), line.UkEmployeeNi, line.UkEmployeeNi != 0);
         Deduct(L("قرض الطالب", "Student loan"), line.UkStudentLoan, line.UkStudentLoan != 0);
@@ -55,6 +57,7 @@ public static class PayslipHtmlTemplate
         }
         Employer(L("التأمينات الاجتماعية (حصة الشركة)", "Social insurance (employer)"), line.GosiEmployerContributionAmount);
         Employer(L("التأمينات الاجتماعية (حصة الشركة)", "Social insurance (employer)"), line.EgEmployerInsurance);
+        Employer(L("التأمين الاجتماعي (حصة الشركة)", "Social security (employer)"), line.GgEmployerSocial);
         Employer(L("التأمين الوطني (حصة الشركة)", "National Insurance (employer)"), line.UkEmployerNi);
         Employer(L("معاش (حصة الشركة)", "Pension (employer)"), line.UkPensionEmployer);
         var employerBlock = employer.Length == 0

@@ -62,6 +62,9 @@ public class PayrollRunLineDto
     public decimal EgEmployeeInsurance { get; set; }
     public decimal EgEmployerInsurance { get; set; }
     public decimal EgIncomeTax { get; set; }
+    public decimal GgIncomeTax { get; set; }
+    public decimal GgEmployeeSocial { get; set; }
+    public decimal GgEmployerSocial { get; set; }
 }
 
 public class PayrollRunDto
@@ -117,5 +120,12 @@ public class PayrollSettingsDto
     public bool IsUkPayroll { get; set; }
     /// <summary>Read-only: true for a company in Egypt, where payroll runs with social insurance and salary income tax.</summary>
     public bool IsEgyptPayroll { get; set; }
+    /// <summary>Read-only: true for a company in Guernsey, where payroll runs with the editable Guernsey rates below.</summary>
+    public bool IsGuernseyPayroll { get; set; }
+    public decimal GgIncomeTaxRatePercent { get; set; }
+    public decimal GgPersonalAllowanceAnnual { get; set; }
+    public decimal GgEmployeeSocialRatePercent { get; set; }
+    public decimal GgEmployerSocialRatePercent { get; set; }
+    public decimal GgSocialMonthlyUpperLimit { get; set; }
     public string UkTaxYear { get; set; } = string.Empty;
 }

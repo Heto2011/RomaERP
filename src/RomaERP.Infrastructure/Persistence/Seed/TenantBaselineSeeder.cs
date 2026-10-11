@@ -78,8 +78,8 @@ public static class TenantBaselineSeeder
         var wanted = new (string Code, string Ar, string En, AccountType Type, AccountNature Nature, string ParentCode, int Level)[]
         {
             ("2180", "ضرائب وتأمين وطني مستحقة (بريطانيا)", "Tax and National Insurance Payable (UK)", AccountType.Liability, AccountNature.Credit, "2100", 3),
-            ("2185", "تأمينات اجتماعية مستحقة (مصر)", "Social Insurance Payable (Egypt)", AccountType.Liability, AccountNature.Credit, "2100", 3),
-            ("5165", "مصروف التأمينات الاجتماعية (حصة الشركة - مصر)", "Employer Social Insurance Expense (Egypt)", AccountType.Expense, AccountNature.Debit, "5000", 2),
+            ("2185", "تأمينات اجتماعية مستحقة", "Social Insurance Payable", AccountType.Liability, AccountNature.Credit, "2100", 3),
+            ("5165", "مصروف التأمينات الاجتماعية (حصة الشركة)", "Employer Social Insurance Expense", AccountType.Expense, AccountNature.Debit, "5000", 2),
             ("2190", "اشتراكات المعاش المستحقة (بريطانيا)", "Pension Contributions Payable (UK)", AccountType.Liability, AccountNature.Credit, "2100", 3),
             ("5160", "مصروف التأمين الوطني (حصة الشركة - بريطانيا)", "Employer National Insurance Expense (UK)", AccountType.Expense, AccountNature.Debit, "5000", 2),
             ("5170", "مصروف المعاش (حصة الشركة - بريطانيا)", "Employer Pension Expense (UK)", AccountType.Expense, AccountNature.Debit, "5000", 2),
@@ -92,9 +92,14 @@ public static class TenantBaselineSeeder
             var parent = await context.Accounts.FirstOrDefaultAsync(a => a.Code == parentCode);
             toAdd.Add(new Account { Code = code, NameAr = ar, NameEn = en, AccountType = type, Nature = nature, ParentAccountId = parent?.Id, IsControlAccount = false, Level = level, IsActive = true });
         }
-        if (toAdd.Count == 0) return;
+        // Companies provisioned before Guernsey shared them carry the Egypt-only names; make them generic.
+        foreach (var account in await context.Accounts.Where(a => (a.Code == "2185" || a.Code == "5165") && a.NameEn.Contains("(Egypt)")).ToListAsync())
+        {
+            account.NameEn = account.NameEn.Replace(" (Egypt)", "");
+            account.NameAr = account.NameAr.Replace(" (مصر)", "").Replace(" - مصر", "");
+        }
 
-        await context.Accounts.AddRangeAsync(toAdd);
+        if (toAdd.Count > 0) await context.Accounts.AddRangeAsync(toAdd);
         await context.SaveChangesAsync();
     }
 

@@ -24,6 +24,7 @@ export default function Payroll() {
 
   const [isUk, setIsUk] = useState(false);
   const [isEgypt, setIsEgypt] = useState(false);
+  const [isGuernsey, setIsGuernsey] = useState(false);
 
   async function load() {
     const [runsRes, periodsRes] = await Promise.all([PayrollApi.getAll(), LookupsApi.fiscalPeriods()]);
@@ -33,9 +34,11 @@ export default function Payroll() {
       const settingsRes = (await PayrollApi.getSettings()).data;
       setIsUk(settingsRes.isUkPayroll);
       setIsEgypt(settingsRes.isEgyptPayroll);
+      setIsGuernsey(settingsRes.isGuernseyPayroll);
     } catch {
       setIsUk(false);
       setIsEgypt(false);
+      setIsGuernsey(false);
     }
   }
 
@@ -154,6 +157,7 @@ export default function Payroll() {
 
       {error && <div className="alert-error">{error}</div>}
       {isEgypt && <div className="text-muted" style={{ marginBottom: 12, fontSize: 13 }}>{t.hr.egPayrollNote}</div>}
+      {isGuernsey && <div className="text-muted" style={{ marginBottom: 12, fontSize: 13 }}>{t.hr.ggNote}</div>}
 
       {showForm && (
         <div className="card">
@@ -262,6 +266,12 @@ export default function Payroll() {
                                 <th>{t.hr.ukLoansColumn}</th>
                                 <th>{t.hr.ukPensionColumn}</th>
                               </>
+                            ) : isGuernsey ? (
+                              <>
+                                <th>{t.hr.ggIncomeTaxColumn}</th>
+                                <th>{t.hr.ggSocialEmployeeColumn}</th>
+                                <th>{t.hr.ggSocialEmployerColumn}</th>
+                              </>
                             ) : isEgypt ? (
                               <>
                                 <th>{t.hr.egInsuranceEmployeeColumn}</th>
@@ -323,6 +333,12 @@ export default function Payroll() {
                                     <td>{line.ukEmployerNi > 0 ? line.ukEmployerNi.toLocaleString() : "-"}</td>
                                     <td>{line.ukStudentLoan + line.ukPostgraduateLoan > 0 ? (line.ukStudentLoan + line.ukPostgraduateLoan).toLocaleString() : "-"}</td>
                                     <td>{line.ukPensionEmployee > 0 ? line.ukPensionEmployee.toLocaleString() : "-"}</td>
+                                  </>
+                                ) : isGuernsey ? (
+                                  <>
+                                    <td>{line.ggIncomeTax > 0 ? line.ggIncomeTax.toLocaleString() : "-"}</td>
+                                    <td>{line.ggEmployeeSocial > 0 ? line.ggEmployeeSocial.toLocaleString() : "-"}</td>
+                                    <td>{line.ggEmployerSocial > 0 ? line.ggEmployerSocial.toLocaleString() : "-"}</td>
                                   </>
                                 ) : isEgypt ? (
                                   <>

@@ -18,6 +18,11 @@ public class CompanySettingsConfiguration : IEntityTypeConfiguration<CompanySett
         builder.Property(c => c.GosiEmployerAnnuitiesRatePercent).HasPrecision(5, 2);
         builder.Property(c => c.GosiEmployerHazardsRatePercent).HasPrecision(5, 2);
         builder.Property(c => c.GosiNonSaudiEmployerHazardsRatePercent).HasPrecision(5, 2);
+        builder.Property(c => c.GgIncomeTaxRatePercent).HasPrecision(5, 2);
+        builder.Property(c => c.GgPersonalAllowanceAnnual).HasPrecision(18, 2);
+        builder.Property(c => c.GgEmployeeSocialRatePercent).HasPrecision(5, 2);
+        builder.Property(c => c.GgEmployerSocialRatePercent).HasPrecision(5, 2);
+        builder.Property(c => c.GgSocialMonthlyUpperLimit).HasPrecision(18, 2);
 
         builder.Property(c => c.EInvoicingClientId).HasMaxLength(200);
         builder.Property(c => c.EInvoicingLastInvoiceHash).HasMaxLength(200);

@@ -123,6 +123,41 @@ export default function PayrollSettingsPage() {
 
           <p className="text-muted" style={{ fontSize: 13 }}>{t.hr.gosiEligibilityNote}</p>
 
+          {settings.isGuernseyPayroll && (
+            <>
+              <hr style={{ margin: "16px 0" }} />
+              <h4 style={{ margin: "0 0 4px" }}>{t.hr.ggSectionTitle}</h4>
+              <p className="text-muted" style={{ fontSize: 13 }}>{t.hr.ggNote}</p>
+              <div className="form-grid">
+                <div className="form-field">
+                  <label>{t.hr.ggIncomeTaxRate}</label>
+                  <input type="number" step="0.01" min={0} max={100} value={settings.ggIncomeTaxRatePercent}
+                    onChange={(e) => setSettings({ ...settings, ggIncomeTaxRatePercent: Number(e.target.value) })} />
+                </div>
+                <div className="form-field">
+                  <label>{t.hr.ggPersonalAllowance}</label>
+                  <input type="number" step="0.01" min={0} value={settings.ggPersonalAllowanceAnnual}
+                    onChange={(e) => setSettings({ ...settings, ggPersonalAllowanceAnnual: Number(e.target.value) })} />
+                </div>
+                <div className="form-field">
+                  <label>{t.hr.ggEmployeeSocialRate}</label>
+                  <input type="number" step="0.01" min={0} max={100} value={settings.ggEmployeeSocialRatePercent}
+                    onChange={(e) => setSettings({ ...settings, ggEmployeeSocialRatePercent: Number(e.target.value) })} />
+                </div>
+                <div className="form-field">
+                  <label>{t.hr.ggEmployerSocialRate}</label>
+                  <input type="number" step="0.01" min={0} max={100} value={settings.ggEmployerSocialRatePercent}
+                    onChange={(e) => setSettings({ ...settings, ggEmployerSocialRatePercent: Number(e.target.value) })} />
+                </div>
+                <div className="form-field">
+                  <label>{t.hr.ggSocialUpperLimit}</label>
+                  <input type="number" step="0.01" min={0} value={settings.ggSocialMonthlyUpperLimit}
+                    onChange={(e) => setSettings({ ...settings, ggSocialMonthlyUpperLimit: Number(e.target.value) })} />
+                </div>
+              </div>
+            </>
+          )}
+
           <button className="btn" type="submit" style={{ marginTop: 14 }}>
             {t.common.save}
           </button>

@@ -34,6 +34,17 @@ public class CompanySettings : AuditableEntity
     /// SANED). A company cost, not deducted from the employee (% of basic salary).</summary>
     public decimal GosiNonSaudiEmployerHazardsRatePercent { get; set; } = 2.0m;
 
+    // ----- Guernsey payroll (used only when Country is Guernsey). All editable: the defaults are the published 2026 figures
+    // and must be confirmed against the Guernsey Revenue Service and Social Security Department. -----
+    /// <summary>Flat income tax rate (% of pay above the personal allowance).</summary>
+    public decimal GgIncomeTaxRatePercent { get; set; } = 20m;
+    /// <summary>Tax-free personal allowance per year, applied to every employee (single-person figure).</summary>
+    public decimal GgPersonalAllowanceAnnual { get; set; } = 15_200m;
+    public decimal GgEmployeeSocialRatePercent { get; set; } = 7.5m;
+    public decimal GgEmployerSocialRatePercent { get; set; } = 7.1m;
+    /// <summary>Monthly pay above which no more social insurance is charged (zero = no ceiling).</summary>
+    public decimal GgSocialMonthlyUpperLimit { get; set; } = 15_717m;
+
     // ----- E-invoicing (government tax authority integration) -----
     public EInvoicingProvider EInvoicingProvider { get; set; } = EInvoicingProvider.None;
     public EInvoicingEnvironment EInvoicingEnvironment { get; set; } = EInvoicingEnvironment.Sandbox;

@@ -1023,6 +1023,9 @@ export interface PayrollRunLine {
   egEmployeeInsurance: number;
   egEmployerInsurance: number;
   egIncomeTax: number;
+  ggIncomeTax: number;
+  ggEmployeeSocial: number;
+  ggEmployerSocial: number;
 }
 
 export interface PayrollSettings {
@@ -1034,6 +1037,12 @@ export interface PayrollSettings {
   gosiNonSaudiEmployerHazardsRatePercent: number;
   isUkPayroll: boolean;
   isEgyptPayroll: boolean;
+  isGuernseyPayroll: boolean;
+  ggIncomeTaxRatePercent: number;
+  ggPersonalAllowanceAnnual: number;
+  ggEmployeeSocialRatePercent: number;
+  ggEmployerSocialRatePercent: number;
+  ggSocialMonthlyUpperLimit: number;
   ukTaxYear: string;
 }
 

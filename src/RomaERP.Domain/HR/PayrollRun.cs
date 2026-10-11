@@ -63,4 +63,10 @@ public class PayrollRunLine : BaseEntity
     /// <summary>Employer social insurance — a company cost on top of the employee's pay, not part of TotalDeductions.</summary>
     public decimal EgEmployerInsurance { get; set; }
     public decimal EgIncomeTax { get; set; }
+
+    // ---- Guernsey payroll (zero elsewhere). The employee-side amounts are already inside TotalDeductions. ----
+    public decimal GgIncomeTax { get; set; }
+    public decimal GgEmployeeSocial { get; set; }
+    /// <summary>Employer social insurance — a company cost on top of the employee's pay, not part of TotalDeductions.</summary>
+    public decimal GgEmployerSocial { get; set; }
 }
