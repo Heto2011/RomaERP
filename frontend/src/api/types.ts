@@ -332,6 +332,32 @@ export interface StockValuationReport {
   totalValue: number;
 }
 
+export interface InvoiceScanLine {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface InvoiceScanResult {
+  vendorName: string | null;
+  vendorTaxNumber: string | null;
+  matchedVendorId: string | null;
+  matchedVendorName: string | null;
+  invoiceNumber: string | null;
+  invoiceDate: string | null;
+  currency: string | null;
+  subTotal: number | null;
+  vatAmount: number | null;
+  vatRatePercent: number | null;
+  total: number | null;
+  suggestedAccountId: string | null;
+  suggestedAccountCode: string | null;
+  suggestedAccountName: string | null;
+  lines: InvoiceScanLine[];
+  needsClarification: boolean;
+  message: string | null;
+}
+
 export interface InventoryMovementLine {
   itemId: string;
   itemCode: string;

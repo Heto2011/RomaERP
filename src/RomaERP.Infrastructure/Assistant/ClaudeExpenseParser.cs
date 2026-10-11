@@ -87,17 +87,111 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
         return await SendExtractionRequestAsync(systemPrompt, userContent, ct, includeEntryDate: true);
     }
 
+    public async Task<InvoiceScanExtraction> ExtractInvoiceFromImageAsync(
+        byte[] imageBytes,
+        string mediaType,
+        IReadOnlyList<ExpenseAccountCandidate> expenseAccounts,
+        CancellationToken ct = default)
+    {
+        var accountsList = string.Join("\n", expenseAccounts.Select(a => $"- {a.Code}: {a.NameAr}"));
+        var systemPrompt = $"""
+            أنت مساعد محاسبي بيقرا صورة فاتورة مورد (مشتريات) ويستخرج بياناتها بدقة عشان تتعبّى في نموذج فاتورة المشتريات تلقائيًا.
+            استخرج: اسم المورد زي ما هو مكتوب، الرقم الضريبي للمورد لو ظاهر، رقم الفاتورة، تاريخ الفاتورة (yyyy-MM-dd)،
+            العملة، الإجمالي قبل الضريبة (subtotal)، قيمة الضريبة (vat_amount)، نسبة الضريبة، الإجمالي النهائي (total)،
+            وبنود الفاتورة (الوصف والكمية وسعر الوحدة قبل الضريبة) لو واضحة.
+            وكمان رشّح أنسب حساب (تصنيف محاسبي) للفاتورة من القائمة دي:
+            {accountsList}
+
+            لا تخمّن أي رقم مش مقروء — سيبه فاضي. لو الصورة مش فاتورة أو مش مقروءة، خلّي needs_clarification = true
+            واكتب سؤال/ملاحظة عربي قصيرة. استخدم أداة extract_purchase_invoice دايمًا للرد.
+            """;
+
+        var userContent = new JsonArray
+        {
+            new JsonObject
+            {
+                ["type"] = "image",
+                ["source"] = new JsonObject
+                {
+                    ["type"] = "base64",
+                    ["media_type"] = mediaType,
+                    ["data"] = Convert.ToBase64String(imageBytes)
+                }
+            },
+            new JsonObject { ["type"] = "text", ["text"] = "استخرج بيانات فاتورة المورد دي." }
+        };
+
+        var nullableNumber = () => new JsonObject { ["type"] = new JsonArray { "number", "null" } };
+        var nullableString = () => new JsonObject { ["type"] = new JsonArray { "string", "null" } };
+        var properties = new JsonObject
+        {
+            ["vendor_name"] = nullableString(),
+            ["vendor_tax_number"] = nullableString(),
+            ["invoice_number"] = nullableString(),
+            ["invoice_date"] = new JsonObject { ["type"] = new JsonArray { "string", "null" }, ["description"] = "yyyy-MM-dd" },
+            ["currency"] = nullableString(),
+            ["subtotal"] = nullableNumber(),
+            ["vat_amount"] = nullableNumber(),
+            ["vat_rate_percent"] = nullableNumber(),
+            ["total"] = nullableNumber(),
+            ["suggested_account_code"] = nullableString(),
+            ["lines"] = new JsonObject
+            {
+                ["type"] = "array",
+                ["items"] = new JsonObject
+                {
+                    ["type"] = "object",
+                    ["properties"] = new JsonObject
+                    {
+                        ["description"] = new JsonObject { ["type"] = "string" },
+                        ["quantity"] = nullableNumber(),
+                        ["unit_price"] = nullableNumber()
+                    }
+                }
+            },
+            ["needs_clarification"] = new JsonObject { ["type"] = "boolean" },
+            ["clarifying_question"] = nullableString()
+        };
+
+        var input = await CallToolAsync(
+            systemPrompt, userContent, "extract_purchase_invoice",
+            "Extract structured supplier-invoice fields from a photo of a purchase invoice.",
+            properties, new JsonArray { "needs_clarification" }, ct);
+
+        DateTime? invoiceDate = ReadString(input, "invoice_date") is { } dateText && DateTime.TryParse(dateText, out var parsed) ? parsed.Date : null;
+
+        var lines = new List<InvoiceScanLine>();
+        if (input["lines"] is JsonArray lineArray)
+        {
+            foreach (var node in lineArray.OfType<JsonObject>())
+            {
+                var description = ReadString(node, "description");
+                if (description is null) continue;
+                lines.Add(new InvoiceScanLine(description, ReadNumber(node, "quantity"), ReadNumber(node, "unit_price")));
+            }
+        }
+
+        var subtotal = ReadNumber(input, "subtotal");
+        var total = ReadNumber(input, "total");
+        return new InvoiceScanExtraction(
+            VendorName: ReadString(input, "vendor_name"),
+            VendorTaxNumber: ReadString(input, "vendor_tax_number"),
+            InvoiceNumber: ReadString(input, "invoice_number"),
+            InvoiceDate: invoiceDate,
+            Currency: ReadString(input, "currency"),
+            SubTotal: subtotal,
+            VatAmount: ReadNumber(input, "vat_amount"),
+            VatRatePercent: ReadNumber(input, "vat_rate_percent"),
+            Total: total,
+            SuggestedAccountCode: ReadString(input, "suggested_account_code"),
+            Lines: lines,
+            NeedsClarification: input["needs_clarification"]?.GetValue<bool>() ?? (subtotal is null && total is null),
+            ClarifyingQuestion: ReadString(input, "clarifying_question"));
+    }
+
     private async Task<ExpenseExtractionResult> SendExtractionRequestAsync(
         string systemPrompt, JsonNode userContent, CancellationToken ct, bool includeEntryDate = false)
     {
-        if (string.IsNullOrWhiteSpace(_settings.ApiKey))
-        {
-            throw new ValidationAppException(
-                "المساعد الذكي مش مفعّل لسه — لازم تضيف مفتاح Claude API في إعدادات السيرفر (Claude:ApiKey) عشان يشتغل.");
-        }
-
-        await _usageLimiter.EnsureWithinDailyLimitAsync("ExpenseCapture", ct);
-
         var properties = new JsonObject
         {
             ["amount"] = new JsonObject { ["type"] = new JsonArray { "number", "null" } },
@@ -110,27 +204,63 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
         if (includeEntryDate)
             properties["entry_date"] = new JsonObject { ["type"] = new JsonArray { "string", "null" }, ["description"] = "yyyy-MM-dd, only if clearly legible on the receipt" };
 
+        var input = await CallToolAsync(
+            systemPrompt, userContent, "extract_expense",
+            "Extract structured expense details from the user's message or receipt image.",
+            properties, new JsonArray { "needs_clarification" }, ct);
+
+
+        decimal? amount = input["amount"] is { } amountNode && amountNode.GetValueKind() != JsonValueKind.Null
+            ? amountNode.GetValue<decimal>()
+            : null;
+
+        DateTime? entryDate = input["entry_date"] is { } dateNode && dateNode.GetValueKind() == JsonValueKind.String
+            && DateTime.TryParse(dateNode.GetValue<string>(), out var parsedDate)
+            ? parsedDate.Date
+            : null;
+
+        return new ExpenseExtractionResult(
+            Amount: amount,
+            Currency: input["currency"]?.GetValue<string>(),
+            Description: input["description"]?.GetValue<string>(),
+            SuggestedAccountCode: input["suggested_account_code"]?.GetValue<string>(),
+            NeedsClarification: input["needs_clarification"]?.GetValue<bool>() ?? amount is null,
+            ClarifyingQuestion: input["clarifying_question"]?.GetValue<string>(),
+            EntryDate: entryDate);
+    }
+    private async Task<JsonObject> CallToolAsync(
+        string systemPrompt, JsonNode userContent, string toolName, string toolDescription,
+        JsonObject properties, JsonArray required, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(_settings.ApiKey))
+        {
+            throw new ValidationAppException(
+                "المساعد الذكي مش مفعّل لسه — لازم تضيف مفتاح Claude API في إعدادات السيرفر (Claude:ApiKey) عشان يشتغل.");
+        }
+
+        await _usageLimiter.EnsureWithinDailyLimitAsync("ExpenseCapture", ct);
+
         var requestBody = new JsonObject
         {
             ["model"] = _settings.Model,
-            ["max_tokens"] = 1024,
+            ["max_tokens"] = 2048,
             ["system"] = systemPrompt + AiLanguage.ReplyDirective(_language.PrefersArabic),
             ["messages"] = new JsonArray { new JsonObject { ["role"] = "user", ["content"] = userContent } },
             ["tools"] = new JsonArray
             {
                 new JsonObject
                 {
-                    ["name"] = "extract_expense",
-                    ["description"] = "Extract structured expense details from the user's message or receipt image.",
+                    ["name"] = toolName,
+                    ["description"] = toolDescription,
                     ["input_schema"] = new JsonObject
                     {
                         ["type"] = "object",
                         ["properties"] = properties,
-                        ["required"] = new JsonArray { "needs_clarification" }
+                        ["required"] = required
                     }
                 }
             },
-            ["tool_choice"] = new JsonObject { ["type"] = "tool", ["name"] = "extract_expense" }
+            ["tool_choice"] = new JsonObject { ["type"] = "tool", ["name"] = toolName }
         };
 
         using var request = new HttpRequestMessage(HttpMethod.Post, _settings.BaseUrl)
@@ -154,24 +284,14 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
             .FirstOrDefault(n => n?["type"]?.GetValue<string>() == "tool_use")
             ?? throw new ValidationAppException("لم يتمكن المساعد الذكي من فهم الرسالة، حاول تاني بصياغة أوضح.");
 
-        var input = toolUse["input"]!.AsObject();
-
-        decimal? amount = input["amount"] is { } amountNode && amountNode.GetValueKind() != JsonValueKind.Null
-            ? amountNode.GetValue<decimal>()
-            : null;
-
-        DateTime? entryDate = input["entry_date"] is { } dateNode && dateNode.GetValueKind() == JsonValueKind.String
-            && DateTime.TryParse(dateNode.GetValue<string>(), out var parsedDate)
-            ? parsedDate.Date
-            : null;
-
-        return new ExpenseExtractionResult(
-            Amount: amount,
-            Currency: input["currency"]?.GetValue<string>(),
-            Description: input["description"]?.GetValue<string>(),
-            SuggestedAccountCode: input["suggested_account_code"]?.GetValue<string>(),
-            NeedsClarification: input["needs_clarification"]?.GetValue<bool>() ?? amount is null,
-            ClarifyingQuestion: input["clarifying_question"]?.GetValue<string>(),
-            EntryDate: entryDate);
+        return toolUse["input"]!.AsObject();
     }
+
+    private static decimal? ReadNumber(JsonObject input, string key)
+        => input[key] is { } node && node.GetValueKind() == JsonValueKind.Number ? node.GetValue<decimal>() : null;
+
+    private static string? ReadString(JsonObject input, string key)
+        => input[key] is { } node && node.GetValueKind() == JsonValueKind.String && !string.IsNullOrWhiteSpace(node.GetValue<string>())
+            ? node.GetValue<string>().Trim()
+            : null;
 }

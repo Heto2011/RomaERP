@@ -19,6 +19,7 @@ import type {
   StockValuationReport,
   InventoryMovementReport,
   PurchasePriceVarianceReport,
+  InvoiceScanResult,
   ReorderSuggestionReport,
   RecipeCostReport,
   WasteAnalysisReport,
@@ -582,6 +583,13 @@ export const PurchasingApi = {
   createVendor: (data: CreateVendorInput) => apiClient.post<Vendor>("/purchasing/vendors", data),
   getInvoices: () => apiClient.get<PurchaseInvoice[]>("/purchasing/invoices"),
   getInvoice: (id: string) => apiClient.get<PurchaseInvoice>(`/purchasing/invoices/${id}`),
+  scanInvoice: (file: File) => {
+    const formData = new FormData();
+    formData.append("file", file);
+    return apiClient.post<InvoiceScanResult>("/purchasing/invoices/scan", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
   createInvoice: (data: CreatePurchaseInvoiceInput) => apiClient.post<PurchaseInvoice>("/purchasing/invoices", data),
   recordPayment: (id: string, data: RecordPurchasePaymentInput) => apiClient.post<PurchaseInvoice>(`/purchasing/invoices/${id}/payments`, data),
   getAging: () => apiClient.get<VendorAging[]>("/purchasing/aging"),

@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { AccountsApi, ExchangeRatesApi, ItemsApi, LookupsApi, PurchasingApi } from "../../api/services";
-import { PaymentTerm, type Account, type FiscalPeriod, type Item, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
+import { PaymentTerm, type InvoiceScanResult, type Account, type FiscalPeriod, type Item, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
@@ -29,6 +29,10 @@ export default function PurchaseInvoices() {
   const [currencyCode, setCurrencyCode] = useState("");
   const [notes, setNotes] = useState("");
   const [lines, setLines] = useState<PurchaseInvoiceLineInput[]>([]);
+
+  const [scanning, setScanning] = useState(false);
+  const [scanResult, setScanResult] = useState<InvoiceScanResult | null>(null);
+  const scanInputRef = useRef<HTMLInputElement>(null);
 
   const [payingInvoice, setPayingInvoice] = useState<PurchaseInvoice | null>(null);
   const [payAmount, setPayAmount] = useState(0);
@@ -76,6 +80,32 @@ export default function PurchaseInvoices() {
     setLines((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
   }
 
+  async function handleScanFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setError(null);
+    setScanning(true);
+    try {
+      const { data } = await PurchasingApi.scanInvoice(file);
+      setScanResult(data);
+      if (data.matchedVendorId) setVendorId(data.matchedVendorId);
+      if (data.invoiceDate) setInvoiceDate(data.invoiceDate.slice(0, 10));
+      if (data.currency && foreignCurrencies.includes(data.currency.toUpperCase())) setCurrencyCode(data.currency.toUpperCase());
+      if (data.invoiceNumber) setNotes(`${t.purchasing.scanSupplierInvoiceNo}: ${data.invoiceNumber}`);
+      const fallbackAccount = data.suggestedAccountId ?? expenseAccounts[0]?.id ?? "";
+      if (data.lines.length > 0) {
+        setLines(data.lines.map((l) => ({ description: l.description, accountId: fallbackAccount, itemId: null, quantity: l.quantity, unitPrice: l.unitPrice })));
+      }
+      const period = periods.find((p) => !p.isClosed && p.startDate.slice(0, 10) <= (data.invoiceDate ?? invoiceDate) && p.endDate.slice(0, 10) >= (data.invoiceDate ?? invoiceDate));
+      if (period) setFiscalPeriodId(period.id);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setScanning(false);
+    }
+  }
+
   function handleAddItems(selected: Item[]) {
     const newLines: PurchaseInvoiceLineInput[] = selected.map((item) => ({
       description: bilingualName(item.nameAr, item.nameEn, lang),
@@ -104,6 +134,7 @@ export default function PurchaseInvoices() {
         lines,
       });
       setShowForm(false);
+      setScanResult(null);
       setVendorId("");
       setFiscalPeriodId("");
       setCurrencyCode("");
@@ -174,6 +205,40 @@ export default function PurchaseInvoices() {
 
       {showForm && (
         <div className="card">
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap", marginBottom: 12 }}>
+            <input ref={scanInputRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" capture="environment" onChange={handleScanFile} style={{ display: "none" }} />
+            <button type="button" className="btn btn-secondary" disabled={scanning} onClick={() => scanInputRef.current?.click()}>
+              {scanning ? t.purchasing.scanning : t.purchasing.scanInvoice}
+            </button>
+            <span className="text-muted">{t.purchasing.scanInvoiceHint}</span>
+          </div>
+
+          {scanResult && (
+            <div className="card" style={{ marginBottom: 12 }}>
+              {scanResult.needsClarification && scanResult.message && <div className="alert-error">{scanResult.message}</div>}
+              <div>
+                <strong>{t.purchasing.scanVendorDetected}:</strong> {scanResult.vendorName ?? "—"}
+                {scanResult.vendorTaxNumber ? ` (${scanResult.vendorTaxNumber})` : ""}
+              </div>
+              {scanResult.matchedVendorName ? (
+                <div className="text-success">{t.purchasing.scanVendorMatched}: {scanResult.matchedVendorName}</div>
+              ) : (
+                scanResult.vendorName && <div className="text-danger">{t.purchasing.scanVendorNotFound}</div>
+              )}
+              {scanResult.suggestedAccountName && (
+                <div>{t.purchasing.scanAccountSuggested}: {scanResult.suggestedAccountCode} - {scanResult.suggestedAccountName}</div>
+              )}
+              {scanResult.vatAmount != null && scanResult.subTotal != null && Math.abs(scanResult.vatAmount - scanResult.subTotal * vatRate) > 0.5 && (
+                <div className="text-danger">
+                  {t.purchasing.scanVatMismatch
+                    .replace("{scanned}", scanResult.vatAmount.toLocaleString())
+                    .replace("{computed}", (scanResult.subTotal * vatRate).toLocaleString())}
+                </div>
+              )}
+              <div className="text-muted">{t.purchasing.scanReview}</div>
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             <div className="form-grid">
               <div className="form-field">

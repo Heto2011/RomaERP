@@ -12,10 +12,12 @@ namespace RomaERP.API.Controllers;
 public class PurchasingController : ControllerBase
 {
     private readonly IPurchasingService _purchasingService;
+    private readonly IInvoiceScanService _invoiceScanService;
 
-    public PurchasingController(IPurchasingService purchasingService)
+    public PurchasingController(IPurchasingService purchasingService, IInvoiceScanService invoiceScanService)
     {
         _purchasingService = purchasingService;
+        _invoiceScanService = invoiceScanService;
     }
 
     [HttpGet("vendors")]
@@ -33,6 +35,28 @@ public class PurchasingController : ControllerBase
     [HttpGet("invoices/{id:guid}")]
     public async Task<ActionResult<PurchaseInvoiceDto>> GetInvoice(Guid id, CancellationToken ct)
         => Ok(await _purchasingService.GetInvoiceAsync(id, ct));
+
+    /// <summary>OCR a photo of a supplier invoice and return the fields to pre-fill the purchase invoice form. Nothing is saved.</summary>
+    [HttpPost("invoices/scan")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    public async Task<ActionResult<InvoiceScanResultDto>> ScanInvoice(IFormFile file, CancellationToken ct)
+    {
+        if (file.Length == 0)
+            throw new RomaERP.Application.Common.Exceptions.ValidationAppException("الملف المرفوع فارغ.");
+
+        var mediaType = file.ContentType?.ToLowerInvariant() switch
+        {
+            "image/jpeg" or "image/jpg" => "image/jpeg",
+            "image/png" => "image/png",
+            "image/webp" => "image/webp",
+            "image/gif" => "image/gif",
+            _ => throw new RomaERP.Application.Common.Exceptions.ValidationAppException("صيغة الصورة غير مدعومة — لازم تكون JPEG أو PNG أو WEBP أو GIF.")
+        };
+
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, ct);
+        return Ok(await _invoiceScanService.ScanAsync(memoryStream.ToArray(), mediaType, ct));
+    }
 
     [HttpPost("invoices")]
     public async Task<ActionResult<PurchaseInvoiceDto>> CreateInvoice(CreatePurchaseInvoiceDto dto, CancellationToken ct)
