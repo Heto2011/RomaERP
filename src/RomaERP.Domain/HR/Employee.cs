@@ -59,5 +59,19 @@ public class Employee : AuditableEntity
     /// the Saudi Labor Law Article 109 minimum — adjust per employee/contract as needed.</summary>
     public int AnnualLeaveDaysPerYear { get; set; } = 21;
 
+    // ---- UK payroll (used only when the company's country is the United Kingdom) ----
+    /// <summary>National Insurance number, e.g. "QQ123456C".</summary>
+    public string? UkNationalInsuranceNumber { get; set; }
+    /// <summary>PAYE tax code, e.g. "1257L". Blank means the standard code 1257L.</summary>
+    public string? UkTaxCode { get; set; }
+    /// <summary>National Insurance category letter (A for most employees). Blank means A.</summary>
+    public string? UkNiCategory { get; set; }
+    public UkStudentLoanPlan UkStudentLoanPlan { get; set; }
+    public bool UkPostgraduateLoan { get; set; }
+    /// <summary>Enrolled in the workplace pension; contributions are taken on qualifying earnings.</summary>
+    public bool UkPensionEnrolled { get; set; }
+    public decimal UkPensionEmployeePercent { get; set; } = 5m;
+    public decimal UkPensionEmployerPercent { get; set; } = 3m;
+
     public ICollection<EmployeeSalaryComponent> SalaryComponents { get; set; } = new List<EmployeeSalaryComponent>();
 }

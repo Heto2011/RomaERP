@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.HR.DTOs;
+using RomaERP.Application.HR.Services.Uk;
 using RomaERP.Domain.HR;
 
 namespace RomaERP.Application.HR.Services;
@@ -74,6 +75,7 @@ public class EmployeeService : IEmployeeService
             AnnualLeaveDaysPerYear = dto.AnnualLeaveDaysPerYear,
             EmploymentStatus = EmploymentStatus.Active
         };
+        ApplyUkPayrollDetails(employee, dto);
 
         _context.Employees.Add(employee);
         await _context.SaveChangesAsync(ct);
@@ -109,6 +111,7 @@ public class EmployeeService : IEmployeeService
         employee.AnnualLeaveDaysPerYear = dto.AnnualLeaveDaysPerYear;
         employee.EmploymentStatus = dto.EmploymentStatus;
         employee.TerminationDate = dto.TerminationDate;
+        ApplyUkPayrollDetails(employee, dto);
 
         await _context.SaveChangesAsync(ct);
         return await GetByIdAsync(id, ct);
@@ -205,6 +208,28 @@ public class EmployeeService : IEmployeeService
         return await GetByIdAsync(employeeId, ct);
     }
 
+    /// <summary>Copies the UK payroll details, validating the tax code and National Insurance category so a typo is caught
+    /// when the employee is saved rather than when payroll is run.</summary>
+    private static void ApplyUkPayrollDetails(Employee employee, CreateEmployeeDto dto)
+    {
+        var taxCode = string.IsNullOrWhiteSpace(dto.UkTaxCode) ? null : dto.UkTaxCode.Trim().ToUpperInvariant();
+        if (taxCode is not null) UkPayrollCalculator.ValidateTaxCode(taxCode);
+        var category = string.IsNullOrWhiteSpace(dto.UkNiCategory) ? null : dto.UkNiCategory.Trim().ToUpperInvariant();
+        if (category is not null && !UkPayrollCalculator.SupportedNiCategories.Contains(category))
+            throw new ValidationAppException($"فئة التأمين الوطني غير مدعومة. المدعوم: {string.Join(", ", UkPayrollCalculator.SupportedNiCategories)}.");
+        if (dto.UkPensionEmployeePercent < 0 || dto.UkPensionEmployeePercent > 100 || dto.UkPensionEmployerPercent < 0 || dto.UkPensionEmployerPercent > 100)
+            throw new ValidationAppException("نسب المعاش يجب أن تكون بين 0 و100.");
+
+        employee.UkNationalInsuranceNumber = string.IsNullOrWhiteSpace(dto.UkNationalInsuranceNumber) ? null : dto.UkNationalInsuranceNumber.Replace(" ", "").ToUpperInvariant();
+        employee.UkTaxCode = taxCode;
+        employee.UkNiCategory = category;
+        employee.UkStudentLoanPlan = dto.UkStudentLoanPlan;
+        employee.UkPostgraduateLoan = dto.UkPostgraduateLoan;
+        employee.UkPensionEnrolled = dto.UkPensionEnrolled;
+        employee.UkPensionEmployeePercent = dto.UkPensionEmployeePercent;
+        employee.UkPensionEmployerPercent = dto.UkPensionEmployerPercent;
+    }
+
     private static string? NormalizeNationality(string? code)
     {
         var c = code?.Trim().ToUpperInvariant();
@@ -262,6 +287,14 @@ public class EmployeeService : IEmployeeService
         HasFaceReferencePhoto = !string.IsNullOrEmpty(e.FaceReferencePhotoPath),
         IsSaudiNational = e.IsSaudiNational,
         Nationality = e.Nationality,
-        AnnualLeaveDaysPerYear = e.AnnualLeaveDaysPerYear
+        AnnualLeaveDaysPerYear = e.AnnualLeaveDaysPerYear,
+        UkNationalInsuranceNumber = e.UkNationalInsuranceNumber,
+        UkTaxCode = e.UkTaxCode,
+        UkNiCategory = e.UkNiCategory,
+        UkStudentLoanPlan = e.UkStudentLoanPlan,
+        UkPostgraduateLoan = e.UkPostgraduateLoan,
+        UkPensionEnrolled = e.UkPensionEnrolled,
+        UkPensionEmployeePercent = e.UkPensionEmployeePercent,
+        UkPensionEmployerPercent = e.UkPensionEmployerPercent
     };
 }

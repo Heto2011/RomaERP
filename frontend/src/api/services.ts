@@ -343,6 +343,7 @@ export const PayrollApi = {
   remove: (id: string) => apiClient.delete(`/payroll/${id}`),
   updateLine: (id: string, employeeId: string, data: { totalAllowances: number; totalDeductions: number }) =>
     apiClient.put<PayrollRun>(`/payroll/${id}/lines/${employeeId}`, data),
+  downloadUkSummary: (id: string) => apiClient.get<Blob>(`/payroll/${id}/uk-summary`, { responseType: "blob" }),
   getSettings: () => apiClient.get<PayrollSettings>("/payroll/settings"),
   updateSettings: (data: PayrollSettings) => apiClient.put<PayrollSettings>("/payroll/settings", data),
 };

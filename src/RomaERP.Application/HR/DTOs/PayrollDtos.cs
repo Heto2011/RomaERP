@@ -51,6 +51,14 @@ public class PayrollRunLineDto
     public decimal UnpaidLeaveDeductionAmount { get; set; }
     public decimal GosiEmployeeDeductionAmount { get; set; }
     public decimal GosiEmployerContributionAmount { get; set; }
+    public decimal UkTaxablePay { get; set; }
+    public decimal UkIncomeTax { get; set; }
+    public decimal UkEmployeeNi { get; set; }
+    public decimal UkEmployerNi { get; set; }
+    public decimal UkStudentLoan { get; set; }
+    public decimal UkPostgraduateLoan { get; set; }
+    public decimal UkPensionEmployee { get; set; }
+    public decimal UkPensionEmployer { get; set; }
 }
 
 public class PayrollRunDto
@@ -101,4 +109,7 @@ public class PayrollSettingsDto
     public decimal GosiEmployerAnnuitiesRatePercent { get; set; }
     public decimal GosiEmployerHazardsRatePercent { get; set; }
     public decimal GosiNonSaudiEmployerHazardsRatePercent { get; set; }
+    /// <summary>Read-only: true for a company in the United Kingdom, where payroll runs with PAYE, National Insurance, pension and student-loan deductions.</summary>
+    public bool IsUkPayroll { get; set; }
+    public string UkTaxYear { get; set; } = string.Empty;
 }

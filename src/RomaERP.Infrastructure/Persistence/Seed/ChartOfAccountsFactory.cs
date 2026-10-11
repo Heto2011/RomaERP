@@ -65,6 +65,8 @@ public static class ChartOfAccountsFactory
         var taxesPayable = New("2160", "ضرائب مستحقة", "Taxes Payable", AccountType.Liability, AccountNature.Credit, currentLiabilities, false, 3);
         var outputVat = New("2161", "ضريبة القيمة المضافة (مخرجات)", "Output VAT", AccountType.Liability, AccountNature.Credit, currentLiabilities, false, 3);
         var gosiPayable = New("2170", "التأمينات الاجتماعية المستحقة (GOSI)", "GOSI Payable", AccountType.Liability, AccountNature.Credit, currentLiabilities, false, 3);
+        var hmrcPayable = New("2180", "ضرائب وتأمين وطني مستحقة (بريطانيا)", "Tax and National Insurance Payable (UK)", AccountType.Liability, AccountNature.Credit, currentLiabilities, false, 3);
+        var pensionPayable = New("2190", "اشتراكات المعاش المستحقة (بريطانيا)", "Pension Contributions Payable (UK)", AccountType.Liability, AccountNature.Credit, currentLiabilities, false, 3);
 
         var longTermLiabilities = New("2200", "الخصوم طويلة الأجل", "Long-term Liabilities", AccountType.Liability, AccountNature.Credit, liabilities, true, 2);
         var longTermLoans = New("2210", "قروض طويلة الأجل", "Long-term Loans", AccountType.Liability, AccountNature.Credit, longTermLiabilities, false, 3);
@@ -72,7 +74,7 @@ public static class ChartOfAccountsFactory
         accounts.AddRange(new[]
         {
             liabilities, currentLiabilities, accruedSalaries, accountsPayable, notesPayable,
-            unearnedRevenue, otherAccruedExpenses, taxesPayable, outputVat, gosiPayable,
+            unearnedRevenue, otherAccruedExpenses, taxesPayable, outputVat, gosiPayable, hmrcPayable, pensionPayable,
             longTermLiabilities, longTermLoans
         });
 
@@ -96,6 +98,8 @@ public static class ChartOfAccountsFactory
         var expenses = New("5000", "المصروفات", "Expenses", AccountType.Expense, AccountNature.Debit, null, true, 1);
         var salariesExpense = New("5100", "مصروف المرتبات والأجور", "Salaries and Wages Expense", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
         var gosiEmployerExpense = New("5150", "مصروف التأمينات الاجتماعية (حصة الشركة)", "GOSI Employer Contribution Expense", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
+        var employerNiExpense = New("5160", "مصروف التأمين الوطني (حصة الشركة - بريطانيا)", "Employer National Insurance Expense (UK)", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
+        var employerPensionExpense = New("5170", "مصروف المعاش (حصة الشركة - بريطانيا)", "Employer Pension Expense (UK)", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
         var rentExpense = New("5200", "إيجارات", "Rent Expense", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
         var adminExpenses = New("5300", "مصروفات إدارية وعمومية", "General & Admin Expenses", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
         var depreciationExpense = New("5400", "مصروف الإهلاك", "Depreciation Expense", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
@@ -104,7 +108,7 @@ public static class ChartOfAccountsFactory
 
         accounts.AddRange(new[]
         {
-            expenses, salariesExpense, gosiEmployerExpense, rentExpense, adminExpenses, depreciationExpense, costOfGoodsSold, fxLoss
+            expenses, salariesExpense, gosiEmployerExpense, employerNiExpense, employerPensionExpense, rentExpense, adminExpenses, depreciationExpense, costOfGoodsSold, fxLoss
         });
 
         return accounts;

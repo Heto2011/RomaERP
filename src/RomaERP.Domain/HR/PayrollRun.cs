@@ -43,4 +43,18 @@ public class PayrollRunLine : BaseEntity
     /// <summary>GOSI employer-side (Annuities + Occupational Hazards) contribution — a company cost on top of
     /// the employee's pay, NOT part of TotalDeductions/NetSalary. Posted separately in PostAsync.</summary>
     public decimal GosiEmployerContributionAmount { get; set; }
+
+    // ---- UK payroll (zero outside the United Kingdom). The employee-side amounts are already inside TotalDeductions. ----
+    /// <summary>Pay subject to income tax this month (gross less the employee's net-pay pension contribution); feeds the cumulative tax of later months.</summary>
+    public decimal UkTaxablePay { get; set; }
+    /// <summary>PAYE income tax withheld; negative when an earlier overpayment is refunded.</summary>
+    public decimal UkIncomeTax { get; set; }
+    public decimal UkEmployeeNi { get; set; }
+    /// <summary>Employer National Insurance — a company cost on top of the employee's pay, not part of TotalDeductions.</summary>
+    public decimal UkEmployerNi { get; set; }
+    public decimal UkStudentLoan { get; set; }
+    public decimal UkPostgraduateLoan { get; set; }
+    public decimal UkPensionEmployee { get; set; }
+    /// <summary>Employer pension contribution — a company cost on top of the employee's pay, not part of TotalDeductions.</summary>
+    public decimal UkPensionEmployer { get; set; }
 }

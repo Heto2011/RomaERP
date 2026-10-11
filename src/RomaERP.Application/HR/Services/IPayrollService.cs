@@ -13,6 +13,8 @@ public interface IPayrollService
     Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<PayrollRunDto> UpdateLineAsync(Guid runId, Guid employeeId, UpdatePayrollLineDto dto, CancellationToken ct = default);
     Task<List<MyPayslipDto>> GetMyPayslipsAsync(Guid employeeId, CancellationToken ct = default);
+    /// <summary>The accountant's summary of a UK pay run as a CSV (one row per employee plus totals), for filing with HMRC outside the system.</summary>
+    Task<string> BuildUkSummaryCsvAsync(Guid runId, CancellationToken ct = default);
     Task<PayrollSettingsDto> GetSettingsAsync(CancellationToken ct = default);
     Task<PayrollSettingsDto> UpdateSettingsAsync(PayrollSettingsDto dto, CancellationToken ct = default);
 }

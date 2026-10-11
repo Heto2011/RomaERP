@@ -55,6 +55,11 @@ public class EmployeeConfiguration : IEntityTypeConfiguration<Employee>
         builder.Property(e => e.FullNameEn).HasMaxLength(200).IsRequired();
         builder.Property(e => e.NationalId).HasMaxLength(20);
         builder.Property(e => e.Nationality).HasMaxLength(2);
+        builder.Property(e => e.UkNationalInsuranceNumber).HasMaxLength(13);
+        builder.Property(e => e.UkTaxCode).HasMaxLength(12);
+        builder.Property(e => e.UkNiCategory).HasMaxLength(1);
+        builder.Property(e => e.UkPensionEmployeePercent).HasPrecision(5, 2);
+        builder.Property(e => e.UkPensionEmployerPercent).HasPrecision(5, 2);
         builder.Property(e => e.Email).HasMaxLength(150);
         builder.Property(e => e.Phone).HasMaxLength(30);
         builder.Property(e => e.BasicSalary).HasPrecision(18, 2);
@@ -224,6 +229,14 @@ public class PayrollRunLineConfiguration : IEntityTypeConfiguration<PayrollRunLi
         builder.Property(l => l.UnpaidLeaveDeductionAmount).HasPrecision(18, 2);
         builder.Property(l => l.GosiEmployeeDeductionAmount).HasPrecision(18, 2);
         builder.Property(l => l.GosiEmployerContributionAmount).HasPrecision(18, 2);
+        builder.Property(l => l.UkTaxablePay).HasPrecision(18, 2);
+        builder.Property(l => l.UkIncomeTax).HasPrecision(18, 2);
+        builder.Property(l => l.UkEmployeeNi).HasPrecision(18, 2);
+        builder.Property(l => l.UkEmployerNi).HasPrecision(18, 2);
+        builder.Property(l => l.UkStudentLoan).HasPrecision(18, 2);
+        builder.Property(l => l.UkPostgraduateLoan).HasPrecision(18, 2);
+        builder.Property(l => l.UkPensionEmployee).HasPrecision(18, 2);
+        builder.Property(l => l.UkPensionEmployer).HasPrecision(18, 2);
 
         builder.HasOne(l => l.Employee)
             .WithMany()

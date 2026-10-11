@@ -71,6 +71,31 @@ public static class TenantBaselineSeeder
         await context.SaveChangesAsync();
     }
 
+    /// <summary>Adds the UK payroll accounts (tax/NI and pension payables, employer NI and pension expenses) to a company
+    /// created before they existed. Safe to run on every startup.</summary>
+    public static async Task EnsureUkPayrollAccountsAsync(ApplicationDbContext context)
+    {
+        var wanted = new (string Code, string Ar, string En, AccountType Type, AccountNature Nature, string ParentCode, int Level)[]
+        {
+            ("2180", "ضرائب وتأمين وطني مستحقة (بريطانيا)", "Tax and National Insurance Payable (UK)", AccountType.Liability, AccountNature.Credit, "2100", 3),
+            ("2190", "اشتراكات المعاش المستحقة (بريطانيا)", "Pension Contributions Payable (UK)", AccountType.Liability, AccountNature.Credit, "2100", 3),
+            ("5160", "مصروف التأمين الوطني (حصة الشركة - بريطانيا)", "Employer National Insurance Expense (UK)", AccountType.Expense, AccountNature.Debit, "5000", 2),
+            ("5170", "مصروف المعاش (حصة الشركة - بريطانيا)", "Employer Pension Expense (UK)", AccountType.Expense, AccountNature.Debit, "5000", 2),
+        };
+
+        var toAdd = new List<Account>();
+        foreach (var (code, ar, en, type, nature, parentCode, level) in wanted)
+        {
+            if (await context.Accounts.AnyAsync(a => a.Code == code)) continue;
+            var parent = await context.Accounts.FirstOrDefaultAsync(a => a.Code == parentCode);
+            toAdd.Add(new Account { Code = code, NameAr = ar, NameEn = en, AccountType = type, Nature = nature, ParentAccountId = parent?.Id, IsControlAccount = false, Level = level, IsActive = true });
+        }
+        if (toAdd.Count == 0) return;
+
+        await context.Accounts.AddRangeAsync(toAdd);
+        await context.SaveChangesAsync();
+    }
+
     public static async Task SeedFiscalYearAsync(ApplicationDbContext context)
     {
         if (await context.FiscalYears.AnyAsync())

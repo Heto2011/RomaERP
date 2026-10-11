@@ -309,4 +309,114 @@ public class PayrollServiceTests
 
         await Assert.ThrowsAsync<ValidationAppException>(() => service.PostAsync(run.Id));
     }
+
+    private static async Task<(ApplicationDbContext Ctx, Employee Employee, FiscalPeriod April, FiscalPeriod May, PayrollService Service)> SeedUkAsync(
+        Action<Employee>? configure = null, bool ukCompany = true, bool withAccounts = false)
+    {
+        var ctx = CreateContext();
+        var employee = CreateEmployee(basicSalary: 3000);
+        configure?.Invoke(employee);
+        var april = new FiscalPeriod { Name = "April 2026", PeriodNumber = 4, StartDate = new DateTime(2026, 4, 1), EndDate = new DateTime(2026, 4, 30) };
+        var may = new FiscalPeriod { Name = "May 2026", PeriodNumber = 5, StartDate = new DateTime(2026, 5, 1), EndDate = new DateTime(2026, 5, 31) };
+        ctx.Employees.Add(employee);
+        ctx.FiscalPeriods.AddRange(april, may);
+        ctx.CompanySettings.Add(new CompanySettings
+        {
+            CompanyNameAr = "شركة", CompanyNameEn = "Co", PayrollDaysPerMonth = 30,
+            Country = ukCompany ? Country.UnitedKingdom : Country.SaudiArabia
+        });
+        if (withAccounts)
+        {
+            ctx.Accounts.AddRange(
+                new Account { Code = AccountingConstants.SalariesExpenseAccountCode, NameAr = "a", NameEn = "Salaries", AccountType = AccountType.Expense, Nature = AccountNature.Debit },
+                new Account { Code = AccountingConstants.AccruedSalariesPayableAccountCode, NameAr = "b", NameEn = "Accrued", AccountType = AccountType.Liability, Nature = AccountNature.Credit },
+                new Account { Code = AccountingConstants.HmrcPayableAccountCode, NameAr = "c", NameEn = "HMRC", AccountType = AccountType.Liability, Nature = AccountNature.Credit },
+                new Account { Code = AccountingConstants.PensionPayableAccountCode, NameAr = "d", NameEn = "Pension", AccountType = AccountType.Liability, Nature = AccountNature.Credit },
+                new Account { Code = AccountingConstants.EmployerNiExpenseAccountCode, NameAr = "e", NameEn = "Employer NI", AccountType = AccountType.Expense, Nature = AccountNature.Debit },
+                new Account { Code = AccountingConstants.EmployerPensionExpenseAccountCode, NameAr = "f", NameEn = "Employer pension", AccountType = AccountType.Expense, Nature = AccountNature.Debit });
+        }
+        await ctx.SaveChangesAsync();
+        return (ctx, employee, april, may, new PayrollService(ctx));
+    }
+
+    [Fact]
+    public async Task UkCompany_ComputesPayeNationalInsuranceAndTheNetPay()
+    {
+        var (_, _, april, _, service) = await SeedUkAsync();
+
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = april.Id, RunDate = new DateTime(2026, 4, 28) });
+
+        var line = Assert.Single(run.Lines);
+        Assert.Equal(390.20m, line.UkIncomeTax);
+        Assert.Equal(156.16m, line.UkEmployeeNi);
+        Assert.Equal(387.45m, line.UkEmployerNi);
+        Assert.Equal(390.20m + 156.16m, line.TotalDeductions);
+        Assert.Equal(3000m - 390.20m - 156.16m, line.NetSalary);
+    }
+
+    [Fact]
+    public async Task UkCompany_TaxIsCumulativeAcrossTheRunsOfTheSameTaxYear()
+    {
+        var (_, _, april, may, service) = await SeedUkAsync();
+        await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = april.Id, RunDate = new DateTime(2026, 4, 28) });
+
+        var second = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = may.Id, RunDate = new DateTime(2026, 5, 28) });
+
+        Assert.Equal(390.40m, Assert.Single(second.Lines).UkIncomeTax);
+    }
+
+    [Fact]
+    public async Task NonUkCompany_GetsNoUkDeductions()
+    {
+        var (_, _, april, _, service) = await SeedUkAsync(ukCompany: false);
+
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = april.Id, RunDate = new DateTime(2026, 4, 28) });
+
+        var line = Assert.Single(run.Lines);
+        Assert.Equal(0m, line.UkIncomeTax);
+        Assert.Equal(3000m, line.NetSalary);
+    }
+
+    [Fact]
+    public async Task UkCompany_RejectsAScottishTaxCodeWithTheEmployeeName()
+    {
+        var (_, _, april, _, service) = await SeedUkAsync(e => e.UkTaxCode = "S1257L");
+
+        var ex = await Assert.ThrowsAsync<ValidationAppException>(() =>
+            service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = april.Id, RunDate = new DateTime(2026, 4, 28) }));
+        Assert.Contains("Ehab Salah", ex.Message);
+    }
+
+    [Fact]
+    public async Task UkPosting_StaysBalanced_WithPensionStudentLoanAndEmployerCosts()
+    {
+        var (ctx, _, april, _, service) = await SeedUkAsync(e =>
+        {
+            e.UkPensionEnrolled = true;
+            e.UkStudentLoanPlan = UkStudentLoanPlan.Plan2;
+        }, withAccounts: true);
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = april.Id, RunDate = new DateTime(2026, 4, 28) });
+        await service.ApproveAsync(run.Id);
+
+        await service.PostAsync(run.Id);
+
+        var posted = await ctx.PayrollRuns.SingleAsync(r => r.Id == run.Id);
+        var entry = await ctx.JournalEntries.Include(e => e.Lines).SingleAsync(e => e.Id == posted.JournalEntryId);
+        Assert.True(entry.IsBalanced);
+        var hmrc = await ctx.Accounts.SingleAsync(a => a.Code == AccountingConstants.HmrcPayableAccountCode);
+        Assert.Contains(entry.Lines, l => l.AccountId == hmrc.Id && l.Credit > 0);
+    }
+
+    [Fact]
+    public async Task UkSummaryCsv_ListsEachEmployeeWithTheirFiguresAndTheAmountOwedToHmrc()
+    {
+        var (_, _, april, _, service) = await SeedUkAsync(e => { e.UkNationalInsuranceNumber = "QQ123456C"; e.UkTaxCode = "1257L"; });
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = april.Id, RunDate = new DateTime(2026, 4, 28) });
+
+        var csv = await service.BuildUkSummaryCsvAsync(run.Id);
+
+        Assert.Contains("Ehab Salah,EMP-001,QQ123456C,1257L,A,3000.00,3000.00,390.20,156.16,387.45", csv);
+        Assert.Contains("Owed to HMRC for this run (income tax + employee NI + employer NI + student loans),933.81", csv); // 390.20 + 156.16 + 387.45
+        Assert.Contains("does not submit anything to HMRC", csv);
+    }
 }

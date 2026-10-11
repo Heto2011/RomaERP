@@ -22,10 +22,32 @@ export default function Payroll() {
   const [description, setDescription] = useState("");
   const [lineEdits, setLineEdits] = useState<Record<string, { totalAllowances: number; totalDeductions: number }>>({});
 
+  const [isUk, setIsUk] = useState(false);
+
   async function load() {
     const [runsRes, periodsRes] = await Promise.all([PayrollApi.getAll(), LookupsApi.fiscalPeriods()]);
     setRuns(runsRes.data);
     setPeriods(periodsRes.data);
+    try {
+      setIsUk((await PayrollApi.getSettings()).data.isUkPayroll);
+    } catch {
+      setIsUk(false);
+    }
+  }
+
+  async function downloadUkSummary(id: string) {
+    setError(null);
+    try {
+      const res = await PayrollApi.downloadUkSummary(id);
+      const url = URL.createObjectURL(res.data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `uk-payroll-summary-${id.slice(0, 8)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
   }
 
   useEffect(() => {
@@ -174,6 +196,11 @@ export default function Payroll() {
                     <button className="btn btn-secondary btn-sm" onClick={() => setExpanded(expanded === run.id ? null : run.id)}>
                       {t.hr.details}
                     </button>
+                    {isUk && (
+                      <button className="btn btn-secondary btn-sm" onClick={() => downloadUkSummary(run.id)}>
+                        {t.hr.ukDownloadSummary}
+                      </button>
+                    )}
                     {run.status === PayrollRunStatus.Draft && (
                       <>
                         <button className="btn btn-sm" onClick={() => handleApprove(run.id)}>
@@ -207,8 +234,20 @@ export default function Payroll() {
                             <th>{t.hr.allowances}</th>
                             <th>{t.hr.deductions}</th>
                             <th>{t.hr.netSalary}</th>
-                            <th>{t.hr.gosiEmployeeColumn}</th>
-                            <th>{t.hr.gosiEmployerColumn}</th>
+                            {isUk ? (
+                              <>
+                                <th>{t.hr.ukIncomeTaxColumn}</th>
+                                <th>{t.hr.ukEmployeeNiColumn}</th>
+                                <th>{t.hr.ukEmployerNiColumn}</th>
+                                <th>{t.hr.ukLoansColumn}</th>
+                                <th>{t.hr.ukPensionColumn}</th>
+                              </>
+                            ) : (
+                              <>
+                                <th>{t.hr.gosiEmployeeColumn}</th>
+                                <th>{t.hr.gosiEmployerColumn}</th>
+                              </>
+                            )}
                             {run.status === PayrollRunStatus.Draft && <th></th>}
                           </tr>
                         </thead>
@@ -250,8 +289,20 @@ export default function Payroll() {
                                   )}
                                 </td>
                                 <td>{line.netSalary.toLocaleString()}</td>
-                                <td>{line.gosiEmployeeDeductionAmount > 0 ? line.gosiEmployeeDeductionAmount.toLocaleString() : "-"}</td>
-                                <td>{line.gosiEmployerContributionAmount > 0 ? line.gosiEmployerContributionAmount.toLocaleString() : "-"}</td>
+                                {isUk ? (
+                                  <>
+                                    <td>{line.ukIncomeTax !== 0 ? line.ukIncomeTax.toLocaleString() : "-"}</td>
+                                    <td>{line.ukEmployeeNi > 0 ? line.ukEmployeeNi.toLocaleString() : "-"}</td>
+                                    <td>{line.ukEmployerNi > 0 ? line.ukEmployerNi.toLocaleString() : "-"}</td>
+                                    <td>{line.ukStudentLoan + line.ukPostgraduateLoan > 0 ? (line.ukStudentLoan + line.ukPostgraduateLoan).toLocaleString() : "-"}</td>
+                                    <td>{line.ukPensionEmployee > 0 ? line.ukPensionEmployee.toLocaleString() : "-"}</td>
+                                  </>
+                                ) : (
+                                  <>
+                                    <td>{line.gosiEmployeeDeductionAmount > 0 ? line.gosiEmployeeDeductionAmount.toLocaleString() : "-"}</td>
+                                    <td>{line.gosiEmployerContributionAmount > 0 ? line.gosiEmployerContributionAmount.toLocaleString() : "-"}</td>
+                                  </>
+                                )}
                                 {run.status === PayrollRunStatus.Draft && (
                                   <td style={{ display: "flex", gap: 4 }}>
                                     {isEditing ? (

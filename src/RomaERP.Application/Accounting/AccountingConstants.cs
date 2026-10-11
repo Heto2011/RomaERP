@@ -27,4 +27,10 @@ public static class AccountingConstants
     public const string FxLossAccountCode = "5450";
     public const string GosiPayableAccountCode = "2170";
     public const string GosiEmployerExpenseAccountCode = "5150";
+    // UK payroll: income tax + National Insurance + student loans owed to HMRC, pension contributions owed to the scheme,
+    // and the employer's own National Insurance and pension costs.
+    public const string HmrcPayableAccountCode = "2180";
+    public const string PensionPayableAccountCode = "2190";
+    public const string EmployerNiExpenseAccountCode = "5160";
+    public const string EmployerPensionExpenseAccountCode = "5170";
 }

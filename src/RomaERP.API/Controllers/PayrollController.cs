@@ -45,6 +45,16 @@ public class PayrollController : ControllerBase
     public async Task<ActionResult<PayrollRunDto>> GetById(Guid id, CancellationToken ct)
         => Ok(await _payrollService.GetByIdAsync(id, ct));
 
+    /// <summary>UK companies: the pay run as a spreadsheet for the accountant (the system does not file with HMRC).</summary>
+    [HttpGet("{id:guid}/uk-summary")]
+    [Authorize(Roles = "Admin,HR,Accountant")]
+    public async Task<IActionResult> GetUkSummary(Guid id, CancellationToken ct)
+    {
+        var csv = await _payrollService.BuildUkSummaryCsvAsync(id, ct);
+        var bytes = System.Text.Encoding.UTF8.GetPreamble().Concat(System.Text.Encoding.UTF8.GetBytes(csv)).ToArray();
+        return File(bytes, "text/csv; charset=utf-8", $"uk-payroll-summary-{id.ToString()[..8]}.csv");
+    }
+
     [HttpPost]
     [Authorize(Roles = "Admin,HR")]
     public async Task<ActionResult<PayrollRunDto>> Create(CreatePayrollRunDto dto, CancellationToken ct)

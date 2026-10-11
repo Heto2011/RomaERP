@@ -34,6 +34,14 @@ public class EmployeeDto
     public bool IsSaudiNational { get; set; }
     public string? Nationality { get; set; }
     public int AnnualLeaveDaysPerYear { get; set; }
+    public string? UkNationalInsuranceNumber { get; set; }
+    public string? UkTaxCode { get; set; }
+    public string? UkNiCategory { get; set; }
+    public UkStudentLoanPlan UkStudentLoanPlan { get; set; }
+    public bool UkPostgraduateLoan { get; set; }
+    public bool UkPensionEnrolled { get; set; }
+    public decimal UkPensionEmployeePercent { get; set; } = 5m;
+    public decimal UkPensionEmployerPercent { get; set; } = 3m;
 }
 
 public class CreateEmployeeDto
@@ -59,6 +67,14 @@ public class CreateEmployeeDto
     /// <summary>ISO alpha-2 nationality code. When supplied it wins over IsSaudiNational.</summary>
     public string? Nationality { get; set; }
     public int AnnualLeaveDaysPerYear { get; set; } = 21;
+    public string? UkNationalInsuranceNumber { get; set; }
+    public string? UkTaxCode { get; set; }
+    public string? UkNiCategory { get; set; }
+    public UkStudentLoanPlan UkStudentLoanPlan { get; set; }
+    public bool UkPostgraduateLoan { get; set; }
+    public bool UkPensionEnrolled { get; set; }
+    public decimal UkPensionEmployeePercent { get; set; } = 5m;
+    public decimal UkPensionEmployerPercent { get; set; } = 3m;
 }
 
 public class UpdateEmployeeDto : CreateEmployeeDto

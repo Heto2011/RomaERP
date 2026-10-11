@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
-import { DepartmentsApi, EmployeesApi, PositionsApi, SalaryComponentsApi, UsersApi, WorkLocationsApi } from "../../api/services";
+import { DepartmentsApi, EmployeesApi, PayrollApi, PositionsApi, SalaryComponentsApi, UsersApi, WorkLocationsApi } from "../../api/services";
 import {
   CalculationType,
   EmploymentStatus,
   Gender,
   MaritalStatus,
   SalaryComponentType,
+  UkStudentLoanPlan,
   type Department,
   type Employee,
   type EmployeeSalaryComponentAssignment,
@@ -47,6 +48,15 @@ export default function Employees() {
   const [phone, setPhone] = useState("");
   const [workLocationId, setWorkLocationId] = useState("");
   const [nationality, setNationality] = useState("");
+  const [isUk, setIsUk] = useState(false);
+  const [ukNiNumber, setUkNiNumber] = useState("");
+  const [ukTaxCode, setUkTaxCode] = useState("");
+  const [ukNiCategory, setUkNiCategory] = useState("A");
+  const [ukStudentLoan, setUkStudentLoan] = useState(UkStudentLoanPlan.None);
+  const [ukPostgraduateLoan, setUkPostgraduateLoan] = useState(false);
+  const [ukPensionEnrolled, setUkPensionEnrolled] = useState(false);
+  const [ukPensionEmployee, setUkPensionEmployee] = useState("5");
+  const [ukPensionEmployer, setUkPensionEmployer] = useState("3");
   const [annualLeaveDaysPerYear, setAnnualLeaveDaysPerYear] = useState("21");
   const [employmentStatus, setEmploymentStatus] = useState(EmploymentStatus.Active);
   const [terminationDate, setTerminationDate] = useState("");
@@ -106,6 +116,11 @@ export default function Employees() {
     setPositions(posRes.data);
     setAllComponents(compRes.data);
     setWorkLocations(locRes.data);
+    try {
+      setIsUk((await PayrollApi.getSettings()).data.isUkPayroll);
+    } catch {
+      setIsUk(false); // payroll settings are not available to every role; the UK section just stays hidden
+    }
   }
 
   useEffect(() => {
@@ -129,6 +144,14 @@ export default function Employees() {
     setPhone("");
     setWorkLocationId("");
     setNationality("");
+    setUkNiNumber("");
+    setUkTaxCode("");
+    setUkNiCategory("A");
+    setUkStudentLoan(UkStudentLoanPlan.None);
+    setUkPostgraduateLoan(false);
+    setUkPensionEnrolled(false);
+    setUkPensionEmployee("5");
+    setUkPensionEmployer("3");
     setAnnualLeaveDaysPerYear("21");
     setEmploymentStatus(EmploymentStatus.Active);
     setTerminationDate("");
@@ -159,6 +182,14 @@ export default function Employees() {
     setPhone(emp.phone ?? "");
     setWorkLocationId(emp.workLocationId ?? "");
     setNationality(emp.nationality ?? (emp.isSaudiNational ? "SA" : ""));
+    setUkNiNumber(emp.ukNationalInsuranceNumber ?? "");
+    setUkTaxCode(emp.ukTaxCode ?? "");
+    setUkNiCategory(emp.ukNiCategory ?? "A");
+    setUkStudentLoan(emp.ukStudentLoanPlan ?? UkStudentLoanPlan.None);
+    setUkPostgraduateLoan(emp.ukPostgraduateLoan ?? false);
+    setUkPensionEnrolled(emp.ukPensionEnrolled ?? false);
+    setUkPensionEmployee(String(emp.ukPensionEmployeePercent ?? 5));
+    setUkPensionEmployer(String(emp.ukPensionEmployerPercent ?? 3));
     setAnnualLeaveDaysPerYear(String(emp.annualLeaveDaysPerYear));
     setEmploymentStatus(emp.employmentStatus);
     setTerminationDate(emp.terminationDate ? emp.terminationDate.slice(0, 10) : "");
@@ -185,6 +216,14 @@ export default function Employees() {
         nationality: nationality || null,
         isSaudiNational: nationality === "SA",
         annualLeaveDaysPerYear: Number(annualLeaveDaysPerYear) || 21,
+        ukNationalInsuranceNumber: ukNiNumber || null,
+        ukTaxCode: ukTaxCode || null,
+        ukNiCategory: ukNiCategory || null,
+        ukStudentLoanPlan: ukStudentLoan,
+        ukPostgraduateLoan,
+        ukPensionEnrolled,
+        ukPensionEmployeePercent: Number(ukPensionEmployee) || 0,
+        ukPensionEmployerPercent: Number(ukPensionEmployer) || 0,
       };
       if (editingId) {
         await EmployeesApi.update(editingId, { ...payload, employmentStatus, terminationDate: terminationDate || null });
@@ -387,6 +426,65 @@ export default function Employees() {
                   ))}
                 </select>
               </div>
+              {isUk && (
+                <div className="form-field" style={{ gridColumn: "1 / -1" }}>
+                  <h4 style={{ margin: "8px 0 2px" }}>{t.hr.ukSectionTitle}</h4>
+                  <div className="text-muted" style={{ fontSize: 13 }}>{t.hr.ukSectionHint}</div>
+                </div>
+              )}
+              {isUk && (
+                <>
+                  <div className="form-field">
+                    <label>{t.hr.ukNiNumber}</label>
+                    <input value={ukNiNumber} maxLength={13} placeholder="QQ123456C" onChange={(e) => setUkNiNumber(e.target.value)} />
+                  </div>
+                  <div className="form-field">
+                    <label>{t.hr.ukTaxCode}</label>
+                    <input value={ukTaxCode} maxLength={12} placeholder="1257L" onChange={(e) => setUkTaxCode(e.target.value)} />
+                    <div className="text-muted" style={{ fontSize: 12 }}>{t.hr.ukTaxCodeHint}</div>
+                  </div>
+                  <div className="form-field">
+                    <label>{t.hr.ukNiCategory}</label>
+                    <select value={ukNiCategory} onChange={(e) => setUkNiCategory(e.target.value)}>
+                      {["A", "B", "C", "H", "J", "M", "V", "X", "Z"].map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    <label>{t.hr.ukStudentLoan}</label>
+                    <select value={ukStudentLoan} onChange={(e) => setUkStudentLoan(Number(e.target.value))}>
+                      <option value={UkStudentLoanPlan.None}>{t.hr.ukStudentLoanNone}</option>
+                      <option value={UkStudentLoanPlan.Plan1}>Plan 1</option>
+                      <option value={UkStudentLoanPlan.Plan2}>Plan 2</option>
+                      <option value={UkStudentLoanPlan.Plan4}>Plan 4</option>
+                      <option value={UkStudentLoanPlan.Plan5}>Plan 5</option>
+                    </select>
+                  </div>
+                  <div className="form-field">
+                    <label>
+                      <input type="checkbox" checked={ukPostgraduateLoan} onChange={(e) => setUkPostgraduateLoan(e.target.checked)} /> {t.hr.ukPostgraduateLoan}
+                    </label>
+                  </div>
+                  <div className="form-field">
+                    <label>
+                      <input type="checkbox" checked={ukPensionEnrolled} onChange={(e) => setUkPensionEnrolled(e.target.checked)} /> {t.hr.ukPensionEnrolled}
+                    </label>
+                  </div>
+                  {ukPensionEnrolled && (
+                    <>
+                      <div className="form-field">
+                        <label>{t.hr.ukPensionEmployee}</label>
+                        <input type="number" min={0} max={100} step="0.01" value={ukPensionEmployee} onChange={(e) => setUkPensionEmployee(e.target.value)} />
+                      </div>
+                      <div className="form-field">
+                        <label>{t.hr.ukPensionEmployer}</label>
+                        <input type="number" min={0} max={100} step="0.01" value={ukPensionEmployer} onChange={(e) => setUkPensionEmployer(e.target.value)} />
+                      </div>
+                    </>
+                  )}
+                </>
+              )}
               {editingId && (
                 <>
                   <div className="form-field">

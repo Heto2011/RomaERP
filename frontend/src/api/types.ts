@@ -856,6 +856,22 @@ export interface Employee {
   isSaudiNational: boolean;
   nationality: string | null;
   annualLeaveDaysPerYear: number;
+  ukNationalInsuranceNumber: string | null;
+  ukTaxCode: string | null;
+  ukNiCategory: string | null;
+  ukStudentLoanPlan: UkStudentLoanPlan;
+  ukPostgraduateLoan: boolean;
+  ukPensionEnrolled: boolean;
+  ukPensionEmployeePercent: number;
+  ukPensionEmployerPercent: number;
+}
+
+export enum UkStudentLoanPlan {
+  None = 0,
+  Plan1 = 1,
+  Plan2 = 2,
+  Plan4 = 4,
+  Plan5 = 5,
 }
 
 export interface WorkLocation {
@@ -993,6 +1009,14 @@ export interface PayrollRunLine {
   unpaidLeaveDeductionAmount: number;
   gosiEmployeeDeductionAmount: number;
   gosiEmployerContributionAmount: number;
+  ukTaxablePay: number;
+  ukIncomeTax: number;
+  ukEmployeeNi: number;
+  ukEmployerNi: number;
+  ukStudentLoan: number;
+  ukPostgraduateLoan: number;
+  ukPensionEmployee: number;
+  ukPensionEmployer: number;
 }
 
 export interface PayrollSettings {
@@ -1002,6 +1026,8 @@ export interface PayrollSettings {
   gosiEmployerAnnuitiesRatePercent: number;
   gosiEmployerHazardsRatePercent: number;
   gosiNonSaudiEmployerHazardsRatePercent: number;
+  isUkPayroll: boolean;
+  ukTaxYear: string;
 }
 
 export enum ContractType {
