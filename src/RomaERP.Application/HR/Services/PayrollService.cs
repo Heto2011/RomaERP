@@ -73,6 +73,7 @@ public class PayrollService : IPayrollService
         // UK income tax is cumulative over the tax year (6 April to 5 April): what each employee has already earned and been
         // taxed on in earlier runs of the same year feeds this run. Earlier runs are counted whether or not they were posted yet.
         var isUk = settings?.Country == Country.UnitedKingdom;
+        var isEgypt = settings?.Country == Country.Egypt;
         var (taxYearStart, taxMonth) = UkPayrollCalculator.TaxPeriodOf(dto.RunDate);
         var yearToDate = new Dictionary<Guid, UkYearToDate>();
         if (isUk)
@@ -164,6 +165,13 @@ public class PayrollService : IPayrollService
                 deductions += uk.IncomeTax + uk.EmployeeNi + uk.StudentLoan + uk.PostgraduateLoan + uk.PensionEmployee;
             }
 
+            EgyptPayrollResult? eg = null;
+            if (isEgypt)
+            {
+                eg = EgyptPayrollCalculator.Calculate(employee.BasicSalary, employee.BasicSalary + allowances - unpaidLeaveDeduction, EgyptPayrollCalculator.IsInsured(employee.Nationality));
+                deductions += eg.EmployeeInsurance + eg.IncomeTax;
+            }
+
             run.Lines.Add(new PayrollRunLine
             {
                 EmployeeId = employee.Id,
@@ -182,7 +190,10 @@ public class PayrollService : IPayrollService
                 UkStudentLoan = uk?.StudentLoan ?? 0,
                 UkPostgraduateLoan = uk?.PostgraduateLoan ?? 0,
                 UkPensionEmployee = uk?.PensionEmployee ?? 0,
-                UkPensionEmployer = uk?.PensionEmployer ?? 0
+                UkPensionEmployer = uk?.PensionEmployer ?? 0,
+                EgEmployeeInsurance = eg?.EmployeeInsurance ?? 0,
+                EgEmployerInsurance = eg?.EmployerInsurance ?? 0,
+                EgIncomeTax = eg?.IncomeTax ?? 0
             });
         }
 
@@ -270,6 +281,7 @@ public class PayrollService : IPayrollService
         var deductionTotals = new Dictionary<Guid, decimal>();
         decimal totalGross = 0, totalNet = 0, totalGosiEmployeeWithheld = 0, totalGosiEmployerContribution = 0;
         decimal ukHmrcWithheld = 0, ukPensionEmployee = 0, ukEmployerNi = 0, ukEmployerPension = 0;
+        decimal egInsuranceEmployee = 0, egInsuranceEmployer = 0, egTax = 0;
         var unlinkedDeductionCodes = new HashSet<string>();
 
         foreach (var line in run.Lines)
@@ -285,6 +297,9 @@ public class PayrollService : IPayrollService
             ukPensionEmployee += line.UkPensionEmployee;
             ukEmployerNi += line.UkEmployerNi;
             ukEmployerPension += line.UkPensionEmployer;
+            egInsuranceEmployee += line.EgEmployeeInsurance;
+            egInsuranceEmployer += line.EgEmployerInsurance;
+            egTax += line.EgIncomeTax;
 
             foreach (var esc in line.Employee!.SalaryComponents.Where(x => x.SalaryComponent!.ComponentType == SalaryComponentType.Deduction))
             {
@@ -378,6 +393,11 @@ public class PayrollService : IPayrollService
         var hmrcOwed = ukHmrcWithheld + ukEmployerNi;
         await AddUkAsync(AccountingConstants.HmrcPayableAccountCode, "ضرائب وتأمين وطني مستحقة", hmrcOwed < 0 ? -hmrcOwed : 0, hmrcOwed > 0 ? hmrcOwed : 0);
         await AddUkAsync(AccountingConstants.PensionPayableAccountCode, "اشتراكات معاش مستحقة", 0, ukPensionEmployee + ukEmployerPension);
+
+        // Egypt payroll: social insurance (employee withheld + employer cost) and salary tax withheld.
+        await AddUkAsync(AccountingConstants.EmployerSocialInsuranceExpenseAccountCode, "مصروف تأمينات اجتماعية (حصة الشركة)", egInsuranceEmployer, 0);
+        await AddUkAsync(AccountingConstants.SocialInsurancePayableAccountCode, "تأمينات اجتماعية مستحقة", 0, egInsuranceEmployee + egInsuranceEmployer);
+        await AddUkAsync(AccountingConstants.TaxesPayableAccountCode, "ضريبة كسب العمل مستحقة", egTax < 0 ? -egTax : 0, egTax > 0 ? egTax : 0);
 
         lines.Add(new JournalEntryLine
         {
@@ -526,6 +546,7 @@ public class PayrollService : IPayrollService
         GosiEmployerHazardsRatePercent = s.GosiEmployerHazardsRatePercent,
         GosiNonSaudiEmployerHazardsRatePercent = s.GosiNonSaudiEmployerHazardsRatePercent,
         IsUkPayroll = s.Country == Country.UnitedKingdom,
+        IsEgyptPayroll = s.Country == Country.Egypt,
         UkTaxYear = UkPayrollCalculator.TaxYear
     };
 
@@ -556,7 +577,10 @@ public class PayrollService : IPayrollService
             UkStudentLoan = l.UkStudentLoan,
             UkPostgraduateLoan = l.UkPostgraduateLoan,
             UkPensionEmployee = l.UkPensionEmployee,
-            UkPensionEmployer = l.UkPensionEmployer
+            UkPensionEmployer = l.UkPensionEmployer,
+            EgEmployeeInsurance = l.EgEmployeeInsurance,
+            EgEmployerInsurance = l.EgEmployerInsurance,
+            EgIncomeTax = l.EgIncomeTax
         }).ToList()
     };
 }

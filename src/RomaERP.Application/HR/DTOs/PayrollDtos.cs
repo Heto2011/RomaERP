@@ -59,6 +59,9 @@ public class PayrollRunLineDto
     public decimal UkPostgraduateLoan { get; set; }
     public decimal UkPensionEmployee { get; set; }
     public decimal UkPensionEmployer { get; set; }
+    public decimal EgEmployeeInsurance { get; set; }
+    public decimal EgEmployerInsurance { get; set; }
+    public decimal EgIncomeTax { get; set; }
 }
 
 public class PayrollRunDto
@@ -112,5 +115,7 @@ public class PayrollSettingsDto
     public decimal GosiNonSaudiEmployerHazardsRatePercent { get; set; }
     /// <summary>Read-only: true for a company in the United Kingdom, where payroll runs with PAYE, National Insurance, pension and student-loan deductions.</summary>
     public bool IsUkPayroll { get; set; }
+    /// <summary>Read-only: true for a company in Egypt, where payroll runs with social insurance and salary income tax.</summary>
+    public bool IsEgyptPayroll { get; set; }
     public string UkTaxYear { get; set; } = string.Empty;
 }

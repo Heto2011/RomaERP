@@ -877,6 +877,10 @@ const ar = {
     ukPensionColumn: "معاش (موظف)",
     ukDownloadSummary: "تقرير المحاسب (جدول)",
     payslip: "كشف الراتب",
+    egInsuranceEmployeeColumn: "تأمينات (موظف)",
+    egInsuranceEmployerColumn: "تأمينات (شركة)",
+    egIncomeTaxColumn: "ضريبة كسب العمل",
+    egPayrollNote: "رواتب مصر: التأمينات الاجتماعية (11% موظف و18.75% شركة على الأجر التأميني بحدّ أدنى 2,700 وأقصى 16,700) وضريبة كسب العمل بشرائح 2026 بتتحسب تلقائيًا. ما تضيفش التأمينات أو الضريبة كعناصر خصم يدوية عشان ما تتكررش. الأرقام لازم يراجعها محاسب قبل الاعتماد.",
 
     payrollSettingsTitle: "إعدادات الرواتب",
     payrollSettingsIntro: "إعدادات عامة تؤثر على كل دورات الرواتب الجاية.",
@@ -2383,6 +2387,10 @@ const en: typeof ar = {
     ukPensionColumn: "Pension (employee)",
     ukDownloadSummary: "Accountant report (spreadsheet)",
     payslip: "Payslip",
+    egInsuranceEmployeeColumn: "Insurance (employee)",
+    egInsuranceEmployerColumn: "Insurance (employer)",
+    egIncomeTaxColumn: "Salary income tax",
+    egPayrollNote: "Egypt payroll: social insurance (11% employee and 18.75% employer on the insurable wage, minimum 2,700 and maximum 16,700) and salary income tax on the 2026 brackets are calculated automatically. Do not add insurance or tax as manual deduction components or they will be counted twice. An accountant must review the figures before approval.",
 
     payrollSettingsTitle: "Payroll Settings",
     payrollSettingsIntro: "Company-wide settings that affect every future payroll run.",

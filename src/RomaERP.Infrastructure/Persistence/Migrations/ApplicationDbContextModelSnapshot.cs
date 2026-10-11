@@ -1596,6 +1596,18 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("EmployeeId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<decimal>("EgEmployeeInsurance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("EgEmployerInsurance")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("EgIncomeTax")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("GosiEmployeeDeductionAmount")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");

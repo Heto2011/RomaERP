@@ -237,6 +237,9 @@ public class PayrollRunLineConfiguration : IEntityTypeConfiguration<PayrollRunLi
         builder.Property(l => l.UkPostgraduateLoan).HasPrecision(18, 2);
         builder.Property(l => l.UkPensionEmployee).HasPrecision(18, 2);
         builder.Property(l => l.UkPensionEmployer).HasPrecision(18, 2);
+        builder.Property(l => l.EgEmployeeInsurance).HasPrecision(18, 2);
+        builder.Property(l => l.EgEmployerInsurance).HasPrecision(18, 2);
+        builder.Property(l => l.EgIncomeTax).HasPrecision(18, 2);
 
         builder.HasOne(l => l.Employee)
             .WithMany()

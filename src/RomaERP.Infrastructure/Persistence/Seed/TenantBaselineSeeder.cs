@@ -78,6 +78,8 @@ public static class TenantBaselineSeeder
         var wanted = new (string Code, string Ar, string En, AccountType Type, AccountNature Nature, string ParentCode, int Level)[]
         {
             ("2180", "ضرائب وتأمين وطني مستحقة (بريطانيا)", "Tax and National Insurance Payable (UK)", AccountType.Liability, AccountNature.Credit, "2100", 3),
+            ("2185", "تأمينات اجتماعية مستحقة (مصر)", "Social Insurance Payable (Egypt)", AccountType.Liability, AccountNature.Credit, "2100", 3),
+            ("5165", "مصروف التأمينات الاجتماعية (حصة الشركة - مصر)", "Employer Social Insurance Expense (Egypt)", AccountType.Expense, AccountNature.Debit, "5000", 2),
             ("2190", "اشتراكات المعاش المستحقة (بريطانيا)", "Pension Contributions Payable (UK)", AccountType.Liability, AccountNature.Credit, "2100", 3),
             ("5160", "مصروف التأمين الوطني (حصة الشركة - بريطانيا)", "Employer National Insurance Expense (UK)", AccountType.Expense, AccountNature.Debit, "5000", 2),
             ("5170", "مصروف المعاش (حصة الشركة - بريطانيا)", "Employer Pension Expense (UK)", AccountType.Expense, AccountNature.Debit, "5000", 2),

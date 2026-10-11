@@ -57,4 +57,10 @@ public class PayrollRunLine : BaseEntity
     public decimal UkPensionEmployee { get; set; }
     /// <summary>Employer pension contribution — a company cost on top of the employee's pay, not part of TotalDeductions.</summary>
     public decimal UkPensionEmployer { get; set; }
+
+    // ---- Egypt payroll (zero elsewhere). The employee-side amounts are already inside TotalDeductions. ----
+    public decimal EgEmployeeInsurance { get; set; }
+    /// <summary>Employer social insurance — a company cost on top of the employee's pay, not part of TotalDeductions.</summary>
+    public decimal EgEmployerInsurance { get; set; }
+    public decimal EgIncomeTax { get; set; }
 }

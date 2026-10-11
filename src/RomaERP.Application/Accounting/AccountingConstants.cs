@@ -33,4 +33,8 @@ public static class AccountingConstants
     public const string PensionPayableAccountCode = "2190";
     public const string EmployerNiExpenseAccountCode = "5160";
     public const string EmployerPensionExpenseAccountCode = "5170";
+    // Egypt payroll: social insurance owed to the insurance authority and the employer's own insurance cost; salary tax goes to Taxes Payable.
+    public const string TaxesPayableAccountCode = "2160";
+    public const string SocialInsurancePayableAccountCode = "2185";
+    public const string EmployerSocialInsuranceExpenseAccountCode = "5165";
 }

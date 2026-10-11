@@ -482,4 +482,39 @@ public class PayrollServiceTests
         Assert.Equal(4500m, line.GosiEmployeeDeductionAmount);      // 10% of the 45,000 ceiling, not of 60,000
         Assert.Equal(5400m, line.GosiEmployerContributionAmount);   // 12% of 45,000
     }
+
+    [Fact]
+    public async Task EgyptCompany_AddsSocialInsuranceAndSalaryTax_AndKeepsTheJournalBalanced()
+    {
+        var ctx = CreateContext();
+        var employee = CreateEmployee(basicSalary: 20000);
+        employee.Nationality = "EG";
+        var foreigner = new Employee { EmployeeCode = "EMP-002", FullNameAr = "أجنبي", FullNameEn = "Foreign", HireDate = new DateTime(2025, 1, 1), BasicSalary = 20000, Nationality = "GB" };
+        var period = new FiscalPeriod { Name = "September 2026", PeriodNumber = 9, StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2026, 9, 30) };
+        ctx.Employees.AddRange(employee, foreigner);
+        ctx.FiscalPeriods.Add(period);
+        ctx.CompanySettings.Add(new CompanySettings { CompanyNameAr = "شركة", CompanyNameEn = "Co", PayrollDaysPerMonth = 30, Country = Country.Egypt });
+        ctx.Accounts.AddRange(
+            new Account { Code = AccountingConstants.SalariesExpenseAccountCode, NameAr = "a", NameEn = "Salaries", AccountType = AccountType.Expense, Nature = AccountNature.Debit },
+            new Account { Code = AccountingConstants.AccruedSalariesPayableAccountCode, NameAr = "b", NameEn = "Accrued", AccountType = AccountType.Liability, Nature = AccountNature.Credit },
+            new Account { Code = AccountingConstants.TaxesPayableAccountCode, NameAr = "c", NameEn = "Taxes", AccountType = AccountType.Liability, Nature = AccountNature.Credit },
+            new Account { Code = AccountingConstants.SocialInsurancePayableAccountCode, NameAr = "d", NameEn = "Insurance payable", AccountType = AccountType.Liability, Nature = AccountNature.Credit },
+            new Account { Code = AccountingConstants.EmployerSocialInsuranceExpenseAccountCode, NameAr = "e", NameEn = "Employer insurance", AccountType = AccountType.Expense, Nature = AccountNature.Debit });
+        await ctx.SaveChangesAsync();
+        var service = new PayrollService(ctx);
+
+        var run = await service.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = period.Id, RunDate = new DateTime(2026, 9, 30) });
+
+        var egyptian = run.Lines.Single(l => l.EmployeeId == employee.Id);
+        Assert.Equal(1837.00m, egyptian.EgEmployeeInsurance);
+        Assert.Equal(3131.25m, egyptian.EgEmployerInsurance);
+        Assert.Equal(2445.10m, egyptian.EgIncomeTax);
+        Assert.Equal(20000m - 1837.00m - 2445.10m, egyptian.NetSalary);
+        Assert.Equal(0m, run.Lines.Single(l => l.EmployeeId == foreigner.Id).EgEmployeeInsurance); // not an Egyptian national
+
+        await service.ApproveAsync(run.Id);
+        await service.PostAsync(run.Id);
+        var posted = await ctx.PayrollRuns.SingleAsync(r => r.Id == run.Id);
+        Assert.True((await ctx.JournalEntries.Include(e => e.Lines).SingleAsync(e => e.Id == posted.JournalEntryId)).IsBalanced);
+    }
 }

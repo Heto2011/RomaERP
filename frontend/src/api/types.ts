@@ -1017,6 +1017,9 @@ export interface PayrollRunLine {
   ukPostgraduateLoan: number;
   ukPensionEmployee: number;
   ukPensionEmployer: number;
+  egEmployeeInsurance: number;
+  egEmployerInsurance: number;
+  egIncomeTax: number;
 }
 
 export interface PayrollSettings {
@@ -1027,6 +1030,7 @@ export interface PayrollSettings {
   gosiEmployerHazardsRatePercent: number;
   gosiNonSaudiEmployerHazardsRatePercent: number;
   isUkPayroll: boolean;
+  isEgyptPayroll: boolean;
   ukTaxYear: string;
 }
 

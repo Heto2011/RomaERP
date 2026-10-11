@@ -23,15 +23,19 @@ export default function Payroll() {
   const [lineEdits, setLineEdits] = useState<Record<string, { totalAllowances: number; totalDeductions: number }>>({});
 
   const [isUk, setIsUk] = useState(false);
+  const [isEgypt, setIsEgypt] = useState(false);
 
   async function load() {
     const [runsRes, periodsRes] = await Promise.all([PayrollApi.getAll(), LookupsApi.fiscalPeriods()]);
     setRuns(runsRes.data);
     setPeriods(periodsRes.data);
     try {
-      setIsUk((await PayrollApi.getSettings()).data.isUkPayroll);
+      const settingsRes = (await PayrollApi.getSettings()).data;
+      setIsUk(settingsRes.isUkPayroll);
+      setIsEgypt(settingsRes.isEgyptPayroll);
     } catch {
       setIsUk(false);
+      setIsEgypt(false);
     }
   }
 
@@ -149,6 +153,7 @@ export default function Payroll() {
       </div>
 
       {error && <div className="alert-error">{error}</div>}
+      {isEgypt && <div className="text-muted" style={{ marginBottom: 12, fontSize: 13 }}>{t.hr.egPayrollNote}</div>}
 
       {showForm && (
         <div className="card">
@@ -257,6 +262,12 @@ export default function Payroll() {
                                 <th>{t.hr.ukLoansColumn}</th>
                                 <th>{t.hr.ukPensionColumn}</th>
                               </>
+                            ) : isEgypt ? (
+                              <>
+                                <th>{t.hr.egInsuranceEmployeeColumn}</th>
+                                <th>{t.hr.egInsuranceEmployerColumn}</th>
+                                <th>{t.hr.egIncomeTaxColumn}</th>
+                              </>
                             ) : (
                               <>
                                 <th>{t.hr.gosiEmployeeColumn}</th>
@@ -312,6 +323,12 @@ export default function Payroll() {
                                     <td>{line.ukEmployerNi > 0 ? line.ukEmployerNi.toLocaleString() : "-"}</td>
                                     <td>{line.ukStudentLoan + line.ukPostgraduateLoan > 0 ? (line.ukStudentLoan + line.ukPostgraduateLoan).toLocaleString() : "-"}</td>
                                     <td>{line.ukPensionEmployee > 0 ? line.ukPensionEmployee.toLocaleString() : "-"}</td>
+                                  </>
+                                ) : isEgypt ? (
+                                  <>
+                                    <td>{line.egEmployeeInsurance > 0 ? line.egEmployeeInsurance.toLocaleString() : "-"}</td>
+                                    <td>{line.egEmployerInsurance > 0 ? line.egEmployerInsurance.toLocaleString() : "-"}</td>
+                                    <td>{line.egIncomeTax > 0 ? line.egIncomeTax.toLocaleString() : "-"}</td>
                                   </>
                                 ) : (
                                   <>
