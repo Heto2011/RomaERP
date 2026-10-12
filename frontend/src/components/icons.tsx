@@ -29,6 +29,14 @@ export function IconGrid() {
   );
 }
 
+export function IconStar() {
+  return (
+    <svg {...common}>
+      <path d="m10 2.8 2.2 4.5 4.9.7-3.55 3.45.85 4.85L10 13.9l-4.4 2.4.85-4.85L2.9 8l4.9-.7L10 2.8Z" />
+    </svg>
+  );
+}
+
 export function IconUser() {
   return (
     <svg {...common}>

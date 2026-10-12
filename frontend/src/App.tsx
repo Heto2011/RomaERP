@@ -96,6 +96,7 @@ import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
 import BankReconciliation from "./pages/assistant/BankReconciliation";
 import RestaurantTables from "./pages/restaurant/RestaurantTables";
 import RestaurantMenu from "./pages/restaurant/RestaurantMenu";
+import LoyaltyPage from "./pages/restaurant/Loyalty";
 import PurchaseReceivingPage from "./pages/restaurant/PurchaseReceiving";
 import DeliveryReconciliationPage from "./pages/restaurant/DeliveryReconciliation";
 import DeliveryPlatforms from "./pages/restaurant/DeliveryPlatforms";
@@ -249,6 +250,7 @@ export default function App() {
       <Route path="/people/subscription" element={<PeopleRoute adminOnly><MySubscriptionPage /></PeopleRoute>} />
       <Route path="/people/employee-requests" element={<PeopleRoute managerOnly><EmployeeRequestsAdmin /></PeopleRoute>} />
       <Route path="/restaurant/tables" element={<ProtectedRoute><RestaurantTables /></ProtectedRoute>} />
+      <Route path="/restaurant/loyalty" element={<ProtectedRoute><LoyaltyPage /></ProtectedRoute>} />
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />
       <Route path="/restaurant/purchase-receiving" element={<ProtectedRoute><PurchaseReceivingPage /></ProtectedRoute>} />
       <Route path="/restaurant/delivery-reconciliation" element={<ProtectedRoute><DeliveryReconciliationPage /></ProtectedRoute>} />
@@ -257,6 +259,7 @@ export default function App() {
       <Route path="/restaurant/kitchen" element={<ProtectedRoute><KitchenDisplay /></ProtectedRoute>} />
       <Route path="/restaurant-portal" element={<RestaurantPortalRoute><RestaurantTables /></RestaurantPortalRoute>} />
       <Route path="/restaurant-portal/tables" element={<RestaurantPortalRoute><RestaurantTables /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/loyalty" element={<RestaurantPortalRoute><LoyaltyPage /></RestaurantPortalRoute>} />
       <Route path="/restaurant-portal/menu" element={<RestaurantPortalRoute><RestaurantMenu /></RestaurantPortalRoute>} />
       <Route path="/restaurant-portal/kitchen" element={<RestaurantPortalRoute><KitchenDisplay /></RestaurantPortalRoute>} />
       <Route path="/restaurant-portal/purchase-receiving" element={<RestaurantPortalRoute><PurchaseReceivingPage /></RestaurantPortalRoute>} />

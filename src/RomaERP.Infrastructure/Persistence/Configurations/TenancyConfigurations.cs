@@ -23,6 +23,8 @@ public class CompanySettingsConfiguration : IEntityTypeConfiguration<CompanySett
         builder.Property(c => c.GgEmployeeSocialRatePercent).HasPrecision(5, 2);
         builder.Property(c => c.GgEmployerSocialRatePercent).HasPrecision(5, 2);
         builder.Property(c => c.GgSocialMonthlyUpperLimit).HasPrecision(18, 2);
+        builder.Property(c => c.LoyaltySpendPerPoint).HasPrecision(18, 2);
+        builder.Property(c => c.LoyaltyPointValue).HasPrecision(18, 2);
 
         builder.Property(c => c.EInvoicingClientId).HasMaxLength(200);
         builder.Property(c => c.EInvoicingLastInvoiceHash).HasMaxLength(200);

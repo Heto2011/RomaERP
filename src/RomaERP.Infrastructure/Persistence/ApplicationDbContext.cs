@@ -70,6 +70,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
 
     public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
     public DbSet<RestaurantOrder> RestaurantOrders => Set<RestaurantOrder>();
+    public DbSet<LoyaltyMember> LoyaltyMembers => Set<LoyaltyMember>();
+    public DbSet<LoyaltyTransaction> LoyaltyTransactions => Set<LoyaltyTransaction>();
     public DbSet<RestaurantOrderLine> RestaurantOrderLines => Set<RestaurantOrderLine>();
     public DbSet<MenuRecipeLine> MenuRecipeLines => Set<MenuRecipeLine>();
     public DbSet<DeliverySettlementImport> DeliverySettlementImports => Set<DeliverySettlementImport>();

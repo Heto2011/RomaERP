@@ -165,11 +165,13 @@ public class RestaurantService : IRestaurantService
     public async Task<List<RestaurantOrderDto>> GetOrdersAsync(bool includeClosed = false, CancellationToken ct = default)
     {
         var vatRate = await GetVatRateAsync(ct);
+        var loyalty = await GetLoyaltySettingsAsync(ct);
         var query = _context.RestaurantOrders
             .AsNoTracking()
             .Include(o => o.Table)
             .Include(o => o.WaiterEmployee)
             .Include(o => o.SalesInvoice)
+            .Include(o => o.LoyaltyMember)
             .Include(o => o.Lines).ThenInclude(l => l.Item)
             .AsQueryable();
 
@@ -177,14 +179,15 @@ public class RestaurantService : IRestaurantService
             query = query.Where(o => o.Status == RestaurantOrderStatus.Open);
 
         var orders = await query.OrderByDescending(o => o.OrderDate).ThenByDescending(o => o.OrderNumber).ToListAsync(ct);
-        return orders.Select(o => Map(o, vatRate)).ToList();
+        return orders.Select(o => Map(o, vatRate, loyalty)).ToList();
     }
 
     public async Task<RestaurantOrderDto> GetOrderAsync(Guid id, CancellationToken ct = default)
     {
         var order = await LoadOrderAsync(id, ct);
         var vatRate = await GetVatRateAsync(ct);
-        return Map(order, vatRate);
+        var loyalty = await GetLoyaltySettingsAsync(ct);
+        return Map(order, vatRate, loyalty);
     }
 
     public async Task<RestaurantOrderDto> CreateOrderAsync(CreateRestaurantOrderDto dto, CancellationToken ct = default)
@@ -212,10 +215,17 @@ public class RestaurantService : IRestaurantService
             && !await _context.Employees.AnyAsync(e => e.Id == waiterId && !e.IsDeleted, ct))
             throw new NotFoundException(nameof(Employee), waiterId);
 
+        // A returning customer (matched by phone) is attached automatically so their points and history follow the order.
+        Guid? loyaltyMemberId = null;
+        var orderPhone = LoyaltyPhone.Normalize(dto.CustomerPhone);
+        if (orderPhone.Length >= 6 && (await GetLoyaltySettingsAsync(ct)).Enabled)
+            loyaltyMemberId = await _context.LoyaltyMembers.Where(m => m.Phone == orderPhone).Select(m => (Guid?)m.Id).FirstOrDefaultAsync(ct);
+
         var count = await _context.RestaurantOrders.CountAsync(ct);
         var order = new RestaurantOrder
         {
             OrderNumber = $"RO-{(count + 1):D6}",
+            LoyaltyMemberId = loyaltyMemberId,
             OrderType = dto.OrderType,
             OrderDate = DateTime.UtcNow,
             TableId = table?.Id,
@@ -387,6 +397,7 @@ public class RestaurantService : IRestaurantService
             DeliveryAddress = order.DeliveryAddress,
             WaiterEmployeeId = order.WaiterEmployeeId,
             WarehouseId = order.WarehouseId,
+            LoyaltyMemberId = order.LoyaltyMemberId,
             Status = RestaurantOrderStatus.Open
         };
         _context.RestaurantOrders.Add(newOrder);
@@ -457,6 +468,13 @@ public class RestaurantService : IRestaurantService
 
         target.DiscountAmount += source.DiscountAmount;
         source.DiscountAmount = 0;
+        if (target.LoyaltyMemberId is null && source.LoyaltyMemberId is not null)
+        {
+            target.LoyaltyMemberId = source.LoyaltyMemberId;
+            target.LoyaltyPointsToRedeem = source.LoyaltyPointsToRedeem;
+        }
+        source.LoyaltyMemberId = null;
+        source.LoyaltyPointsToRedeem = 0;
         source.Status = RestaurantOrderStatus.Cancelled;
         source.Notes = string.IsNullOrWhiteSpace(source.Notes) ? $"مدمج في {target.OrderNumber}" : $"{source.Notes} — مدمج في {target.OrderNumber}";
         await _context.SaveChangesAsync(ct);
@@ -464,6 +482,63 @@ public class RestaurantService : IRestaurantService
         await ReleaseTableIfIdleAsync(source.TableId, source.Id, ct);
         await _context.SaveChangesAsync(ct);
         return await GetOrderAsync(target.Id, ct);
+    }
+
+    /// <summary>Attaches a repeat customer to the open order (found by phone, or registered on the spot) and, if asked, sets how many of
+    /// their points to spend. The points are only deducted when the order is billed, so cancelling the order costs the customer nothing.</summary>
+    public async Task<RestaurantOrderDto> SetOrderLoyaltyAsync(Guid orderId, SetOrderLoyaltyDto dto, CancellationToken ct = default)
+    {
+        var loyalty = await GetLoyaltySettingsAsync(ct);
+        if (!loyalty.Enabled)
+            throw new ValidationAppException("برنامج نقاط الولاء مش مفعّل. فعّله من إعدادات الولاء.");
+
+        var order = await LoadOrderAsync(orderId, ct);
+        EnsureOpen(order);
+
+        var phone = LoyaltyPhone.Normalize(dto.Phone);
+        if (phone.Length < 6)
+            throw new ValidationAppException("اكتب رقم موبايل صحيح للعميل.");
+
+        var member = await _context.LoyaltyMembers.FirstOrDefaultAsync(m => m.Phone == phone, ct);
+        if (member is null)
+        {
+            member = new LoyaltyMember
+            {
+                Phone = phone,
+                Name = string.IsNullOrWhiteSpace(dto.Name) ? $"عميل {phone}" : dto.Name.Trim()
+            };
+            _context.LoyaltyMembers.Add(member);
+        }
+
+        if (dto.PointsToRedeem < 0)
+            throw new ValidationAppException("عدد النقاط لا يمكن أن يكون سالبًا.");
+        if (dto.PointsToRedeem > 0)
+        {
+            if (dto.PointsToRedeem < loyalty.MinRedeemPoints)
+                throw new ValidationAppException($"أقل عدد نقاط للاستبدال هو {loyalty.MinRedeemPoints}.");
+            if (dto.PointsToRedeem > member.PointsBalance)
+                throw new ValidationAppException($"رصيد النقاط ({member.PointsBalance}) أقل من المطلوب.");
+        }
+
+        order.LoyaltyMemberId = member.Id;
+        order.LoyaltyMember = member;
+        order.LoyaltyPointsToRedeem = dto.PointsToRedeem;
+        if (string.IsNullOrWhiteSpace(order.CustomerName)) order.CustomerName = member.Name;
+        if (string.IsNullOrWhiteSpace(order.CustomerPhone)) order.CustomerPhone = member.Phone;
+
+        await _context.SaveChangesAsync(ct);
+        return await GetOrderAsync(orderId, ct);
+    }
+
+    public async Task<RestaurantOrderDto> ClearOrderLoyaltyAsync(Guid orderId, CancellationToken ct = default)
+    {
+        var order = await LoadOrderAsync(orderId, ct);
+        EnsureOpen(order);
+        order.LoyaltyMemberId = null;
+        order.LoyaltyMember = null;
+        order.LoyaltyPointsToRedeem = 0;
+        await _context.SaveChangesAsync(ct);
+        return await GetOrderAsync(orderId, ct);
     }
 
     /// <summary>A table goes back to Available only when no other open order is still seated at it (a split-off check keeps it occupied).</summary>
@@ -553,11 +628,18 @@ public class RestaurantService : IRestaurantService
         // Any order-level discount is spread proportionally across lines (by their own gross share) rather
         // than carried as its own negative invoice line, since SalesInvoiceLineInputDto rejects a negative
         // UnitPrice — every line's discounted price still ends up clamped to zero or above.
+        var loyaltySettings = await GetLoyaltySettingsAsync(ct);
         var grossOrderTotal = order.Lines.Sum(l => l.LineTotal);
+        var payableBeforeLoyalty = grossOrderTotal - order.Lines.Sum(l => l.DiscountAmount) - order.DiscountAmount;
+        var (redeemedPoints, loyaltyDiscount) = LoyaltyRules.Redemption(order, payableBeforeLoyalty, loyaltySettings);
+        if (redeemedPoints > 0 && order.LoyaltyMember!.PointsBalance < redeemedPoints)
+            throw new ValidationAppException($"رصيد نقاط العميل ({order.LoyaltyMember.PointsBalance}) أقل من النقاط المطلوب استبدالها ({redeemedPoints}).");
+        var totalOrderDiscount = order.DiscountAmount + loyaltyDiscount;
+
         var invoiceLines = order.Lines.Select(l =>
         {
             var orderDiscountShare = grossOrderTotal > 0
-                ? Math.Round(order.DiscountAmount * (l.LineTotal / grossOrderTotal), 2)
+                ? Math.Round(totalOrderDiscount * (l.LineTotal / grossOrderTotal), 2)
                 : 0;
             var netLineTotal = Math.Max(0, l.LineTotal - l.DiscountAmount - orderDiscountShare);
             var discountedUnitPrice = l.Quantity > 0 ? Math.Round(netLineTotal / l.Quantity, 2) : 0;
@@ -643,6 +725,7 @@ public class RestaurantService : IRestaurantService
         order.Status = RestaurantOrderStatus.Billed;
         order.SalesInvoiceId = invoice.Id;
         order.CashierShiftId = dto.CashierShiftId;
+        ApplyLoyaltyOnBill(order, redeemedPoints, loyaltyDiscount, Math.Max(0m, payableBeforeLoyalty - loyaltyDiscount), loyaltySettings);
         await ReleaseTableIfIdleAsync(order.TableId, order.Id, ct);
 
         await _context.SaveChangesAsync(ct);
@@ -725,6 +808,25 @@ public class RestaurantService : IRestaurantService
                 await _journalEntryService.ReverseAsync(entryId, ct);
         }
 
+        if (order.LoyaltyMember is { } loyaltyMember)
+        {
+            var net = Math.Max(0m, order.Lines.Sum(l => l.LineTotal - l.DiscountAmount) - order.DiscountAmount - order.LoyaltyDiscountAmount);
+            if (order.LoyaltyPointsToRedeem > 0)
+            {
+                loyaltyMember.PointsBalance += order.LoyaltyPointsToRedeem;
+                AddLoyaltyTransaction(loyaltyMember, order, LoyaltyTransactionType.Reverse, order.LoyaltyPointsToRedeem, $"إرجاع نقاط مستبدلة - إلغاء {order.OrderNumber}");
+            }
+            if (order.LoyaltyPointsEarned > 0)
+            {
+                var taken = Math.Min(order.LoyaltyPointsEarned, loyaltyMember.PointsBalance);
+                loyaltyMember.PointsBalance -= taken;
+                loyaltyMember.LifetimePointsEarned = Math.Max(0, loyaltyMember.LifetimePointsEarned - order.LoyaltyPointsEarned);
+                AddLoyaltyTransaction(loyaltyMember, order, LoyaltyTransactionType.Reverse, -taken, $"خصم نقاط مكتسبة - إلغاء {order.OrderNumber}");
+            }
+            loyaltyMember.VisitCount = Math.Max(0, loyaltyMember.VisitCount - 1);
+            loyaltyMember.TotalSpent = Math.Max(0m, loyaltyMember.TotalSpent - net);
+        }
+
         order.Status = RestaurantOrderStatus.Voided;
         order.VoidedAtUtc = DateTime.UtcNow;
         order.VoidReason = dto.Reason;
@@ -732,6 +834,46 @@ public class RestaurantService : IRestaurantService
         await _context.SaveChangesAsync(ct);
         return await GetOrderAsync(orderId, ct);
     }
+
+    /// <summary>Freezes the redemption on the order, spends the points and credits the ones just earned, and updates the customer's visit stats.</summary>
+    private void ApplyLoyaltyOnBill(RestaurantOrder order, int redeemedPoints, decimal loyaltyDiscount, decimal netAmount, LoyaltySettings settings)
+    {
+        order.LoyaltyPointsToRedeem = redeemedPoints;
+        order.LoyaltyDiscountAmount = loyaltyDiscount;
+        order.LoyaltyPointsEarned = 0;
+
+        var member = order.LoyaltyMember;
+        if (member is null) return;
+
+        var earned = LoyaltyRules.PointsEarned(netAmount, settings);
+        order.LoyaltyPointsEarned = earned;
+
+        if (redeemedPoints > 0)
+        {
+            member.PointsBalance -= redeemedPoints;
+            AddLoyaltyTransaction(member, order, LoyaltyTransactionType.Redeem, -redeemedPoints, $"استبدال نقاط - {order.OrderNumber}");
+        }
+        if (earned > 0)
+        {
+            member.PointsBalance += earned;
+            member.LifetimePointsEarned += earned;
+            AddLoyaltyTransaction(member, order, LoyaltyTransactionType.Earn, earned, $"نقاط من الطلب {order.OrderNumber}");
+        }
+        member.VisitCount++;
+        member.TotalSpent += netAmount;
+        member.LastVisitUtc = DateTime.UtcNow;
+    }
+
+    private void AddLoyaltyTransaction(LoyaltyMember member, RestaurantOrder order, LoyaltyTransactionType type, int points, string note)
+        => _context.LoyaltyTransactions.Add(new LoyaltyTransaction
+        {
+            LoyaltyMemberId = member.Id,
+            RestaurantOrderId = order.Id,
+            Type = type,
+            Points = points,
+            BalanceAfter = member.PointsBalance,
+            Note = note
+        });
 
     private async Task<Customer> GetOrCreateWalkInCustomerAsync(CancellationToken ct)
     {
@@ -790,6 +932,7 @@ public class RestaurantService : IRestaurantService
             .Include(o => o.Table)
             .Include(o => o.WaiterEmployee)
             .Include(o => o.SalesInvoice)
+            .Include(o => o.LoyaltyMember)
             .Include(o => o.Lines).ThenInclude(l => l.Item).ThenInclude(i => i!.RecipeLines).ThenInclude(r => r.RawMaterialItem)
             .FirstOrDefaultAsync(o => o.Id == id, ct)
             ?? throw new NotFoundException(nameof(RestaurantOrder), id);
@@ -798,6 +941,14 @@ public class RestaurantService : IRestaurantService
     {
         var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct);
         return settings?.VatRate ?? 0;
+    }
+
+    private async Task<LoyaltySettings> GetLoyaltySettingsAsync(CancellationToken ct)
+    {
+        var s = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct);
+        return s is null
+            ? new LoyaltySettings(false, 10m, 0.5m, 20)
+            : new LoyaltySettings(s.LoyaltyEnabled, s.LoyaltySpendPerPoint, s.LoyaltyPointValue, s.LoyaltyMinRedeemPoints);
     }
 
     private async Task<Account> GetAccountAsync(string code, string arabicLabel, CancellationToken ct)
@@ -813,12 +964,20 @@ public class RestaurantService : IRestaurantService
         Status = t.Status
     };
 
-    private static RestaurantOrderDto Map(RestaurantOrder o, decimal vatRate)
+    private static RestaurantOrderDto Map(RestaurantOrder o, decimal vatRate, LoyaltySettings loyalty)
     {
         var grossSubTotal = o.Lines.Sum(l => l.LineTotal);
         var lineDiscounts = o.Lines.Sum(l => l.DiscountAmount);
-        var totalDiscount = lineDiscounts + o.DiscountAmount;
+
+        // Once billed the redemption is frozen on the order; while open it follows the current lines and discounts.
+        var (redeemPoints, loyaltyDiscount) = o.Status == RestaurantOrderStatus.Open
+            ? LoyaltyRules.Redemption(o, grossSubTotal - lineDiscounts - o.DiscountAmount, loyalty)
+            : (o.LoyaltyPointsToRedeem, o.LoyaltyDiscountAmount);
+        var totalDiscount = lineDiscounts + o.DiscountAmount + loyaltyDiscount;
         var subTotal = Math.Max(0, grossSubTotal - totalDiscount);
+        var pointsEarned = o.Status == RestaurantOrderStatus.Open
+            ? (o.LoyaltyMemberId is null ? 0 : LoyaltyRules.PointsEarned(subTotal, loyalty))
+            : o.LoyaltyPointsEarned;
         var vatAmount = Math.Round(subTotal * vatRate, 2);
 
         return new RestaurantOrderDto
@@ -850,6 +1009,13 @@ public class RestaurantService : IRestaurantService
             VoidReason = o.VoidReason,
             SourcePlatform = o.SourcePlatform,
             ExternalOrderRef = o.ExternalOrderRef,
+            LoyaltyMemberId = o.LoyaltyMemberId,
+            LoyaltyMemberName = o.LoyaltyMember?.Name,
+            LoyaltyMemberPhone = o.LoyaltyMember?.Phone,
+            LoyaltyPointsBalance = o.LoyaltyMember?.PointsBalance ?? 0,
+            LoyaltyPointsToRedeem = redeemPoints,
+            LoyaltyDiscountAmount = loyaltyDiscount,
+            LoyaltyPointsEarned = pointsEarned,
             Lines = o.Lines.OrderBy(l => l.LineNumber).Select(l => new RestaurantOrderLineDto
             {
                 Id = l.Id,

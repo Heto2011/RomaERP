@@ -160,6 +160,18 @@ public class RestaurantOrderDto
     public string? VoidReason { get; set; }
     public string? SourcePlatform { get; set; }
     public string? ExternalOrderRef { get; set; }
+
+    // ----- Loyalty -----
+    public Guid? LoyaltyMemberId { get; set; }
+    public string? LoyaltyMemberName { get; set; }
+    public string? LoyaltyMemberPhone { get; set; }
+    public int LoyaltyPointsBalance { get; set; }
+    /// <summary>Points that will be spent on this order (already limited to what the order total allows).</summary>
+    public int LoyaltyPointsToRedeem { get; set; }
+    /// <summary>Discount those points give — already included in <see cref="TotalDiscount"/>.</summary>
+    public decimal LoyaltyDiscountAmount { get; set; }
+    /// <summary>Points collected: final once billed, an estimate while the order is open.</summary>
+    public int LoyaltyPointsEarned { get; set; }
     public List<RestaurantOrderLineDto> Lines { get; set; } = new();
 }
 
@@ -198,4 +210,13 @@ public class MoveOrderTableDto
 public class MergeOrdersDto
 {
     public Guid SourceOrderId { get; set; }
+}
+
+/// <summary>Attaches a repeat customer (found, or created, by phone number) to an open order, optionally spending points on it.</summary>
+public class SetOrderLoyaltyDto
+{
+    public string Phone { get; set; } = string.Empty;
+    /// <summary>Only used when the phone number is new — the name to register the customer under.</summary>
+    public string? Name { get; set; }
+    public int PointsToRedeem { get; set; }
 }

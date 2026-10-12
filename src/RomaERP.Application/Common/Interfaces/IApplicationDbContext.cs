@@ -54,6 +54,8 @@ public interface IApplicationDbContext
 
     DbSet<RestaurantTable> RestaurantTables { get; }
     DbSet<RestaurantOrder> RestaurantOrders { get; }
+    DbSet<LoyaltyMember> LoyaltyMembers { get; }
+    DbSet<LoyaltyTransaction> LoyaltyTransactions { get; }
     DbSet<RestaurantOrderLine> RestaurantOrderLines { get; }
     DbSet<MenuRecipeLine> MenuRecipeLines { get; }
     DbSet<DeliverySettlementImport> DeliverySettlementImports { get; }

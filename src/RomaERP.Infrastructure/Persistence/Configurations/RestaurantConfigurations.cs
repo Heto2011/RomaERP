@@ -48,6 +48,12 @@ public class RestaurantOrderConfiguration : IEntityTypeConfiguration<RestaurantO
             .HasForeignKey(o => o.WarehouseId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.Property(o => o.LoyaltyDiscountAmount).HasPrecision(18, 2);
+        builder.HasOne(o => o.LoyaltyMember)
+            .WithMany()
+            .HasForeignKey(o => o.LoyaltyMemberId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasOne(o => o.SalesInvoice)
             .WithMany()
             .HasForeignKey(o => o.SalesInvoiceId)
@@ -193,5 +199,32 @@ public class DeliveryWebhookEventConfiguration : IEntityTypeConfiguration<Delive
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasQueryFilter(e => !e.IsDeleted);
+    }
+}
+
+public class LoyaltyMemberConfiguration : IEntityTypeConfiguration<LoyaltyMember>
+{
+    public void Configure(EntityTypeBuilder<LoyaltyMember> builder)
+    {
+        builder.Property(m => m.Name).HasMaxLength(200).IsRequired();
+        builder.Property(m => m.Phone).HasMaxLength(30).IsRequired();
+        builder.Property(m => m.Notes).HasMaxLength(500);
+        builder.Property(m => m.TotalSpent).HasPrecision(18, 2);
+        builder.HasIndex(m => m.Phone).IsUnique();
+        builder.HasQueryFilter(m => !m.IsDeleted);
+    }
+}
+
+public class LoyaltyTransactionConfiguration : IEntityTypeConfiguration<LoyaltyTransaction>
+{
+    public void Configure(EntityTypeBuilder<LoyaltyTransaction> builder)
+    {
+        builder.Property(t => t.Note).HasMaxLength(300);
+        builder.HasIndex(t => t.RestaurantOrderId);
+        builder.HasOne(t => t.LoyaltyMember)
+            .WithMany()
+            .HasForeignKey(t => t.LoyaltyMemberId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasQueryFilter(t => !t.IsDeleted);
     }
 }

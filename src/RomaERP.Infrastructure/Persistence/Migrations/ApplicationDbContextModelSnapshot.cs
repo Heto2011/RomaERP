@@ -3030,6 +3030,19 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<decimal>("LoyaltyDiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("LoyaltyMemberId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("LoyaltyPointsEarned")
+                        .HasColumnType("int");
+
+                    b.Property<int>("LoyaltyPointsToRedeem")
+                        .HasColumnType("int");
+
                     b.Property<string>("Notes")
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
@@ -3080,6 +3093,8 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("CashierShiftId");
+
+                    b.HasIndex("LoyaltyMemberId");
 
                     b.HasIndex("OrderNumber")
                         .IsUnique();
@@ -3144,6 +3159,114 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.HasIndex("RestaurantOrderId");
 
                     b.ToTable("RestaurantOrderLines");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Restaurant.LoyaltyMember", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastVisitUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("LifetimePointsEarned")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<int>("PointsBalance")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("TotalSpent")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int>("VisitCount")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Phone")
+                        .IsUnique();
+
+                    b.ToTable("LoyaltyMembers");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Restaurant.LoyaltyTransaction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("BalanceAfter")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("LoyaltyMemberId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<int>("Points")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("RestaurantOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoyaltyMemberId");
+
+                    b.HasIndex("RestaurantOrderId");
+
+                    b.ToTable("LoyaltyTransactions");
                 });
 
             modelBuilder.Entity("RomaERP.Domain.Restaurant.RestaurantTable", b =>
@@ -3757,6 +3880,20 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .HasColumnType("decimal(5,2)");
 
                     b.Property<decimal>("GgPersonalAllowanceAnnual")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("LoyaltyEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("LoyaltyMinRedeemPoints")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("LoyaltyPointValue")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("LoyaltySpendPerPoint")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
@@ -4610,11 +4747,27 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Navigation("RawMaterialItem");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Restaurant.LoyaltyTransaction", b =>
+                {
+                    b.HasOne("RomaERP.Domain.Restaurant.LoyaltyMember", "LoyaltyMember")
+                        .WithMany()
+                        .HasForeignKey("LoyaltyMemberId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LoyaltyMember");
+                });
+
             modelBuilder.Entity("RomaERP.Domain.Restaurant.RestaurantOrder", b =>
                 {
                     b.HasOne("RomaERP.Domain.Restaurant.CashierShift", "CashierShift")
                         .WithMany()
                         .HasForeignKey("CashierShiftId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("RomaERP.Domain.Restaurant.LoyaltyMember", "LoyaltyMember")
+                        .WithMany()
+                        .HasForeignKey("LoyaltyMemberId")
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("RomaERP.Domain.Sales.SalesInvoice", "SalesInvoice")
@@ -4639,6 +4792,8 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("CashierShift");
+
+                    b.Navigation("LoyaltyMember");
 
                     b.Navigation("SalesInvoice");
 

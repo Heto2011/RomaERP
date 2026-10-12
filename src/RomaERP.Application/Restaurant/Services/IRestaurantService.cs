@@ -24,6 +24,8 @@ public interface IRestaurantService
     Task<RestaurantOrderDto> SetLineKitchenStatusAsync(Guid orderId, Guid lineId, SetLineKitchenStatusDto dto, CancellationToken ct = default);
     Task<SplitOrderResultDto> SplitOrderAsync(Guid orderId, SplitOrderDto dto, CancellationToken ct = default);
     Task<RestaurantOrderDto> MoveOrderToTableAsync(Guid orderId, MoveOrderTableDto dto, CancellationToken ct = default);
+    Task<RestaurantOrderDto> SetOrderLoyaltyAsync(Guid orderId, SetOrderLoyaltyDto dto, CancellationToken ct = default);
+    Task<RestaurantOrderDto> ClearOrderLoyaltyAsync(Guid orderId, CancellationToken ct = default);
     Task<RestaurantOrderDto> MergeOrdersAsync(Guid targetOrderId, MergeOrdersDto dto, CancellationToken ct = default);
     Task<RestaurantOrderDto> CancelOrderAsync(Guid orderId, CancellationToken ct = default);
     Task<RestaurantOrderDto> BillOrderAsync(Guid orderId, BillOrderDto dto, CancellationToken ct = default);

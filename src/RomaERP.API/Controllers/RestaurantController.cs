@@ -89,6 +89,14 @@ public class RestaurantController : ControllerBase
     public async Task<ActionResult<SplitOrderResultDto>> SplitOrder(Guid id, SplitOrderDto dto, CancellationToken ct)
         => Ok(await _restaurantService.SplitOrderAsync(id, dto, ct));
 
+    [HttpPut("orders/{id:guid}/loyalty")]
+    public async Task<ActionResult<RestaurantOrderDto>> SetOrderLoyalty(Guid id, SetOrderLoyaltyDto dto, CancellationToken ct)
+        => Ok(await _restaurantService.SetOrderLoyaltyAsync(id, dto, ct));
+
+    [HttpDelete("orders/{id:guid}/loyalty")]
+    public async Task<ActionResult<RestaurantOrderDto>> ClearOrderLoyalty(Guid id, CancellationToken ct)
+        => Ok(await _restaurantService.ClearOrderLoyaltyAsync(id, ct));
+
     [HttpPost("orders/{id:guid}/move-table")]
     public async Task<ActionResult<RestaurantOrderDto>> MoveOrderToTable(Guid id, MoveOrderTableDto dto, CancellationToken ct)
         => Ok(await _restaurantService.MoveOrderToTableAsync(id, dto, ct));

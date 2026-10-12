@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { usePortalManifest } from "../utils/pwa";
-import { IconCart, IconGrid, IconBook, IconTruck, IconSwap, IconRefresh, IconClock, IconSun, IconMoon, IconMenuToggle } from "./icons";
+import { IconCart, IconGrid, IconStar, IconBook, IconTruck, IconSwap, IconRefresh, IconClock, IconSun, IconMoon, IconMenuToggle } from "./icons";
 
 /// <summary>A distinct-branded shell for the restaurant/POS pages — same components, same data, same
 /// login as the existing /restaurant/* section — just its own accent color and name ("ROMA Restaurant")
@@ -19,6 +19,7 @@ export default function RestaurantPortalLayout({ children }: { children: ReactNo
 
   const links = [
     { to: "/restaurant-portal/tables", label: t.nav.restaurantTables, icon: <IconGrid /> },
+    { to: "/restaurant-portal/loyalty", label: t.nav.restaurantLoyalty, icon: <IconStar /> },
     { to: "/restaurant-portal/menu", label: t.nav.restaurantMenu, icon: <IconBook /> },
     { to: "/restaurant-portal/kitchen", label: t.nav.kitchenDisplay, icon: <IconClock /> },
     { to: "/restaurant-portal/purchase-receiving", label: t.restaurant.purchaseReceivingTitle, icon: <IconTruck /> },

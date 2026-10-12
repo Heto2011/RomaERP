@@ -161,6 +161,10 @@ import type {
   MoveOrderTableInput,
   MergeOrdersInput,
   SplitOrderResult,
+  SetOrderLoyaltyInput,
+  LoyaltySettings,
+  LoyaltyMember,
+  LoyaltyMemberDetail,
 } from "./types";
 
 export const AuthApi = {
@@ -627,9 +631,25 @@ export const RestaurantApi = {
     apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/move-table`, data),
   mergeOrders: (targetOrderId: string, data: MergeOrdersInput) =>
     apiClient.post<RestaurantOrder>(`/restaurant/orders/${targetOrderId}/merge`, data),
+  setOrderLoyalty: (orderId: string, data: SetOrderLoyaltyInput) =>
+    apiClient.put<RestaurantOrder>(`/restaurant/orders/${orderId}/loyalty`, data),
+  clearOrderLoyalty: (orderId: string) => apiClient.delete<RestaurantOrder>(`/restaurant/orders/${orderId}/loyalty`),
   cancelOrder: (orderId: string) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/cancel`),
   billOrder: (orderId: string, data: BillOrderInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/bill`, data),
   voidOrder: (orderId: string, data: VoidOrderInput) => apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/void`, data),
+};
+
+export const LoyaltyApi = {
+  getSettings: () => apiClient.get<LoyaltySettings>("/restaurant/loyalty/settings"),
+  updateSettings: (data: LoyaltySettings) => apiClient.put<LoyaltySettings>("/restaurant/loyalty/settings", data),
+  getMembers: (search?: string) => apiClient.get<LoyaltyMember[]>("/restaurant/loyalty/members", { params: { search } }),
+  findByPhone: (phone: string) => apiClient.get<LoyaltyMember>("/restaurant/loyalty/members/by-phone", { params: { phone } }),
+  getMember: (id: string) => apiClient.get<LoyaltyMemberDetail>(`/restaurant/loyalty/members/${id}`),
+  createMember: (data: { name: string; phone: string; notes?: string | null }) => apiClient.post<LoyaltyMember>("/restaurant/loyalty/members", data),
+  updateMember: (id: string, data: { name: string; phone: string; notes?: string | null }) =>
+    apiClient.put<LoyaltyMember>(`/restaurant/loyalty/members/${id}`, data),
+  adjustPoints: (id: string, data: { points: number; note?: string | null }) =>
+    apiClient.post<LoyaltyMember>(`/restaurant/loyalty/members/${id}/adjust`, data),
 };
 
 export const CashierShiftsApi = {

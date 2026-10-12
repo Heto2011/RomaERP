@@ -546,4 +546,121 @@ public class RestaurantServiceTests
         await service.CancelOrderAsync(order.Id);
         Assert.Equal(RestaurantTableStatus.Available, (await seed.Ctx.RestaurantTables.AsNoTracking().SingleAsync(t => t.Id == seed.Table.Id)).Status);
     }
+
+    private static async Task EnableLoyaltyAsync(ApplicationDbContext ctx)
+    {
+        var settings = await ctx.CompanySettings.FirstAsync();
+        settings.LoyaltyEnabled = true;
+        settings.LoyaltySpendPerPoint = 10;
+        settings.LoyaltyPointValue = 0.5m;
+        settings.LoyaltyMinRedeemPoints = 20;
+        await ctx.SaveChangesAsync();
+    }
+
+    private static async Task<RestaurantOrderDto> OpenPizzaOrderAsync(RestaurantService service, SeedResult seed, decimal qty, RestaurantTable? table = null)
+    {
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto
+        {
+            OrderType = RestaurantOrderType.DineIn, TableId = (table ?? seed.Table).Id, WarehouseId = seed.Warehouse.Id
+        });
+        return await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Pizza.Id, Quantity = qty });
+    }
+
+    [Fact]
+    public async Task Loyalty_EarnsPointsOnBill_RedeemsThemAsDiscount_AndVoidReversesBoth()
+    {
+        var seed = await SeedAsync();
+        await EnableLoyaltyAsync(seed.Ctx);
+        var service = BuildService(seed.Ctx);
+
+        // First visit: 2 pizzas = 200 -> 20 points, shown as an estimate while the order is open.
+        var first = await OpenPizzaOrderAsync(service, seed, 2);
+        var attached = await service.SetOrderLoyaltyAsync(first.Id, new SetOrderLoyaltyDto { Phone = "+20 100 123 4567", Name = "أحمد" });
+        Assert.Equal(20, attached.LoyaltyPointsEarned);
+        Assert.Equal("01001234567", attached.LoyaltyMemberPhone);
+        var billedFirst = await service.BillOrderAsync(first.Id, new BillOrderDto { PaymentTerm = PaymentTerm.Cash, FiscalPeriodId = seed.Period.Id });
+        Assert.Equal(20, billedFirst.LoyaltyPointsEarned);
+
+        var member = await seed.Ctx.LoyaltyMembers.SingleAsync();
+        Assert.Equal(20, member.PointsBalance);
+        Assert.Equal(1, member.VisitCount);
+        Assert.Equal(200m, member.TotalSpent);
+
+        // Second visit, same customer (matched by phone typed in another format): spend all 20 points = 10 off 100.
+        var second = await OpenPizzaOrderAsync(service, seed, 1);
+        var withRedeem = await service.SetOrderLoyaltyAsync(second.Id, new SetOrderLoyaltyDto { Phone = "01001234567", PointsToRedeem = 20 });
+        Assert.Equal(10m, withRedeem.LoyaltyDiscountAmount);
+        Assert.Equal(90m, withRedeem.SubTotal);
+
+        var billedSecond = await service.BillOrderAsync(second.Id, new BillOrderDto { PaymentTerm = PaymentTerm.Cash, FiscalPeriodId = seed.Period.Id });
+        Assert.Equal(9, billedSecond.LoyaltyPointsEarned);
+        Assert.Equal(102.6m, billedSecond.TotalAmount);
+
+        member = await seed.Ctx.LoyaltyMembers.SingleAsync();
+        Assert.Equal(9, member.PointsBalance); // 20 - 20 + 9
+        Assert.Equal(2, member.VisitCount);
+
+        // Voiding the second order gives the redeemed points back and takes the earned ones away.
+        await service.VoidOrderAsync(second.Id, new VoidOrderDto { Reason = "اختبار" });
+        member = await seed.Ctx.LoyaltyMembers.SingleAsync();
+        Assert.Equal(20, member.PointsBalance);
+        Assert.Equal(1, member.VisitCount);
+        Assert.Equal(200m, member.TotalSpent);
+        Assert.Equal(5, await seed.Ctx.LoyaltyTransactions.CountAsync()); // earn, redeem, earn, plus two reversals
+    }
+
+    [Fact]
+    public async Task Loyalty_RefusesWhenDisabled_AndBadRedeemAmounts()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+        var order = await OpenPizzaOrderAsync(service, seed, 1);
+
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.SetOrderLoyaltyAsync(order.Id, new SetOrderLoyaltyDto { Phone = "01001234567" }));
+
+        await EnableLoyaltyAsync(seed.Ctx);
+        await service.SetOrderLoyaltyAsync(order.Id, new SetOrderLoyaltyDto { Phone = "01001234567", Name = "منى" });
+        // new customer has no points yet, so any redemption is refused; below the minimum is refused too
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.SetOrderLoyaltyAsync(order.Id, new SetOrderLoyaltyDto { Phone = "01001234567", PointsToRedeem = 5 }));
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.SetOrderLoyaltyAsync(order.Id, new SetOrderLoyaltyDto { Phone = "01001234567", PointsToRedeem = 50 }));
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.SetOrderLoyaltyAsync(order.Id, new SetOrderLoyaltyDto { Phone = "12" }));
+    }
+
+    [Fact]
+    public async Task Loyalty_ReturningCustomerIsAttachedAutomaticallyByPhone_AndHistoryListsOrders()
+    {
+        var seed = await SeedAsync();
+        await EnableLoyaltyAsync(seed.Ctx);
+        var service = BuildService(seed.Ctx);
+
+        var first = await OpenPizzaOrderAsync(service, seed, 1);
+        await service.SetOrderLoyaltyAsync(first.Id, new SetOrderLoyaltyDto { Phone = "01001234567", Name = "سارة" });
+        await service.BillOrderAsync(first.Id, new BillOrderDto { PaymentTerm = PaymentTerm.Cash, FiscalPeriodId = seed.Period.Id });
+
+        var takeaway = await service.CreateOrderAsync(new CreateRestaurantOrderDto
+        {
+            OrderType = RestaurantOrderType.Takeaway, CustomerPhone = "00201001234567", WarehouseId = seed.Warehouse.Id
+        });
+        Assert.NotNull(takeaway.LoyaltyMemberId);
+        Assert.Equal("سارة", takeaway.LoyaltyMemberName);
+
+        var loyalty = new LoyaltyService(seed.Ctx);
+        var member = (await loyalty.GetMembersAsync("سارة")).Single();
+        var detail = await loyalty.GetMemberAsync(member.Id);
+        Assert.Single(detail.Orders);
+        Assert.Equal(10, detail.Orders[0].PointsEarned);
+        Assert.Contains("بيتزا × 1", detail.FavouriteItems);
+    }
+
+    [Fact]
+    public void LoyaltyRules_CapRedemptionToWhatIsLeftToPay()
+    {
+        var settings = new LoyaltySettings(true, 10m, 0.5m, 20);
+        var order = new RestaurantOrder { LoyaltyMemberId = Guid.NewGuid(), LoyaltyPointsToRedeem = 100 }; // worth 50
+        var (points, discount) = LoyaltyRules.Redemption(order, 30m, settings);
+        Assert.Equal(30m, discount);
+        Assert.Equal(60, points);
+        Assert.Equal((0, 0m), LoyaltyRules.Redemption(order, 30m, settings with { Enabled = false }));
+        Assert.Equal(4, LoyaltyRules.PointsEarned(49.99m, settings));
+    }
 }

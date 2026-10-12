@@ -1846,7 +1846,66 @@ export interface RestaurantOrder {
   totalAmount: number;
   voidedAtUtc: string | null;
   voidReason: string | null;
+  loyaltyMemberId: string | null;
+  loyaltyMemberName: string | null;
+  loyaltyMemberPhone: string | null;
+  loyaltyPointsBalance: number;
+  loyaltyPointsToRedeem: number;
+  loyaltyDiscountAmount: number;
+  loyaltyPointsEarned: number;
   lines: RestaurantOrderLine[];
+}
+
+export interface SetOrderLoyaltyInput {
+  phone: string;
+  name?: string | null;
+  pointsToRedeem: number;
+}
+
+export interface LoyaltySettings {
+  enabled: boolean;
+  spendPerPoint: number;
+  pointValue: number;
+  minRedeemPoints: number;
+}
+
+export interface LoyaltyMember {
+  id: string;
+  name: string;
+  phone: string;
+  notes: string | null;
+  pointsBalance: number;
+  lifetimePointsEarned: number;
+  visitCount: number;
+  totalSpent: number;
+  averageSpend: number;
+  lastVisitUtc: string | null;
+}
+
+export interface LoyaltyOrderHistory {
+  orderId: string;
+  orderNumber: string;
+  orderDate: string;
+  orderType: RestaurantOrderType;
+  status: RestaurantOrderStatus;
+  total: number;
+  pointsEarned: number;
+  pointsRedeemed: number;
+  items: string[];
+}
+
+export interface LoyaltyTransaction {
+  createdAtUtc: string;
+  type: number;
+  points: number;
+  balanceAfter: number;
+  note: string | null;
+}
+
+export interface LoyaltyMemberDetail extends LoyaltyMember {
+  favouriteItems: string[];
+  orders: LoyaltyOrderHistory[];
+  transactions: LoyaltyTransaction[];
 }
 
 export interface SetLineDiscountInput {

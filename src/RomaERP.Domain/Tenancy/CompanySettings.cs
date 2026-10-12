@@ -34,6 +34,15 @@ public class CompanySettings : AuditableEntity
     /// SANED). A company cost, not deducted from the employee (% of basic salary).</summary>
     public decimal GosiNonSaudiEmployerHazardsRatePercent { get; set; } = 2.0m;
 
+    // ----- Restaurant loyalty programme (off by default) -----
+    public bool LoyaltyEnabled { get; set; }
+    /// <summary>Amount a customer spends (after discounts, before VAT) to earn one point.</summary>
+    public decimal LoyaltySpendPerPoint { get; set; } = 10m;
+    /// <summary>Discount value of one point when redeemed.</summary>
+    public decimal LoyaltyPointValue { get; set; } = 0.5m;
+    /// <summary>Smallest number of points that can be redeemed in one order.</summary>
+    public int LoyaltyMinRedeemPoints { get; set; } = 20;
+
     // ----- Guernsey payroll (used only when Country is Guernsey). All editable: the defaults are the published 2026 figures
     // and must be confirmed against the Guernsey Revenue Service and Social Security Department. -----
     /// <summary>Flat income tax rate (% of pay above the personal allowance).</summary>

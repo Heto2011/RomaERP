@@ -66,6 +66,16 @@ public class RestaurantOrder : AuditableEntity
     /// lines can't carry a negative amount.</summary>
     public decimal DiscountAmount { get; set; }
 
+    /// <summary>Repeat customer attached to this order (collects points when billed). Null for anonymous orders.</summary>
+    public Guid? LoyaltyMemberId { get; set; }
+    public LoyaltyMember? LoyaltyMember { get; set; }
+    /// <summary>Points the customer asked to spend on this order; turned into <see cref="LoyaltyDiscountAmount"/> and
+    /// deducted from their balance when the order is billed.</summary>
+    public int LoyaltyPointsToRedeem { get; set; }
+    /// <summary>Money value of the redeemed points — applied like an order-level discount, on top of <see cref="DiscountAmount"/>.</summary>
+    public decimal LoyaltyDiscountAmount { get; set; }
+    public int LoyaltyPointsEarned { get; set; }
+
     public Guid? SalesInvoiceId { get; set; }
     public SalesInvoice? SalesInvoice { get; set; }
 

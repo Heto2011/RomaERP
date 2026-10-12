@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { CashierShiftsApi, EmployeesApi, LookupsApi, RestaurantApi, SalesApi, WarehousesApi } from "../../api/services";
+import { CashierShiftsApi, EmployeesApi, LookupsApi, LoyaltyApi, RestaurantApi, SalesApi, WarehousesApi } from "../../api/services";
 import {
   PaymentTerm,
   RestaurantOrderType,
@@ -12,6 +12,7 @@ import {
   type Warehouse,
   type FiscalPeriod,
   type CashierShift,
+  type LoyaltyMember,
 } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
@@ -58,6 +59,13 @@ export default function RestaurantPOS() {
   const [showSplitDialog, setShowSplitDialog] = useState(false);
   const [splitLineIds, setSplitLineIds] = useState<Set<string>>(new Set());
 
+  const [loyaltyEnabled, setLoyaltyEnabled] = useState(false);
+  const [showLoyaltyDialog, setShowLoyaltyDialog] = useState(false);
+  const [loyaltyPhone, setLoyaltyPhone] = useState("");
+  const [loyaltyName, setLoyaltyName] = useState("");
+  const [loyaltyRedeem, setLoyaltyRedeem] = useState(0);
+  const [loyaltyFound, setLoyaltyFound] = useState<LoyaltyMember | null>(null);
+
   const [showMoveDialog, setShowMoveDialog] = useState(false);
   const [moveTargetTableId, setMoveTargetTableId] = useState("");
   const [showMergeDialog, setShowMergeDialog] = useState(false);
@@ -83,6 +91,7 @@ export default function RestaurantPOS() {
 
   useEffect(() => {
     load();
+    LoyaltyApi.getSettings().then((r) => setLoyaltyEnabled(r.data.enabled)).catch(() => setLoyaltyEnabled(false));
   }, []);
 
   useEffect(() => {
@@ -253,6 +262,58 @@ export default function RestaurantPOS() {
       const res = await RestaurantApi.splitOrder(selectedOrder.id, { lineIds: Array.from(splitLineIds) });
       setShowSplitDialog(false);
       setSelectedOrderId(res.data.originalOrder.id);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  function openLoyaltyDialog() {
+    setLoyaltyPhone(selectedOrder?.loyaltyMemberPhone ?? selectedOrder?.customerPhone ?? "");
+    setLoyaltyName(selectedOrder?.loyaltyMemberName ?? selectedOrder?.customerName ?? "");
+    setLoyaltyRedeem(selectedOrder?.loyaltyPointsToRedeem ?? 0);
+    setLoyaltyFound(null);
+    setShowLoyaltyDialog(true);
+  }
+
+  // Look the customer up as the cashier types, so the balance and name show up before anything is saved.
+  useEffect(() => {
+    if (!showLoyaltyDialog) return;
+    const digits = loyaltyPhone.replace(/\D/g, "");
+    if (digits.length < 6) {
+      setLoyaltyFound(null);
+      return;
+    }
+    const handle = window.setTimeout(() => {
+      LoyaltyApi.findByPhone(loyaltyPhone)
+        .then((r) => {
+          setLoyaltyFound(r.data);
+          setLoyaltyName((n) => n || r.data.name);
+        })
+        .catch(() => setLoyaltyFound(null));
+    }, 350);
+    return () => window.clearTimeout(handle);
+  }, [loyaltyPhone, showLoyaltyDialog]);
+
+  async function handleSetLoyalty(e: React.FormEvent) {
+    e.preventDefault();
+    if (!selectedOrder) return;
+    setError(null);
+    try {
+      await RestaurantApi.setOrderLoyalty(selectedOrder.id, { phone: loyaltyPhone, name: loyaltyName || null, pointsToRedeem: loyaltyRedeem });
+      setShowLoyaltyDialog(false);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
+  async function handleClearLoyalty() {
+    if (!selectedOrder) return;
+    setError(null);
+    try {
+      await RestaurantApi.clearOrderLoyalty(selectedOrder.id);
+      setShowLoyaltyDialog(false);
       await load();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -612,6 +673,19 @@ export default function RestaurantPOS() {
                 ))}
               </div>
 
+              {loyaltyEnabled && selectedOrder.status === RestaurantOrderStatus.Open && (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", padding: "6px 0" }}>
+                  <button type="button" className="btn btn-secondary btn-sm" onClick={openLoyaltyDialog}>
+                    {selectedOrder.loyaltyMemberId ? `⭐ ${selectedOrder.loyaltyMemberName}` : t.restaurant.loyaltyAttach}
+                  </button>
+                  {selectedOrder.loyaltyMemberId && (
+                    <span className="text-muted">
+                      {t.restaurant.loyaltyBalance}: {selectedOrder.loyaltyPointsBalance} · {t.restaurant.loyaltyWillEarn}: +{selectedOrder.loyaltyPointsEarned}
+                    </span>
+                  )}
+                </div>
+              )}
+
               <div className="pos-cart-totals">
                 <div><span>{t.common.subtotal}</span><span>{selectedOrder.grossSubTotal.toLocaleString()}</span></div>
                 <div>
@@ -625,6 +699,12 @@ export default function RestaurantPOS() {
                   </span>
                   <span>{selectedOrder.totalDiscount.toLocaleString()}</span>
                 </div>
+                {selectedOrder.loyaltyDiscountAmount > 0 && (
+                  <div>
+                    <span>{t.restaurant.loyaltyDiscountRow} ({selectedOrder.loyaltyPointsToRedeem})</span>
+                    <span>-{selectedOrder.loyaltyDiscountAmount.toLocaleString()}</span>
+                  </div>
+                )}
                 <div><span>{t.common.vat} ({(selectedOrder.vatRate * 100).toFixed(0)}%)</span><span>{selectedOrder.vatAmount.toLocaleString()}</span></div>
                 <div className="pos-cart-total-grand"><span>{t.common.total}</span><span>{selectedOrder.totalAmount.toLocaleString()}</span></div>
               </div>
@@ -765,6 +845,47 @@ export default function RestaurantPOS() {
                   {t.restaurant.splitBillConfirm}
                 </button>
                 <button className="btn btn-secondary" type="button" onClick={() => setShowSplitDialog(false)}>{t.common.cancel}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {showLoyaltyDialog && selectedOrder && (
+        <div className="modal-overlay" onClick={() => setShowLoyaltyDialog(false)}>
+          <div className="card" style={{ maxWidth: 420, margin: "8% auto" }} onClick={(e) => e.stopPropagation()}>
+            <h3>{t.restaurant.loyaltyAttachTitle} — {selectedOrder.orderNumber}</h3>
+            <form onSubmit={handleSetLoyalty}>
+              <div className="form-field">
+                <label>{t.restaurant.loyaltyPhone}</label>
+                <input value={loyaltyPhone} onChange={(e) => setLoyaltyPhone(e.target.value)} inputMode="tel" dir="ltr" autoFocus required />
+              </div>
+              {loyaltyPhone.replace(/\D/g, "").length >= 6 && (
+                <p className={loyaltyFound ? "text-success" : "text-muted"} style={{ margin: "4px 0" }}>
+                  {loyaltyFound
+                    ? `${t.restaurant.loyaltyFound}: ${loyaltyFound.name} — ${t.restaurant.loyaltyBalance}: ${loyaltyFound.pointsBalance}`
+                    : t.restaurant.loyaltyNewCustomer}
+                </p>
+              )}
+              <div className="form-field">
+                <label>{t.restaurant.loyaltyMember}</label>
+                <input value={loyaltyName} onChange={(e) => setLoyaltyName(e.target.value)} />
+              </div>
+              <div className="form-field">
+                <label>{t.restaurant.loyaltyRedeemPoints}</label>
+                <input
+                  type="number" min={0} step="1" value={loyaltyRedeem}
+                  max={loyaltyFound?.pointsBalance ?? 0}
+                  onChange={(e) => setLoyaltyRedeem(Number(e.target.value) || 0)}
+                  disabled={!loyaltyFound || loyaltyFound.pointsBalance === 0}
+                />
+              </div>
+              <div style={{ display: "flex", gap: 10, marginTop: 14, flexWrap: "wrap" }}>
+                <button className="btn" type="submit">{t.common.save}</button>
+                {selectedOrder.loyaltyMemberId && (
+                  <button className="btn btn-secondary" type="button" onClick={handleClearLoyalty}>{t.restaurant.loyaltyRemove}</button>
+                )}
+                <button className="btn btn-secondary" type="button" onClick={() => setShowLoyaltyDialog(false)}>{t.common.cancel}</button>
               </div>
             </form>
           </div>
