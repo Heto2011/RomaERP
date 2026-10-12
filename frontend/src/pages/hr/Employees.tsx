@@ -52,6 +52,7 @@ export default function Employees() {
   const [isGuernsey, setIsGuernsey] = useState(false);
   const [ggSsNumber, setGgSsNumber] = useState("");
   const [ggTaxReference, setGgTaxReference] = useState("");
+  const [ggAllowance, setGgAllowance] = useState("");
   const [ukNiNumber, setUkNiNumber] = useState("");
   const [ukTaxCode, setUkTaxCode] = useState("");
   const [ukNiCategory, setUkNiCategory] = useState("A");
@@ -152,6 +153,7 @@ export default function Employees() {
     setNationality("");
     setGgSsNumber("");
     setGgTaxReference("");
+    setGgAllowance("");
     setUkNiNumber("");
     setUkTaxCode("");
     setUkNiCategory("A");
@@ -192,6 +194,7 @@ export default function Employees() {
     setNationality(emp.nationality ?? (emp.isSaudiNational ? "SA" : ""));
     setGgSsNumber(emp.ggSocialSecurityNumber ?? "");
     setGgTaxReference(emp.ggTaxReference ?? "");
+    setGgAllowance(emp.ggPersonalAllowanceAnnual != null ? String(emp.ggPersonalAllowanceAnnual) : "");
     setUkNiNumber(emp.ukNationalInsuranceNumber ?? "");
     setUkTaxCode(emp.ukTaxCode ?? "");
     setUkNiCategory(emp.ukNiCategory ?? "A");
@@ -228,6 +231,7 @@ export default function Employees() {
         annualLeaveDaysPerYear: Number(annualLeaveDaysPerYear) || 21,
         ggSocialSecurityNumber: ggSsNumber || null,
         ggTaxReference: ggTaxReference || null,
+        ggPersonalAllowanceAnnual: ggAllowance.trim() === "" ? null : Number(ggAllowance),
         ukNationalInsuranceNumber: ukNiNumber || null,
         ukTaxCode: ukTaxCode || null,
         ukNiCategory: ukNiCategory || null,
@@ -447,6 +451,11 @@ export default function Employees() {
                   <div className="form-field">
                     <label>{t.hr.ggTaxReference}</label>
                     <input value={ggTaxReference} maxLength={20} onChange={(e) => setGgTaxReference(e.target.value)} />
+                  </div>
+                  <div className="form-field">
+                    <label>{t.hr.ggAllowanceAnnual}</label>
+                    <input type="number" min={0} step="0.01" value={ggAllowance} onChange={(e) => setGgAllowance(e.target.value)} />
+                    <small className="text-muted">{t.hr.ggAllowanceHint}</small>
                   </div>
                 </>
               )}

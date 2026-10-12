@@ -1374,6 +1374,10 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .HasMaxLength(12)
                         .HasColumnType("nvarchar(12)");
 
+                    b.Property<decimal?>("GgPersonalAllowanceAnnual")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("GgSocialSecurityNumber")
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");

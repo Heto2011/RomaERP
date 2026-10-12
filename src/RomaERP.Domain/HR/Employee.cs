@@ -78,6 +78,8 @@ public class Employee : AuditableEntity
     public string? GgSocialSecurityNumber { get; set; }
     /// <summary>Income tax reference issued by the Guernsey Revenue Service.</summary>
     public string? GgTaxReference { get; set; }
+    /// <summary>This employee's tax-free allowance for the year, taken from the Revenue Service coding notice. Empty means the company's standard allowance applies; set it when the allowance is split between employers or differs from the standard.</summary>
+    public decimal? GgPersonalAllowanceAnnual { get; set; }
 
     public ICollection<EmployeeSalaryComponent> SalaryComponents { get; set; } = new List<EmployeeSalaryComponent>();
 }

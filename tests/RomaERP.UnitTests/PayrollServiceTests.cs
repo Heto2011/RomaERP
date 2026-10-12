@@ -552,4 +552,24 @@ public class PayrollServiceTests
         Assert.Contains("SS-12345", renderer.Html);
         Assert.Contains("TR-9876", renderer.Html);
     }
+
+    [Fact]
+    public async Task Guernsey_EmployeeAllowanceFromCodingNotice_OverridesTheCompanyAllowance()
+    {
+        var ctx = CreateContext();
+        var standard = CreateEmployee(basicSalary: 3000);
+        var split = CreateEmployee(basicSalary: 3000);
+        split.GgPersonalAllowanceAnnual = 7_600m; // half the standard 15,200: the other half sits with another employer
+        var period = new FiscalPeriod { Name = "September 2026", PeriodNumber = 9, StartDate = new DateTime(2026, 9, 1), EndDate = new DateTime(2026, 9, 30) };
+        ctx.Employees.AddRange(standard, split);
+        ctx.FiscalPeriods.Add(period);
+        ctx.CompanySettings.Add(new CompanySettings { CompanyNameAr = "ش", CompanyNameEn = "Co", Country = Country.Guernsey, PayrollDaysPerMonth = 30 });
+        await ctx.SaveChangesAsync();
+
+        var run = await new PayrollService(ctx).CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = period.Id, RunDate = new DateTime(2026, 9, 30) });
+
+        // (36,000 - 15,200) x 20% / 12 = 346.67 ; (36,000 - 7,600) x 20% / 12 = 473.33
+        Assert.Equal(346.67m, run.Lines.Single(l => l.EmployeeId == standard.Id).GgIncomeTax);
+        Assert.Equal(473.33m, run.Lines.Single(l => l.EmployeeId == split.Id).GgIncomeTax);
+    }
 }

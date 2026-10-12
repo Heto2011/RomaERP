@@ -924,6 +924,7 @@ export interface Employee {
   ukPensionEmployerPercent: number;
   ggSocialSecurityNumber: string | null;
   ggTaxReference: string | null;
+  ggPersonalAllowanceAnnual: number | null;
 }
 
 export enum UkStudentLoanPlan {

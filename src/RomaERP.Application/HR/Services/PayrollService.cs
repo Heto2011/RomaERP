@@ -177,7 +177,7 @@ public class PayrollService : IPayrollService
             if (isGuernsey)
             {
                 gg = GuernseyPayrollCalculator.Calculate(employee.BasicSalary + allowances - unpaidLeaveDeduction, settings!.GgIncomeTaxRatePercent,
-                    settings.GgPersonalAllowanceAnnual, settings.GgEmployeeSocialRatePercent, settings.GgEmployerSocialRatePercent, settings.GgSocialMonthlyUpperLimit);
+                    employee.GgPersonalAllowanceAnnual ?? settings.GgPersonalAllowanceAnnual, settings.GgEmployeeSocialRatePercent, settings.GgEmployerSocialRatePercent, settings.GgSocialMonthlyUpperLimit);
                 deductions += gg.IncomeTax + gg.EmployeeSocial;
             }
 

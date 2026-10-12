@@ -231,6 +231,7 @@ public class EmployeeService : IEmployeeService
 
         employee.GgSocialSecurityNumber = string.IsNullOrWhiteSpace(dto.GgSocialSecurityNumber) ? null : dto.GgSocialSecurityNumber.Trim();
         employee.GgTaxReference = string.IsNullOrWhiteSpace(dto.GgTaxReference) ? null : dto.GgTaxReference.Trim();
+        employee.GgPersonalAllowanceAnnual = dto.GgPersonalAllowanceAnnual is { } allowance && allowance >= 0 ? allowance : null;
     }
 
     private static string? NormalizeNationality(string? code)
@@ -300,6 +301,7 @@ public class EmployeeService : IEmployeeService
         UkPensionEmployeePercent = e.UkPensionEmployeePercent,
         UkPensionEmployerPercent = e.UkPensionEmployerPercent,
         GgSocialSecurityNumber = e.GgSocialSecurityNumber,
-        GgTaxReference = e.GgTaxReference
+        GgTaxReference = e.GgTaxReference,
+        GgPersonalAllowanceAnnual = e.GgPersonalAllowanceAnnual
     };
 }
