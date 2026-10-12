@@ -3047,6 +3047,9 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
+                    b.Property<Guid?>("OfflineClientId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<DateTime>("OrderDate")
                         .HasColumnType("datetime2");
 
@@ -3095,6 +3098,10 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.HasIndex("CashierShiftId");
 
                     b.HasIndex("LoyaltyMemberId");
+
+                    b.HasIndex("OfflineClientId")
+                        .IsUnique()
+                        .HasFilter("[OfflineClientId] IS NOT NULL");
 
                     b.HasIndex("OrderNumber")
                         .IsUnique();

@@ -484,6 +484,112 @@ public class RestaurantService : IRestaurantService
         return await GetOrderAsync(target.Id, ct);
     }
 
+    /// <summary>Imports tickets that were rung up on a POS terminal without internet. Each one is created, filled and billed in one go, using today's menu
+    /// prices and the sale's own date. A ticket that fails (e.g. a recipe ingredient ran out) is rolled back and reported on its own, so one bad ticket never
+    /// blocks the rest, and a ticket sent twice is recognised by its client id and not billed again.</summary>
+    public async Task<List<OfflineOrderResultDto>> SyncOfflineOrdersAsync(OfflineOrdersBatchDto batch, CancellationToken ct = default)
+    {
+        var results = new List<OfflineOrderResultDto>();
+        foreach (var ticket in batch.Orders.OrderBy(o => o.CreatedAtUtc))
+        {
+            var result = new OfflineOrderResultDto { ClientId = ticket.ClientId };
+            results.Add(result);
+            Guid? createdOrderId = null;
+            try
+            {
+                var existing = ticket.ClientId == Guid.Empty ? null : await _context.RestaurantOrders
+                    .AsNoTracking().Include(o => o.SalesInvoice)
+                    .FirstOrDefaultAsync(o => o.OfflineClientId == ticket.ClientId, ct);
+                if (existing is not null)
+                {
+                    result.Success = true;
+                    result.AlreadySynced = true;
+                    result.OrderNumber = existing.OrderNumber;
+                    result.InvoiceNumber = existing.SalesInvoice?.InvoiceNumber;
+                    continue;
+                }
+
+                if (ticket.ClientId == Guid.Empty)
+                    throw new ValidationAppException("التذكرة من غير رقم تعريف.");
+                if (ticket.Lines.Count == 0)
+                    throw new ValidationAppException("التذكرة فاضية.");
+                if (ticket.PaymentTerm != PaymentTerm.Cash && ticket.PaymentTerm != PaymentTerm.Card)
+                    throw new ValidationAppException("التذاكر الأوفلاين بتتحصل كاش أو شبكة بس.");
+                if (!await _context.Warehouses.AnyAsync(w => w.Id == ticket.WarehouseId && !w.IsDeleted, ct))
+                    throw new NotFoundException(nameof(Warehouse), ticket.WarehouseId);
+
+                // The table is only kept on the ticket if it still exists; the table's live status is left alone because the sale is already finished.
+                Guid? tableId = null;
+                if (ticket.OrderType == RestaurantOrderType.DineIn && ticket.TableId is { } tid
+                    && await _context.RestaurantTables.AnyAsync(t => t.Id == tid && !t.IsDeleted, ct))
+                    tableId = tid;
+
+                var count = await _context.RestaurantOrders.CountAsync(ct);
+                var order = new RestaurantOrder
+                {
+                    OrderNumber = $"RO-{(count + 1):D6}",
+                    OrderType = ticket.OrderType,
+                    OrderDate = ticket.CreatedAtUtc == default ? DateTime.UtcNow : ticket.CreatedAtUtc,
+                    TableId = tableId,
+                    CustomerName = ticket.CustomerName,
+                    CustomerPhone = ticket.CustomerPhone,
+                    DeliveryAddress = ticket.DeliveryAddress,
+                    WarehouseId = ticket.WarehouseId,
+                    Notes = string.IsNullOrWhiteSpace(ticket.Notes) ? "تذكرة أوفلاين" : $"{ticket.Notes} (تذكرة أوفلاين)",
+                    Status = RestaurantOrderStatus.Open,
+                    OfflineClientId = ticket.ClientId
+                };
+                _context.RestaurantOrders.Add(order);
+                await _context.SaveChangesAsync(ct);
+                createdOrderId = order.Id;
+
+                foreach (var line in ticket.Lines)
+                    await AddLineAsync(order.Id, new AddOrderLineDto { ItemId = line.ItemId, Quantity = line.Quantity, Notes = line.Notes }, ct);
+                if (ticket.DiscountAmount > 0)
+                    await SetOrderDiscountAsync(order.Id, new SetOrderDiscountDto { DiscountAmount = ticket.DiscountAmount }, ct);
+
+                // A shift that has been closed since the sale can't take the cash any more; the sale is still recorded, just without the shift link.
+                Guid? shiftId = ticket.CashierShiftId;
+                if (shiftId is { } sid && !await _context.CashierShifts.AnyAsync(s => s.Id == sid && s.Status == CashierShiftStatus.Open, ct))
+                    shiftId = null;
+
+                var billed = await BillOrderAsync(order.Id, new BillOrderDto
+                {
+                    PaymentTerm = ticket.PaymentTerm,
+                    FiscalPeriodId = ticket.FiscalPeriodId,
+                    CashierShiftId = shiftId,
+                    SaleDate = ticket.CreatedAtUtc == default ? null : ticket.CreatedAtUtc
+                }, ct);
+
+                result.Success = true;
+                result.OrderNumber = billed.OrderNumber;
+                result.InvoiceNumber = billed.SalesInvoiceNumber;
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException)
+            {
+                result.Success = false;
+                result.Error = ex is ValidationAppException or NotFoundException ? ex.Message : "حصلت مشكلة غير متوقعة أثناء ترحيل التذكرة.";
+                await RollBackFailedOfflineOrderAsync(createdOrderId, ct);
+            }
+        }
+        return results;
+    }
+
+    /// <summary>Drops whatever a failed ticket left half-done in the change tracker, then cancels the order row (kept, so order numbers stay unique) and frees its client id so the ticket can be retried later.</summary>
+    private async Task RollBackFailedOfflineOrderAsync(Guid? orderId, CancellationToken ct)
+    {
+        if (_context is DbContext db)
+            db.ChangeTracker.Clear();
+        if (orderId is not { } id) return;
+
+        var order = await _context.RestaurantOrders.FirstOrDefaultAsync(o => o.Id == id, ct);
+        if (order is null || order.Status == RestaurantOrderStatus.Billed) return;
+        order.Status = RestaurantOrderStatus.Cancelled;
+        order.Notes = $"{order.Notes} — فشل الترحيل";
+        order.OfflineClientId = null;
+        await _context.SaveChangesAsync(ct);
+    }
+
     /// <summary>Attaches a repeat customer to the open order (found by phone, or registered on the spot) and, if asked, sets how many of
     /// their points to spend. The points are only deducted when the order is billed, so cancelling the order costs the customer nothing.</summary>
     public async Task<RestaurantOrderDto> SetOrderLoyaltyAsync(Guid orderId, SetOrderLoyaltyDto dto, CancellationToken ct = default)
@@ -628,6 +734,7 @@ public class RestaurantService : IRestaurantService
         // Any order-level discount is spread proportionally across lines (by their own gross share) rather
         // than carried as its own negative invoice line, since SalesInvoiceLineInputDto rejects a negative
         // UnitPrice — every line's discounted price still ends up clamped to zero or above.
+        var saleDate = (dto.SaleDate ?? DateTime.UtcNow).Date;
         var loyaltySettings = await GetLoyaltySettingsAsync(ct);
         var grossOrderTotal = order.Lines.Sum(l => l.LineTotal);
         var payableBeforeLoyalty = grossOrderTotal - order.Lines.Sum(l => l.DiscountAmount) - order.DiscountAmount;
@@ -665,7 +772,7 @@ public class RestaurantService : IRestaurantService
         var invoice = await _salesService.CreateInvoiceAsync(new CreateSalesInvoiceDto
         {
             CustomerId = customer.Id,
-            InvoiceDate = DateTime.UtcNow.Date,
+            InvoiceDate = saleDate,
             FiscalPeriodId = dto.FiscalPeriodId,
             PaymentTerm = dto.PaymentTerm,
             WarehouseId = order.WarehouseId,
@@ -695,7 +802,7 @@ public class RestaurantService : IRestaurantService
                 stockMovements.Add(new StockMovement
                 {
                     MovementNumber = $"SM-{(movementSequenceBase + ++movementIndex):D6}",
-                    MovementDate = DateTime.UtcNow.Date,
+                    MovementDate = saleDate,
                     MovementType = StockMovementType.Issue,
                     ItemId = item.Id,
                     WarehouseId = order.WarehouseId,
@@ -710,7 +817,7 @@ public class RestaurantService : IRestaurantService
             if (totalCogs > 0)
             {
                 var cogsEntry = await SimpleJournalEntryFactory.CreatePostedAsync(
-                    _context, DateTime.UtcNow.Date, dto.FiscalPeriodId,
+                    _context, saleDate, dto.FiscalPeriodId,
                     $"تكلفة مكوّنات - طلب مطعم {order.OrderNumber}",
                     debitAccountId: cogsAccount.Id, creditAccountId: inventoryAccount.Id,
                     amount: totalCogs, reference: RestaurantConstants.RestaurantOrderReference, ct: ct);

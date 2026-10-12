@@ -97,6 +97,10 @@ public class RestaurantOrder : AuditableEntity
     /// retried/duplicate webhook for the same order be recognized instead of billed twice.</summary>
     public string? ExternalOrderRef { get; set; }
 
+    /// <summary>Set for a ticket rung up on a POS terminal while it had no internet and synced later — the id the terminal generated,
+    /// so a ticket that is sent twice (a retry after a dropped connection) is recognised and never billed twice.</summary>
+    public Guid? OfflineClientId { get; set; }
+
     public ICollection<RestaurantOrderLine> Lines { get; set; } = new List<RestaurantOrderLine>();
 }
 

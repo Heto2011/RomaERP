@@ -89,6 +89,11 @@ public class RestaurantController : ControllerBase
     public async Task<ActionResult<SplitOrderResultDto>> SplitOrder(Guid id, SplitOrderDto dto, CancellationToken ct)
         => Ok(await _restaurantService.SplitOrderAsync(id, dto, ct));
 
+    /// <summary>Receives the tickets a POS terminal rang up while it had no internet. Returns one result per ticket; failures don't stop the others.</summary>
+    [HttpPost("orders/offline-sync")]
+    public async Task<ActionResult<List<OfflineOrderResultDto>>> SyncOfflineOrders(OfflineOrdersBatchDto batch, CancellationToken ct)
+        => Ok(await _restaurantService.SyncOfflineOrdersAsync(batch, ct));
+
     [HttpPut("orders/{id:guid}/loyalty")]
     public async Task<ActionResult<RestaurantOrderDto>> SetOrderLoyalty(Guid id, SetOrderLoyaltyDto dto, CancellationToken ct)
         => Ok(await _restaurantService.SetOrderLoyaltyAsync(id, dto, ct));

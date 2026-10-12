@@ -30,6 +30,7 @@ public class RestaurantOrderConfiguration : IEntityTypeConfiguration<RestaurantO
         builder.Property(o => o.SourcePlatform).HasMaxLength(50);
         builder.Property(o => o.ExternalOrderRef).HasMaxLength(100);
         builder.HasIndex(o => o.OrderNumber).IsUnique();
+        builder.HasIndex(o => o.OfflineClientId).IsUnique().HasFilter("[OfflineClientId] IS NOT NULL");
         builder.HasIndex(o => new { o.SourcePlatform, o.ExternalOrderRef }).IsUnique()
             .HasFilter("[SourcePlatform] IS NOT NULL AND [ExternalOrderRef] IS NOT NULL");
 

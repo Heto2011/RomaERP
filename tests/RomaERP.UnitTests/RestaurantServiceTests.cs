@@ -663,4 +663,85 @@ public class RestaurantServiceTests
         Assert.Equal((0, 0m), LoyaltyRules.Redemption(order, 30m, settings with { Enabled = false }));
         Assert.Equal(4, LoyaltyRules.PointsEarned(49.99m, settings));
     }
+
+    private static OfflineOrderDto OfflineTicket(SeedResult seed, decimal pizzas, DateTime? createdAt = null) => new()
+    {
+        ClientId = Guid.NewGuid(),
+        CreatedAtUtc = createdAt ?? DateTime.UtcNow.AddHours(-2),
+        OrderType = RestaurantOrderType.DineIn,
+        TableId = seed.Table.Id,
+        WarehouseId = seed.Warehouse.Id,
+        PaymentTerm = PaymentTerm.Cash,
+        FiscalPeriodId = seed.Period.Id,
+        Lines = new List<OfflineOrderLineDto> { new() { ItemId = seed.Pizza.Id, Quantity = pizzas } }
+    };
+
+    [Fact]
+    public async Task OfflineSync_BillsTicketOnItsOwnDate_AndIgnoresAResend()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+        var saleDay = DateTime.UtcNow.Date.AddDays(-1).AddHours(20);
+        var ticket = OfflineTicket(seed, 2, saleDay);
+
+        var first = (await service.SyncOfflineOrdersAsync(new OfflineOrdersBatchDto { Orders = { ticket } })).Single();
+        Assert.True(first.Success, first.Error);
+        Assert.False(first.AlreadySynced);
+        Assert.NotNull(first.InvoiceNumber);
+
+        var invoice = await seed.Ctx.SalesInvoices.SingleAsync();
+        Assert.Equal(saleDay.Date, invoice.InvoiceDate);
+        Assert.Equal(228m, invoice.TotalAmount); // 2 x 100 + 14% VAT
+        // The table was not touched: the diners are long gone and nobody is seated there.
+        Assert.Equal(RestaurantTableStatus.Available, (await seed.Ctx.RestaurantTables.SingleAsync()).Status);
+        Assert.Equal(99m, (await seed.Ctx.Items.SingleAsync(i => i.Id == seed.Flour.Id)).QuantityOnHand); // 2 x 0.5 kg used
+
+        // The terminal lost the answer and sends the same ticket again: nothing is billed twice.
+        var again = (await service.SyncOfflineOrdersAsync(new OfflineOrdersBatchDto { Orders = { ticket } })).Single();
+        Assert.True(again.Success);
+        Assert.True(again.AlreadySynced);
+        Assert.Equal(first.OrderNumber, again.OrderNumber);
+        Assert.Equal(1, await seed.Ctx.SalesInvoices.CountAsync());
+    }
+
+    [Fact]
+    public async Task OfflineSync_FailedTicketIsRolledBack_DoesNotBlockOthers_AndCanBeRetried()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+
+        var tooBig = OfflineTicket(seed, 500); // needs 250 kg of flour, only 100 on hand
+        var fine = OfflineTicket(seed, 1);
+
+        var results = await service.SyncOfflineOrdersAsync(new OfflineOrdersBatchDto { Orders = { tooBig, fine } });
+        var failed = results.Single(r => r.ClientId == tooBig.ClientId);
+        var ok = results.Single(r => r.ClientId == fine.ClientId);
+        Assert.False(failed.Success);
+        Assert.False(string.IsNullOrWhiteSpace(failed.Error));
+        Assert.True(ok.Success, ok.Error);
+        Assert.Equal(1, await seed.Ctx.SalesInvoices.CountAsync());
+
+        // Stock arrives; the same ticket syncs fine on the next attempt.
+        var flour = await seed.Ctx.Items.SingleAsync(i => i.Id == seed.Flour.Id);
+        flour.QuantityOnHand = 1000;
+        await seed.Ctx.SaveChangesAsync();
+        var retry = (await service.SyncOfflineOrdersAsync(new OfflineOrdersBatchDto { Orders = { tooBig } })).Single();
+        Assert.True(retry.Success, retry.Error);
+        Assert.Equal(2, await seed.Ctx.SalesInvoices.CountAsync());
+    }
+
+    [Fact]
+    public async Task OfflineSync_RejectsEmptyAndCreditTickets()
+    {
+        var seed = await SeedAsync();
+        var service = BuildService(seed.Ctx);
+        var empty = OfflineTicket(seed, 1);
+        empty.Lines.Clear();
+        var credit = OfflineTicket(seed, 1);
+        credit.PaymentTerm = PaymentTerm.Credit;
+
+        var results = await service.SyncOfflineOrdersAsync(new OfflineOrdersBatchDto { Orders = { empty, credit } });
+        Assert.All(results, r => Assert.False(r.Success));
+        Assert.Equal(0, await seed.Ctx.SalesInvoices.CountAsync());
+    }
 }
