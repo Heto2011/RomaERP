@@ -13,6 +13,16 @@ public class VendorDto
     public string? TaxRegistrationNumber { get; set; }
     public bool IsActive { get; set; }
     public decimal ApBalance { get; set; }
+    public string? ContactPerson { get; set; }
+    public string? Mobile { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? CommercialRegisterNumber { get; set; }
+    public string? Notes { get; set; }
+    public int PaymentTermsDays { get; set; }
+    public decimal CreditLimit { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
 }
 
 public class CreateVendorDto
@@ -23,6 +33,37 @@ public class CreateVendorDto
     public string? Phone { get; set; }
     public string? Email { get; set; }
     public string? TaxRegistrationNumber { get; set; }
+    public string? ContactPerson { get; set; }
+    public string? Mobile { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? CommercialRegisterNumber { get; set; }
+    public string? Notes { get; set; }
+    public int PaymentTermsDays { get; set; }
+    public decimal CreditLimit { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
+}
+
+/// <summary>Edit an existing vendor — the code stays as it was (invoices refer to it).</summary>
+public class UpdateVendorDto
+{
+    public string NameAr { get; set; } = string.Empty;
+    public string NameEn { get; set; } = string.Empty;
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? TaxRegistrationNumber { get; set; }
+    public bool IsActive { get; set; } = true;
+    public string? ContactPerson { get; set; }
+    public string? Mobile { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? CommercialRegisterNumber { get; set; }
+    public string? Notes { get; set; }
+    public int PaymentTermsDays { get; set; }
+    public decimal CreditLimit { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
 }
 
 public class PurchaseInvoiceLineInputDto

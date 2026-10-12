@@ -100,6 +100,8 @@ import type {
   SetBudgetLineInput,
   BudgetVsActualReport,
   CreateCustomerInput,
+  UpdateCustomerInput,
+  UpdateVendorInput,
   CreatePurchaseInvoiceInput,
   CreateDepreciationRunInput,
   CreateFixedAssetInput,
@@ -557,6 +559,7 @@ export const InventoryApi = {
 export const SalesApi = {
   getCustomers: () => apiClient.get<Customer[]>("/sales/customers"),
   createCustomer: (data: CreateCustomerInput) => apiClient.post<Customer>("/sales/customers", data),
+  updateCustomer: (id: string, data: UpdateCustomerInput) => apiClient.put<Customer>(`/sales/customers/${id}`, data),
   getInvoices: () => apiClient.get<SalesInvoice[]>("/sales/invoices"),
   getInvoice: (id: string) => apiClient.get<SalesInvoice>(`/sales/invoices/${id}`),
   createInvoice: (data: CreateSalesInvoiceInput) => apiClient.post<SalesInvoice>("/sales/invoices", data),
@@ -587,6 +590,7 @@ export const ZatcaOnboardingApi = {
 export const PurchasingApi = {
   getVendors: () => apiClient.get<Vendor[]>("/purchasing/vendors"),
   createVendor: (data: CreateVendorInput) => apiClient.post<Vendor>("/purchasing/vendors", data),
+  updateVendor: (id: string, data: UpdateVendorInput) => apiClient.put<Vendor>(`/purchasing/vendors/${id}`, data),
   getInvoices: () => apiClient.get<PurchaseInvoice[]>("/purchasing/invoices"),
   getInvoice: (id: string) => apiClient.get<PurchaseInvoice>(`/purchasing/invoices/${id}`),
   scanInvoice: (file: File) => {

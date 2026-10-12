@@ -28,6 +28,10 @@ public class PurchasingController : ControllerBase
     public async Task<ActionResult<VendorDto>> CreateVendor(CreateVendorDto dto, CancellationToken ct)
         => Ok(await _purchasingService.CreateVendorAsync(dto, ct));
 
+    [HttpPut("vendors/{id:guid}")]
+    public async Task<ActionResult<VendorDto>> UpdateVendor(Guid id, UpdateVendorDto dto, CancellationToken ct)
+        => Ok(await _purchasingService.UpdateVendorAsync(id, dto, ct));
+
     [HttpGet("invoices")]
     public async Task<ActionResult<List<PurchaseInvoiceDto>>> GetInvoices(CancellationToken ct)
         => Ok(await _purchasingService.GetInvoicesAsync(ct));

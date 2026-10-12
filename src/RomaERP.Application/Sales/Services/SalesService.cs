@@ -48,12 +48,50 @@ public class SalesService : ISalesService
             Phone = dto.Phone,
             Email = dto.Email,
             TaxRegistrationNumber = dto.TaxRegistrationNumber,
+            ContactPerson = dto.ContactPerson,
+            Mobile = dto.Mobile,
+            Address = dto.Address,
+            City = dto.City,
+            CommercialRegisterNumber = dto.CommercialRegisterNumber,
+            Notes = dto.Notes,
+            PaymentTermsDays = dto.PaymentTermsDays,
+            CreditLimit = dto.CreditLimit,
             IsActive = true
         };
+        customer.PaymentTermsDays = Math.Max(0, customer.PaymentTermsDays);
+        customer.CreditLimit = Math.Max(0, customer.CreditLimit);
 
         _context.Customers.Add(customer);
         await _context.SaveChangesAsync(ct);
 
+        return Map(customer);
+    }
+
+    public async Task<CustomerDto> UpdateCustomerAsync(Guid id, UpdateCustomerDto dto, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(dto.NameAr) || string.IsNullOrWhiteSpace(dto.NameEn))
+            throw new ValidationAppException("الاسم بالعربي والإنجليزي مطلوبين.");
+
+        var customer = await _context.Customers.FirstOrDefaultAsync(c => c.Id == id, ct)
+            ?? throw new NotFoundException(nameof(Customer), id);
+
+        customer.NameAr = dto.NameAr;
+        customer.NameEn = dto.NameEn;
+        customer.Phone = dto.Phone;
+        customer.Email = dto.Email;
+        customer.TaxRegistrationNumber = dto.TaxRegistrationNumber;
+        customer.IsActive = dto.IsActive;
+        customer.ContactPerson = dto.ContactPerson;
+        customer.Mobile = dto.Mobile;
+        customer.Address = dto.Address;
+        customer.City = dto.City;
+        customer.CommercialRegisterNumber = dto.CommercialRegisterNumber;
+        customer.Notes = dto.Notes;
+        customer.PaymentTermsDays = dto.PaymentTermsDays;
+        customer.CreditLimit = dto.CreditLimit;
+        customer.PaymentTermsDays = Math.Max(0, customer.PaymentTermsDays);
+        customer.CreditLimit = Math.Max(0, customer.CreditLimit);
+        await _context.SaveChangesAsync(ct);
         return Map(customer);
     }
 
@@ -672,7 +710,15 @@ public class SalesService : ISalesService
         Email = c.Email,
         TaxRegistrationNumber = c.TaxRegistrationNumber,
         IsActive = c.IsActive,
-        ArBalance = c.ArBalance
+        ArBalance = c.ArBalance,
+        ContactPerson = c.ContactPerson,
+        Mobile = c.Mobile,
+        Address = c.Address,
+        City = c.City,
+        CommercialRegisterNumber = c.CommercialRegisterNumber,
+        Notes = c.Notes,
+        PaymentTermsDays = c.PaymentTermsDays,
+        CreditLimit = c.CreditLimit
     };
 
     /// <summary>A line is "paid" once cumulative payments (invoice.PaidAmount) cover its cumulative schedule

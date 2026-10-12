@@ -12,6 +12,20 @@ public class Vendor : AuditableEntity
     public string? TaxRegistrationNumber { get; set; }
     public bool IsActive { get; set; } = true;
 
+    // ----- Full details -----
+    public string? ContactPerson { get; set; }
+    public string? Mobile { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? CommercialRegisterNumber { get; set; }
+    public string? Notes { get; set; }
+    /// <summary>Days of credit agreed (0 = pay on the spot).</summary>
+    public int PaymentTermsDays { get; set; }
+    /// <summary>Informational ceiling for the open balance; shown on the card, not yet enforced when invoicing.</summary>
+    public decimal CreditLimit { get; set; }
+    public string? BankName { get; set; }
+    public string? BankAccountNumber { get; set; }
+
     /// <summary>Running Accounts Payable balance for this vendor — increases on a Credit invoice,
     /// decreases as payments are recorded against it.</summary>
     public decimal ApBalance { get; set; }

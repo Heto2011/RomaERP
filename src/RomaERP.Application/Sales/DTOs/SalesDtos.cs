@@ -13,6 +13,14 @@ public class CustomerDto
     public string? TaxRegistrationNumber { get; set; }
     public bool IsActive { get; set; }
     public decimal ArBalance { get; set; }
+    public string? ContactPerson { get; set; }
+    public string? Mobile { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? CommercialRegisterNumber { get; set; }
+    public string? Notes { get; set; }
+    public int PaymentTermsDays { get; set; }
+    public decimal CreditLimit { get; set; }
 }
 
 public class CreateCustomerDto
@@ -23,6 +31,33 @@ public class CreateCustomerDto
     public string? Phone { get; set; }
     public string? Email { get; set; }
     public string? TaxRegistrationNumber { get; set; }
+    public string? ContactPerson { get; set; }
+    public string? Mobile { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? CommercialRegisterNumber { get; set; }
+    public string? Notes { get; set; }
+    public int PaymentTermsDays { get; set; }
+    public decimal CreditLimit { get; set; }
+}
+
+/// <summary>Edit an existing customer — the code stays as it was (invoices refer to it).</summary>
+public class UpdateCustomerDto
+{
+    public string NameAr { get; set; } = string.Empty;
+    public string NameEn { get; set; } = string.Empty;
+    public string? Phone { get; set; }
+    public string? Email { get; set; }
+    public string? TaxRegistrationNumber { get; set; }
+    public bool IsActive { get; set; } = true;
+    public string? ContactPerson { get; set; }
+    public string? Mobile { get; set; }
+    public string? Address { get; set; }
+    public string? City { get; set; }
+    public string? CommercialRegisterNumber { get; set; }
+    public string? Notes { get; set; }
+    public int PaymentTermsDays { get; set; }
+    public decimal CreditLimit { get; set; }
 }
 
 public class SalesInvoiceLineInputDto

@@ -6,6 +6,7 @@ public interface ISalesService
 {
     Task<List<CustomerDto>> GetCustomersAsync(CancellationToken ct = default);
     Task<CustomerDto> CreateCustomerAsync(CreateCustomerDto dto, CancellationToken ct = default);
+    Task<CustomerDto> UpdateCustomerAsync(Guid id, UpdateCustomerDto dto, CancellationToken ct = default);
 
     Task<List<SalesInvoiceDto>> GetInvoicesAsync(CancellationToken ct = default);
     Task<SalesInvoiceDto> GetInvoiceAsync(Guid id, CancellationToken ct = default);

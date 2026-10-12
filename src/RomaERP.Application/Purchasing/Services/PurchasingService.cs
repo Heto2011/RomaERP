@@ -50,12 +50,54 @@ public class PurchasingService : IPurchasingService
             Phone = dto.Phone,
             Email = dto.Email,
             TaxRegistrationNumber = dto.TaxRegistrationNumber,
+            ContactPerson = dto.ContactPerson,
+            Mobile = dto.Mobile,
+            Address = dto.Address,
+            City = dto.City,
+            CommercialRegisterNumber = dto.CommercialRegisterNumber,
+            Notes = dto.Notes,
+            PaymentTermsDays = dto.PaymentTermsDays,
+            CreditLimit = dto.CreditLimit,
+            BankName = dto.BankName,
+            BankAccountNumber = dto.BankAccountNumber,
             IsActive = true
         };
+        vendor.PaymentTermsDays = Math.Max(0, vendor.PaymentTermsDays);
+        vendor.CreditLimit = Math.Max(0, vendor.CreditLimit);
 
         _context.Vendors.Add(vendor);
         await _context.SaveChangesAsync(ct);
 
+        return Map(vendor);
+    }
+
+    public async Task<VendorDto> UpdateVendorAsync(Guid id, UpdateVendorDto dto, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(dto.NameAr) || string.IsNullOrWhiteSpace(dto.NameEn))
+            throw new ValidationAppException("الاسم بالعربي والإنجليزي مطلوبين.");
+
+        var vendor = await _context.Vendors.FirstOrDefaultAsync(v => v.Id == id, ct)
+            ?? throw new NotFoundException(nameof(Vendor), id);
+
+        vendor.NameAr = dto.NameAr;
+        vendor.NameEn = dto.NameEn;
+        vendor.Phone = dto.Phone;
+        vendor.Email = dto.Email;
+        vendor.TaxRegistrationNumber = dto.TaxRegistrationNumber;
+        vendor.IsActive = dto.IsActive;
+        vendor.ContactPerson = dto.ContactPerson;
+        vendor.Mobile = dto.Mobile;
+        vendor.Address = dto.Address;
+        vendor.City = dto.City;
+        vendor.CommercialRegisterNumber = dto.CommercialRegisterNumber;
+        vendor.Notes = dto.Notes;
+        vendor.PaymentTermsDays = dto.PaymentTermsDays;
+        vendor.CreditLimit = dto.CreditLimit;
+        vendor.BankName = dto.BankName;
+        vendor.BankAccountNumber = dto.BankAccountNumber;
+        vendor.PaymentTermsDays = Math.Max(0, vendor.PaymentTermsDays);
+        vendor.CreditLimit = Math.Max(0, vendor.CreditLimit);
+        await _context.SaveChangesAsync(ct);
         return Map(vendor);
     }
 
@@ -470,7 +512,17 @@ public class PurchasingService : IPurchasingService
         Email = v.Email,
         TaxRegistrationNumber = v.TaxRegistrationNumber,
         IsActive = v.IsActive,
-        ApBalance = v.ApBalance
+        ApBalance = v.ApBalance,
+        ContactPerson = v.ContactPerson,
+        Mobile = v.Mobile,
+        Address = v.Address,
+        City = v.City,
+        CommercialRegisterNumber = v.CommercialRegisterNumber,
+        Notes = v.Notes,
+        PaymentTermsDays = v.PaymentTermsDays,
+        CreditLimit = v.CreditLimit,
+        BankName = v.BankName,
+        BankAccountNumber = v.BankAccountNumber
     };
 
     private static PurchaseInvoiceDto Map(PurchaseInvoice i) => new()

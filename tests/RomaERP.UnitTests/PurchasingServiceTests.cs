@@ -256,4 +256,30 @@ public class PurchasingServiceTests
         Assert.Equal(8, movement.UnitCost);
         Assert.Null(movement.JournalEntryId);
     }
+
+    [Fact]
+    public async Task Vendor_FullDetails_AreSavedAndEditable_WithNegativeCreditClamped()
+    {
+        var ctx = CreateContext();
+        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
+
+        var created = await service.CreateVendorAsync(new CreateVendorDto
+        {
+            Code = "V-100", NameAr = "الأمل", NameEn = "Al Amal", ContactPerson = "أحمد", Mobile = "01001234567", Address = "شارع 1",
+            City = "القاهرة", CommercialRegisterNumber = "CR-9", PaymentTermsDays = -5, CreditLimit = 50000, BankName = "CIB", BankAccountNumber = "EG12", Notes = "مورد دقيق"
+        });
+        Assert.Equal("أحمد", created.ContactPerson);
+        Assert.Equal(0, created.PaymentTermsDays); // a negative term is clamped, not stored
+        Assert.Equal("CIB", created.BankName);
+
+        var updated = await service.UpdateVendorAsync(created.Id, new UpdateVendorDto
+        {
+            NameAr = "الأمل للتوريدات", NameEn = "Al Amal Supplies", PaymentTermsDays = 30, CreditLimit = 80000, City = "الجيزة", IsActive = false
+        });
+        Assert.Equal("V-100", updated.Code); // the code never changes
+        Assert.Equal(30, updated.PaymentTermsDays);
+        Assert.Equal("الجيزة", updated.City);
+        Assert.False(updated.IsActive);
+        Assert.Null(updated.ContactPerson); // fields left empty on edit are cleared
+    }
 }

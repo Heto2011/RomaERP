@@ -1320,6 +1320,14 @@ export interface Customer {
   taxRegistrationNumber: string | null;
   isActive: boolean;
   arBalance: number;
+  contactPerson?: string | null;
+  mobile?: string | null;
+  address?: string | null;
+  city?: string | null;
+  commercialRegisterNumber?: string | null;
+  notes?: string | null;
+  paymentTermsDays?: number;
+  creditLimit?: number;
 }
 
 export interface CreateCustomerInput {
@@ -1329,7 +1337,17 @@ export interface CreateCustomerInput {
   phone?: string | null;
   email?: string | null;
   taxRegistrationNumber?: string | null;
+  contactPerson?: string | null;
+  mobile?: string | null;
+  address?: string | null;
+  city?: string | null;
+  commercialRegisterNumber?: string | null;
+  notes?: string | null;
+  paymentTermsDays?: number;
+  creditLimit?: number;
 }
+
+export type UpdateCustomerInput = Omit<CreateCustomerInput, "code"> & { isActive: boolean };
 
 export interface SalesInvoiceLineInput {
   description: string;
@@ -1484,6 +1502,16 @@ export interface Vendor {
   taxRegistrationNumber: string | null;
   isActive: boolean;
   apBalance: number;
+  contactPerson?: string | null;
+  mobile?: string | null;
+  address?: string | null;
+  city?: string | null;
+  commercialRegisterNumber?: string | null;
+  notes?: string | null;
+  paymentTermsDays?: number;
+  creditLimit?: number;
+  bankName?: string | null;
+  bankAccountNumber?: string | null;
 }
 
 export interface CreateVendorInput {
@@ -1493,7 +1521,19 @@ export interface CreateVendorInput {
   phone?: string | null;
   email?: string | null;
   taxRegistrationNumber?: string | null;
+  contactPerson?: string | null;
+  mobile?: string | null;
+  address?: string | null;
+  city?: string | null;
+  commercialRegisterNumber?: string | null;
+  notes?: string | null;
+  paymentTermsDays?: number;
+  creditLimit?: number;
+  bankName?: string | null;
+  bankAccountNumber?: string | null;
 }
+
+export type UpdateVendorInput = Omit<CreateVendorInput, "code"> & { isActive: boolean };
 
 export interface PurchaseInvoiceLineInput {
   description: string;

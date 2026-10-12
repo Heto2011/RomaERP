@@ -15,6 +15,15 @@ public class VendorConfiguration : IEntityTypeConfiguration<Vendor>
         builder.Property(v => v.Email).HasMaxLength(150);
         builder.Property(v => v.TaxRegistrationNumber).HasMaxLength(50);
         builder.Property(v => v.ApBalance).HasPrecision(18, 2);
+        builder.Property(v => v.ContactPerson).HasMaxLength(150);
+        builder.Property(v => v.Mobile).HasMaxLength(30);
+        builder.Property(v => v.Address).HasMaxLength(300);
+        builder.Property(v => v.City).HasMaxLength(100);
+        builder.Property(v => v.CommercialRegisterNumber).HasMaxLength(50);
+        builder.Property(v => v.Notes).HasMaxLength(500);
+        builder.Property(v => v.CreditLimit).HasPrecision(18, 2);
+        builder.Property(v => v.BankName).HasMaxLength(150);
+        builder.Property(v => v.BankAccountNumber).HasMaxLength(60);
         builder.HasIndex(v => v.Code).IsUnique();
 
         builder.HasQueryFilter(v => !v.IsDeleted);

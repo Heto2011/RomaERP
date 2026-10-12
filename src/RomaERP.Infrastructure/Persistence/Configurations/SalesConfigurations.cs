@@ -15,6 +15,13 @@ public class CustomerConfiguration : IEntityTypeConfiguration<Customer>
         builder.Property(c => c.Email).HasMaxLength(150);
         builder.Property(c => c.TaxRegistrationNumber).HasMaxLength(50);
         builder.Property(c => c.ArBalance).HasPrecision(18, 2);
+        builder.Property(c => c.ContactPerson).HasMaxLength(150);
+        builder.Property(c => c.Mobile).HasMaxLength(30);
+        builder.Property(c => c.Address).HasMaxLength(300);
+        builder.Property(c => c.City).HasMaxLength(100);
+        builder.Property(c => c.CommercialRegisterNumber).HasMaxLength(50);
+        builder.Property(c => c.Notes).HasMaxLength(500);
+        builder.Property(c => c.CreditLimit).HasPrecision(18, 2);
         builder.HasIndex(c => c.Code).IsUnique();
 
         builder.HasQueryFilter(c => !c.IsDeleted);

@@ -30,6 +30,10 @@ public class SalesController : ControllerBase
     public async Task<ActionResult<CustomerDto>> CreateCustomer(CreateCustomerDto dto, CancellationToken ct)
         => Ok(await _salesService.CreateCustomerAsync(dto, ct));
 
+    [HttpPut("customers/{id:guid}")]
+    public async Task<ActionResult<CustomerDto>> UpdateCustomer(Guid id, UpdateCustomerDto dto, CancellationToken ct)
+        => Ok(await _salesService.UpdateCustomerAsync(id, dto, ct));
+
     [HttpGet("invoices")]
     public async Task<ActionResult<List<SalesInvoiceDto>>> GetInvoices(CancellationToken ct)
         => Ok(await _salesService.GetInvoicesAsync(ct));

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { SalesApi } from "../../api/services";
 import type { Customer } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -8,6 +9,7 @@ import { makeSequentialCodeGenerator } from "../../utils/sequentialCode";
 
 export default function Customers() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -61,6 +63,9 @@ export default function Customers() {
           >
             {t.common.quickAdd}
           </button>
+          <Link className="btn btn-secondary" to="/sales/customers/new">
+            {t.purchasing.partyFullDetails}
+          </Link>
           <button className="btn" onClick={() => setShowForm((v) => !v)}>
             {showForm ? t.common.cancel : t.sales.newCustomer}
           </button>
@@ -137,7 +142,7 @@ export default function Customers() {
               </tr>
             )}
             {customers.map((c) => (
-              <tr key={c.id}>
+              <tr key={c.id} style={{ cursor: "pointer" }} onClick={() => navigate(`/sales/customers/${c.id}`)} title={t.purchasing.partyEdit}>
                 <td>{c.code}</td>
                 <td>{c.nameAr}</td>
                 <td>{c.nameEn}</td>

@@ -95,6 +95,7 @@ import AiAssistant from "./pages/assistant/AiAssistant";
 import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
 import BankReconciliation from "./pages/assistant/BankReconciliation";
 import RestaurantTables from "./pages/restaurant/RestaurantTables";
+import PartyForm from "./pages/PartyForm";
 import RestaurantMenu from "./pages/restaurant/RestaurantMenu";
 import LoyaltyPage from "./pages/restaurant/Loyalty";
 import PurchaseReceivingPage from "./pages/restaurant/PurchaseReceiving";
@@ -215,10 +216,14 @@ export default function App() {
       <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssets /></ProtectedRoute>} />
       <Route path="/accounting/depreciation-runs" element={<ProtectedRoute><DepreciationRuns /></ProtectedRoute>} />
       <Route path="/sales/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
+      <Route path="/sales/customers/new" element={<ProtectedRoute><PartyForm kind="customer" /></ProtectedRoute>} />
+      <Route path="/sales/customers/:id" element={<ProtectedRoute><PartyForm kind="customer" /></ProtectedRoute>} />
       <Route path="/sales/invoices" element={<ProtectedRoute><SalesInvoices /></ProtectedRoute>} />
       <Route path="/sales/notes" element={<ProtectedRoute><SalesNotes /></ProtectedRoute>} />
       <Route path="/sales/aging" element={<ProtectedRoute><ArAging /></ProtectedRoute>} />
       <Route path="/purchasing/vendors" element={<ProtectedRoute><Vendors /></ProtectedRoute>} />
+      <Route path="/purchasing/vendors/new" element={<ProtectedRoute><PartyForm kind="vendor" /></ProtectedRoute>} />
+      <Route path="/purchasing/vendors/:id" element={<ProtectedRoute><PartyForm kind="vendor" /></ProtectedRoute>} />
       <Route path="/purchasing/invoices" element={<ProtectedRoute><PurchaseInvoices /></ProtectedRoute>} />
       <Route path="/purchasing/aging" element={<ProtectedRoute><ApAging /></ProtectedRoute>} />
       <Route path="/hr/departments" element={<ProtectedRoute><Departments /></ProtectedRoute>} />

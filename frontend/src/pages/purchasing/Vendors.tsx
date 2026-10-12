@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { PurchasingApi } from "../../api/services";
 import type { Vendor } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -8,6 +9,7 @@ import { makeSequentialCodeGenerator } from "../../utils/sequentialCode";
 
 export default function Vendors() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
@@ -61,6 +63,9 @@ export default function Vendors() {
           >
             {t.common.quickAdd}
           </button>
+          <Link className="btn btn-secondary" to="/purchasing/vendors/new">
+            {t.purchasing.partyFullDetails}
+          </Link>
           <button className="btn" onClick={() => setShowForm((v) => !v)}>
             {showForm ? t.common.cancel : t.purchasing.newVendor}
           </button>
@@ -137,7 +142,7 @@ export default function Vendors() {
               </tr>
             )}
             {vendors.map((v) => (
-              <tr key={v.id}>
+              <tr key={v.id} style={{ cursor: "pointer" }} onClick={() => navigate(`/purchasing/vendors/${v.id}`)} title={t.purchasing.partyEdit}>
                 <td>{v.code}</td>
                 <td>{v.nameAr}</td>
                 <td>{v.nameEn}</td>

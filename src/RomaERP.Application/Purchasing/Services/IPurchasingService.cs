@@ -6,6 +6,7 @@ public interface IPurchasingService
 {
     Task<List<VendorDto>> GetVendorsAsync(CancellationToken ct = default);
     Task<VendorDto> CreateVendorAsync(CreateVendorDto dto, CancellationToken ct = default);
+    Task<VendorDto> UpdateVendorAsync(Guid id, UpdateVendorDto dto, CancellationToken ct = default);
 
     Task<List<PurchaseInvoiceDto>> GetInvoicesAsync(CancellationToken ct = default);
     Task<PurchaseInvoiceDto> GetInvoiceAsync(Guid id, CancellationToken ct = default);
