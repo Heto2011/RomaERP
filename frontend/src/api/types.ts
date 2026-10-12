@@ -1856,6 +1856,38 @@ export interface RestaurantOrder {
   lines: RestaurantOrderLine[];
 }
 
+export interface OfflineOrderLineInput {
+  itemId: string;
+  quantity: number;
+  notes?: string | null;
+}
+
+export interface OfflineOrderInput {
+  clientId: string;
+  createdAtUtc: string;
+  orderType: RestaurantOrderType;
+  tableId: string | null;
+  customerName: string | null;
+  customerPhone: string | null;
+  deliveryAddress: string | null;
+  warehouseId: string;
+  paymentTerm: PaymentTerm;
+  fiscalPeriodId: string;
+  cashierShiftId: string | null;
+  discountAmount: number;
+  notes: string | null;
+  lines: OfflineOrderLineInput[];
+}
+
+export interface OfflineOrderResult {
+  clientId: string;
+  success: boolean;
+  alreadySynced: boolean;
+  orderNumber: string | null;
+  invoiceNumber: string | null;
+  error: string | null;
+}
+
 export interface SetOrderLoyaltyInput {
   phone: string;
   name?: string | null;

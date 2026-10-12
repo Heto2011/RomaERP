@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { CashierShiftsApi, EmployeesApi, LookupsApi, LoyaltyApi, RestaurantApi, SalesApi, WarehousesApi } from "../../api/services";
 import {
@@ -19,6 +19,9 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
 import { useAuth } from "../../context/AuthContext";
 import { IconGrid, IconBox, IconTruck } from "../../components/icons";
+import OfflinePos, { OfflineQueueNotice } from "./OfflinePos";
+import { useOnlineStatus } from "../../offline/useOnlineStatus";
+import { listOutbox, loadSnapshot, saveSnapshot, syncOutbox, type OutboxTicket, type PosSnapshot } from "../../offline/posOffline";
 
 export default function RestaurantPOS() {
   const { t, lang } = useLanguage();
@@ -59,6 +62,13 @@ export default function RestaurantPOS() {
   const [showSplitDialog, setShowSplitDialog] = useState(false);
   const [splitLineIds, setSplitLineIds] = useState<Set<string>>(new Set());
 
+  const { online } = useOnlineStatus();
+  const [vatRate, setVatRate] = useState(0);
+  const [snapshot, setSnapshot] = useState<PosSnapshot | null>(null);
+  const [queue, setQueue] = useState<OutboxTicket[]>([]);
+  const [syncing, setSyncing] = useState(false);
+  const [syncMessage, setSyncMessage] = useState<string | null>(null);
+
   const [loyaltyEnabled, setLoyaltyEnabled] = useState(false);
   const [showLoyaltyDialog, setShowLoyaltyDialog] = useState(false);
   const [loyaltyPhone, setLoyaltyPhone] = useState("");
@@ -75,26 +85,33 @@ export default function RestaurantPOS() {
   const availableTables = tables.filter((tb) => tb.status === RestaurantTableStatus.Available);
 
   async function load() {
-    const [ordersRes, tablesRes, menuRes, warehousesRes, periodsRes] = await Promise.all([
+    const [ordersRes, tablesRes, menuRes, warehousesRes, periodsRes, settingsRes] = await Promise.all([
       RestaurantApi.getOrders(false),
       RestaurantApi.getTables(),
       RestaurantApi.getMenu(),
       WarehousesApi.getAll(),
       LookupsApi.fiscalPeriods(),
+      LookupsApi.companySettings(),
     ]);
     setOrders(ordersRes.data);
     setTables(tablesRes.data);
     setMenu(menuRes.data);
     setWarehouses(warehousesRes.data);
     setPeriods(periodsRes.data);
+    setVatRate(settingsRes.data.vatRate);
   }
 
   useEffect(() => {
-    load();
+    if (!online) return;
+    load().catch(() => {});
     LoyaltyApi.getSettings().then((r) => setLoyaltyEnabled(r.data.enabled)).catch(() => setLoyaltyEnabled(false));
-  }, []);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online]);
 
   useEffect(() => {
+    // Started with no internet: wait for the connection before asking who the cashier is and which shift is open.
+    if (!online || employeeId) return;
+    setEmployeeError(null);
     EmployeesApi.getMyProfile()
       .then((res) => {
         setEmployeeId(res.data.id);
@@ -104,7 +121,49 @@ export default function RestaurantPOS() {
       .catch(() => setEmployeeError(t.restaurant.noEmployeeLinkedError))
       .finally(() => setShiftLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [online]);
+
+  const refreshQueue = useCallback(async () => setQueue(await listOutbox()), []);
+
+  useEffect(() => {
+    loadSnapshot().then(setSnapshot);
+    refreshQueue();
+  }, [refreshQueue]);
+
+  // Keep a copy of everything the offline screen needs, refreshed whenever the live data changes.
+  useEffect(() => {
+    if (menu.length === 0 || warehouses.length === 0) return;
+    const fresh: PosSnapshot = {
+      savedAt: new Date().toISOString(),
+      menu, tables, warehouses, periods,
+      activeShiftId: activeShift?.id ?? null,
+      vatRate,
+    };
+    setSnapshot(fresh);
+    saveSnapshot(fresh);
+  }, [menu, tables, warehouses, periods, activeShift, vatRate]);
+
+  const runSync = useCallback(async () => {
+    setSyncing(true);
+    try {
+      const summary = await syncOutbox();
+      await refreshQueue();
+      if (summary.synced > 0) {
+        setSyncMessage(t.restaurant.offlineSyncedOk.replace("{n}", String(summary.synced)));
+        await load();
+      }
+      if (summary.failed > 0) setSyncMessage((m) => `${m ? m + " " : ""}${t.restaurant.offlineSyncFailed.replace("{n}", String(summary.failed))}`);
+    } finally {
+      setSyncing(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshQueue, t]);
+
+  // The moment the connection is back, send whatever was rung up offline.
+  useEffect(() => {
+    if (online && queue.some((q) => q.status === "pending")) runSync();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [online, queue.length]);
 
   async function handleOpenShift(e: React.FormEvent) {
     e.preventDefault();
@@ -475,6 +534,19 @@ export default function RestaurantPOS() {
     </button>
   );
 
+  if (!online) {
+    return (
+      <OfflinePos
+        snapshot={snapshot}
+        queue={queue}
+        syncing={syncing}
+        onSyncNow={runSync}
+        onQueueChanged={refreshQueue}
+        exitButton={exitButton}
+      />
+    );
+  }
+
   if (shiftLoading) {
     return (
       <div className="pos-page">
@@ -545,6 +617,8 @@ export default function RestaurantPOS() {
       </div>
 
       {error && <div className="alert-error">{error}</div>}
+      {syncMessage && <div className="alert-success">{syncMessage}</div>}
+      <OfflineQueueNotice queue={queue} syncing={syncing} onSyncNow={runSync} onChanged={refreshQueue} />
 
       <div className="pos-layout">
         <div className="pos-orders-rail">

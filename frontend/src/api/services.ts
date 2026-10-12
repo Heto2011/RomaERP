@@ -162,6 +162,8 @@ import type {
   MergeOrdersInput,
   SplitOrderResult,
   SetOrderLoyaltyInput,
+  OfflineOrderInput,
+  OfflineOrderResult,
   LoyaltySettings,
   LoyaltyMember,
   LoyaltyMemberDetail,
@@ -631,6 +633,8 @@ export const RestaurantApi = {
     apiClient.post<RestaurantOrder>(`/restaurant/orders/${orderId}/move-table`, data),
   mergeOrders: (targetOrderId: string, data: MergeOrdersInput) =>
     apiClient.post<RestaurantOrder>(`/restaurant/orders/${targetOrderId}/merge`, data),
+  syncOfflineOrders: (data: { orders: OfflineOrderInput[] }) =>
+    apiClient.post<OfflineOrderResult[]>("/restaurant/orders/offline-sync", data),
   setOrderLoyalty: (orderId: string, data: SetOrderLoyaltyInput) =>
     apiClient.put<RestaurantOrder>(`/restaurant/orders/${orderId}/loyalty`, data),
   clearOrderLoyalty: (orderId: string) => apiClient.delete<RestaurantOrder>(`/restaurant/orders/${orderId}/loyalty`),
