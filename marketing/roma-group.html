@@ -4,10 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Roma Group — مجموعة منتجات لإدارة أعمالك</title>
-<meta name="description" content="Roma Group تجمع منتجاتنا: Roma HR لإدارة الموارد البشرية، RomaERP لإدارة الأعمال والمحاسبة، بالإضافة لـRoma Voice وRoma Tools. اختر المنتج اللي محتاجه شغلك.">
+<meta name="description" content="Roma Group تجمع منتجاتنا: Roma HR لإدارة الموارد البشرية، RomaERP لإدارة الأعمال والمحاسبة، بالإضافة لـRoma Tools. اختر المنتج اللي محتاجه شغلك.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Roma Group">
-<meta property="og:title" content="Roma Group — أربع أدوات، شركة واحدة تثق فيها">
+<meta property="og:title" content="Roma Group — ثلاث أدوات، شركة واحدة تثق فيها">
 <meta property="og:description" content="اختر المنتج اللي محتاجه شغلك دلوقتي — كل منتج شغال لوحده، ولو حبيت تجمعهم مع بعض تقدر بسهولة.">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -16,7 +16,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
   :root{
-    --primary:#0f5c4b; --hr:#c8862e; --voice:#3a6ea5; --tools:#8a7355;
+    --primary:#0f5c4b; --hr:#c8862e; --tools:#8a7355;
     --hero-bg:#0d1319;
   }
   *{box-sizing:border-box; margin:0; padding:0;}
@@ -51,8 +51,7 @@
   .card:hover{transform:translateY(-2px); border-color:rgba(255,255,255,.3);}
   .card.featured{background:rgba(200,134,46,.14); border-color:rgba(200,134,46,.4); color:#c8862e;}
   .card.erp{background:rgba(15,92,75,.26); border-color:rgba(95,208,161,.36); color:#5fd0a1;}
-  .card.voice{background:rgba(58,110,165,.14); border-color:rgba(58,110,165,.42); color:#6fa3dc;}
-  .card.tools{background:rgba(138,115,85,.14); border-color:rgba(138,115,85,.42); color:#b59a72;}
+  .card.tools{grid-column:1 / -1; background:rgba(138,115,85,.14); border-color:rgba(138,115,85,.42); color:#b59a72;}
   .card-art{position:absolute; z-index:-1; inset-inline-end:-22px; bottom:-22px; width:160px; height:160px; opacity:.27; pointer-events:none;}
   .badge{width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:#fff;}
   .card-title{font-weight:900; font-size:18px; color:#fff;}
@@ -93,7 +92,7 @@
 
     <div class="hero-copy">
       <div class="eyebrow"><span data-i18n="eyebrow">مجموعة منتجات لإدارة أعمالك بذكاء</span></div>
-      <h1 data-i18n="h1">أربع أدوات، شركة واحدة تثق فيها</h1>
+      <h1 data-i18n="h1">ثلاث أدوات، شركة واحدة تثق فيها</h1>
       <div class="subtitle" data-i18n="sub">اختر المنتج اللي محتاجه شغلك دلوقتي — كل منتج شغال لوحده، ولو حبيت تجمعهم مع بعض تقدر بسهولة</div>
     </div>
 
@@ -126,28 +125,15 @@
         <div class="card-cta" style="color:#5fd0a1;" data-i18n="erpCta">شغال حاليًا ←</div>
       </a>
 
-      <div class="card voice" aria-disabled="true">
-        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="9.3" y="3" width="5.4" height="10" rx="2.7"/>
-          <path d="M5.5 11a6.5 6.5 0 0 0 13 0"/>
-          <path d="M12 17.5V21"/>
-          <path d="M9 21h6"/>
-        </svg>
-        <div class="badge" style="background:var(--voice);">V</div>
-        <div class="card-title">Roma Voice</div>
-        <div class="card-desc" data-i18n="voiceDesc">تسجيل عمليات ومكالمات بالصوت وتحويلها تلقائيًا لبيانات — تفاصيله قريبًا</div>
-        <div class="card-cta muted" data-i18n="soon">قريبًا</div>
-      </div>
-
-      <div class="card tools" aria-disabled="true">
+      <a href="https://tools.romagroup.app" class="card tools">
         <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14.7 6.3a3.6 3.6 0 0 0-4.9 4.9L4 17l3 3 5.8-5.8a3.6 3.6 0 0 0 4.9-4.9l-1.9 1.9a1.8 1.8 0 0 1-2.5-2.5l1.9-1.9z"/>
         </svg>
         <div class="badge" style="background:var(--tools);">T</div>
         <div class="card-title">Roma Tools</div>
-        <div class="card-desc" data-i18n="toolsDesc">أدوات مساعدة صغيرة لتشغيل أعمالك اليومية — تفاصيله قريبًا</div>
-        <div class="card-cta muted" data-i18n="soon">قريبًا</div>
-      </div>
+        <div class="card-desc" data-i18n="toolsDesc">أدوات مساعدة صغيرة لتشغيل أعمالك اليومية</div>
+        <div class="card-cta" style="color:#b59a72;" data-i18n="toolsCta">افتح الأدوات ←</div>
+      </a>
     </div>
   </div>
 
@@ -164,8 +150,8 @@
 <script>
   SiteLang.apply({
   "@title": "Roma Group — products to run your business",
-  "@description": "Roma Group brings our products together: Roma HR for people management, RomaERP for accounting and business operations, plus Roma Voice and Roma Tools. Pick the product your business needs.",
-  "@ogTitle": "Roma Group — four tools, one company you can trust",
+  "@description": "Roma Group brings our products together: Roma HR for people management, RomaERP for accounting and business operations, plus Roma Tools. Pick the product your business needs.",
+  "@ogTitle": "Roma Group — three tools, one company you can trust",
   "@ogDescription": "Pick the product you need today — each one works on its own, and you can combine them whenever you like.",
   "navProducts": "Products",
   "navAbout": "About",
@@ -173,7 +159,7 @@
   "loginErp": "ERP login",
   "loginHr": "HR login",
   "eyebrow": "Products that run your business smarter",
-  "h1": "Four tools, one company you can trust",
+  "h1": "Three tools, one company you can trust",
   "sub": "Pick the product your business needs today — each one works on its own, and you can combine them whenever you like.",
   "hrDesc": "GPS attendance, automatic payroll, requests and approvals — for any company",
   "hrT1": "GPS attendance",
@@ -187,9 +173,8 @@
   "erpT4": "E-invoicing",
   "erpT5": "AI",
   "erpCta": "Live now →",
-  "voiceDesc": "Record operations and calls by voice and turn them into data automatically — details coming soon",
-  "toolsDesc": "Small helper tools for your day-to-day operations — details coming soon",
-  "soon": "Coming soon"
+  "toolsDesc": "Small helper tools for your day-to-day operations",
+  "toolsCta": "Open the tools →"
 });
 </script>
 </body>
