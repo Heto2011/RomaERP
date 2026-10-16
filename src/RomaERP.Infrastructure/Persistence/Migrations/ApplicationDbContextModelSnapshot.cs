@@ -1945,6 +1945,56 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.ToTable("SurveyParticipations");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Assistant.ExpensePolicy", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("AccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("BlocksApproval")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<decimal?>("MaxAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<decimal?>("RequireProofAbove")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("AccountId");
+
+                    b.ToTable("ExpensePolicies");
+                });
+
             modelBuilder.Entity("RomaERP.Domain.HR.EmployeeContract", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5068,6 +5118,16 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Navigation("SurveyResponse");
 
                     b.Navigation("SurveyQuestion");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Assistant.ExpensePolicy", b =>
+                {
+                    b.HasOne("RomaERP.Domain.Accounting.Account", "Account")
+                        .WithMany()
+                        .HasForeignKey("AccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Account");
                 });
 
             modelBuilder.Entity("RomaERP.Domain.HR.EmployeeContract", b =>

@@ -45,6 +45,23 @@ public class ExpenseCaptureConfiguration : IEntityTypeConfiguration<ExpenseCaptu
     }
 }
 
+public class ExpensePolicyConfiguration : IEntityTypeConfiguration<ExpensePolicy>
+{
+    public void Configure(EntityTypeBuilder<ExpensePolicy> builder)
+    {
+        builder.Property(p => p.Name).HasMaxLength(200).IsRequired();
+        builder.Property(p => p.MaxAmount).HasPrecision(18, 2);
+        builder.Property(p => p.RequireProofAbove).HasPrecision(18, 2);
+
+        builder.HasOne(p => p.Account)
+            .WithMany()
+            .HasForeignKey(p => p.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(p => !p.IsDeleted);
+    }
+}
+
 public class ExpenseCaptureMessageConfiguration : IEntityTypeConfiguration<ExpenseCaptureMessage>
 {
     public void Configure(EntityTypeBuilder<ExpenseCaptureMessage> builder)

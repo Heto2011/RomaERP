@@ -43,4 +43,14 @@ public class ExpenseCaptureDto
     public string? ProofFileName { get; set; }
     public Guid? JournalEntryId { get; set; }
     public string SubmittedByUserId { get; set; } = string.Empty;
+    /// <summary>Company expense policies this expense breaks (empty when it is fine).</summary>
+    public List<PolicyIssueDto> PolicyIssues { get; set; } = new();
+}
+
+public class PolicyIssueDto
+{
+    public string PolicyName { get; set; } = string.Empty;
+    public string Message { get; set; } = string.Empty;
+    /// <summary>True when the policy stops the expense from being approved.</summary>
+    public bool Blocks { get; set; }
 }

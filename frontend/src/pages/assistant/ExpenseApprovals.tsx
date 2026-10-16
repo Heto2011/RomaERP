@@ -85,7 +85,14 @@ export default function ExpenseApprovals() {
             )}
             {captures.map((c) => (
               <tr key={c.id}>
-                <td>{c.description}</td>
+                <td>
+                  {c.description}
+                  {(c.policyIssues ?? []).map((i, idx) => (
+                    <div key={idx} style={{ fontSize: 12, color: i.blocks ? "#b42318" : "#b54708" }}>
+                      ⚠ {t.assistant.policyViolates}: {i.policyName} — {i.message}
+                    </div>
+                  ))}
+                </td>
                 <td>{c.amount} {c.currency}</td>
                 <td>{new Date(c.entryDate).toLocaleDateString()}</td>
                 <td>

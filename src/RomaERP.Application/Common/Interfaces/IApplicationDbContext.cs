@@ -42,6 +42,7 @@ public interface IApplicationDbContext
     DbSet<WorkShift> WorkShifts { get; }
     DbSet<JobPosting> JobPostings { get; }
     DbSet<Candidate> Candidates { get; }
+    DbSet<ExpensePolicy> ExpensePolicies { get; }
     DbSet<ReviewCycle> ReviewCycles { get; }
     DbSet<ReviewAssignment> ReviewAssignments { get; }
     DbSet<Survey> Surveys { get; }

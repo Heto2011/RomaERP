@@ -616,6 +616,24 @@ export interface ExpenseCapture {
   proofFileName: string | null;
   journalEntryId: string | null;
   submittedByUserId: string;
+  policyIssues?: PolicyIssue[];
+}
+
+export interface PolicyIssue {
+  policyName: string;
+  message: string;
+  blocks: boolean;
+}
+
+export interface ExpensePolicy {
+  id: string;
+  name: string;
+  accountId: string | null;
+  accountName: string | null;
+  maxAmount: number | null;
+  requireProofAbove: number | null;
+  blocksApproval: boolean;
+  isActive: boolean;
 }
 
 export interface ChatTurnResponse {

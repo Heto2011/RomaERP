@@ -83,7 +83,7 @@ public class ExpenseAssistantService : IExpenseAssistantService
                 Content = m.Content,
                 CreatedAtUtc = m.CreatedAtUtc
             }).ToList(),
-            Capture = Map(capture)
+            Capture = WithIssues(Map(capture), capture, await LoadPoliciesAsync(ct))
         };
     }
 
@@ -146,7 +146,7 @@ public class ExpenseAssistantService : IExpenseAssistantService
                 Content = m.Content,
                 CreatedAtUtc = m.CreatedAtUtc
             }).ToList(),
-            Capture = Map(capture)
+            Capture = WithIssues(Map(capture), capture, await LoadPoliciesAsync(ct))
         };
     }
 
@@ -291,7 +291,8 @@ public class ExpenseAssistantService : IExpenseAssistantService
             .OrderBy(c => c.CreatedAtUtc)
             .ToListAsync(ct);
 
-        return captures.Select(Map).ToList();
+        var policies = await LoadPoliciesAsync(ct);
+        return captures.Select(c => WithIssues(Map(c), c, policies)).ToList();
     }
 
     public async Task<ExpenseCaptureDto> ApproveAsync(Guid captureId, CancellationToken ct = default)
@@ -305,6 +306,10 @@ public class ExpenseAssistantService : IExpenseAssistantService
 
         if (capture.Status != ExpenseCaptureStatus.PendingApproval)
             throw new ValidationAppException("هذا المصروف ليس في انتظار الاعتماد.");
+
+        var blocking = ExpensePolicyRules.Evaluate(capture, await LoadPoliciesAsync(ct)).Where(i => i.Blocks).ToList();
+        if (blocking.Count > 0)
+            throw new ValidationAppException("المصروف ده بيخالف سياسة الشركة: " + string.Join(" ", blocking.Select(i => $"({i.PolicyName}) {i.Message}")));
 
         Guid creditAccountId;
         DateTime entryDate;
@@ -391,6 +396,15 @@ public class ExpenseAssistantService : IExpenseAssistantService
         await _context.SaveChangesAsync(ct);
 
         return Map(capture);
+    }
+
+    private async Task<List<ExpensePolicy>> LoadPoliciesAsync(CancellationToken ct)
+        => await _context.ExpensePolicies.AsNoTracking().Where(p => p.IsActive && !p.IsDeleted).ToListAsync(ct);
+
+    private static ExpenseCaptureDto WithIssues(ExpenseCaptureDto dto, ExpenseCapture capture, IEnumerable<ExpensePolicy> policies)
+    {
+        dto.PolicyIssues = ExpensePolicyRules.Evaluate(capture, policies);
+        return dto;
     }
 
     private static ExpenseCaptureDto Map(ExpenseCapture c) => new()

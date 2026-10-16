@@ -119,6 +119,7 @@ import type {
   Employee,
   FixedAsset,
   ExpenseCapture,
+  ExpensePolicy,
   FiscalPeriod,
   FiscalYearDetail,
   IncomeStatement,
@@ -433,6 +434,13 @@ export const PayrollApi = {
   downloadUkSummary: (id: string) => apiClient.get<Blob>(`/payroll/${id}/uk-summary`, { responseType: "blob" }),
   getSettings: () => apiClient.get<PayrollSettings>("/payroll/settings"),
   updateSettings: (data: PayrollSettings) => apiClient.put<PayrollSettings>("/payroll/settings", data),
+};
+
+export const ExpensePoliciesApi = {
+  getAll: () => apiClient.get<ExpensePolicy[]>("/expense-policies"),
+  create: (data: Partial<ExpensePolicy>) => apiClient.post<ExpensePolicy>("/expense-policies", data),
+  update: (id: string, data: Partial<ExpensePolicy>) => apiClient.put<ExpensePolicy>(`/expense-policies/${id}`, data),
+  remove: (id: string) => apiClient.delete(`/expense-policies/${id}`),
 };
 
 export const AiAssistantApi = {
