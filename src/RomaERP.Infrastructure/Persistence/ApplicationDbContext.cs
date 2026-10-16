@@ -58,6 +58,13 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<WorkShift> WorkShifts => Set<WorkShift>();
     public DbSet<JobPosting> JobPostings => Set<JobPosting>();
     public DbSet<Candidate> Candidates => Set<Candidate>();
+    public DbSet<ReviewCycle> ReviewCycles => Set<ReviewCycle>();
+    public DbSet<ReviewAssignment> ReviewAssignments => Set<ReviewAssignment>();
+    public DbSet<Survey> Surveys => Set<Survey>();
+    public DbSet<SurveyQuestion> SurveyQuestions => Set<SurveyQuestion>();
+    public DbSet<SurveyResponse> SurveyResponses => Set<SurveyResponse>();
+    public DbSet<SurveyAnswer> SurveyAnswers => Set<SurveyAnswer>();
+    public DbSet<SurveyParticipation> SurveyParticipations => Set<SurveyParticipation>();
     public DbSet<ShiftAssignment> ShiftAssignments => Set<ShiftAssignment>();
 
     public DbSet<ItemCategory> ItemCategories => Set<ItemCategory>();
@@ -140,6 +147,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         foreach (var entry in ChangeTracker.Entries())
         {
             if (entry.Entity is AuditLog) continue;
+            // Survey answers must stay anonymous: logging who created each row would tie an answer back to the person.
+            if (entry.Entity is SurveyResponse or SurveyAnswer) continue;
             if (entry.Entity is not (BaseEntity or ApplicationUser)) continue;
             if (entry.State is not (EntityState.Added or EntityState.Modified or EntityState.Deleted)) continue;
 

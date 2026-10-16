@@ -303,3 +303,77 @@ public class CandidateConfiguration : IEntityTypeConfiguration<Candidate>
         builder.HasQueryFilter(c => !c.IsDeleted);
     }
 }
+
+public class ReviewCycleConfiguration : IEntityTypeConfiguration<ReviewCycle>
+{
+    public void Configure(EntityTypeBuilder<ReviewCycle> builder)
+    {
+        builder.Property(c => c.Name).HasMaxLength(200).IsRequired();
+        builder.Property(c => c.Description).HasMaxLength(1000);
+        builder.Property(c => c.Competencies).HasMaxLength(2000).IsRequired();
+        builder.HasQueryFilter(c => !c.IsDeleted);
+    }
+}
+
+public class ReviewAssignmentConfiguration : IEntityTypeConfiguration<ReviewAssignment>
+{
+    public void Configure(EntityTypeBuilder<ReviewAssignment> builder)
+    {
+        builder.Property(a => a.OverallRating).HasPrecision(4, 2);
+        builder.Property(a => a.Comments).HasMaxLength(2000);
+        builder.HasOne(a => a.ReviewCycle).WithMany().HasForeignKey(a => a.ReviewCycleId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(a => a.SubjectEmployee).WithMany().HasForeignKey(a => a.SubjectEmployeeId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(a => a.ReviewerEmployee).WithMany().HasForeignKey(a => a.ReviewerEmployeeId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(a => new { a.ReviewCycleId, a.SubjectEmployeeId, a.ReviewerEmployeeId }).IsUnique();
+        builder.HasQueryFilter(a => !a.IsDeleted);
+    }
+}
+
+public class SurveyConfiguration : IEntityTypeConfiguration<Survey>
+{
+    public void Configure(EntityTypeBuilder<Survey> builder)
+    {
+        builder.Property(s => s.Title).HasMaxLength(200).IsRequired();
+        builder.Property(s => s.Description).HasMaxLength(1000);
+        builder.HasQueryFilter(s => !s.IsDeleted);
+    }
+}
+
+public class SurveyQuestionConfiguration : IEntityTypeConfiguration<SurveyQuestion>
+{
+    public void Configure(EntityTypeBuilder<SurveyQuestion> builder)
+    {
+        builder.Property(q => q.Text).HasMaxLength(500).IsRequired();
+        builder.HasOne(q => q.Survey).WithMany().HasForeignKey(q => q.SurveyId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasQueryFilter(q => !q.IsDeleted);
+    }
+}
+
+public class SurveyResponseConfiguration : IEntityTypeConfiguration<SurveyResponse>
+{
+    public void Configure(EntityTypeBuilder<SurveyResponse> builder)
+    {
+        builder.HasOne(r => r.Survey).WithMany().HasForeignKey(r => r.SurveyId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasQueryFilter(r => !r.IsDeleted);
+    }
+}
+
+public class SurveyAnswerConfiguration : IEntityTypeConfiguration<SurveyAnswer>
+{
+    public void Configure(EntityTypeBuilder<SurveyAnswer> builder)
+    {
+        builder.Property(a => a.TextValue).HasMaxLength(2000);
+        builder.HasOne(a => a.SurveyResponse).WithMany().HasForeignKey(a => a.SurveyResponseId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(a => a.SurveyQuestion).WithMany().HasForeignKey(a => a.SurveyQuestionId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasQueryFilter(a => !a.IsDeleted);
+    }
+}
+
+public class SurveyParticipationConfiguration : IEntityTypeConfiguration<SurveyParticipation>
+{
+    public void Configure(EntityTypeBuilder<SurveyParticipation> builder)
+    {
+        builder.HasIndex(p => new { p.SurveyId, p.EmployeeId }).IsUnique();
+        builder.HasQueryFilter(p => !p.IsDeleted);
+    }
+}

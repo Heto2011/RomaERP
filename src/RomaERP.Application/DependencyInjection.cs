@@ -43,6 +43,8 @@ public static class DependencyInjection
         services.AddScoped<IEmployeeContractService, EmployeeContractService>();
         services.AddScoped<IShiftService, ShiftService>();
         services.AddScoped<IRecruitmentService, RecruitmentService>();
+        services.AddScoped<IPerformanceService, PerformanceService>();
+        services.AddScoped<ISurveyService, SurveyService>();
 
         services.AddScoped<IItemCategoryService, ItemCategoryService>();
         services.AddScoped<IWarehouseService, WarehouseService>();
