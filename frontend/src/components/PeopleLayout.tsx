@@ -5,7 +5,7 @@ import { ProductScope } from "../api/types";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import { usePortalManifest } from "../utils/pwa";
-import { IconUsers, IconCheck, IconClock, IconBuilding, IconBriefcase, IconFile, IconWallet, IconDollar, IconBarChart, IconGrid, IconCalendar, IconSun, IconMoon, IconShield } from "./icons";
+import { IconUsers, IconCheck, IconClock, IconBuilding, IconBriefcase, IconFile, IconWallet, IconDollar, IconBarChart, IconGrid, IconCalendar, IconSun, IconMoon, IconShield, IconChat } from "./icons";
 
 /// <summary>A distinct-branded shell for the same HR pages the main app already has under /hr/* — same
 /// components, same data, same login, just its own accent color and a top navigation bar (rather than the
@@ -28,6 +28,8 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
     { to: "/people/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
     { to: "/people/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },
     { to: "/people/my-schedule", label: t.hr.mySchedule, icon: <IconCalendar /> },
+    { to: "/people/my-reviews", label: t.hr.myReviews, icon: <IconCheck /> },
+    { to: "/people/my-surveys", label: t.hr.mySurveys, icon: <IconChat /> },
   ];
 
   const managerLinks = [
@@ -44,6 +46,8 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
     { to: "/people/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
     { to: "/people/shifts", label: t.hr.shiftsTitle, icon: <IconCalendar /> },
     { to: "/people/recruitment", label: t.hr.recruitmentTitle, icon: <IconUsers /> },
+    { to: "/people/performance", label: t.hr.performanceTitle, icon: <IconBarChart /> },
+    { to: "/people/surveys", label: t.hr.surveysTitle, icon: <IconChat /> },
     { to: "/people/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },
     ...(isAdmin ? [{ to: "/people/subscription", label: t.mySubscription.title, icon: <IconDollar /> }] : []),
   ];

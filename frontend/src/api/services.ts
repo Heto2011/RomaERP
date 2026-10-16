@@ -168,6 +168,11 @@ import type {
   JobPosting,
   Candidate,
   PublicJob,
+  ReviewCycle,
+  ReviewAssignment,
+  ReviewSubjectResult,
+  Survey,
+  SurveyResults,
   SetOrderLoyaltyInput,
   OfflineOrderInput,
   OfflineOrderResult,
@@ -259,6 +264,34 @@ export const PositionsApi = {
   create: (data: Partial<Position>) => apiClient.post<Position>("/positions", data),
   update: (id: string, data: Partial<Position>) => apiClient.put<Position>(`/positions/${id}`, data),
   remove: (id: string) => apiClient.delete(`/positions/${id}`),
+};
+
+export const PerformanceApi = {
+  getCycles: () => apiClient.get<ReviewCycle[]>("/performance/cycles"),
+  createCycle: (data: Partial<ReviewCycle>) => apiClient.post<ReviewCycle>("/performance/cycles", data),
+  updateCycle: (id: string, data: Partial<ReviewCycle>) => apiClient.put<ReviewCycle>(`/performance/cycles/${id}`, data),
+  setStatus: (id: string, status: number) => apiClient.post<ReviewCycle>(`/performance/cycles/${id}/status`, null, { params: { status } }),
+  getAssignments: (id: string) => apiClient.get<ReviewAssignment[]>(`/performance/cycles/${id}/assignments`),
+  addAssignments: (id: string, subjectEmployeeId: string, reviewers: { reviewerEmployeeId: string; relationship: number }[]) =>
+    apiClient.post<number>(`/performance/cycles/${id}/assignments`, { subjectEmployeeId, reviewers }),
+  addSelfReviews: (id: string) => apiClient.post<number>(`/performance/cycles/${id}/self-reviews`),
+  deleteAssignment: (id: string) => apiClient.delete(`/performance/assignments/${id}`),
+  getResults: (id: string) => apiClient.get<ReviewSubjectResult[]>(`/performance/cycles/${id}/results`),
+  mine: () => apiClient.get<ReviewAssignment[]>("/performance/mine"),
+  submit: (id: string, ratings: Record<string, number>, comments: string | null) =>
+    apiClient.post<ReviewAssignment>(`/performance/assignments/${id}/submit`, { ratings, comments }),
+};
+
+export const SurveysApi = {
+  getAll: () => apiClient.get<Survey[]>("/surveys"),
+  create: (data: Partial<Survey>) => apiClient.post<Survey>("/surveys", data),
+  update: (id: string, data: Partial<Survey>) => apiClient.put<Survey>(`/surveys/${id}`, data),
+  setStatus: (id: string, status: number) => apiClient.post<Survey>(`/surveys/${id}/status`, null, { params: { status } }),
+  remove: (id: string) => apiClient.delete(`/surveys/${id}`),
+  results: (id: string) => apiClient.get<SurveyResults>(`/surveys/${id}/results`),
+  open: () => apiClient.get<Survey[]>("/surveys/open"),
+  respond: (id: string, answers: { questionId: string; numberValue?: number | null; textValue?: string | null }[]) =>
+    apiClient.post(`/surveys/${id}/respond`, { answers }),
 };
 
 export const RecruitmentApi = {

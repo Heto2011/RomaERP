@@ -883,6 +883,91 @@ export enum EmploymentStatus {
   Terminated = 3,
 }
 
+export enum ReviewCycleStatus { Draft = 1, Active = 2, Closed = 3 }
+export enum ReviewRelationship { Self = 1, Manager = 2, Peer = 3, DirectReport = 4 }
+export enum SurveyStatus { Draft = 1, Open = 2, Closed = 3 }
+export enum SurveyQuestionType { Rating = 1, YesNo = 2, Text = 3 }
+
+export interface ReviewCycle {
+  id: string;
+  name: string;
+  description: string | null;
+  startDate: string;
+  endDate: string;
+  status: ReviewCycleStatus;
+  competencies: string[];
+  totalReviews: number;
+  submittedReviews: number;
+}
+
+export interface ReviewAssignment {
+  id: string;
+  reviewCycleId: string;
+  cycleName: string;
+  subjectEmployeeId: string;
+  subjectName: string;
+  reviewerEmployeeId: string;
+  reviewerName: string;
+  relationship: ReviewRelationship;
+  isSubmitted: boolean;
+  overallRating: number | null;
+  competencies: string[];
+  ratings: Record<string, number>;
+  comments: string | null;
+}
+
+export interface ReviewGroupResult {
+  relationship: ReviewRelationship;
+  count: number;
+  average: number | null;
+  byCompetency: Record<string, number>;
+  comments: string[];
+}
+
+export interface ReviewSubjectResult {
+  employeeId: string;
+  employeeName: string;
+  groups: ReviewGroupResult[];
+  othersAverage: number | null;
+  selfAverage: number | null;
+}
+
+export interface SurveyQuestion {
+  id: string;
+  text: string;
+  type: SurveyQuestionType;
+}
+
+export interface Survey {
+  id: string;
+  title: string;
+  description: string | null;
+  isAnonymous: boolean;
+  status: SurveyStatus;
+  questions: SurveyQuestion[];
+  responseCount: number;
+  answered: boolean;
+}
+
+export interface SurveyQuestionResult {
+  questionId: string;
+  text: string;
+  type: SurveyQuestionType;
+  answers: number;
+  average: number | null;
+  distribution: Record<string, number>;
+  texts: string[];
+}
+
+export interface SurveyResults {
+  surveyId: string;
+  title: string;
+  responseCount: number;
+  invitedCount: number;
+  textHidden: boolean;
+  questions: SurveyQuestionResult[];
+}
+
 export enum JobStatus {
   Draft = 1,
   Open = 2,
