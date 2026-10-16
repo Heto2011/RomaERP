@@ -152,6 +152,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> },
         { to: "/hr/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
         { to: "/hr/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },
+        { to: "/hr/my-schedule", label: t.hr.mySchedule, icon: <IconCalendar /> },
       ],
     },
     {
@@ -175,6 +176,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/my-profile", label: t.nav.myProfile, icon: <IconUser /> },
         { to: "/hr/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
         { to: "/hr/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },
+        { to: "/hr/my-schedule", label: t.hr.mySchedule, icon: <IconCalendar /> },
         ...(user?.roles.includes("Admin") ? [openPeoplePortalLink, openRestaurantPortalLink, openInventoryPortalLink] : []),
       ],
     },
@@ -269,6 +271,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               { to: "/hr/payroll-settings", label: t.hr.payrollSettingsTitle, icon: <IconWallet /> },
               { to: "/hr/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
               { to: "/hr/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
+              { to: "/hr/shifts", label: t.hr.shiftsTitle, icon: <IconCalendar /> },
               { to: "/hr/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },
             ],
           },

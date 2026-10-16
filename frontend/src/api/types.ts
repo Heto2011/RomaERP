@@ -883,6 +883,27 @@ export enum EmploymentStatus {
   Terminated = 3,
 }
 
+export interface WorkShift {
+  id: string;
+  name: string;
+  startTime: string;
+  endTime: string;
+  color: string | null;
+  isActive: boolean;
+  isOvernight: boolean;
+}
+
+export interface RosterEntry {
+  employeeId: string;
+  employeeName: string;
+  date: string;
+  shiftId: string;
+  shiftName: string;
+  startTime: string;
+  endTime: string;
+  color: string | null;
+}
+
 export interface Employee {
   id: string;
   employeeCode: string;

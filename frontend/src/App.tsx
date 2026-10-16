@@ -95,6 +95,8 @@ import AiAssistant from "./pages/assistant/AiAssistant";
 import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
 import BankReconciliation from "./pages/assistant/BankReconciliation";
 import RestaurantTables from "./pages/restaurant/RestaurantTables";
+import Shifts from "./pages/hr/Shifts";
+import MySchedule from "./pages/hr/MySchedule";
 import PartyForm from "./pages/PartyForm";
 import RestaurantMenu from "./pages/restaurant/RestaurantMenu";
 import LoyaltyPage from "./pages/restaurant/Loyalty";
@@ -237,11 +239,15 @@ export default function App() {
       <Route path="/hr/work-locations" element={<ProtectedRoute><WorkLocations /></ProtectedRoute>} />
       <Route path="/hr/attendance" element={<ProtectedRoute><Attendance /></ProtectedRoute>} />
       <Route path="/hr/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
+      <Route path="/hr/my-schedule" element={<ProtectedRoute><MySchedule /></ProtectedRoute>} />
+      <Route path="/hr/shifts" element={<ProtectedRoute><Shifts /></ProtectedRoute>} />
       <Route path="/hr/employee-requests" element={<ProtectedRoute><EmployeeRequestsAdmin /></ProtectedRoute>} />
       <Route path="/people" element={<PeopleRoute><PeopleDashboard /></PeopleRoute>} />
       <Route path="/people/calendar" element={<PeopleRoute managerOnly><PeopleCalendar /></PeopleRoute>} />
       <Route path="/people/attendance" element={<PeopleRoute><Attendance /></PeopleRoute>} />
       <Route path="/people/my-requests" element={<PeopleRoute><MyRequests /></PeopleRoute>} />
+      <Route path="/people/my-schedule" element={<PeopleRoute><MySchedule /></PeopleRoute>} />
+      <Route path="/people/shifts" element={<PeopleRoute managerOnly><Shifts /></PeopleRoute>} />
       <Route path="/people/departments" element={<PeopleRoute managerOnly><Departments /></PeopleRoute>} />
       <Route path="/people/positions" element={<PeopleRoute managerOnly><Positions /></PeopleRoute>} />
       <Route path="/people/employees" element={<PeopleRoute managerOnly><Employees /></PeopleRoute>} />

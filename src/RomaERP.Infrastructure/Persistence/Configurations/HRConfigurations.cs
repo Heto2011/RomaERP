@@ -253,3 +253,24 @@ public class PayrollRunLineConfiguration : IEntityTypeConfiguration<PayrollRunLi
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public class WorkShiftConfiguration : IEntityTypeConfiguration<WorkShift>
+{
+    public void Configure(EntityTypeBuilder<WorkShift> builder)
+    {
+        builder.Property(s => s.Name).HasMaxLength(100).IsRequired();
+        builder.Property(s => s.Color).HasMaxLength(20);
+        builder.HasQueryFilter(s => !s.IsDeleted);
+    }
+}
+
+public class ShiftAssignmentConfiguration : IEntityTypeConfiguration<ShiftAssignment>
+{
+    public void Configure(EntityTypeBuilder<ShiftAssignment> builder)
+    {
+        builder.HasOne(a => a.Employee).WithMany().HasForeignKey(a => a.EmployeeId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(a => a.WorkShift).WithMany().HasForeignKey(a => a.WorkShiftId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(a => new { a.EmployeeId, a.Date }).IsUnique();
+        builder.HasQueryFilter(a => !a.IsDeleted);
+    }
+}

@@ -27,6 +27,7 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
     { to: "/people", label: t.nav.dashboard, icon: <IconGrid />, end: true },
     { to: "/people/attendance", label: t.hr.attendanceTitle, icon: <IconClock /> },
     { to: "/people/my-requests", label: t.hr.myRequests, icon: <IconCheck /> },
+    { to: "/people/my-schedule", label: t.hr.mySchedule, icon: <IconCalendar /> },
   ];
 
   const managerLinks = [
@@ -41,6 +42,7 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
     ...(isHrManager ? [{ to: "/people/payroll-settings", label: t.hr.payrollSettingsTitle, icon: <IconWallet /> }] : []),
     { to: "/people/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
     { to: "/people/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
+    { to: "/people/shifts", label: t.hr.shiftsTitle, icon: <IconCalendar /> },
     { to: "/people/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },
     ...(isAdmin ? [{ to: "/people/subscription", label: t.mySubscription.title, icon: <IconDollar /> }] : []),
   ];

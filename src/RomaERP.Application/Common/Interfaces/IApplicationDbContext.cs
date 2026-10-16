@@ -39,6 +39,8 @@ public interface IApplicationDbContext
     DbSet<AttendanceRecord> AttendanceRecords { get; }
     DbSet<EmployeeRequest> EmployeeRequests { get; }
     DbSet<EmployeeContract> EmployeeContracts { get; }
+    DbSet<WorkShift> WorkShifts { get; }
+    DbSet<ShiftAssignment> ShiftAssignments { get; }
 
     DbSet<ItemCategory> ItemCategories { get; }
     DbSet<Warehouse> Warehouses { get; }

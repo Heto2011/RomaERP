@@ -163,6 +163,8 @@ import type {
   MoveOrderTableInput,
   MergeOrdersInput,
   SplitOrderResult,
+  WorkShift,
+  RosterEntry,
   SetOrderLoyaltyInput,
   OfflineOrderInput,
   OfflineOrderResult,
@@ -254,6 +256,17 @@ export const PositionsApi = {
   create: (data: Partial<Position>) => apiClient.post<Position>("/positions", data),
   update: (id: string, data: Partial<Position>) => apiClient.put<Position>(`/positions/${id}`, data),
   remove: (id: string) => apiClient.delete(`/positions/${id}`),
+};
+
+export const ShiftsApi = {
+  getAll: () => apiClient.get<WorkShift[]>("/shifts"),
+  create: (data: Partial<WorkShift>) => apiClient.post<WorkShift>("/shifts", data),
+  update: (id: string, data: Partial<WorkShift>) => apiClient.put<WorkShift>(`/shifts/${id}`, data),
+  remove: (id: string) => apiClient.delete(`/shifts/${id}`),
+  roster: (from: string, to: string) => apiClient.get<RosterEntry[]>("/shifts/roster", { params: { from, to } }),
+  setAssignment: (employeeId: string, date: string, shiftId: string | null) => apiClient.put("/shifts/roster", { employeeId, date, shiftId }),
+  copyWeek: (fromStart: string, toStart: string) => apiClient.post<number>("/shifts/roster/copy-week", { fromStart, toStart }),
+  mine: (from: string, to: string) => apiClient.get<RosterEntry[]>("/shifts/mine", { params: { from, to } }),
 };
 
 export const EmployeesApi = {
