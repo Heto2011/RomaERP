@@ -56,6 +56,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<EmployeeRequest> EmployeeRequests => Set<EmployeeRequest>();
     public DbSet<EmployeeContract> EmployeeContracts => Set<EmployeeContract>();
     public DbSet<WorkShift> WorkShifts => Set<WorkShift>();
+    public DbSet<JobPosting> JobPostings => Set<JobPosting>();
+    public DbSet<Candidate> Candidates => Set<Candidate>();
     public DbSet<ShiftAssignment> ShiftAssignments => Set<ShiftAssignment>();
 
     public DbSet<ItemCategory> ItemCategories => Set<ItemCategory>();

@@ -272,6 +272,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               { to: "/hr/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
               { to: "/hr/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
               { to: "/hr/shifts", label: t.hr.shiftsTitle, icon: <IconCalendar /> },
+              { to: "/hr/recruitment", label: t.hr.recruitmentTitle, icon: <IconUsers /> },
               { to: "/hr/employee-requests", label: t.hr.employeeRequestsTitle, icon: <IconCheck /> },
             ],
           },

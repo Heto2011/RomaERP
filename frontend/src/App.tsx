@@ -96,6 +96,8 @@ import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
 import BankReconciliation from "./pages/assistant/BankReconciliation";
 import RestaurantTables from "./pages/restaurant/RestaurantTables";
 import Shifts from "./pages/hr/Shifts";
+import Recruitment from "./pages/hr/Recruitment";
+import Careers from "./pages/Careers";
 import MySchedule from "./pages/hr/MySchedule";
 import PartyForm from "./pages/PartyForm";
 import RestaurantMenu from "./pages/restaurant/RestaurantMenu";
@@ -168,6 +170,8 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/careers/:companyCode" element={<Careers />} />
+      <Route path="/careers/:companyCode/:jobId" element={<Careers />} />
       <Route path="/people-login" element={<PeopleLogin />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
@@ -241,6 +245,7 @@ export default function App() {
       <Route path="/hr/my-requests" element={<ProtectedRoute><MyRequests /></ProtectedRoute>} />
       <Route path="/hr/my-schedule" element={<ProtectedRoute><MySchedule /></ProtectedRoute>} />
       <Route path="/hr/shifts" element={<ProtectedRoute><Shifts /></ProtectedRoute>} />
+      <Route path="/hr/recruitment" element={<ProtectedRoute><Recruitment /></ProtectedRoute>} />
       <Route path="/hr/employee-requests" element={<ProtectedRoute><EmployeeRequestsAdmin /></ProtectedRoute>} />
       <Route path="/people" element={<PeopleRoute><PeopleDashboard /></PeopleRoute>} />
       <Route path="/people/calendar" element={<PeopleRoute managerOnly><PeopleCalendar /></PeopleRoute>} />
@@ -248,6 +253,7 @@ export default function App() {
       <Route path="/people/my-requests" element={<PeopleRoute><MyRequests /></PeopleRoute>} />
       <Route path="/people/my-schedule" element={<PeopleRoute><MySchedule /></PeopleRoute>} />
       <Route path="/people/shifts" element={<PeopleRoute managerOnly><Shifts /></PeopleRoute>} />
+      <Route path="/people/recruitment" element={<PeopleRoute managerOnly><Recruitment /></PeopleRoute>} />
       <Route path="/people/departments" element={<PeopleRoute managerOnly><Departments /></PeopleRoute>} />
       <Route path="/people/positions" element={<PeopleRoute managerOnly><Positions /></PeopleRoute>} />
       <Route path="/people/employees" element={<PeopleRoute managerOnly><Employees /></PeopleRoute>} />

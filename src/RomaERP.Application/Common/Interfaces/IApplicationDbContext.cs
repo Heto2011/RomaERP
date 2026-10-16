@@ -40,6 +40,8 @@ public interface IApplicationDbContext
     DbSet<EmployeeRequest> EmployeeRequests { get; }
     DbSet<EmployeeContract> EmployeeContracts { get; }
     DbSet<WorkShift> WorkShifts { get; }
+    DbSet<JobPosting> JobPostings { get; }
+    DbSet<Candidate> Candidates { get; }
     DbSet<ShiftAssignment> ShiftAssignments { get; }
 
     DbSet<ItemCategory> ItemCategories { get; }

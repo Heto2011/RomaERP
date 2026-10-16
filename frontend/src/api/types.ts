@@ -883,6 +883,63 @@ export enum EmploymentStatus {
   Terminated = 3,
 }
 
+export enum JobStatus {
+  Draft = 1,
+  Open = 2,
+  Closed = 3,
+}
+
+export enum CandidateStage {
+  Applied = 1,
+  Screening = 2,
+  Interview = 3,
+  Offer = 4,
+  Hired = 5,
+  Rejected = 6,
+}
+
+export interface JobPosting {
+  id: string;
+  title: string;
+  departmentId: string | null;
+  departmentName: string | null;
+  location: string | null;
+  description: string;
+  requirements: string | null;
+  status: JobStatus;
+  closingDate: string | null;
+  candidateCount: number;
+}
+
+export interface Candidate {
+  id: string;
+  jobPostingId: string;
+  jobTitle: string;
+  fullName: string;
+  email: string;
+  phone: string | null;
+  resumeText: string;
+  coverNote: string | null;
+  source: string;
+  stage: CandidateStage;
+  notes: string | null;
+  interviewAtUtc: string | null;
+  aiScore: number | null;
+  aiSummary: string | null;
+  aiScreenedAtUtc: string | null;
+  appliedAtUtc: string;
+}
+
+export interface PublicJob {
+  id: string;
+  title: string;
+  departmentName: string | null;
+  location: string | null;
+  description: string;
+  requirements: string | null;
+  closingDate: string | null;
+}
+
 export interface WorkShift {
   id: string;
   name: string;

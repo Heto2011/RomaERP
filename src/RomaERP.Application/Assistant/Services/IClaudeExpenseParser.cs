@@ -30,6 +30,8 @@ public record InvoiceScanExtraction(
     bool NeedsClarification,
     string? ClarifyingQuestion);
 
+public record CandidateScreeningResult(int Score, string Summary, IReadOnlyList<string> Strengths, IReadOnlyList<string> Concerns);
+
 /// <summary>
 /// Abstraction over the natural-language understanding step (Claude API). Kept separate from
 /// the conversation/business logic so the assistant flow can be tested without live API calls,
@@ -59,5 +61,13 @@ public interface IClaudeExpenseParser
         byte[] imageBytes,
         string mediaType,
         IReadOnlyList<ExpenseAccountCandidate> expenseAccounts,
+        CancellationToken ct = default);
+
+    /// <summary>Reads a CV against a job description and returns a 0–100 fit score with a short summary, strengths and concerns. Advisory only.</summary>
+    Task<CandidateScreeningResult> ScreenCandidateAsync(
+        string jobTitle,
+        string jobDescription,
+        string? requirements,
+        string resumeText,
         CancellationToken ct = default);
 }

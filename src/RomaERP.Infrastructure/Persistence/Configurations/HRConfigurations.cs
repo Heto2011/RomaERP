@@ -274,3 +274,32 @@ public class ShiftAssignmentConfiguration : IEntityTypeConfiguration<ShiftAssign
         builder.HasQueryFilter(a => !a.IsDeleted);
     }
 }
+
+public class JobPostingConfiguration : IEntityTypeConfiguration<JobPosting>
+{
+    public void Configure(EntityTypeBuilder<JobPosting> builder)
+    {
+        builder.Property(j => j.Title).HasMaxLength(200).IsRequired();
+        builder.Property(j => j.Location).HasMaxLength(200);
+        builder.Property(j => j.Description).HasMaxLength(4000).IsRequired();
+        builder.Property(j => j.Requirements).HasMaxLength(2000);
+        builder.HasOne(j => j.Department).WithMany().HasForeignKey(j => j.DepartmentId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasQueryFilter(j => !j.IsDeleted);
+    }
+}
+
+public class CandidateConfiguration : IEntityTypeConfiguration<Candidate>
+{
+    public void Configure(EntityTypeBuilder<Candidate> builder)
+    {
+        builder.Property(c => c.FullName).HasMaxLength(200).IsRequired();
+        builder.Property(c => c.Email).HasMaxLength(200).IsRequired();
+        builder.Property(c => c.Phone).HasMaxLength(40);
+        builder.Property(c => c.CoverNote).HasMaxLength(2000);
+        builder.Property(c => c.Source).HasMaxLength(40).IsRequired();
+        builder.Property(c => c.Notes).HasMaxLength(2000);
+        builder.Property(c => c.AiSummary).HasMaxLength(2500);
+        builder.HasOne(c => c.JobPosting).WithMany().HasForeignKey(c => c.JobPostingId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasQueryFilter(c => !c.IsDeleted);
+    }
+}

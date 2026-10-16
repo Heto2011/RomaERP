@@ -189,6 +189,37 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
             ClarifyingQuestion: ReadString(input, "clarifying_question"));
     }
 
+    public async Task<CandidateScreeningResult> ScreenCandidateAsync(
+        string jobTitle, string jobDescription, string? requirements, string resumeText, CancellationToken ct = default)
+    {
+        const int maxChars = 12000;
+        var cv = resumeText.Length > maxChars ? resumeText[..maxChars] : resumeText;
+        var systemPrompt = """
+            أنت مساعد موارد بشرية بيراجع سيرة ذاتية مقابل وصف وظيفة ويدّي رأي استشاري لمسؤول التوظيف (مش قرار).
+            قيّم مدى تطابق الخبرات والمهارات المكتوبة فعلًا في السيرة مع متطلبات الوظيفة، من 0 لـ 100.
+            ما تعتمدش على الاسم أو الجنس أو السن أو الجنسية أو الديانة أو الحالة الاجتماعية أو الصورة، وما تذكرهمش.
+            لو السيرة قصيرة أو ناقصة قول كده في الملخص ومتخمّنش خبرات مش مكتوبة.
+            استخدم أداة screen_candidate دايمًا للرد.
+            """;
+        var userText = $"الوظيفة: {jobTitle}\n\nالوصف:\n{jobDescription}\n\nالمتطلبات:\n{requirements ?? "-"}\n\n--- السيرة الذاتية ---\n{cv}";
+        var properties = new JsonObject
+        {
+            ["score"] = new JsonObject { ["type"] = "integer", ["minimum"] = 0, ["maximum"] = 100 },
+            ["summary"] = new JsonObject { ["type"] = "string", ["description"] = "two or three short sentences" },
+            ["strengths"] = new JsonObject { ["type"] = "array", ["items"] = new JsonObject { ["type"] = "string" } },
+            ["concerns"] = new JsonObject { ["type"] = "array", ["items"] = new JsonObject { ["type"] = "string" } }
+        };
+        var input = await CallToolAsync(systemPrompt, JsonValue.Create(userText)!, "screen_candidate",
+            "Score how well a CV fits a job description and explain briefly.", properties,
+            new JsonArray { "score", "summary" }, ct);
+
+        var score = input["score"] is { } sNode && sNode.GetValueKind() == JsonValueKind.Number ? (int)Math.Round(sNode.GetValue<decimal>()) : 0;
+        static List<string> Strings(JsonNode? node) => node is JsonArray arr
+            ? arr.Where(n => n is not null && n.GetValueKind() == JsonValueKind.String).Select(n => n!.GetValue<string>().Trim()).Where(x => x.Length > 0).Take(6).ToList()
+            : new List<string>();
+        return new CandidateScreeningResult(Math.Clamp(score, 0, 100), ReadString(input, "summary") ?? string.Empty, Strings(input["strengths"]), Strings(input["concerns"]));
+    }
+
     private async Task<ExpenseExtractionResult> SendExtractionRequestAsync(
         string systemPrompt, JsonNode userContent, CancellationToken ct, bool includeEntryDate = false)
     {

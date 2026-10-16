@@ -165,6 +165,9 @@ import type {
   SplitOrderResult,
   WorkShift,
   RosterEntry,
+  JobPosting,
+  Candidate,
+  PublicJob,
   SetOrderLoyaltyInput,
   OfflineOrderInput,
   OfflineOrderResult,
@@ -256,6 +259,28 @@ export const PositionsApi = {
   create: (data: Partial<Position>) => apiClient.post<Position>("/positions", data),
   update: (id: string, data: Partial<Position>) => apiClient.put<Position>(`/positions/${id}`, data),
   remove: (id: string) => apiClient.delete(`/positions/${id}`),
+};
+
+export const RecruitmentApi = {
+  getJobs: () => apiClient.get<JobPosting[]>("/recruitment/jobs"),
+  createJob: (data: Partial<JobPosting>) => apiClient.post<JobPosting>("/recruitment/jobs", data),
+  updateJob: (id: string, data: Partial<JobPosting>) => apiClient.put<JobPosting>(`/recruitment/jobs/${id}`, data),
+  deleteJob: (id: string) => apiClient.delete(`/recruitment/jobs/${id}`),
+  getCandidates: (jobId?: string) => apiClient.get<Candidate[]>("/recruitment/candidates", { params: { jobId } }),
+  addCandidate: (data: { jobPostingId: string; fullName: string; email: string; phone?: string | null; resumeText: string; coverNote?: string | null }) =>
+    apiClient.post<Candidate>("/recruitment/candidates", data),
+  updateCandidate: (id: string, data: { stage: number; notes: string | null; interviewAtUtc: string | null }) =>
+    apiClient.put<Candidate>(`/recruitment/candidates/${id}`, data),
+  deleteCandidate: (id: string) => apiClient.delete(`/recruitment/candidates/${id}`),
+  screen: (id: string) => apiClient.post<Candidate>(`/recruitment/candidates/${id}/screen`),
+};
+
+/** The public careers page: no login, so the company is named explicitly on every call. */
+export const CareersApi = {
+  getJobs: (companyCode: string) => systemApiClient.get<PublicJob[]>("/careers/jobs", { headers: { "X-Company-Code": companyCode } }),
+  getJob: (companyCode: string, id: string) => systemApiClient.get<PublicJob>(`/careers/jobs/${id}`, { headers: { "X-Company-Code": companyCode } }),
+  apply: (companyCode: string, id: string, data: { fullName: string; email: string; phone: string | null; resumeText: string; coverNote: string | null; website: string }) =>
+    systemApiClient.post(`/careers/jobs/${id}/apply`, data, { headers: { "X-Company-Code": companyCode } }),
 };
 
 export const ShiftsApi = {
