@@ -1,3 +1,4 @@
+using RomaERP.Application.Common;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Common.Exceptions;
@@ -176,11 +177,11 @@ public class ShiftService : IShiftService
     private static void Apply(WorkShift shift, ShiftDto dto)
     {
         if (string.IsNullOrWhiteSpace(dto.Name)) throw new ValidationAppException("اكتب اسم الوردية.");
-        shift.Name = dto.Name.Trim();
+        shift.Name = TextLimit.Check(dto.Name, 100, "اسم الوردية")!;
         shift.StartTime = Parse(dto.StartTime);
         shift.EndTime = Parse(dto.EndTime);
         if (shift.StartTime == shift.EndTime) throw new ValidationAppException("بداية ونهاية الوردية لازم يكونوا مختلفين.");
-        shift.Color = string.IsNullOrWhiteSpace(dto.Color) ? null : dto.Color.Trim();
+        shift.Color = TextLimit.Check(dto.Color, 20, "اللون");
         shift.IsActive = dto.IsActive;
     }
 

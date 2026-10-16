@@ -1,3 +1,4 @@
+using RomaERP.Application.Common;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
@@ -113,14 +114,14 @@ public class SurveyService : ISurveyService
             _context.Surveys.Add(survey);
         }
 
-        survey.Title = dto.Title.Trim();
-        survey.Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description.Trim();
+        survey.Title = TextLimit.Check(dto.Title, 200, "عنوان الاستبيان")!;
+        survey.Description = TextLimit.Check(dto.Description, 1000, "الوصف");
         survey.IsAnonymous = dto.IsAnonymous;
         await _context.SaveChangesAsync(ct);
 
         var order = 1;
         foreach (var q in questions)
-            _context.SurveyQuestions.Add(new SurveyQuestion { SurveyId = survey.Id, Order = order++, Text = q.Text.Trim(), Type = q.Type });
+            _context.SurveyQuestions.Add(new SurveyQuestion { SurveyId = survey.Id, Order = order++, Text = TextLimit.Check(q.Text, 500, "نص السؤال")!, Type = q.Type });
         await _context.SaveChangesAsync(ct);
 
         var saved = await _context.SurveyQuestions.AsNoTracking().Where(q => q.SurveyId == survey.Id).ToListAsync(ct);

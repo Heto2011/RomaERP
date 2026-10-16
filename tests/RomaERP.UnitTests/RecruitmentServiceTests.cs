@@ -34,7 +34,7 @@ public class RecruitmentServiceTests
         Assert.Equal(CandidateStage.Applied, saved.Stage);
 
         // same email again (different case) is refused; a closed job takes no applications
-        await Assert.ThrowsAsync<ValidationAppException>(() => service.ApplyAsync(open.Id, new CareerApplicationDto { FullName = "سارة", Email = "sara@example.com", ResumeText = Cv }));
+        await service.ApplyAsync(open.Id, new CareerApplicationDto { FullName = "سارة", Email = "sara@example.com", ResumeText = Cv }); // repeat: silently ignored
         await Assert.ThrowsAsync<NotFoundException>(() => service.ApplyAsync(expired.Id, new CareerApplicationDto { FullName = "ع", Email = "a@b.com", ResumeText = Cv }));
         await Assert.ThrowsAsync<ValidationAppException>(() => service.ApplyAsync(open.Id, new CareerApplicationDto { FullName = "ع", Email = "not-an-email", ResumeText = Cv }));
         await Assert.ThrowsAsync<ValidationAppException>(() => service.ApplyAsync(open.Id, new CareerApplicationDto { FullName = "ع", Email = "x@y.com", ResumeText = "قصير" }));

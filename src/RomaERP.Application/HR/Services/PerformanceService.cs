@@ -1,3 +1,4 @@
+using RomaERP.Application.Common;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Common.Exceptions;
@@ -134,8 +135,8 @@ public class PerformanceService : IPerformanceService
             _context.ReviewCycles.Add(cycle);
         }
 
-        cycle.Name = dto.Name.Trim();
-        cycle.Description = string.IsNullOrWhiteSpace(dto.Description) ? null : dto.Description.Trim();
+        cycle.Name = TextLimit.Check(dto.Name, 200, "اسم الدورة")!;
+        cycle.Description = TextLimit.Check(dto.Description, 1000, "الوصف");
         cycle.StartDate = dto.StartDate.Date;
         cycle.EndDate = dto.EndDate.Date;
         cycle.Competencies = string.Join("\n", competencies);

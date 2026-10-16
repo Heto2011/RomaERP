@@ -1,3 +1,4 @@
+using RomaERP.Application.Common;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Assistant.DTOs;
 using RomaERP.Application.Common.Exceptions;
@@ -56,7 +57,7 @@ public class ExpensePolicyService : IExpensePolicyService
             policy = new ExpensePolicy();
             _context.ExpensePolicies.Add(policy);
         }
-        policy.Name = dto.Name.Trim();
+        policy.Name = TextLimit.Check(dto.Name, 200, "اسم السياسة")!;
         policy.AccountId = dto.AccountId;
         policy.MaxAmount = dto.MaxAmount;
         policy.RequireProofAbove = dto.RequireProofAbove;

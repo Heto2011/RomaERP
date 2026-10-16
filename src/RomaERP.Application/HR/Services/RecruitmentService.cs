@@ -1,3 +1,4 @@
+using RomaERP.Application.Common;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Assistant.Services;
 using RomaERP.Application.Common.Exceptions;
@@ -135,11 +136,11 @@ public class RecruitmentService : IRecruitmentService
         if (dto.DepartmentId is { } deptId && !await _context.Departments.AnyAsync(d => d.Id == deptId && !d.IsDeleted, ct))
             throw new NotFoundException(nameof(Department), deptId);
 
-        job.Title = dto.Title.Trim();
+        job.Title = TextLimit.Check(dto.Title, 200, "مسمى الوظيفة")!;
         job.DepartmentId = dto.DepartmentId;
-        job.Location = string.IsNullOrWhiteSpace(dto.Location) ? null : dto.Location.Trim();
-        job.Description = dto.Description.Trim();
-        job.Requirements = string.IsNullOrWhiteSpace(dto.Requirements) ? null : dto.Requirements.Trim();
+        job.Location = TextLimit.Check(dto.Location, 200, "المكان");
+        job.Description = TextLimit.Check(dto.Description, 4000, "وصف الوظيفة")!;
+        job.Requirements = TextLimit.Check(dto.Requirements, 2000, "المتطلبات");
         job.Status = dto.Status == 0 ? JobStatus.Draft : dto.Status;
         job.ClosingDate = dto.ClosingDate?.Date;
         await _context.SaveChangesAsync(ct);
@@ -171,7 +172,10 @@ public class RecruitmentService : IRecruitmentService
     public async Task<CandidateDto> AddCandidateAsync(SaveCandidateDto dto, string source, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(dto.FullName)) throw new ValidationAppException("اكتب الاسم.");
+        var fullName = TextLimit.Check(dto.FullName, 200, "الاسم")!;
+        var phone = TextLimit.Check(dto.Phone, 40, "رقم التليفون");
         var email = (dto.Email ?? string.Empty).Trim();
+        if (email.Length > 200) throw new ValidationAppException("الإيميل طويل جدًا.");
         if (!email.Contains('@') || email.Length < 5) throw new ValidationAppException("اكتب إيميل صحيح.");
         if (string.IsNullOrWhiteSpace(dto.ResumeText) || dto.ResumeText.Trim().Length < 30)
             throw new ValidationAppException("الصق نص السيرة الذاتية (٣٠ حرف على الأقل).");
@@ -187,9 +191,9 @@ public class RecruitmentService : IRecruitmentService
         var candidate = new Candidate
         {
             JobPostingId = job.Id,
-            FullName = dto.FullName.Trim(),
+            FullName = fullName,
             Email = email,
-            Phone = string.IsNullOrWhiteSpace(dto.Phone) ? null : dto.Phone.Trim(),
+            Phone = phone,
             ResumeText = resume.Length > MaxResumeChars ? resume[..MaxResumeChars] : resume,
             CoverNote = string.IsNullOrWhiteSpace(dto.CoverNote) ? null : (dto.CoverNote.Trim().Length > 2000 ? dto.CoverNote.Trim()[..2000] : dto.CoverNote.Trim()),
             Source = source,
@@ -264,6 +268,9 @@ public class RecruitmentService : IRecruitmentService
         if (!string.IsNullOrWhiteSpace(dto.Website)) return;
 
         await GetOpenJobAsync(jobId, ct);
+        // A repeat application from the same email is accepted silently, so the public page cannot be used to check who has applied.
+        var applicant = (dto.Email ?? string.Empty).Trim().ToLowerInvariant();
+        if (applicant.Length > 0 && await _context.Candidates.AnyAsync(c => c.JobPostingId == jobId && c.Email.ToLower() == applicant, ct)) return;
         await AddCandidateAsync(new SaveCandidateDto
         {
             JobPostingId = jobId, FullName = dto.FullName, Email = dto.Email, Phone = dto.Phone, ResumeText = dto.ResumeText, CoverNote = dto.CoverNote
