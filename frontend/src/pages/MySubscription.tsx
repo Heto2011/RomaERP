@@ -398,7 +398,8 @@ export default function MySubscriptionPage() {
             </div>
           );
         })()}
-        {!bankInfo?.configured && !(outsideEgypt && cardOptions?.enabled) && <div className="text-muted">{outsideEgypt ? t.mySubscription.cardPaymentSoon : t.mySubscription.bankNotConfigured}</div>}
+        {outsideEgypt && !cardOptions?.enabled && extras?.enabled && <div className="text-muted">{t.mySubscription.cardActive}</div>}
+        {!bankInfo?.configured && !(outsideEgypt && cardOptions?.enabled) && !(outsideEgypt && extras?.enabled) && <div className="text-muted">{outsideEgypt ? t.mySubscription.cardPaymentSoon : t.mySubscription.bankNotConfigured}</div>}
         {bankInfo?.configured && (bankInfo.iban || bankInfo.accountName) && (
           <table>
             <tbody>
