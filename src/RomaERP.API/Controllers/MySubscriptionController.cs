@@ -53,7 +53,7 @@ public class MySubscriptionController : ControllerBase
     [HttpGet("card-payments")]
     public async Task<ActionResult<CardPaymentOptionsDto>> GetCardPaymentOptions(CancellationToken ct)
     {
-        if (_tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt || !_lemon.IsConfigured)
+        if (_tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt || !_lemon.IsConfigured || await HasLiveCardSubscriptionAsync(ct))
             return Ok(new CardPaymentOptionsDto(false, new List<CardPlanOptionDto>()));
 
         var plans = new List<CardPlanOptionDto>();
@@ -71,6 +71,8 @@ public class MySubscriptionController : ControllerBase
     {
         if (_tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt)
             throw new ValidationAppException("الدفع في مصر بيتم عن طريق إنستاباي.");
+        if (await HasLiveCardSubscriptionAsync(ct))
+            throw new ValidationAppException("اشتراكك بالبطاقة شغّال بالفعل. لو عايز تغيّر الباقة استخدم زرار الترقية تحت.");
         var planCode = (request.PlanCode ?? string.Empty).Trim().ToLowerInvariant();
         if (!AllowedCardPlans().Contains(planCode) || !await _lemon.HasVariantAsync(planCode, request.Annual, IsUk(), ct))
             throw new ValidationAppException("الباقة دي مش متاحة للدفع بالبطاقة.");
@@ -80,6 +82,16 @@ public class MySubscriptionController : ControllerBase
         var url = await _lemon.CreateCheckoutAsync(new LemonCheckoutRequest(
             _tenantContext.TenantId, _tenantContext.CompanyCode, CurrentEmail(), CurrentName(), planCode, request.Annual, baseUrl + returnPath + "?paid=1", IsUk()), ct);
         return Ok(new CardCheckoutDto(url));
+    }
+
+    /// <summary>True when this company already pays by card and the subscription is still running, so a second checkout would charge it twice.</summary>
+    private async Task<bool> HasLiveCardSubscriptionAsync(CancellationToken ct)
+    {
+        var all = await _billing.GetTenantSubscriptionsAsync(ct);
+        var mine = all.FirstOrDefault(s => s.TenantId == _tenantContext.TenantId);
+        return mine is not null
+            && mine.PaymentProvider == RomaERP.Infrastructure.Billing.LemonSqueezyService.ProviderName
+            && mine.Status is RomaERP.Domain.Tenancy.SubscriptionStatus.Active or RomaERP.Domain.Tenancy.SubscriptionStatus.PastDue;
     }
 
     // UK and Guernsey customers are priced in sterling on the website, so their card checkout uses their own USD price set.
