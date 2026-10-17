@@ -169,7 +169,8 @@ public class LemonSqueezyService : ILemonSqueezyService
                         variant_quantities = quantity > 1 ? new[] { new { variant_id = long.Parse(variant, CultureInfo.InvariantCulture), quantity } } : null,
                         custom,
                     },
-                    product_options = new { redirect_url = redirectUrl },
+                    // Only the variant we picked is offered, so a customer cannot switch to another region's price on the checkout page.
+                    product_options = new { redirect_url = redirectUrl, enabled_variants = new[] { long.Parse(variant, CultureInfo.InvariantCulture) } },
                 },
                 relationships = new
                 {
