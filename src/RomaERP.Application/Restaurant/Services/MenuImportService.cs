@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using RomaERP.Application.Assistant.Services;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.Restaurant.DTOs;
@@ -9,6 +10,9 @@ namespace RomaERP.Application.Restaurant.Services;
 public interface IMenuImportService
 {
     Task<MenuImportResultDto> ImportAsync(MenuImportRequestDto request, CancellationToken ct = default);
+
+    /// <summary>Reads a menu from a PDF or photo into import rows. Nothing is saved — the rows go through the normal preview and confirm.</summary>
+    Task<MenuScanResultDto> ScanAsync(byte[] fileBytes, string mediaType, CancellationToken ct = default);
 }
 
 /// <summary>Loads a customer's existing menu in one go: categories are created as needed, each dish becomes a menu item
@@ -20,10 +24,26 @@ public class MenuImportService : IMenuImportService
     private const string DefaultUnit = "طبق";
 
     private readonly IApplicationDbContext _context;
+    private readonly IClaudeExpenseParser _parser;
 
-    public MenuImportService(IApplicationDbContext context)
+    public MenuImportService(IApplicationDbContext context, IClaudeExpenseParser parser)
     {
         _context = context;
+        _parser = parser;
+    }
+
+    public async Task<MenuScanResultDto> ScanAsync(byte[] fileBytes, string mediaType, CancellationToken ct = default)
+    {
+        var extraction = await _parser.ExtractMenuAsync(fileBytes, mediaType, ct);
+        var rows = extraction.Items
+            .Where(i => i.Price is >= 0)
+            .Select(i => new MenuImportRowDto { Category = i.Category.Trim(), NameAr = i.Name.Trim(), Price = i.Price!.Value })
+            .Take(MaxRows)
+            .ToList();
+        var skipped = extraction.Items.Count(i => i.Price is null or < 0);
+        if (rows.Count == 0)
+            throw new ValidationAppException(extraction.Note ?? "مقدرتش أقرا أصناف بأسعار من الملف ده. جرّب ملف أوضح أو الصق المنيو كنص.");
+        return new MenuScanResultDto { Rows = rows, SkippedWithoutPrice = skipped, Note = extraction.Note };
     }
 
     public async Task<MenuImportResultDto> ImportAsync(MenuImportRequestDto request, CancellationToken ct = default)

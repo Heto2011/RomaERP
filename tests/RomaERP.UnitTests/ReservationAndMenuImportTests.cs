@@ -1,3 +1,4 @@
+using RomaERP.Application.Assistant.Services;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Restaurant.DTOs;
@@ -119,7 +120,7 @@ public class ReservationAndMenuImportTests
     public async Task MenuImport_Preview_SavesNothing_ThenApply_CreatesMenuBilledWithoutStock()
     {
         var seed = await RestaurantServiceTests.SeedAsync();
-        var import = new MenuImportService(seed.Ctx);
+        var import = new MenuImportService(seed.Ctx, new FakeClaudeExpenseParser());
         var rows = new List<MenuImportRowDto> { Row("مشروبات", "شاي", 15), Row("مشروبات", "قهوة", 25), Row("حلويات", "كنافة", 60) };
         var itemsBefore = await seed.Ctx.Items.CountAsync();
 
@@ -148,7 +149,7 @@ public class ReservationAndMenuImportTests
     public async Task MenuImport_ReimportingIsSafe_AndPriceUpdateIsOptIn()
     {
         var seed = await RestaurantServiceTests.SeedAsync();
-        var import = new MenuImportService(seed.Ctx);
+        var import = new MenuImportService(seed.Ctx, new FakeClaudeExpenseParser());
         await import.ImportAsync(new MenuImportRequestDto { Rows = new() { Row("مشروبات", "شاي", 15) }, Apply = true });
 
         var same = await import.ImportAsync(new MenuImportRequestDto { Rows = new() { Row("مشروبات", "شاي", 18) }, Apply = true });
@@ -165,7 +166,7 @@ public class ReservationAndMenuImportTests
     public async Task MenuImport_AnyBadRow_BlocksTheWholeSave()
     {
         var seed = await RestaurantServiceTests.SeedAsync();
-        var import = new MenuImportService(seed.Ctx);
+        var import = new MenuImportService(seed.Ctx, new FakeClaudeExpenseParser());
         var rows = new List<MenuImportRowDto> { Row("مشروبات", "شاي", 15), Row("", "بدون قسم", 5), Row("مشروبات", "شاي", 9), Row("مشروبات", "سالب", -1), Row("مخزون", "دقيق", 3) };
         var itemsBefore = await seed.Ctx.Items.CountAsync();
 
@@ -176,5 +177,29 @@ public class ReservationAndMenuImportTests
         await Assert.ThrowsAsync<ValidationAppException>(() => import.ImportAsync(new MenuImportRequestDto { Rows = rows, Apply = true }));
         Assert.Equal(itemsBefore, await seed.Ctx.Items.CountAsync());
         await Assert.ThrowsAsync<ValidationAppException>(() => import.ImportAsync(new MenuImportRequestDto()));
+    }
+
+    [Fact]
+    public async Task MenuScan_ReturnsRowsWithPrices_AndCountsTheOnesWithout()
+    {
+        var seed = await RestaurantServiceTests.SeedAsync();
+        var parser = new FakeClaudeExpenseParser
+        {
+            MenuHandler = () => new MenuScanExtraction(new List<MenuScanItem>
+            {
+                new("مشروبات", "شاي", 15), new("مشروبات", "عصير موسمي", null), new("حلويات", "كنافة - كبير", 80)
+            }, null)
+        };
+        var import = new MenuImportService(seed.Ctx, parser);
+
+        var result = await import.ScanAsync(new byte[] { 1 }, "application/pdf");
+
+        Assert.Equal(2, result.Rows.Count);
+        Assert.Equal(1, result.SkippedWithoutPrice);
+        Assert.Equal("كنافة - كبير", result.Rows[1].NameAr);
+        Assert.Equal(0, await seed.Ctx.Items.CountAsync(i => i.NameAr == "شاي"));
+
+        parser.MenuHandler = () => new MenuScanExtraction(new List<MenuScanItem>(), "الملف مش منيو");
+        await Assert.ThrowsAsync<ValidationAppException>(() => import.ScanAsync(new byte[] { 1 }, "application/pdf"));
     }
 }

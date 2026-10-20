@@ -58,6 +58,32 @@ public class RestaurantController : ControllerBase
     public async Task<ActionResult<MenuImportResultDto>> ImportMenu(MenuImportRequestDto request, CancellationToken ct)
         => Ok(await _menuImport.ImportAsync(request, ct));
 
+    /// <summary>Reads a menu from a PDF or photo (AI) into import rows. Saves nothing.</summary>
+    [HttpPost("menu/scan")]
+    [Authorize(Roles = "Admin,Accountant")]
+    [RequestSizeLimit(10 * 1024 * 1024)]
+    public async Task<ActionResult<MenuScanResultDto>> ScanMenu(IFormFile file, CancellationToken ct)
+    {
+        if (file.Length == 0)
+            throw new RomaERP.Application.Common.Exceptions.ValidationAppException("الملف المرفوع فارغ.");
+
+        var mediaType = file.ContentType?.ToLowerInvariant() switch
+        {
+            "application/pdf" => "application/pdf",
+            "image/jpeg" or "image/jpg" => "image/jpeg",
+            "image/png" => "image/png",
+            "image/webp" => "image/webp",
+            _ => throw new RomaERP.Application.Common.Exceptions.ValidationAppException("الملف لازم يكون PDF أو صورة (JPEG / PNG / WEBP).")
+        };
+
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, ct);
+        var bytes = memoryStream.ToArray();
+        if (mediaType == "application/pdf" && !(bytes.Length > 4 && bytes[0] == 0x25 && bytes[1] == 0x50 && bytes[2] == 0x44 && bytes[3] == 0x46))
+            throw new RomaERP.Application.Common.Exceptions.ValidationAppException("الملف مش PDF سليم.");
+        return Ok(await _menuImport.ScanAsync(bytes, mediaType, ct));
+    }
+
     [HttpGet("orders")]
     public async Task<ActionResult<List<RestaurantOrderDto>>> GetOrders(bool includeClosed, CancellationToken ct)
         => Ok(await _restaurantService.GetOrdersAsync(includeClosed, ct));

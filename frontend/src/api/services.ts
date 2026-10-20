@@ -187,6 +187,7 @@ import type {
   SeatReservationResult,
   MenuImportRow,
   MenuImportResult,
+  MenuScanResult,
 } from "./types";
 
 export const AuthApi = {
@@ -703,6 +704,11 @@ export const RestaurantApi = {
   getMenu: () => apiClient.get<MenuItem[]>("/restaurant/menu"),
   importMenu: (rows: MenuImportRow[], apply: boolean, updateExistingPrices: boolean) =>
     apiClient.post<MenuImportResult>("/restaurant/menu/import", { rows, apply, updateExistingPrices }),
+  scanMenu: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiClient.post<MenuScanResult>("/restaurant/menu/scan", form, { headers: { "Content-Type": "multipart/form-data" } });
+  },
   getRecipe: (itemId: string) => apiClient.get<RecipeLine[]>(`/restaurant/menu/${itemId}/recipe`),
   setMenuItem: (itemId: string, data: SetMenuItemInput) => apiClient.put(`/restaurant/menu/${itemId}`, data),
 

@@ -189,6 +189,68 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
             ClarifyingQuestion: ReadString(input, "clarifying_question"));
     }
 
+    public async Task<MenuScanExtraction> ExtractMenuAsync(byte[] fileBytes, string mediaType, CancellationToken ct = default)
+    {
+        var systemPrompt = """
+            أنت مساعد بيقرا منيو مطعم (ملف PDF أو صورة) ويطلّع كل الأصناف بقسمها وسعرها بدقة عشان تتحمّل في نظام الكاشير.
+            اكتب اسم القسم واسم الصنف زي ما هم مكتوبين في المنيو من غير ما تغيّرهم أو تترجمهم.
+            لو الصنف له أحجام أو أنواع بأسعار مختلفة (صغير/كبير مثلاً)، اعمل صنف منفصل لكل حجم واكتب الحجم في الاسم.
+            السعر رقم بس من غير عملة. لو مفيش سعر مقروء للصنف سيبه فاضي ومتخمّنش.
+            متضيفش أصناف مش موجودة في المنيو. استخدم أداة extract_menu دايمًا للرد.
+            """;
+
+        var isPdf = mediaType == "application/pdf";
+        var userContent = new JsonArray
+        {
+            new JsonObject
+            {
+                ["type"] = isPdf ? "document" : "image",
+                ["source"] = new JsonObject
+                {
+                    ["type"] = "base64",
+                    ["media_type"] = mediaType,
+                    ["data"] = Convert.ToBase64String(fileBytes)
+                }
+            },
+            new JsonObject { ["type"] = "text", ["text"] = "اطلع كل أصناف المنيو ده بالقسم والسعر." }
+        };
+
+        var properties = new JsonObject
+        {
+            ["items"] = new JsonObject
+            {
+                ["type"] = "array",
+                ["items"] = new JsonObject
+                {
+                    ["type"] = "object",
+                    ["properties"] = new JsonObject
+                    {
+                        ["category"] = new JsonObject { ["type"] = "string" },
+                        ["name"] = new JsonObject { ["type"] = "string" },
+                        ["price"] = new JsonObject { ["type"] = new JsonArray { "number", "null" } }
+                    },
+                    ["required"] = new JsonArray { "category", "name" }
+                }
+            },
+            ["note"] = new JsonObject { ["type"] = new JsonArray { "string", "null" }, ["description"] = "short Arabic note if the file was unclear or is not a menu" }
+        };
+
+        var input = await CallToolAsync(systemPrompt, userContent, "extract_menu",
+            "List every dish of a restaurant menu with its category and price.", properties, new JsonArray { "items" }, ct, maxTokens: 8192);
+
+        var items = new List<MenuScanItem>();
+        if (input["items"] is JsonArray arr)
+        {
+            foreach (var node in arr.OfType<JsonObject>())
+            {
+                var name = ReadString(node, "name");
+                if (name is null) continue;
+                items.Add(new MenuScanItem(ReadString(node, "category") ?? "منيو", name, ReadNumber(node, "price")));
+            }
+        }
+        return new MenuScanExtraction(items, ReadString(input, "note"));
+    }
+
     public async Task<CandidateScreeningResult> ScreenCandidateAsync(
         string jobTitle, string jobDescription, string? requirements, string resumeText, CancellationToken ct = default)
     {
@@ -261,7 +323,7 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
     }
     private async Task<JsonObject> CallToolAsync(
         string systemPrompt, JsonNode userContent, string toolName, string toolDescription,
-        JsonObject properties, JsonArray required, CancellationToken ct)
+        JsonObject properties, JsonArray required, CancellationToken ct, int maxTokens = 2048)
     {
         if (string.IsNullOrWhiteSpace(_settings.ApiKey))
         {
@@ -274,7 +336,7 @@ public class ClaudeExpenseParser : IClaudeExpenseParser
         var requestBody = new JsonObject
         {
             ["model"] = _settings.Model,
-            ["max_tokens"] = 2048,
+            ["max_tokens"] = maxTokens,
             ["system"] = systemPrompt + AiLanguage.ReplyDirective(_language.PrefersArabic),
             ["messages"] = new JsonArray { new JsonObject { ["role"] = "user", ["content"] = userContent } },
             ["tools"] = new JsonArray

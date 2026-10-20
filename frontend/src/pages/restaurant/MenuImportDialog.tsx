@@ -39,6 +39,8 @@ export default function MenuImportDialog({ onClose, onDone }: { onClose: () => v
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [scanning, setScanning] = useState(false);
+  const [info, setInfo] = useState<string | null>(null);
 
   async function run(apply: boolean) {
     setError(null);
@@ -62,6 +64,25 @@ export default function MenuImportDialog({ onClose, onDone }: { onClose: () => v
     }
   }
 
+  async function onScan(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setError(null);
+    setInfo(null);
+    setPreview(null);
+    setScanning(true);
+    try {
+      const res = await RestaurantApi.scanMenu(file);
+      setText(res.data.rows.map((r) => `${r.category}، ${r.nameAr}، ${r.price}`).join("\n"));
+      setInfo(t.restaurant.importScanDone + (res.data.skippedWithoutPrice > 0 ? ` ${t.restaurant.importScanSkipped} ${res.data.skippedWithoutPrice}` : ""));
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setScanning(false);
+    }
+  }
+
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -82,6 +103,8 @@ export default function MenuImportDialog({ onClose, onDone }: { onClose: () => v
         <p className="text-muted">{t.restaurant.importNoStockNote}</p>
 
         {error && <div className="alert-error">{error}</div>}
+        {info && !saved && <div className="alert-success">{info}</div>}
+        {scanning && <div className="text-muted">{t.restaurant.importScanning}</div>}
         {saved && <div className="alert-success">{t.restaurant.importDone}</div>}
 
         {!saved && (
@@ -90,6 +113,10 @@ export default function MenuImportDialog({ onClose, onDone }: { onClose: () => v
               placeholder={t.restaurant.importMenuExample}
               onChange={(e) => { setText(e.target.value); setPreview(null); }} />
             <div style={{ display: "flex", gap: 14, alignItems: "center", flexWrap: "wrap", marginTop: 8 }}>
+              <label className="btn btn-sm" style={{ cursor: scanning ? "wait" : "pointer" }}>
+                {t.restaurant.importScanFile}
+                <input type="file" accept="application/pdf,image/jpeg,image/png,image/webp" onChange={onScan} disabled={scanning} style={{ display: "none" }} />
+              </label>
               <label className="btn btn-secondary btn-sm" style={{ cursor: "pointer" }}>
                 {t.restaurant.importUploadFile}
                 <input type="file" accept=".csv,.txt,text/csv,text/plain" onChange={onFile} style={{ display: "none" }} />
@@ -131,7 +158,7 @@ export default function MenuImportDialog({ onClose, onDone }: { onClose: () => v
         )}
 
         <div style={{ display: "flex", gap: 10, marginTop: 16 }}>
-          {!saved && <button className="btn btn-secondary" onClick={() => run(false)} disabled={busy || !text.trim()}>{t.restaurant.importPreview}</button>}
+          {!saved && <button className="btn btn-secondary" onClick={() => run(false)} disabled={busy || scanning || !text.trim()}>{t.restaurant.importPreview}</button>}
           {!saved && preview && preview.errors === 0 && preview.created + preview.updated > 0 && (
             <button className="btn" onClick={() => run(true)} disabled={busy}>{t.restaurant.importConfirm}</button>
           )}

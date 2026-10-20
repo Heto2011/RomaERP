@@ -30,6 +30,10 @@ public record InvoiceScanExtraction(
     bool NeedsClarification,
     string? ClarifyingQuestion);
 
+public record MenuScanItem(string Category, string Name, decimal? Price);
+
+public record MenuScanExtraction(IReadOnlyList<MenuScanItem> Items, string? Note);
+
 public record CandidateScreeningResult(int Score, string Summary, IReadOnlyList<string> Strengths, IReadOnlyList<string> Concerns);
 
 /// <summary>
@@ -62,6 +66,10 @@ public interface IClaudeExpenseParser
         string mediaType,
         IReadOnlyList<ExpenseAccountCandidate> expenseAccounts,
         CancellationToken ct = default);
+
+    /// <summary>Reads a restaurant menu from a PDF or a photo and lists every dish with its category and price.
+    /// <paramref name="mediaType"/> is application/pdf or an image type Claude accepts.</summary>
+    Task<MenuScanExtraction> ExtractMenuAsync(byte[] fileBytes, string mediaType, CancellationToken ct = default);
 
     /// <summary>Reads a CV against a job description and returns a 0–100 fit score with a short summary, strengths and concerns. Advisory only.</summary>
     Task<CandidateScreeningResult> ScreenCandidateAsync(

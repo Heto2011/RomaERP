@@ -33,6 +33,12 @@ public class FakeClaudeExpenseParser : IClaudeExpenseParser
     public Task<CandidateScreeningResult> ScreenCandidateAsync(string jobTitle, string jobDescription, string? requirements, string resumeText, CancellationToken ct = default)
         => Task.FromResult(ScreeningHandler(resumeText));
 
+    public Func<MenuScanExtraction> MenuHandler { get; set; } =
+        () => new MenuScanExtraction(new List<MenuScanItem>(), "غير واضح");
+
+    public Task<MenuScanExtraction> ExtractMenuAsync(byte[] fileBytes, string mediaType, CancellationToken ct = default)
+        => Task.FromResult(MenuHandler());
+
     public Task<InvoiceScanExtraction> ExtractInvoiceFromImageAsync(byte[] imageBytes, string mediaType, IReadOnlyList<ExpenseAccountCandidate> expenseAccounts, CancellationToken ct = default)
         => Task.FromResult(InvoiceHandler());
 }

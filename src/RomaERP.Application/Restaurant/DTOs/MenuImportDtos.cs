@@ -41,3 +41,12 @@ public class MenuImportResultDto
     public int Errors { get; set; }
     public List<MenuImportLineResultDto> Lines { get; set; } = new();
 }
+
+public class MenuScanResultDto
+{
+    public List<MenuImportRowDto> Rows { get; set; } = new();
+
+    /// <summary>Dishes the reader found but could not read a price for — they are left out so nothing is guessed.</summary>
+    public int SkippedWithoutPrice { get; set; }
+    public string? Note { get; set; }
+}

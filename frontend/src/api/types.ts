@@ -2636,3 +2636,9 @@ export interface MenuImportResult {
   errors: number;
   lines: MenuImportLine[];
 }
+
+export interface MenuScanResult {
+  rows: MenuImportRow[];
+  skippedWithoutPrice: number;
+  note: string | null;
+}
