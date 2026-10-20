@@ -105,6 +105,7 @@ import MySurveys from "./pages/hr/MySurveys";
 import Careers from "./pages/Careers";
 import MySchedule from "./pages/hr/MySchedule";
 import PartyForm from "./pages/PartyForm";
+import RestaurantReservations from "./pages/restaurant/RestaurantReservations";
 import RestaurantMenu from "./pages/restaurant/RestaurantMenu";
 import LoyaltyPage from "./pages/restaurant/Loyalty";
 import PurchaseReceivingPage from "./pages/restaurant/PurchaseReceiving";
@@ -280,6 +281,7 @@ export default function App() {
       <Route path="/people/labor-report" element={<PeopleRoute managerOnly><LaborReportPage /></PeopleRoute>} />
       <Route path="/people/subscription" element={<PeopleRoute adminOnly><MySubscriptionPage /></PeopleRoute>} />
       <Route path="/people/employee-requests" element={<PeopleRoute managerOnly><EmployeeRequestsAdmin /></PeopleRoute>} />
+      <Route path="/restaurant/reservations" element={<ProtectedRoute><RestaurantReservations /></ProtectedRoute>} />
       <Route path="/restaurant/tables" element={<ProtectedRoute><RestaurantTables /></ProtectedRoute>} />
       <Route path="/restaurant/loyalty" element={<ProtectedRoute><LoyaltyPage /></ProtectedRoute>} />
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />
@@ -289,6 +291,7 @@ export default function App() {
       <Route path="/restaurant/pos" element={<ProtectedRoute layout={false} loginPath="/pos-login"><RestaurantPOS /></ProtectedRoute>} />
       <Route path="/restaurant/kitchen" element={<ProtectedRoute><KitchenDisplay /></ProtectedRoute>} />
       <Route path="/restaurant-portal" element={<RestaurantPortalRoute><RestaurantTables /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/reservations" element={<RestaurantPortalRoute><RestaurantReservations /></RestaurantPortalRoute>} />
       <Route path="/restaurant-portal/tables" element={<RestaurantPortalRoute><RestaurantTables /></RestaurantPortalRoute>} />
       <Route path="/restaurant-portal/loyalty" element={<RestaurantPortalRoute><LoyaltyPage /></RestaurantPortalRoute>} />
       <Route path="/restaurant-portal/menu" element={<RestaurantPortalRoute><RestaurantMenu /></RestaurantPortalRoute>} />

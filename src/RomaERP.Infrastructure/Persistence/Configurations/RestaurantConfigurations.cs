@@ -229,3 +229,21 @@ public class LoyaltyTransactionConfiguration : IEntityTypeConfiguration<LoyaltyT
         builder.HasQueryFilter(t => !t.IsDeleted);
     }
 }
+
+public class RestaurantReservationConfiguration : IEntityTypeConfiguration<RestaurantReservation>
+{
+    public void Configure(EntityTypeBuilder<RestaurantReservation> builder)
+    {
+        builder.Property(r => r.ReservationNumber).HasMaxLength(20).IsRequired();
+        builder.Property(r => r.CustomerName).HasMaxLength(200).IsRequired();
+        builder.Property(r => r.CustomerPhone).HasMaxLength(30).IsRequired();
+        builder.Property(r => r.Notes).HasMaxLength(1000);
+        builder.HasIndex(r => r.ReservationNumber).IsUnique();
+        builder.HasIndex(r => r.ReservationAt);
+
+        builder.HasOne(r => r.Table).WithMany().HasForeignKey(r => r.TableId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(r => r.RestaurantOrder).WithMany().HasForeignKey(r => r.RestaurantOrderId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(r => !r.IsDeleted);
+    }
+}

@@ -81,6 +81,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<ItemLot> ItemLots => Set<ItemLot>();
 
     public DbSet<RestaurantTable> RestaurantTables => Set<RestaurantTable>();
+    public DbSet<RestaurantReservation> RestaurantReservations => Set<RestaurantReservation>();
     public DbSet<RestaurantOrder> RestaurantOrders => Set<RestaurantOrder>();
     public DbSet<LoyaltyMember> LoyaltyMembers => Set<LoyaltyMember>();
     public DbSet<LoyaltyTransaction> LoyaltyTransactions => Set<LoyaltyTransaction>();

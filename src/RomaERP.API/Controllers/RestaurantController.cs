@@ -13,10 +13,12 @@ namespace RomaERP.API.Controllers;
 public class RestaurantController : ControllerBase
 {
     private readonly IRestaurantService _restaurantService;
+    private readonly IMenuImportService _menuImport;
 
-    public RestaurantController(IRestaurantService restaurantService)
+    public RestaurantController(IRestaurantService restaurantService, IMenuImportService menuImport)
     {
         _restaurantService = restaurantService;
+        _menuImport = menuImport;
     }
 
     [HttpGet("tables")]
@@ -48,6 +50,13 @@ public class RestaurantController : ControllerBase
         await _restaurantService.SetMenuItemAsync(itemId, dto, ct);
         return NoContent();
     }
+
+    /// <summary>Loads a customer's existing menu in bulk. Apply = false only previews the result.</summary>
+    [HttpPost("menu/import")]
+    [Authorize(Roles = "Admin,Accountant")]
+    [RequestSizeLimit(512 * 1024)]
+    public async Task<ActionResult<MenuImportResultDto>> ImportMenu(MenuImportRequestDto request, CancellationToken ct)
+        => Ok(await _menuImport.ImportAsync(request, ct));
 
     [HttpGet("orders")]
     public async Task<ActionResult<List<RestaurantOrderDto>>> GetOrders(bool includeClosed, CancellationToken ct)

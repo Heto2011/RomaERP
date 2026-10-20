@@ -65,6 +65,7 @@ public interface IApplicationDbContext
     DbSet<ItemLot> ItemLots { get; }
 
     DbSet<RestaurantTable> RestaurantTables { get; }
+    DbSet<RestaurantReservation> RestaurantReservations { get; }
     DbSet<RestaurantOrder> RestaurantOrders { get; }
     DbSet<LoyaltyMember> LoyaltyMembers { get; }
     DbSet<LoyaltyTransaction> LoyaltyTransactions { get; }

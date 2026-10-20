@@ -758,7 +758,7 @@ public class RestaurantService : IRestaurantService
                 UnitPrice = discountedUnitPrice,
                 // Recipe-based items go through as service lines (no ItemId) so ISalesService doesn't also try
                 // to decrement the finished-product Item itself — only its non-recipe raw materials, below.
-                ItemId = l.Item!.RecipeLines.Count > 0 ? null : l.ItemId
+                ItemId = l.Item!.RecipeLines.Count > 0 || l.Item.SoldWithoutStock ? null : l.ItemId
             };
         }).ToList();
 

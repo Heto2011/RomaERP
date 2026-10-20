@@ -31,6 +31,10 @@ public class Item : AuditableEntity
     public bool IsMenuItem { get; set; }
     public decimal MenuPrice { get; set; }
 
+    /// <summary>A menu item that is not tracked in stock (typically imported straight from a customer's existing menu):
+    /// billing never checks or decrements its quantity. Items with a recipe already behave this way for the dish itself.</summary>
+    public bool SoldWithoutStock { get; set; }
+
     /// <summary>When true, receipts and consumption for this item also maintain per-batch quantity and
     /// expiry tracking in <see cref="ItemLot"/> (FEFO — first-expiring lot consumed first). Costing itself is
     /// unaffected: QuantityOnHand/AverageCost above stay the single source of truth either way, lots are a

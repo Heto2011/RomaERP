@@ -25,11 +25,11 @@ public class RestaurantServiceTests
         return new ApplicationDbContext(options);
     }
 
-    private record SeedResult(
+    internal record SeedResult(
         ApplicationDbContext Ctx, Account Cash, Account Revenue, Account OutputVat, Account Cogs, Account Inventory, Account Ar,
         Warehouse Warehouse, FiscalPeriod Period, RestaurantTable Table, Item Flour, Item Pizza, Item Water);
 
-    private static async Task<SeedResult> SeedAsync(decimal vatRate = 0.14m)
+    internal static async Task<SeedResult> SeedAsync(decimal vatRate = 0.14m)
     {
         var ctx = CreateContext();
 
@@ -68,7 +68,7 @@ public class RestaurantServiceTests
         return new SeedResult(ctx, cash, revenue, outputVat, cogs, inventory, ar, warehouse, period, table, flour, pizza, water);
     }
 
-    private static RestaurantService BuildService(ApplicationDbContext ctx)
+    internal static RestaurantService BuildService(ApplicationDbContext ctx)
         => new(ctx, new SalesService(ctx, new FakeHtmlToPdfRenderer(), new ExchangeRateService(ctx, new FakeExchangeRateProvider())), new ItemLotService(ctx), new JournalEntryService(ctx));
 
     [Fact]

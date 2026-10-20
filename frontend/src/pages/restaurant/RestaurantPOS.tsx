@@ -43,7 +43,8 @@ export default function RestaurantPOS() {
   const [closingCountedCash, setClosingCountedCash] = useState(0);
   const [closedShiftSummary, setClosedShiftSummary] = useState<CashierShift | null>(null);
 
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  // A reservation that was just turned into an order opens straight on it (…/pos?order=<id>).
+  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(() => new URLSearchParams(window.location.search).get("order"));
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
   const [showNewOrder, setShowNewOrder] = useState(false);

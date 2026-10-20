@@ -180,6 +180,13 @@ import type {
   LoyaltySettings,
   LoyaltyMember,
   LoyaltyMemberDetail,
+  Reservation,
+  ReservationStatus,
+  SaveReservationInput,
+  SeatReservationInput,
+  SeatReservationResult,
+  MenuImportRow,
+  MenuImportResult,
 } from "./types";
 
 export const AuthApi = {
@@ -694,6 +701,8 @@ export const RestaurantApi = {
     apiClient.put<RestaurantTable>(`/restaurant/tables/${id}/status`, { status }),
 
   getMenu: () => apiClient.get<MenuItem[]>("/restaurant/menu"),
+  importMenu: (rows: MenuImportRow[], apply: boolean, updateExistingPrices: boolean) =>
+    apiClient.post<MenuImportResult>("/restaurant/menu/import", { rows, apply, updateExistingPrices }),
   getRecipe: (itemId: string) => apiClient.get<RecipeLine[]>(`/restaurant/menu/${itemId}/recipe`),
   setMenuItem: (itemId: string, data: SetMenuItemInput) => apiClient.put(`/restaurant/menu/${itemId}`, data),
 
@@ -945,4 +954,13 @@ export const SubscriptionsApi = {
     systemApiClient.post<SubscriptionInvoice>(`/system/subscriptions/invoices/${invoiceId}/mark-paid`, { paymentReference }, { headers: { "X-System-Key": systemKey } }),
   runBillingCycle: (systemKey: string) =>
     systemApiClient.post<BillingRunResult>("/system/subscriptions/run-billing-cycle", null, { headers: { "X-System-Key": systemKey } }),
+};
+
+export const ReservationsApi = {
+  getAll: (date?: string, status?: ReservationStatus) => apiClient.get<Reservation[]>("/restaurant/reservations", { params: { date, status } }),
+  create: (data: SaveReservationInput) => apiClient.post<Reservation>("/restaurant/reservations", data),
+  update: (id: string, data: SaveReservationInput) => apiClient.put<Reservation>(`/restaurant/reservations/${id}`, data),
+  cancel: (id: string) => apiClient.post<Reservation>(`/restaurant/reservations/${id}/cancel`),
+  noShow: (id: string) => apiClient.post<Reservation>(`/restaurant/reservations/${id}/no-show`),
+  seat: (id: string, data: SeatReservationInput) => apiClient.post<SeatReservationResult>(`/restaurant/reservations/${id}/seat`, data),
 };

@@ -4,6 +4,8 @@ import type { Item, RecipeLine } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
+import { useAuth } from "../../context/AuthContext";
+import MenuImportDialog from "./MenuImportDialog";
 
 interface RecipeLineDraft {
   rawMaterialItemId: string;
@@ -22,6 +24,9 @@ export default function RestaurantMenu() {
   const [newRawMaterialId, setNewRawMaterialId] = useState("");
   const [newQuantity, setNewQuantity] = useState(1);
   const [saving, setSaving] = useState(false);
+  const [showImport, setShowImport] = useState(false);
+  const { user } = useAuth();
+  const canImport = !!user?.roles.some((r) => r === "Admin" || r === "Accountant");
 
   async function load() {
     const res = await ItemsApi.getAll();
@@ -91,6 +96,7 @@ export default function RestaurantMenu() {
     <div>
       <div className="page-header">
         <h1>{t.restaurant.menuTitle}</h1>
+        {canImport && <button className="btn" onClick={() => setShowImport(true)}>{t.restaurant.importMenu}</button>}
       </div>
 
       {error && <div className="alert-error">{error}</div>}
@@ -127,6 +133,8 @@ export default function RestaurantMenu() {
           </tbody>
         </table>
       </div>
+
+      {showImport && <MenuImportDialog onClose={() => setShowImport(false)} onDone={() => load()} />}
 
       {editingItem && (
         <div className="modal-overlay" onClick={closeEditor}>

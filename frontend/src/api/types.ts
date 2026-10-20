@@ -2568,3 +2568,71 @@ export interface SupportTicketSummary {
   createdAtUtc: string;
   updatedAtUtc: string | null;
 }
+
+export enum ReservationStatus {
+  Booked = 1,
+  Seated = 2,
+  Cancelled = 3,
+  NoShow = 4,
+}
+
+export interface Reservation {
+  id: string;
+  reservationNumber: string;
+  customerName: string;
+  customerPhone: string;
+  partySize: number;
+  reservationAt: string;
+  tableId: string | null;
+  tableNumber: string | null;
+  status: ReservationStatus;
+  notes: string | null;
+  restaurantOrderId: string | null;
+  orderNumber: string | null;
+}
+
+export interface SaveReservationInput {
+  customerName: string;
+  customerPhone: string;
+  partySize: number;
+  reservationAt: string;
+  tableId: string | null;
+  notes: string | null;
+}
+
+export interface SeatReservationInput {
+  orderType: RestaurantOrderType;
+  tableId: string | null;
+  warehouseId: string;
+}
+
+export interface SeatReservationResult {
+  reservation: Reservation;
+  order: RestaurantOrder;
+}
+
+export interface MenuImportRow {
+  category: string;
+  nameAr: string;
+  nameEn?: string | null;
+  price: number;
+}
+
+export interface MenuImportLine {
+  row: number;
+  category: string;
+  nameAr: string;
+  price: number;
+  action: "create" | "update" | "same" | "error";
+  message: string | null;
+}
+
+export interface MenuImportResult {
+  applied: boolean;
+  created: number;
+  updated: number;
+  unchanged: number;
+  newCategories: number;
+  errors: number;
+  lines: MenuImportLine[];
+}
