@@ -263,6 +263,7 @@ const ar = {
   },
   trial: {
     activityTitle: "نشاطك إيه؟",
+    activityPlaceholder: "اختار نشاطك",
     activityHint: "اختار نشاط واحد أو أكتر (لحد 3). هنظهرلك الأقسام اللي تخص نشاطك أول، وتقدر تفتح باقي الأقسام في أي وقت.",
     activityRestaurant: "مطعم / كافيه",
     activityRetail: "تجزئة / محل",
@@ -2112,6 +2113,7 @@ const en: typeof ar = {
   },
   trial: {
     activityTitle: "What does your business do?",
+    activityPlaceholder: "Choose your activity",
     activityHint: "Pick one or more activities (up to 3). We show the sections that fit your business first, and you can open the rest at any time.",
     activityRestaurant: "Restaurant / café",
     activityRetail: "Retail / shop",

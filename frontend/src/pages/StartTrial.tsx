@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { TrialApi } from "../api/services";
@@ -29,6 +29,24 @@ export default function StartTrial() {
     searchParams.get("product") === "hr" ? ProductScope.PeopleOnly : ProductScope.Full
   );
   const [businessTypes, setBusinessTypes] = useState<number>(0);
+  const [activityOpen, setActivityOpen] = useState(false);
+  const activityRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!activityOpen) return;
+    function onDown(e: MouseEvent) {
+      if (activityRef.current && !activityRef.current.contains(e.target as Node)) setActivityOpen(false);
+    }
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") setActivityOpen(false);
+    }
+    document.addEventListener("mousedown", onDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [activityOpen]);
   const [companyNameAr, setCompanyNameAr] = useState("");
   const [companyNameEn, setCompanyNameEn] = useState("");
   const [country, setCountry] = useState<Country>(Country.SaudiArabia);
@@ -94,26 +112,44 @@ export default function StartTrial() {
         {error && <div className="alert-error">{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {productScope === ProductScope.Full && (
-            <div className="form-field">
+            <div className="form-field" ref={activityRef} style={{ position: "relative" }}>
               <label>{t.trial.activityTitle}</label>
-              <div role="group" aria-label={t.trial.activityTitle} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8 }}>
-                {activities.map((a) => {
-                  const selected = (businessTypes & a.type) !== 0;
-                  return (
-                    <button
-                      key={a.type}
-                      type="button"
-                      aria-pressed={selected}
-                      className={selected ? "btn" : "btn btn-secondary"}
-                      style={{ padding: "12px 10px", display: "flex", justifyContent: "center", gap: 6, alignItems: "center" }}
-                      onClick={() => toggleActivity(a.type)}
-                    >
-                      <span>{a.label}</span>
-                      {a.soon && <span className="sidebar-soon-badge">{t.trial.activitySoon}</span>}
-                    </button>
-                  );
-                })}
-              </div>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                aria-haspopup="listbox"
+                aria-expanded={activityOpen}
+                onClick={() => setActivityOpen((v) => !v)}
+                style={{ width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center", fontWeight: 500 }}
+              >
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {activities.filter((a) => (businessTypes & a.type) !== 0).map((a) => a.label).join(lang === "ar" ? "، " : ", ") || t.trial.activityPlaceholder}
+                </span>
+                <span aria-hidden="true">▾</span>
+              </button>
+              {activityOpen && (
+                <div
+                  role="listbox"
+                  aria-multiselectable="true"
+                  style={{ position: "absolute", insetInline: 0, top: "100%", zIndex: 20, marginTop: 4, background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, boxShadow: "0 8px 24px rgba(0,0,0,.18)", padding: 6 }}
+                >
+                  {activities.map((a) => {
+                    const selected = (businessTypes & a.type) !== 0;
+                    return (
+                      <label
+                        key={a.type}
+                        role="option"
+                        aria-selected={selected}
+                        style={{ display: "flex", alignItems: "center", gap: 10, padding: "9px 10px", borderRadius: 6, cursor: "pointer", fontSize: 14, color: "var(--color-text)" }}
+                      >
+                        <input type="checkbox" checked={selected} onChange={() => toggleActivity(a.type)} />
+                        <span>{a.label}</span>
+                        {a.soon && <span className="sidebar-soon-badge">{t.trial.activitySoon}</span>}
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
               <span className="text-muted" style={{ fontSize: 12 }}>
                 {(businessTypes & BusinessType.Contracting) !== 0 ? t.trial.activityContractingNote : t.trial.activityHint}
               </span>
