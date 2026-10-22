@@ -8,7 +8,7 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Roma Group">
 <meta property="og:title" content="Roma Group — منتجات كتير، شركة واحدة تثق فيها">
-<meta property="og:description" content="اختر المنتج اللي محتاجه شغلك دلوقتي — كل منتج شغال لوحده، ولو حبيت تجمعهم مع بعض تقدر بسهولة.">
+<meta property="og:description" content="اختار اللي محتاجه شغلك وابدأ بأي منتج — كل واحد شغال لوحده، وتقدر تضيف غيره في أي وقت.">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -42,7 +42,7 @@
   .hero-copy{display:flex; flex-direction:column; align-items:center; text-align:center; gap:16px; padding:36px 0 8px;}
   .eyebrow{display:inline-flex; align-items:center; gap:8px; background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.16); color:#fff; border-radius:999px; padding:6px 16px; font-size:12.5px; font-weight:700;}
   h1{font-size:clamp(28px,4.5vw,42px); font-weight:900; color:#fff; line-height:1.35; max-width:760px; margin:0 auto;}
-  .subtitle{font-size:15.5px; color:rgba(255,255,255,.6); max-width:600px; line-height:1.7; margin:0 auto;}
+  .subtitle{font-size:15.5px; color:rgba(255,255,255,.72); max-width:600px; line-height:1.7; margin:0 auto;}
 
   .grid{flex:1; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; padding:32px 0 64px; max-width:900px; margin:0 auto; width:100%;}
   @media (max-width:640px){ .grid{grid-template-columns:1fr;} }
@@ -51,17 +51,19 @@
   .card:hover{transform:translateY(-2px); border-color:rgba(255,255,255,.3);}
   .card.featured{background:rgba(200,134,46,.14); border-color:rgba(200,134,46,.4); color:#c8862e;}
   .card.erp{background:rgba(15,92,75,.26); border-color:rgba(95,208,161,.36); color:#5fd0a1;}
-  .card.ai{background:rgba(74,168,216,.14); border-color:rgba(74,168,216,.42); color:#4aa8d8;}
-  .card.tools{background:rgba(138,115,85,.14); border-color:rgba(138,115,85,.42); color:#b59a72;}
+  .card.ai{background:rgba(45,212,191,.14); border-color:rgba(45,212,191,.42); color:#2dd4bf;}
+  .card.tools{background:rgba(167,139,250,.14); border-color:rgba(167,139,250,.42); color:#a78bfa;}
   .card-art{position:absolute; z-index:-1; inset-inline-end:-22px; bottom:-22px; width:160px; height:160px; opacity:.27; pointer-events:none;}
   .badge{width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:#fff;}
   .card-title{font-weight:900; font-size:18px; color:#fff;}
-  .card-desc{font-size:13px; color:rgba(255,255,255,.55); line-height:1.6; max-width:80%;}
+  .card-desc{font-size:13px; color:rgba(255,255,255,.76); line-height:1.6; max-width:80%;}
   .card-tags{display:flex; flex-wrap:wrap; gap:6px; max-width:88%;}
   .card-tags span{font-size:11.5px; font-weight:700; padding:4px 10px; border-radius:999px; background:rgba(255,255,255,.09); color:rgba(255,255,255,.78);}
   .card-cta{font-size:12.5px; font-weight:700; margin-top:4px;}
   .card-cta.muted{color:rgba(255,255,255,.4);}
 
+  .contact-btn{display:inline-block; padding:12px 26px; border-radius:12px; border:1px solid rgba(255,255,255,.28); color:#fff; font-weight:800; font-size:14.5px;}
+  .contact-btn:hover{border-color:rgba(255,255,255,.6);}
   footer{text-align:center; padding:24px; font-size:12.5px; color:rgba(255,255,255,.4);}
 </style>
 <script src="/site-lang.js"></script>
@@ -94,23 +96,10 @@
     <div class="hero-copy">
       <div class="eyebrow"><span data-i18n="eyebrow">مجموعة منتجات لإدارة أعمالك بذكاء</span></div>
       <h1 data-i18n="h1">منتجات كتير، شركة واحدة تثق فيها</h1>
-      <div class="subtitle" data-i18n="sub">اختر المنتج اللي محتاجه شغلك دلوقتي — كل منتج شغال لوحده، ولو حبيت تجمعهم مع بعض تقدر بسهولة</div>
+      <div class="subtitle" data-i18n="sub">اختار اللي محتاجه شغلك وابدأ بأي منتج — كل واحد شغال لوحده، وتقدر تضيف غيره في أي وقت</div>
     </div>
 
     <div class="grid">
-      <a href="roma-hr.html" class="card featured">
-        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M12 21s7-6.7 7-12.2A7 7 0 1 0 5 8.8C5 14.3 12 21 12 21z"/>
-          <circle cx="12" cy="8.5" r="3.3"/>
-          <path d="M12 6.8V8.6l1.4 1"/>
-        </svg>
-        <div class="badge" style="background:var(--hr); color:#2c1c04;">HR</div>
-        <div class="card-title">Roma HR</div>
-        <div class="card-desc" data-i18n="hrDesc">حضور وانصراف بالموقع الجغرافي، رواتب تلقائية، طلبات وموافقات — لأي شركة</div>
-        <div class="card-tags"><span data-i18n="hrT1">حضور بالـGPS</span><span data-i18n="hrT2">رواتب تلقائية</span><span data-i18n="hrT3">إجازات وطلبات</span></div>
-        <div class="card-cta" style="color:var(--hr);" data-i18n="hrCta">جرّبه الآن ←</div>
-      </a>
-
       <a href="roma-erp.html" class="card erp">
         <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M3 21h18"/>
@@ -126,31 +115,47 @@
         <div class="card-cta" style="color:#5fd0a1;" data-i18n="erpCta">شغال حاليًا ←</div>
       </a>
 
+      <a href="roma-hr.html" class="card featured">
+        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 21s7-6.7 7-12.2A7 7 0 1 0 5 8.8C5 14.3 12 21 12 21z"/>
+          <circle cx="12" cy="8.5" r="3.3"/>
+          <path d="M12 6.8V8.6l1.4 1"/>
+        </svg>
+        <div class="badge" style="background:var(--hr); color:#2c1c04;">HR</div>
+        <div class="card-title">Roma HR</div>
+        <div class="card-desc" data-i18n="hrDesc">حضور وانصراف بالموقع الجغرافي، رواتب تلقائية، طلبات وموافقات — لأي شركة</div>
+        <div class="card-tags"><span data-i18n="hrT1">حضور بالـGPS</span><span data-i18n="hrT2">رواتب تلقائية</span><span data-i18n="hrT3">إجازات وطلبات</span></div>
+        <div class="card-cta" style="color:var(--hr);" data-i18n="hrCta">جرّبه الآن ←</div>
+      </a>
+
       <a href="roma-ai.html" class="card ai">
         <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/>
           <path d="M5 11a7 7 0 0 0 14 0"/>
           <path d="M12 18v3"/>
         </svg>
-        <div class="badge" style="background:#4aa8d8; color:#08202c;">AI</div>
+        <div class="badge" style="background:#2dd4bf; color:#071a1a;">AI</div>
         <div class="card-title">Roma AI</div>
         <div class="card-desc" data-i18n="aiDesc">موظف صوتي للمطاعم يرد على المكالمات ويسجّل الطلبات والحجوزات — ورد آلي على واتساب قريبًا</div>
-        <div class="card-tags"><span data-i18n="aiT1">Roma Voice</span><span data-i18n="aiT2">Roma Reply</span></div>
-        <div class="card-cta" style="color:#4aa8d8;" data-i18n="aiCta">شوف التفاصيل ←</div>
+        <div class="card-tags"><span data-i18n="aiT1">Roma Voice</span><span data-i18n="aiT2">Roma Reply (قريبًا)</span></div>
+        <div class="card-cta" style="color:#2dd4bf;" data-i18n="aiCta">شوف التفاصيل ←</div>
       </a>
 
       <a href="https://tools.romagroup.app" class="card tools">
         <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
           <path d="M14.7 6.3a3.6 3.6 0 0 0-4.9 4.9L4 17l3 3 5.8-5.8a3.6 3.6 0 0 0 4.9-4.9l-1.9 1.9a1.8 1.8 0 0 1-2.5-2.5l1.9-1.9z"/>
         </svg>
-        <div class="badge" style="background:var(--tools);">T</div>
+        <div class="badge" style="background:#a78bfa; color:#14091f;">T</div>
         <div class="card-title">Roma Tools</div>
         <div class="card-desc" data-i18n="toolsDesc">أدوات مساعدة صغيرة لتشغيل أعمالك اليومية</div>
-        <div class="card-cta" style="color:#b59a72;" data-i18n="toolsCta">افتح الأدوات ←</div>
+        <div class="card-cta" style="color:#a78bfa;" data-i18n="toolsCta">افتح الأدوات ←</div>
       </a>
     </div>
   </div>
 
+  <div class="wrap" style="text-align:center; padding-bottom:36px;">
+    <a href="mailto:support@romagroup.app" class="contact-btn" data-i18n="contactBtn">تواصل معنا — support@romagroup.app</a>
+  </div>
   <footer>Roma Group © 2026</footer>
 </div>
 
@@ -174,7 +179,7 @@
   "loginHr": "HR login",
   "eyebrow": "Products that run your business smarter",
   "h1": "Several products, one company you can trust",
-  "sub": "Pick the product your business needs today — each one works on its own, and you can combine them whenever you like.",
+  "sub": "Pick what your business needs and start with any product — each works on its own, and you can add more any time.",
   "hrDesc": "GPS attendance, automatic payroll, requests and approvals — for any company",
   "hrT1": "GPS attendance",
   "hrT2": "Automatic payroll",
@@ -190,9 +195,10 @@
   "toolsDesc": "Small helper tools for your day-to-day operations",
   "toolsCta": "Open the tools →",
   "soon": "Coming soon",
+  "contactBtn": "Contact us — support@romagroup.app",
   "aiDesc": "A voice agent for restaurants that answers calls and records orders and bookings — automatic WhatsApp replies coming soon",
   "aiT1": "Roma Voice",
-  "aiT2": "Roma Reply",
+  "aiT2": "Roma Reply (soon)",
   "aiCta": "See details →"
 });
 </script>
