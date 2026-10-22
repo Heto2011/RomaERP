@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Roma AI — خدمة عملاء بالذكاء الاصطناعي لمطعمك</title>
+<meta name="description" content="Roma AI: موظف صوتي يرد على مكالمات مطعمك ويسجّل الطلبات والحجوزات على مدار الساعة (Roma Voice)، ورد آلي على واتساب (Roma Reply، قريبًا).">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Roma Group">
+<meta property="og:title" content="Roma AI — خدمة عملاء بالذكاء الاصطناعي لمطعمك">
+<meta property="og:description" content="موظف صوتي يرد ويسجّل الطلبات والحجوزات، وبعده رد آلي على واتساب.">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --primary:#0f5c4b; --ai:#4aa8d8; --ai-soft:rgba(74,168,216,.14);
+    --hero-bg:#0d1319; --text:rgba(255,255,255,.72); --muted:rgba(255,255,255,.55);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{font-family:"Tajawal","Segoe UI",sans-serif; background:var(--hero-bg); color:var(--text);}
+  a{text-decoration:none; color:inherit;}
+  .wrap{max-width:1000px; margin:0 auto; padding:0 24px;}
+  :focus-visible{outline:2px solid var(--ai); outline-offset:3px;}
+
+  .hero{background:radial-gradient(120% 70% at 50% -10%, #16262f 0%, var(--hero-bg) 65%);}
+  nav{display:flex; align-items:center; justify-content:space-between; padding:26px 0; gap:12px; flex-wrap:wrap;}
+  .brand{display:flex; align-items:center; gap:10px;}
+  .brand img{width:34px; height:34px; border-radius:9px;}
+  .brand-name{font-weight:900; font-size:19px; color:#fff;}
+  .nav-right{display:flex; gap:8px; flex-wrap:wrap; font-size:13px; font-weight:700;}
+  .nav-right a, .lang-btn{padding:7px 14px; border:1px solid rgba(255,255,255,.22); border-radius:999px; color:rgba(255,255,255,.85); background:transparent; font:inherit; font-size:13px; font-weight:700; cursor:pointer;}
+  .nav-right a:hover, .lang-btn:hover{border-color:rgba(255,255,255,.5); color:#fff;}
+
+  .hero-copy{display:flex; flex-direction:column; align-items:center; text-align:center; gap:16px; padding:48px 0 56px;}
+  .eyebrow{display:inline-flex; background:var(--ai-soft); border:1px solid rgba(74,168,216,.4); color:#9fd4ee; border-radius:999px; padding:6px 16px; font-size:12.5px; font-weight:700;}
+  h1{font-size:clamp(28px,4.6vw,44px); font-weight:900; color:#fff; line-height:1.35; max-width:780px; text-wrap:balance;}
+  .subtitle{font-size:16px; color:var(--muted); max-width:620px; line-height:1.75;}
+  .cta-row{display:flex; gap:12px; flex-wrap:wrap; justify-content:center; margin-top:10px;}
+  .btn{padding:12px 26px; border-radius:12px; font-weight:800; font-size:15px; border:1px solid transparent;}
+  .btn.primary{background:var(--ai); color:#08202c;}
+  .btn.primary:hover{background:#6bbce4;}
+  .btn.ghost{border-color:rgba(255,255,255,.28); color:#fff;}
+  .btn.ghost:hover{border-color:rgba(255,255,255,.55);}
+
+  section{padding:56px 0;}
+  h2{font-size:clamp(22px,3.2vw,30px); font-weight:900; color:#fff; margin-bottom:10px; text-wrap:balance;}
+  .lead{color:var(--muted); max-width:640px; line-height:1.75; margin-bottom:28px;}
+
+  .products{display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px;}
+  @media (max-width:700px){ .products{grid-template-columns:1fr;} }
+  .product{border-radius:16px; padding:26px; border:1px solid rgba(255,255,255,.14); background:rgba(255,255,255,.05); display:flex; flex-direction:column; gap:10px;}
+  .product.live{background:var(--ai-soft); border-color:rgba(74,168,216,.42);}
+  .tag{align-self:flex-start; font-size:11.5px; font-weight:800; padding:4px 12px; border-radius:999px; background:rgba(255,255,255,.1); color:rgba(255,255,255,.8);}
+  .live .tag{background:rgba(95,208,161,.18); color:#7fe0b8;}
+  .product h3{font-size:21px; font-weight:900; color:#fff;}
+  .product p{font-size:14px; line-height:1.7; color:var(--muted);}
+  .product ul{list-style:none; display:flex; flex-direction:column; gap:8px; margin-top:6px;}
+  .product li{font-size:14px; padding-inline-start:22px; position:relative; color:var(--text);}
+  .product li::before{content:"✓"; position:absolute; inset-inline-start:0; color:var(--ai); font-weight:900;}
+  .product .link{margin-top:auto; padding-top:10px; font-weight:800; font-size:14px; color:#9fd4ee;}
+
+  .steps{display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:18px;}
+  @media (max-width:700px){ .steps{grid-template-columns:1fr;} }
+  .step{border-top:2px solid var(--ai); padding-top:14px;}
+  .step b{display:block; color:#fff; font-size:16px; margin-bottom:6px;}
+  .step span{font-size:14px; line-height:1.7; color:var(--muted);}
+
+  .contact{text-align:center; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.14); border-radius:18px; padding:40px 24px;}
+  .contact p{color:var(--muted); margin-bottom:20px;}
+  footer{text-align:center; padding:28px; font-size:12.5px; color:rgba(255,255,255,.4);}
+  footer a{color:rgba(255,255,255,.6); margin:0 10px;}
+</style>
+<script src="/site-lang.js"></script>
+</head>
+<body>
+
+<div class="hero">
+  <div class="wrap">
+    <nav>
+      <a class="brand" href="/roma-group.html">
+        <img src="/roma-logo.png" alt="" width="34" height="34">
+        <span class="brand-name">Roma AI</span>
+      </a>
+      <div class="nav-right">
+        <button id="langToggle" class="lang-btn" type="button">English</button>
+        <a href="/roma-group.html" data-i18n="navGroup">Roma Group</a>
+        <a href="https://voice.romagroup.app" data-i18n="navLogin">دخول المطاعم</a>
+      </div>
+    </nav>
+
+    <div class="hero-copy">
+      <span class="eyebrow" data-i18n="eyebrow">خدمة عملاء بالذكاء الاصطناعي للمطاعم</span>
+      <h1 data-i18n="h1">مطعمك يرد على كل مكالمة، على مدار الساعة</h1>
+      <p class="subtitle" data-i18n="sub">Roma Voice يرد على التليفون بالعربي، يعرض المنيو، ويسجّل الطلبات والحجوزات في لوحة تحكم المطعم، من غير ما حد من فريقك يشيل السماعة.</p>
+      <div class="cta-row">
+        <a class="btn primary" href="mailto:support@romagroup.app?subject=Roma%20Voice" data-i18n="ctaMain">اطلب تجربة</a>
+        <a class="btn ghost" href="#products" data-i18n="ctaSecond">شوف المنتجات</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <section id="products">
+    <h2 data-i18n="prodTitle">منتجين، هدف واحد: عميل راضي</h2>
+    <p class="lead" data-i18n="prodLead">كل منتج يشتغل لوحده، وتقدر تبدأ بأي واحد.</p>
+    <div class="products">
+      <article class="product live">
+        <span class="tag" data-i18n="liveTag">متاح الآن</span>
+        <h3>Roma Voice</h3>
+        <p data-i18n="voiceDesc">موظف استقبال صوتي يرد على مكالمات مطعمك.</p>
+        <ul>
+          <li data-i18n="v1">يرد بالعربي ويعرض المنيو والأسعار</li>
+          <li data-i18n="v2">يسجّل أوردرات الاستلام والتوصيل</li>
+          <li data-i18n="v3">يحجز الطاولات بالتاريخ والوقت وعدد الأشخاص</li>
+          <li data-i18n="v4">كل مكالمة بملخصها ونصها في لوحة التحكم</li>
+          <li data-i18n="v5">يحوّل المكالمة لموظف عندك لو العميل طلب كده</li>
+        </ul>
+        <a class="link" href="mailto:support@romagroup.app?subject=Roma%20Voice" data-i18n="voiceCta">اطلب تجربة ←</a>
+      </article>
+
+      <article class="product">
+        <span class="tag" data-i18n="soonTag">قريبًا</span>
+        <h3>Roma Reply</h3>
+        <p data-i18n="replyDesc">رد آلي على رسائل واتساب عملائك.</p>
+        <ul>
+          <li data-i18n="r1">ردود فورية على أسئلة المنيو والمواعيد</li>
+          <li data-i18n="r2">أوردرات وحجوزات من المحادثة مباشرة</li>
+          <li data-i18n="r3">نفس لوحة التحكم مع Roma Voice</li>
+        </ul>
+        <a class="link" href="mailto:support@romagroup.app?subject=Roma%20Reply" data-i18n="replyCta">عايز أعرف أول ما يجهز ←</a>
+      </article>
+    </div>
+  </section>
+
+  <section>
+    <h2 data-i18n="howTitle">إزاي يشتغل؟</h2>
+    <div class="steps" style="margin-top:24px;">
+      <div class="step"><b data-i18n="s1t">1. نجهّز المنيو</b><span data-i18n="s1">نضيف منيو مطعمك وأسعاره ومواعيد العمل وبيانات التوصيل.</span></div>
+      <div class="step"><b data-i18n="s2t">2. نربط رقم مطعمك</b><span data-i18n="s2">يتربط رقم تليفون بالموظف الصوتي، وتجرّبه قبل ما يبدأ.</span></div>
+      <div class="step"><b data-i18n="s3t">3. تتابع من لوحتك</b><span data-i18n="s3">الطلبات والحجوزات وسجل المكالمات واستهلاك الدقايق في مكان واحد.</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="contact">
+      <h2 data-i18n="cTitle">جاهز تجرّب على مطعمك؟</h2>
+      <p data-i18n="cText">ابعتلنا اسم مطعمك وهنرجع لك بتجربة.</p>
+      <a class="btn primary" href="mailto:support@romagroup.app?subject=Roma%20AI" data-i18n="cBtn">support@romagroup.app</a>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <a href="/roma-group.html">Roma Group</a>
+  <a href="/terms.html" data-i18n="terms">الشروط</a>
+  <div style="margin-top:10px;">Roma Group © 2026</div>
+</footer>
+
+<script>
+  fetch("/api/marketing/pageview", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ path: location.pathname, referrer: document.referrer || null }),
+  }).catch(() => {});
+</script>
+<script>
+  SiteLang.apply({
+  "@title": "Roma AI — AI customer service for your restaurant",
+  "@description": "Roma AI: a voice agent that answers your restaurant's calls and takes orders and bookings around the clock (Roma Voice), plus automatic WhatsApp replies (Roma Reply, coming soon).",
+  "@ogTitle": "Roma AI — AI customer service for your restaurant",
+  "@ogDescription": "A voice agent that answers, takes orders and books tables — and WhatsApp replies next.",
+  "navGroup": "Roma Group",
+  "navLogin": "Restaurant login",
+  "eyebrow": "AI customer service for restaurants",
+  "h1": "Your restaurant answers every call, around the clock",
+  "sub": "Roma Voice answers the phone in Arabic, reads out the menu, and records orders and bookings in your restaurant dashboard — without anyone on your team picking up.",
+  "ctaMain": "Request a trial",
+  "ctaSecond": "See the products",
+  "prodTitle": "Two products, one goal: happy customers",
+  "prodLead": "Each product works on its own — start with either one.",
+  "liveTag": "Available now",
+  "soonTag": "Coming soon",
+  "voiceDesc": "A voice receptionist that answers your restaurant's calls.",
+  "v1": "Answers in Arabic and reads out the menu and prices",
+  "v2": "Takes pickup and delivery orders",
+  "v3": "Books tables by date, time and party size",
+  "v4": "Every call with its summary and transcript in your dashboard",
+  "v5": "Transfers the call to your staff when the customer asks",
+  "voiceCta": "Request a trial →",
+  "replyDesc": "Automatic replies to your customers' WhatsApp messages.",
+  "r1": "Instant answers about the menu and opening hours",
+  "r2": "Orders and bookings straight from the chat",
+  "r3": "Same dashboard as Roma Voice",
+  "replyCta": "Tell me when it's ready →",
+  "howTitle": "How it works",
+  "s1t": "1. We set up your menu",
+  "s1": "We add your menu, prices, opening hours and delivery details.",
+  "s2t": "2. We connect your number",
+  "s2": "A phone number is linked to the voice agent, and you try it before it goes live.",
+  "s3t": "3. You follow it from your dashboard",
+  "s3": "Orders, bookings, call history and minutes used — in one place.",
+  "cTitle": "Ready to try it on your restaurant?",
+  "cText": "Send us your restaurant's name and we'll get back to you with a trial.",
+  "cBtn": "support@romagroup.app",
+  "terms": "Terms"
+});
+</script>
+</body>
+</html>

@@ -4,10 +4,10 @@
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Roma Group — مجموعة منتجات لإدارة أعمالك</title>
-<meta name="description" content="Roma Group تجمع منتجاتنا: Roma HR لإدارة الموارد البشرية، RomaERP لإدارة الأعمال والمحاسبة، بالإضافة لـRoma Tools. اختر المنتج اللي محتاجه شغلك.">
+<meta name="description" content="Roma Group تجمع منتجاتنا: Roma HR لإدارة الموارد البشرية، RomaERP لإدارة الأعمال والمحاسبة، Roma AI لخدمة العملاء بالذكاء الاصطناعي، بالإضافة لـRoma Tools. اختر المنتج اللي محتاجه شغلك.">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Roma Group">
-<meta property="og:title" content="Roma Group — ثلاث أدوات، شركة واحدة تثق فيها">
+<meta property="og:title" content="Roma Group — منتجات كتير، شركة واحدة تثق فيها">
 <meta property="og:description" content="اختر المنتج اللي محتاجه شغلك دلوقتي — كل منتج شغال لوحده، ولو حبيت تجمعهم مع بعض تقدر بسهولة.">
 <meta name="twitter:card" content="summary_large_image">
 <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -51,7 +51,8 @@
   .card:hover{transform:translateY(-2px); border-color:rgba(255,255,255,.3);}
   .card.featured{background:rgba(200,134,46,.14); border-color:rgba(200,134,46,.4); color:#c8862e;}
   .card.erp{background:rgba(15,92,75,.26); border-color:rgba(95,208,161,.36); color:#5fd0a1;}
-  .card.tools{grid-column:1 / -1; background:rgba(138,115,85,.14); border-color:rgba(138,115,85,.42); color:#b59a72;}
+  .card.ai{background:rgba(74,168,216,.14); border-color:rgba(74,168,216,.42); color:#4aa8d8;}
+  .card.tools{background:rgba(138,115,85,.14); border-color:rgba(138,115,85,.42); color:#b59a72;}
   .card-art{position:absolute; z-index:-1; inset-inline-end:-22px; bottom:-22px; width:160px; height:160px; opacity:.27; pointer-events:none;}
   .badge{width:40px; height:40px; border-radius:11px; display:flex; align-items:center; justify-content:center; font-size:15px; font-weight:900; color:#fff;}
   .card-title{font-weight:900; font-size:18px; color:#fff;}
@@ -92,7 +93,7 @@
 
     <div class="hero-copy">
       <div class="eyebrow"><span data-i18n="eyebrow">مجموعة منتجات لإدارة أعمالك بذكاء</span></div>
-      <h1 data-i18n="h1">ثلاث أدوات، شركة واحدة تثق فيها</h1>
+      <h1 data-i18n="h1">منتجات كتير، شركة واحدة تثق فيها</h1>
       <div class="subtitle" data-i18n="sub">اختر المنتج اللي محتاجه شغلك دلوقتي — كل منتج شغال لوحده، ولو حبيت تجمعهم مع بعض تقدر بسهولة</div>
     </div>
 
@@ -123,6 +124,19 @@
         <div class="card-desc" data-i18n="erpDesc">محاسبة، مبيعات، مخزون، وتقارير — نظام إدارة أعمال متكامل بالذكاء الاصطناعي</div>
         <div class="card-tags"><span data-i18n="erpT1">محاسبة</span><span data-i18n="erpT2">مبيعات ومخزون</span><span data-i18n="erpT3">كاشير POS</span><span data-i18n="erpT4">فاتورة إلكترونية</span><span data-i18n="erpT5">ذكاء اصطناعي</span></div>
         <div class="card-cta" style="color:#5fd0a1;" data-i18n="erpCta">شغال حاليًا ←</div>
+      </a>
+
+      <a href="roma-ai.html" class="card ai">
+        <svg class="card-art" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3a3 3 0 0 0-3 3v5a3 3 0 0 0 6 0V6a3 3 0 0 0-3-3z"/>
+          <path d="M5 11a7 7 0 0 0 14 0"/>
+          <path d="M12 18v3"/>
+        </svg>
+        <div class="badge" style="background:#4aa8d8; color:#08202c;">AI</div>
+        <div class="card-title">Roma AI</div>
+        <div class="card-desc" data-i18n="aiDesc">موظف صوتي للمطاعم يرد على المكالمات ويسجّل الطلبات والحجوزات — ورد آلي على واتساب قريبًا</div>
+        <div class="card-tags"><span data-i18n="aiT1">Roma Voice</span><span data-i18n="aiT2">Roma Reply</span></div>
+        <div class="card-cta" style="color:#4aa8d8;" data-i18n="aiCta">شوف التفاصيل ←</div>
       </a>
 
       <div class="card tools" aria-disabled="true">
@@ -159,7 +173,7 @@
   "loginErp": "ERP login",
   "loginHr": "HR login",
   "eyebrow": "Products that run your business smarter",
-  "h1": "Three tools, one company you can trust",
+  "h1": "Several products, one company you can trust",
   "sub": "Pick the product your business needs today — each one works on its own, and you can combine them whenever you like.",
   "hrDesc": "GPS attendance, automatic payroll, requests and approvals — for any company",
   "hrT1": "GPS attendance",
@@ -174,7 +188,11 @@
   "erpT5": "AI",
   "erpCta": "Live now →",
   "toolsDesc": "Small helper tools for your day-to-day operations — details coming soon",
-  "soon": "Coming soon"
+  "soon": "Coming soon",
+  "aiDesc": "A voice agent for restaurants that answers calls and records orders and bookings — automatic WhatsApp replies coming soon",
+  "aiT1": "Roma Voice",
+  "aiT2": "Roma Reply",
+  "aiCta": "See details →"
 });
 </script>
 </body>
