@@ -55,7 +55,8 @@ public class TenantProvisioningService : ITenantProvisioningService
             IsActive = true,
             IsDemo = request.IsDemo,
             ExpiresAtUtc = request.IsDemo && request.DemoExpiryDays is { } days ? DateTime.UtcNow.AddDays(days) : null,
-            ProductScope = request.ProductScope
+            ProductScope = request.ProductScope,
+            BusinessType = request.BusinessType
         };
 
         _central.Tenants.Add(tenant);

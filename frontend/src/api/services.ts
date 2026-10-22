@@ -188,6 +188,7 @@ import type {
   MenuImportRow,
   MenuImportResult,
   MenuScanResult,
+  BusinessType,
 } from "./types";
 
 export const AuthApi = {
@@ -196,13 +197,13 @@ export const AuthApi = {
   resetPassword: (companyCode: string, email: string, token: string, newPassword: string) =>
     apiClient.post<{ message: string }>("/auth/reset-password", { email, token, newPassword }, { headers: { "X-Company-Code": companyCode } }),
   login: (companyCode: string, email: string, password: string) =>
-    apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[]; productScope: ProductScope }>(
+    apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[]; productScope: ProductScope; businessType: BusinessType }>(
       "/auth/login",
       { email, password },
       { headers: { "X-Company-Code": companyCode } }
     ),
   posPinLogin: (companyCode: string, pin: string) =>
-    apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[]; productScope: ProductScope }>(
+    apiClient.post<{ token: string; email: string; fullName: string; roles: string[]; modules: string[]; productScope: ProductScope; businessType: BusinessType }>(
       "/auth/pos-pin-login",
       { pin },
       { headers: { "X-Company-Code": companyCode } }

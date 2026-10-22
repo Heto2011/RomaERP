@@ -2486,6 +2486,16 @@ export enum ProductScope {
   PeopleOnly = 2,
 }
 
+export enum BusinessType {
+  General = 1,
+  Restaurant = 2,
+  Retail = 3,
+  Services = 4,
+  Wholesale = 5,
+  Manufacturing = 6,
+  Contracting = 7,
+}
+
 export interface TrialSignupRequest {
   companyNameAr: string;
   companyNameEn: string;
@@ -2494,6 +2504,7 @@ export interface TrialSignupRequest {
   adminEmail: string;
   adminPassword: string;
   productScope: ProductScope;
+  businessType: BusinessType;
 }
 
 export interface TrialSignupResponse {
@@ -2504,6 +2515,7 @@ export interface TrialSignupResponse {
   roles: string[];
   expiresAtUtc: string | null;
   productScope: ProductScope;
+  businessType: BusinessType;
 }
 
 export interface AuditLogEntry {

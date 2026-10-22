@@ -10,5 +10,6 @@ public interface ITenantContext
     string ConnectionString { get; }
     Country Country { get; }
     ProductScope ProductScope { get; }
+    BusinessType BusinessType => BusinessType.General;
     bool IsResolved { get; }
 }

@@ -9,7 +9,8 @@ public record TrialSignupRequest(
     string AdminFullName,
     string AdminEmail,
     string AdminPassword,
-    ProductScope ProductScope = ProductScope.Full);
+    ProductScope ProductScope = ProductScope.Full,
+    BusinessType BusinessType = BusinessType.General);
 
 /// <summary>Carries a ready-to-use login token so the new tenant lands straight in the app —
 /// no separate login step right after signing up.</summary>
@@ -20,4 +21,5 @@ public record TrialSignupResponse(
     string FullName,
     List<string> Roles,
     DateTime? ExpiresAtUtc,
-    ProductScope ProductScope);
+    ProductScope ProductScope,
+    BusinessType BusinessType);

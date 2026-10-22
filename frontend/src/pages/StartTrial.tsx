@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { TrialApi } from "../api/services";
-import { Country, ProductScope } from "../api/types";
+import { BusinessType, Country, ProductScope } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 import PasswordInput from "../components/PasswordInput";
@@ -28,6 +28,7 @@ export default function StartTrial() {
   const [productScope] = useState<ProductScope>(
     searchParams.get("product") === "hr" ? ProductScope.PeopleOnly : ProductScope.Full
   );
+  const [businessType, setBusinessType] = useState<BusinessType | null>(null);
   const [companyNameAr, setCompanyNameAr] = useState("");
   const [companyNameEn, setCompanyNameEn] = useState("");
   const [country, setCountry] = useState<Country>(Country.SaudiArabia);
@@ -37,6 +38,15 @@ export default function StartTrial() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  const activities = [
+    { type: BusinessType.Restaurant, label: t.trial.activityRestaurant, soon: false },
+    { type: BusinessType.Retail, label: t.trial.activityRetail, soon: false },
+    { type: BusinessType.Services, label: t.trial.activityServices, soon: false },
+    { type: BusinessType.Wholesale, label: t.trial.activityWholesale, soon: false },
+    { type: BusinessType.Manufacturing, label: t.trial.activityManufacturing, soon: false },
+    { type: BusinessType.Contracting, label: t.trial.activityContracting, soon: true },
+  ];
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault();
@@ -51,9 +61,10 @@ export default function StartTrial() {
         adminEmail: email,
         adminPassword: password,
         productScope,
+        businessType: businessType ?? BusinessType.General,
       });
       const { data } = res;
-      loginWithToken(data.companyCode, data.token, data.email, data.fullName, data.roles, [], data.productScope);
+      loginWithToken(data.companyCode, data.token, data.email, data.fullName, data.roles, [], data.productScope, data.businessType);
       navigate(data.productScope === ProductScope.PeopleOnly ? "/people" : "/");
     } catch (err) {
       setError(getErrorMessage(err));
@@ -74,6 +85,33 @@ export default function StartTrial() {
         <p>{t.trial.subtitle}</p>
         {error && <div className="alert-error">{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+          {productScope === ProductScope.Full && (
+            <div className="form-field">
+              <label>{t.trial.activityTitle}</label>
+              <div role="radiogroup" aria-label={t.trial.activityTitle} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8 }}>
+                {activities.map((a) => {
+                  const selected = businessType === a.type;
+                  return (
+                    <button
+                      key={a.type}
+                      type="button"
+                      role="radio"
+                      aria-checked={selected}
+                      className={selected ? "btn" : "btn btn-secondary"}
+                      style={{ padding: "12px 10px", display: "flex", justifyContent: "center", gap: 6, alignItems: "center" }}
+                      onClick={() => setBusinessType(a.type)}
+                    >
+                      <span>{a.label}</span>
+                      {a.soon && <span className="sidebar-soon-badge">{t.trial.activitySoon}</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              <span className="text-muted" style={{ fontSize: 12 }}>
+                {businessType === BusinessType.Contracting ? t.trial.activityContractingNote : t.trial.activityHint}
+              </span>
+            </div>
+          )}
           <div className="form-field">
             <label>{t.trial.companyNameAr}</label>
             <input type="text" value={companyNameAr} onChange={(e) => setCompanyNameAr(e.target.value)} required />
@@ -112,7 +150,7 @@ export default function StartTrial() {
               </a>
             </span>
           </label>
-          <button className="btn" type="submit" disabled={loading || !agreedToTerms}>
+          <button className="btn" type="submit" disabled={loading || !agreedToTerms || (productScope === ProductScope.Full && businessType === null)}>
             {loading ? t.trial.submitting : t.trial.submit}
           </button>
         </form>

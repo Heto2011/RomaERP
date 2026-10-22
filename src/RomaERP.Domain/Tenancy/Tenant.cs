@@ -16,6 +16,21 @@ public enum ProductScope
 }
 
 /// <summary>Registry row in the central database — points a company code at its own isolated database.</summary>
+/// <summary>What the company does, chosen at signup. It only decides which sections the app shows first
+/// (the rest stay one click away under "show all sections"); data and permissions are identical for every type.</summary>
+public enum BusinessType
+{
+    /// <summary>Not chosen (every company created before this existed) — the whole app is shown.</summary>
+    General = 1,
+    Restaurant = 2,
+    Retail = 3,
+    Services = 4,
+    Wholesale = 5,
+    Manufacturing = 6,
+    /// <summary>Contracting has no project module yet; the choice is kept so we know who is waiting for it.</summary>
+    Contracting = 7
+}
+
 public class Tenant : AuditableEntity
 {
     public string CompanyCode { get; set; } = string.Empty;
@@ -25,6 +40,7 @@ public class Tenant : AuditableEntity
     public string DatabaseName { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
     public ProductScope ProductScope { get; set; } = ProductScope.Full;
+    public BusinessType BusinessType { get; set; } = BusinessType.General;
 
     /// <summary>Marks a tenant created for a sales demo rather than a real customer, so it can be tracked
     /// and later deactivated separately from paying tenants.</summary>

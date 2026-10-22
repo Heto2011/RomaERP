@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from "react";
 import { AuthApi } from "../api/services";
-import { ProductScope } from "../api/types";
+import { BusinessType, ProductScope } from "../api/types";
 
 interface AuthUser {
   email: string;
@@ -8,12 +8,13 @@ interface AuthUser {
   roles: string[];
   modules: string[];
   productScope: ProductScope;
+  businessType?: BusinessType;
 }
 
 interface AuthContextValue {
   user: AuthUser | null;
   login: (companyCode: string, email: string, password: string) => Promise<void>;
-  loginWithToken: (companyCode: string, token: string, email: string, fullName: string, roles: string[], modules?: string[], productScope?: ProductScope) => void;
+  loginWithToken: (companyCode: string, token: string, email: string, fullName: string, roles: string[], modules?: string[], productScope?: ProductScope, businessType?: BusinessType) => void;
   logout: () => void;
 }
 
@@ -29,17 +30,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data } = await AuthApi.login(companyCode, email, password);
     localStorage.setItem("companyCode", companyCode);
     localStorage.setItem("token", data.token);
-    const authUser = { email: data.email, fullName: data.fullName, roles: data.roles, modules: data.modules, productScope: data.productScope };
+    const authUser = { email: data.email, fullName: data.fullName, roles: data.roles, modules: data.modules, productScope: data.productScope, businessType: data.businessType };
     localStorage.setItem("user", JSON.stringify(authUser));
     setUser(authUser);
   }
 
   /// Used when the backend already hands back a ready-to-use token (e.g. right after self-service
   /// trial signup), so the caller doesn't have to immediately turn around and call login() again.
-  function loginWithToken(companyCode: string, token: string, email: string, fullName: string, roles: string[], modules: string[] = [], productScope: ProductScope = ProductScope.Full) {
+  function loginWithToken(companyCode: string, token: string, email: string, fullName: string, roles: string[], modules: string[] = [], productScope: ProductScope = ProductScope.Full, businessType: BusinessType = BusinessType.General) {
     localStorage.setItem("companyCode", companyCode);
     localStorage.setItem("token", token);
-    const authUser = { email, fullName, roles, modules, productScope };
+    const authUser = { email, fullName, roles, modules, productScope, businessType };
     localStorage.setItem("user", JSON.stringify(authUser));
     setUser(authUser);
   }

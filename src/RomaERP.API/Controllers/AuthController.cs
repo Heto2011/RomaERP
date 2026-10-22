@@ -66,7 +66,7 @@ public class AuthController : ControllerBase
 
         await RecordLoginAsync(user.Id.ToString(), user.Email!, success: true, method: "Password", ct);
 
-        return Ok(new AuthResponse(token, user.Email!, user.FullName, roles, modules, _tenantContext.ProductScope));
+        return Ok(new AuthResponse(token, user.Email!, user.FullName, roles, modules, _tenantContext.ProductScope, _tenantContext.BusinessType));
     }
 
     /// <summary>Always answers the same way, so it can't be used to find out which emails have accounts.</summary>
@@ -112,7 +112,7 @@ public class AuthController : ControllerBase
                 var modules = await GetModulesAsync(user);
                 var token = _tokenService.GenerateToken(user.Id, user.UserName!, user.Email!, _tenantContext.CompanyCode, roles, modules);
                 await RecordLoginAsync(user.Id.ToString(), user.Email!, success: true, method: "PosPin", CancellationToken.None);
-                return Ok(new AuthResponse(token, user.Email!, user.FullName, roles, modules, _tenantContext.ProductScope));
+                return Ok(new AuthResponse(token, user.Email!, user.FullName, roles, modules, _tenantContext.ProductScope, _tenantContext.BusinessType));
             }
         }
 

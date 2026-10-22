@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { ProductScope } from "../api/types";
+import { BusinessType, ProductScope } from "../api/types";
+import { hiddenSectionsFor, SHOW_ALL_KEY, type NavSectionKey } from "../businessType";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import GlobalSearch from "./GlobalSearch";
@@ -318,7 +319,23 @@ export default function Layout({ children }: { children: ReactNode }) {
     [t.nav.inventory]: { module: "Inventory", fallbackRoles: ["Accountant"] },
     [t.nav.restaurant]: { module: "POS", fallbackRoles: ["Accountant", "Employee"] },
   };
+  // A company that said what it does sees the sections that fit it first; the rest are one click away.
+  const [showAll, setShowAll] = useState(() => {
+    try { return localStorage.getItem(SHOW_ALL_KEY) === "1"; } catch { return false; }
+  });
+  const hiddenKeys = hiddenSectionsFor[user?.businessType ?? BusinessType.General] ?? [];
+  const sectionKeys: Record<string, NavSectionKey> = {
+    [t.nav.restaurant]: "restaurant",
+    [t.nav.inventory]: "inventory",
+    [t.nav.purchasing]: "purchasing",
+  };
+  function toggleShowAll() {
+    const next = !showAll;
+    setShowAll(next);
+    try { localStorage.setItem(SHOW_ALL_KEY, next ? "1" : "0"); } catch { /* ignore */ }
+  }
   function canSeeSection(section: string) {
+    if (!showAll && sectionKeys[section] && hiddenKeys.includes(sectionKeys[section])) return false;
     if (isPeopleOnly && !peopleOnlyAllowedSections.has(section)) return false;
     const access = sectionAccess[section];
     if (!access) return true;
@@ -353,6 +370,11 @@ export default function Layout({ children }: { children: ReactNode }) {
             <GlobalSearch />
           </div>
           <div className="topnav-actions">
+            {hiddenKeys.length > 0 && (
+              <button className="btn btn-secondary btn-sm" onClick={toggleShowAll}>
+                {showAll ? t.nav.showMySections : t.nav.showAllSections}
+              </button>
+            )}
             <UsageIndicator />
             <span className="topnav-user">{user?.fullName}</span>
             <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>

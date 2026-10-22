@@ -13,7 +13,8 @@ public record ProvisionTenantRequest(
     bool IsDemo = false,
     int? DemoExpiryDays = null,
     bool SeedDemoData = false,
-    ProductScope ProductScope = ProductScope.Full);
+    ProductScope ProductScope = ProductScope.Full,
+    BusinessType BusinessType = BusinessType.General);
 
 public record TenantDto(
     Guid Id,
