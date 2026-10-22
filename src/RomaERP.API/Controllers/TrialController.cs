@@ -63,7 +63,7 @@ public class TrialController : ControllerBase
                         DemoExpiryDays: 21,
                         SeedDemoData: false,
                         ProductScope: request.ProductScope,
-                        BusinessType: Enum.IsDefined(request.BusinessType) ? request.BusinessType : RomaERP.Domain.Tenancy.BusinessType.General),
+                        BusinessTypes: SanitizeBusinessTypes(request.BusinessTypes)),
                     ct);
             }
             catch (ValidationAppException ex) when (ex.Message.Contains("مستخدم قبل كده") && attempt < 4)
@@ -100,7 +100,15 @@ public class TrialController : ControllerBase
         var roles = await userManager.GetRolesAsync(user);
         var token = _tokenService.GenerateToken(user.Id, user.UserName!, user.Email!, tenant.CompanyCode, roles, Array.Empty<string>());
 
-        return Ok(new TrialSignupResponse(token, tenant.CompanyCode, user.Email!, user.FullName, roles.ToList(), tenant.ExpiresAtUtc, tenantEntity.ProductScope, tenantEntity.BusinessType));
+        return Ok(new TrialSignupResponse(token, tenant.CompanyCode, user.Email!, user.FullName, roles.ToList(), tenant.ExpiresAtUtc, tenantEntity.ProductScope, tenantEntity.BusinessTypes));
+    }
+
+    /// <summary>Keeps only known activity bits and at most three of them (a longer pick says nothing about the business).</summary>
+    public static RomaERP.Domain.Tenancy.BusinessType SanitizeBusinessTypes(RomaERP.Domain.Tenancy.BusinessType picked)
+    {
+        var known = (RomaERP.Domain.Tenancy.BusinessType)((int)picked & 0b111111);
+        var bits = System.Numerics.BitOperations.PopCount((uint)known);
+        return bits is >= 1 and <= 3 ? known : RomaERP.Domain.Tenancy.BusinessType.None;
     }
 
     private static string BuildBaseSlug(string companyNameEn, string adminEmail)

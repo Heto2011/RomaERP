@@ -28,7 +28,7 @@ export default function StartTrial() {
   const [productScope] = useState<ProductScope>(
     searchParams.get("product") === "hr" ? ProductScope.PeopleOnly : ProductScope.Full
   );
-  const [businessType, setBusinessType] = useState<BusinessType | null>(null);
+  const [businessTypes, setBusinessTypes] = useState<number>(0);
   const [companyNameAr, setCompanyNameAr] = useState("");
   const [companyNameEn, setCompanyNameEn] = useState("");
   const [country, setCountry] = useState<Country>(Country.SaudiArabia);
@@ -38,6 +38,14 @@ export default function StartTrial() {
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  function toggleActivity(type: BusinessType) {
+    setBusinessTypes((cur) => {
+      if ((cur & type) !== 0) return cur & ~type;
+      const picked = [1, 2, 4, 8, 16, 32].filter((bit) => (cur & bit) !== 0).length;
+      return picked >= 3 ? cur : cur | type;
+    });
+  }
 
   const activities = [
     { type: BusinessType.Restaurant, label: t.trial.activityRestaurant, soon: false },
@@ -61,10 +69,10 @@ export default function StartTrial() {
         adminEmail: email,
         adminPassword: password,
         productScope,
-        businessType: businessType ?? BusinessType.General,
+        businessTypes,
       });
       const { data } = res;
-      loginWithToken(data.companyCode, data.token, data.email, data.fullName, data.roles, [], data.productScope, data.businessType);
+      loginWithToken(data.companyCode, data.token, data.email, data.fullName, data.roles, [], data.productScope, data.businessTypes);
       navigate(data.productScope === ProductScope.PeopleOnly ? "/people" : "/");
     } catch (err) {
       setError(getErrorMessage(err));
@@ -88,18 +96,17 @@ export default function StartTrial() {
           {productScope === ProductScope.Full && (
             <div className="form-field">
               <label>{t.trial.activityTitle}</label>
-              <div role="radiogroup" aria-label={t.trial.activityTitle} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8 }}>
+              <div role="group" aria-label={t.trial.activityTitle} style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))", gap: 8 }}>
                 {activities.map((a) => {
-                  const selected = businessType === a.type;
+                  const selected = (businessTypes & a.type) !== 0;
                   return (
                     <button
                       key={a.type}
                       type="button"
-                      role="radio"
-                      aria-checked={selected}
+                      aria-pressed={selected}
                       className={selected ? "btn" : "btn btn-secondary"}
                       style={{ padding: "12px 10px", display: "flex", justifyContent: "center", gap: 6, alignItems: "center" }}
-                      onClick={() => setBusinessType(a.type)}
+                      onClick={() => toggleActivity(a.type)}
                     >
                       <span>{a.label}</span>
                       {a.soon && <span className="sidebar-soon-badge">{t.trial.activitySoon}</span>}
@@ -108,7 +115,7 @@ export default function StartTrial() {
                 })}
               </div>
               <span className="text-muted" style={{ fontSize: 12 }}>
-                {businessType === BusinessType.Contracting ? t.trial.activityContractingNote : t.trial.activityHint}
+                {(businessTypes & BusinessType.Contracting) !== 0 ? t.trial.activityContractingNote : t.trial.activityHint}
               </span>
             </div>
           )}
@@ -150,7 +157,7 @@ export default function StartTrial() {
               </a>
             </span>
           </label>
-          <button className="btn" type="submit" disabled={loading || !agreedToTerms || (productScope === ProductScope.Full && businessType === null)}>
+          <button className="btn" type="submit" disabled={loading || !agreedToTerms || (productScope === ProductScope.Full && businessTypes === 0)}>
             {loading ? t.trial.submitting : t.trial.submit}
           </button>
         </form>

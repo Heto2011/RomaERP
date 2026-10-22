@@ -12,8 +12,8 @@ using RomaERP.Infrastructure.Persistence.Central;
 namespace RomaERP.Infrastructure.Persistence.CentralMigrations
 {
     [DbContext(typeof(CentralDbContext))]
-    [Migration("20261022035408_AddTenantBusinessType")]
-    partial class AddTenantBusinessType
+    [Migration("20261022040522_AddTenantBusinessTypes")]
+    partial class AddTenantBusinessTypes
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -531,7 +531,7 @@ namespace RomaERP.Infrastructure.Persistence.CentralMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("BusinessType")
+                    b.Property<int>("BusinessTypes")
                         .HasColumnType("int");
 
                     b.Property<string>("CompanyCode")

@@ -2486,14 +2486,15 @@ export enum ProductScope {
   PeopleOnly = 2,
 }
 
+/** Bit flags: a company can pick up to three activities, e.g. Restaurant | Contracting = 33. 0 = not chosen. */
 export enum BusinessType {
-  General = 1,
-  Restaurant = 2,
-  Retail = 3,
+  None = 0,
+  Restaurant = 1,
+  Retail = 2,
   Services = 4,
-  Wholesale = 5,
-  Manufacturing = 6,
-  Contracting = 7,
+  Wholesale = 8,
+  Manufacturing = 16,
+  Contracting = 32,
 }
 
 export interface TrialSignupRequest {
@@ -2504,7 +2505,7 @@ export interface TrialSignupRequest {
   adminEmail: string;
   adminPassword: string;
   productScope: ProductScope;
-  businessType: BusinessType;
+  businessTypes: BusinessType;
 }
 
 export interface TrialSignupResponse {
@@ -2515,7 +2516,7 @@ export interface TrialSignupResponse {
   roles: string[];
   expiresAtUtc: string | null;
   productScope: ProductScope;
-  businessType: BusinessType;
+  businessTypes: BusinessType;
 }
 
 export interface AuditLogEntry {

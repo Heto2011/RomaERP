@@ -12,7 +12,7 @@ public class TenantContext : ITenantContext
     public string ConnectionString { get; private set; } = string.Empty;
     public Country Country { get; private set; }
     public ProductScope ProductScope { get; private set; }
-    public BusinessType BusinessType { get; private set; } = BusinessType.General;
+    public BusinessType BusinessTypes { get; private set; } = BusinessType.None;
     public bool IsResolved { get; private set; }
 
     public void Resolve(Tenant tenant, string connectionString)
@@ -22,7 +22,7 @@ public class TenantContext : ITenantContext
         ConnectionString = connectionString;
         Country = tenant.Country;
         ProductScope = tenant.ProductScope;
-        BusinessType = tenant.BusinessType;
+        BusinessTypes = tenant.BusinessTypes;
         IsResolved = true;
     }
 }

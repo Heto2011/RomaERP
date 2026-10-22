@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { BusinessType, ProductScope } from "../api/types";
+import { ProductScope } from "../api/types";
 import { hiddenSectionsFor, SHOW_ALL_KEY, type NavSectionKey } from "../businessType";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
@@ -323,11 +323,10 @@ export default function Layout({ children }: { children: ReactNode }) {
   const [showAll, setShowAll] = useState(() => {
     try { return localStorage.getItem(SHOW_ALL_KEY) === "1"; } catch { return false; }
   });
-  const hiddenKeys = hiddenSectionsFor[user?.businessType ?? BusinessType.General] ?? [];
+  const hiddenKeys = hiddenSectionsFor(user?.businessTypes);
   const sectionKeys: Record<string, NavSectionKey> = {
     [t.nav.restaurant]: "restaurant",
     [t.nav.inventory]: "inventory",
-    [t.nav.purchasing]: "purchasing",
   };
   function toggleShowAll() {
     const next = !showAll;

@@ -528,7 +528,7 @@ namespace RomaERP.Infrastructure.Persistence.CentralMigrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
 
-                    b.Property<int>("BusinessType")
+                    b.Property<int>("BusinessTypes")
                         .HasColumnType("int");
 
                     b.Property<string>("CompanyCode")
