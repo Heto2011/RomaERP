@@ -202,15 +202,16 @@ export default function RestaurantReservations() {
                     <span className={statusClass[r.status]}>{statusLabel[r.status]}</span>
                     {r.orderNumber && <div className="text-muted">{t.restaurant.reservationOrder}: {r.orderNumber}</div>}
                   </td>
-                  <td style={{ whiteSpace: "nowrap" }}>
+                  <td>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 6, minWidth: 130 }}>
                     {r.status === ReservationStatus.Booked && (
                       <>
-                        <button className="btn btn-sm" onClick={() => openSeat(r)} disabled={busy}>{t.restaurant.guestArrived}</button>{" "}
-                        <button className="btn btn-secondary btn-sm" onClick={() => openForm(r)} disabled={busy}>{t.common.edit}</button>{" "}
+                        <button className="btn btn-sm" onClick={() => openSeat(r)} disabled={busy}>{t.restaurant.guestArrived}</button>
+                        <button className="btn btn-secondary btn-sm" onClick={() => openForm(r)} disabled={busy}>{t.common.edit}</button>
                         <button className="btn btn-secondary btn-sm" disabled={busy}
                           onClick={() => window.confirm(t.restaurant.noShowConfirm) && run(() => ReservationsApi.noShow(r.id)).catch(() => {})}>
                           {t.restaurant.markNoShow}
-                        </button>{" "}
+                        </button>
                         <button className="btn btn-secondary btn-sm" disabled={busy}
                           onClick={() => window.confirm(t.restaurant.cancelReservationConfirm) && run(() => ReservationsApi.cancel(r.id)).catch(() => {})}>
                           {t.restaurant.cancelReservation}
@@ -220,6 +221,7 @@ export default function RestaurantReservations() {
                     {r.status === ReservationStatus.Seated && r.restaurantOrderId && !portal && (
                       <Link className="btn btn-secondary btn-sm" to={`${posPath}?order=${r.restaurantOrderId}`}>{t.restaurant.openInPos}</Link>
                     )}
+                    </div>
                   </td>
                 </tr>
               ))}
