@@ -95,6 +95,7 @@ import ForecastPage from "./pages/accounting/Forecast";
 import AiAssistant from "./pages/assistant/AiAssistant";
 import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
 import ExpensePolicies from "./pages/assistant/ExpensePolicies";
+import RecurringExpenses from "./pages/assistant/RecurringExpenses";
 import BankReconciliation from "./pages/assistant/BankReconciliation";
 import RestaurantTables from "./pages/restaurant/RestaurantTables";
 import Shifts from "./pages/hr/Shifts";
@@ -203,6 +204,7 @@ export default function App() {
       <Route path="/einvoicing" element={<ProtectedRoute><EInvoicing /></ProtectedRoute>} />
       <Route path="/assistant/chat" element={<ProtectedRoute><AiAssistant /></ProtectedRoute>} />
       <Route path="/assistant/approvals" element={<ProtectedRoute><ExpenseApprovals /></ProtectedRoute>} />
+      <Route path="/assistant/recurring" element={<ProtectedRoute><RecurringExpenses /></ProtectedRoute>} />
       <Route path="/assistant/policies" element={<ProtectedRoute><ExpensePolicies /></ProtectedRoute>} />
       <Route path="/assistant/bank-reconciliation" element={<ProtectedRoute><BankReconciliation /></ProtectedRoute>} />
       <Route path="/accounting/chart-of-accounts" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />

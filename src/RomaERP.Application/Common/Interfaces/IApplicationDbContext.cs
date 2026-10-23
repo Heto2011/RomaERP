@@ -43,6 +43,7 @@ public interface IApplicationDbContext
     DbSet<JobPosting> JobPostings { get; }
     DbSet<Candidate> Candidates { get; }
     DbSet<ExpensePolicy> ExpensePolicies { get; }
+    DbSet<RecurringExpense> RecurringExpenses { get; }
     DbSet<ReviewCycle> ReviewCycles { get; }
     DbSet<ReviewAssignment> ReviewAssignments { get; }
     DbSet<Survey> Surveys { get; }

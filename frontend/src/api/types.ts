@@ -2679,3 +2679,18 @@ export interface AiUsageOverview {
   nearOrOverLimit: number;
   tenants: TenantAiUsage[];
 }
+
+export interface RecurringExpense {
+  id: string;
+  description: string;
+  accountId: string;
+  accountCode: string | null;
+  accountName: string | null;
+  /** null = the amount changes every month and is typed in when the expense is approved. */
+  amount: number | null;
+  currency: string;
+  paymentMethod: ExpensePaymentMethod;
+  dayOfMonth: number;
+  isActive: boolean;
+  lastPreparedMonth: string | null;
+}

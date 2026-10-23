@@ -190,6 +190,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       items: [
         { to: "/assistant/chat", label: t.nav.assistantChat, icon: <IconChat /> },
         { to: "/assistant/approvals", label: t.nav.assistantApprovals, icon: <IconCheck /> },
+        { to: "/assistant/recurring", label: t.nav.assistantRecurring, icon: <IconRefresh /> },
         ...(user?.roles.includes("Admin") ? [{ to: "/assistant/policies", label: t.nav.assistantPolicies, icon: <IconCheck /> }] : []),
         { to: "/assistant/bank-reconciliation", label: t.nav.assistantBankReconciliation, icon: <IconRefresh /> },
       ],

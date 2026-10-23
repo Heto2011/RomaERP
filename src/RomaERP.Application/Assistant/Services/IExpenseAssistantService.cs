@@ -13,6 +13,9 @@ public interface IExpenseAssistantService
     Task<List<ExpenseCaptureDto>> GetPendingReconciliationAsync(CancellationToken ct = default);
     Task<List<ExpenseCaptureDto>> GetPendingApprovalAsync(CancellationToken ct = default);
     Task<ExpenseCaptureDto> ApproveAsync(Guid captureId, CancellationToken ct = default);
+
+    /// <summary>Lets the approver type or correct the amount of an expense that is waiting for approval (a monthly fixed item may have none yet).</summary>
+    Task<ExpenseCaptureDto> SetPendingAmountAsync(Guid captureId, decimal amount, CancellationToken ct = default);
     Task<ExpenseCaptureDto> RejectAsync(Guid captureId, CancellationToken ct = default);
     Task<ExpenseCaptureDto> AttachProofAsync(Guid captureId, string fileName, string storagePath, CancellationToken ct = default);
 }

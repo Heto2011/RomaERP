@@ -16,9 +16,11 @@ public class AiAssistantController : ControllerBase
     private readonly IExpenseAssistantService _assistantService;
     private readonly IBusinessQaService _qaService;
     private readonly IWebHostEnvironment _environment;
+    private readonly IRecurringExpenseService _recurring;
 
-    public AiAssistantController(IExpenseAssistantService assistantService, IBusinessQaService qaService, IWebHostEnvironment environment)
+    public AiAssistantController(IExpenseAssistantService assistantService, IBusinessQaService qaService, IWebHostEnvironment environment, IRecurringExpenseService recurring)
     {
+        _recurring = recurring;
         _assistantService = assistantService;
         _qaService = qaService;
         _environment = environment;
@@ -47,7 +49,18 @@ public class AiAssistantController : ControllerBase
     [HttpGet("pending-approval")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<List<ExpenseCaptureDto>>> GetPendingApproval(CancellationToken ct)
-        => Ok(await _assistantService.GetPendingApprovalAsync(ct));
+    {
+        // Fixed monthly items that have come due are prepared the first time the approver looks (idempotent per month).
+        await _recurring.PrepareDueAsync(DateTime.UtcNow.Date, User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "system", ct);
+        return Ok(await _assistantService.GetPendingApprovalAsync(ct));
+    }
+
+    public record SetAmountRequest(decimal Amount);
+
+    [HttpPut("captures/{id:guid}/amount")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ExpenseCaptureDto>> SetAmount(Guid id, SetAmountRequest request, CancellationToken ct)
+        => Ok(await _assistantService.SetPendingAmountAsync(id, request.Amount, ct));
 
     [HttpPost("captures/{id:guid}/approve")]
     [Authorize(Roles = "Admin")]

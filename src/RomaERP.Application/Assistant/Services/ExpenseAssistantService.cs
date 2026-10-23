@@ -295,6 +295,19 @@ public class ExpenseAssistantService : IExpenseAssistantService
         return captures.Select(c => WithIssues(Map(c), c, policies)).ToList();
     }
 
+    public async Task<ExpenseCaptureDto> SetPendingAmountAsync(Guid captureId, decimal amount, CancellationToken ct = default)
+    {
+        if (amount <= 0 || amount > 1_000_000_000m) throw new ValidationAppException("اكتب مبلغًا صحيحًا أكبر من صفر.");
+        var capture = await _context.ExpenseCaptures.Include(c => c.SuggestedAccount).Include(c => c.CustodyEmployee)
+            .FirstOrDefaultAsync(c => c.Id == captureId, ct)
+            ?? throw new NotFoundException(nameof(ExpenseCapture), captureId);
+        if (capture.Status != ExpenseCaptureStatus.PendingApproval)
+            throw new ValidationAppException("المبلغ بيتعدّل بس وهو في انتظار الاعتماد.");
+        capture.Amount = decimal.Round(amount, 2);
+        await _context.SaveChangesAsync(ct);
+        return Map(capture);
+    }
+
     public async Task<ExpenseCaptureDto> ApproveAsync(Guid captureId, CancellationToken ct = default)
     {
         var capture = await _context.ExpenseCaptures
@@ -306,6 +319,8 @@ public class ExpenseAssistantService : IExpenseAssistantService
 
         if (capture.Status != ExpenseCaptureStatus.PendingApproval)
             throw new ValidationAppException("هذا المصروف ليس في انتظار الاعتماد.");
+        if (capture.Amount is not > 0)
+            throw new ValidationAppException("اكتب مبلغ المصروف الأول (مفيش مبلغ مسجّل).");
 
         var blocking = ExpensePolicyRules.Evaluate(capture, await LoadPoliciesAsync(ct)).Where(i => i.Blocks).ToList();
         if (blocking.Count > 0)

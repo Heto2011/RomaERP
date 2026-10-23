@@ -59,6 +59,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<JobPosting> JobPostings => Set<JobPosting>();
     public DbSet<Candidate> Candidates => Set<Candidate>();
     public DbSet<ExpensePolicy> ExpensePolicies => Set<ExpensePolicy>();
+    public DbSet<RecurringExpense> RecurringExpenses => Set<RecurringExpense>();
     public DbSet<ReviewCycle> ReviewCycles => Set<ReviewCycle>();
     public DbSet<ReviewAssignment> ReviewAssignments => Set<ReviewAssignment>();
     public DbSet<Survey> Surveys => Set<Survey>();

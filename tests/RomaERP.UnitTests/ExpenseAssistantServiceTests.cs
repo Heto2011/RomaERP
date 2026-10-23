@@ -53,7 +53,7 @@ public class ExpenseAssistantServiceTests
         return new ApplicationDbContext(options);
     }
 
-    private static async Task<(ApplicationDbContext ctx, Account cash, Account fuelExpense, Account custody, FiscalPeriod period)> SeedAsync()
+    internal static async Task<(ApplicationDbContext ctx, Account cash, Account fuelExpense, Account custody, FiscalPeriod period)> SeedAsync()
     {
         var ctx = CreateContext();
 

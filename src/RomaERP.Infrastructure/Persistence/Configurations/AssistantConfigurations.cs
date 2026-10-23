@@ -99,3 +99,20 @@ public class BankStatementLineConfiguration : IEntityTypeConfiguration<BankState
         builder.Property(l => l.Amount).HasPrecision(18, 2);
     }
 }
+
+public class RecurringExpenseConfiguration : IEntityTypeConfiguration<RecurringExpense>
+{
+    public void Configure(EntityTypeBuilder<RecurringExpense> builder)
+    {
+        builder.Property(r => r.Description).HasMaxLength(200).IsRequired();
+        builder.Property(r => r.Amount).HasPrecision(18, 2);
+        builder.Property(r => r.Currency).HasMaxLength(10);
+
+        builder.HasOne(r => r.Account)
+            .WithMany()
+            .HasForeignKey(r => r.AccountId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(r => !r.IsDeleted);
+    }
+}

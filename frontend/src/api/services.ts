@@ -190,6 +190,7 @@ import type {
   MenuScanResult,
   BusinessType,
   AiUsageOverview,
+  RecurringExpense,
 } from "./types";
 
 export const AuthApi = {
@@ -453,7 +454,18 @@ export const ExpensePoliciesApi = {
   remove: (id: string) => apiClient.delete(`/expense-policies/${id}`),
 };
 
+export const RecurringExpensesApi = {
+  getAll: () => apiClient.get<RecurringExpense[]>("/recurring-expenses"),
+  create: (data: Partial<RecurringExpense>) => apiClient.post<RecurringExpense>("/recurring-expenses", data),
+  update: (id: string, data: Partial<RecurringExpense>) => apiClient.put<RecurringExpense>(`/recurring-expenses/${id}`, data),
+  setActive: (id: string, isActive: boolean) => apiClient.post<RecurringExpense>(`/recurring-expenses/${id}/active`, { isActive }),
+  fromCapture: (captureId: string, amountIsFixed: boolean, dayOfMonth: number | null) =>
+    apiClient.post<RecurringExpense>(`/recurring-expenses/from-capture/${captureId}`, { amountIsFixed, dayOfMonth }),
+  remove: (id: string) => apiClient.delete(`/recurring-expenses/${id}`),
+};
+
 export const AiAssistantApi = {
+  setAmount: (captureId: string, amount: number) => apiClient.put<ExpenseCapture>(`/aiassistant/captures/${captureId}/amount`, { amount }),
   sendMessage: (captureId: string | null, message: string) =>
     apiClient.post<ChatTurnResponse>("/aiassistant/messages", { captureId, message }),
   getPendingReconciliation: () => apiClient.get<ExpenseCapture[]>("/aiassistant/pending-reconciliation"),
