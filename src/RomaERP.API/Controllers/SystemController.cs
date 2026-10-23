@@ -28,6 +28,7 @@ public class SystemController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly CentralDbContext _central;
     private readonly IWebHostEnvironment _environment;
+    private readonly RomaERP.Application.Assistant.Services.IAiUsageOverviewService _aiUsage;
 
     public SystemController(
         ITenantProvisioningService provisioning,
@@ -35,8 +36,10 @@ public class SystemController : ControllerBase
         ISystemPasswordResetService passwordReset,
         IConfiguration configuration,
         CentralDbContext central,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        RomaERP.Application.Assistant.Services.IAiUsageOverviewService aiUsage)
     {
+        _aiUsage = aiUsage;
         _environment = environment;
         _provisioning = provisioning;
         _userTransfer = userTransfer;
@@ -62,6 +65,16 @@ public class SystemController : ControllerBase
         if (keyCheck is not null) return keyCheck;
 
         return Ok(await _provisioning.GetTenantsAsync(demoOnly, ct));
+    }
+
+    /// <summary>AI usage of every active company (this month / today, against its plan's cap) — so spend can be watched without opening Anthropic.</summary>
+    [HttpGet("ai-usage")]
+    public async Task<ActionResult<RomaERP.Application.Assistant.Services.AiUsageOverviewDto>> GetAiUsage(CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        return Ok(await _aiUsage.GetAsync(ct));
     }
 
     [HttpPost("tenants/expire-demo")]

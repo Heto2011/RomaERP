@@ -95,6 +95,7 @@ public static class DependencyInjection
         services.AddHttpClient<RomaERP.Application.Support.Services.ISupportAiTriageService, RomaERP.Infrastructure.Support.ClaudeSupportTriageService>();
         services.AddHttpClient<RomaERP.Application.Assistant.Services.IBusinessQaService, ClaudeBusinessQaService>();
         services.AddScoped<RomaERP.Application.Assistant.Services.IAiUsageLimiter, AiUsageLimiter>();
+        services.AddScoped<RomaERP.Application.Assistant.Services.IAiUsageOverviewService, AiUsageOverviewService>();
 
         return services;
     }

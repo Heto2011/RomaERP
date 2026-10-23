@@ -2655,3 +2655,27 @@ export interface MenuScanResult {
   skippedWithoutPrice: number;
   note: string | null;
 }
+
+export interface TenantAiUsage {
+  companyCode: string;
+  companyName: string;
+  planCode: string | null;
+  isDemo: boolean;
+  todayBusinessQa: number;
+  todayExpenseCapture: number;
+  monthTotal: number;
+  monthlyLimit: number | null;
+  percentOfLimit: number | null;
+  level: "ok" | "warning" | "over" | "unlimited";
+  estimatedCostUsd: number;
+  error: string | null;
+}
+
+export interface AiUsageOverview {
+  generatedAtUtc: string;
+  monthTotalCalls: number;
+  monthEstimatedCostUsd: number;
+  todayTotalCalls: number;
+  nearOrOverLimit: number;
+  tenants: TenantAiUsage[];
+}

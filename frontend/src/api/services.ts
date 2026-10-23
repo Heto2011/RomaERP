@@ -189,6 +189,7 @@ import type {
   MenuImportResult,
   MenuScanResult,
   BusinessType,
+  AiUsageOverview,
 } from "./types";
 
 export const AuthApi = {
@@ -970,4 +971,9 @@ export const ReservationsApi = {
   cancel: (id: string) => apiClient.post<Reservation>(`/restaurant/reservations/${id}/cancel`),
   noShow: (id: string) => apiClient.post<Reservation>(`/restaurant/reservations/${id}/no-show`),
   seat: (id: string, data: SeatReservationInput) => apiClient.post<SeatReservationResult>(`/restaurant/reservations/${id}/seat`, data),
+};
+
+export const AiUsageApi = {
+  getOverview: (systemKey: string) =>
+    systemApiClient.get<AiUsageOverview>("/system/ai-usage", { headers: { "X-System-Key": systemKey } }),
 };

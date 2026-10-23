@@ -17,6 +17,7 @@ import MarketingViewsPage from "./pages/system/MarketingViews";
 import MySubscriptionPage from "./pages/MySubscription";
 import SubscriptionsPage from "./pages/system/Subscriptions";
 import SupportTicketsPage from "./pages/system/SupportTickets";
+import AiUsagePage from "./pages/system/AiUsage";
 import Dashboard from "./pages/Dashboard";
 import Users from "./pages/Users";
 import ForgotPassword from "./pages/ForgotPassword";
@@ -189,6 +190,7 @@ export default function App() {
       <Route path="/system/data-deletion" element={<DataDeletionPage />} />
       <Route path="/system/marketing-views" element={<MarketingViewsPage />} />
       <Route path="/system/subscriptions" element={<SubscriptionsPage />} />
+      <Route path="/system/ai-usage" element={<AiUsagePage />} />
       <Route path="/system/support-tickets" element={<SupportTicketsPage />} />
       <Route path="/" element={<RootRoute />} />
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
