@@ -13,4 +13,7 @@ public interface IWhatsAppNotificationService
     /// every day) and false for the user-triggered "Send via WhatsApp" button (an explicit ask deserves a reply
     /// either way).</summary>
     Task<WhatsAppSendResultDto> SendAlertsDigestAsync(bool skipIfNothingSignificant, CancellationToken ct = default);
+
+    /// <summary>Sends one short message to the configured WhatsApp recipient. Returns a not-configured result (nothing sent) when WhatsApp is off.</summary>
+    Task<WhatsAppSendResultDto> SendTextAsync(string text, CancellationToken ct = default);
 }

@@ -55,6 +55,7 @@ public static class DependencyInjection
         services.AddHttpClient<IWhatsAppSender, RomaERP.Infrastructure.Notifications.MetaWhatsAppSender>();
         services.AddHttpClient<IEmailSender, RomaERP.Infrastructure.Notifications.ResendEmailSender>();
         services.AddScoped<IPasswordRecoveryService, RomaERP.Infrastructure.Identity.PasswordRecoveryService>();
+        services.AddScoped<IAdminEmailProvider, RomaERP.Infrastructure.Identity.AdminEmailProvider>();
 
         // Every tenant has its own, fully separate database. The connection string is only known once
         // TenantResolutionMiddleware resolves the request's company code, so it's read lazily here from

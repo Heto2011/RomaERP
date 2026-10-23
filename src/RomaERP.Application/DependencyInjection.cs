@@ -59,6 +59,7 @@ public static class DependencyInjection
         services.AddScoped<IExpenseAssistantService, ExpenseAssistantService>();
         services.AddScoped<IExpensePolicyService, ExpensePolicyService>();
         services.AddScoped<IRecurringExpenseService, RecurringExpenseService>();
+        services.AddScoped<IRecurringExpenseReminderService, RecurringExpenseReminderService>();
         services.AddScoped<IBankReconciliationService, BankReconciliationService>();
 
         services.AddScoped<ISalesService, SalesService>();

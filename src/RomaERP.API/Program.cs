@@ -49,6 +49,7 @@ builder.Services.AddScoped<ICurrentUserService, CurrentUserService>();
 builder.Services.AddScoped<IUserLanguage, HttpUserLanguage>();
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.ExchangeRateRefreshBackgroundService>();
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.WhatsAppAlertDigestBackgroundService>();
+builder.Services.AddHostedService<RomaERP.API.BackgroundServices.RecurringExpenseReminderBackgroundService>();
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.DemoTenantExpiryBackgroundService>();
 builder.Services.AddHostedService<RomaERP.API.BackgroundServices.SubscriptionBillingBackgroundService>();
 

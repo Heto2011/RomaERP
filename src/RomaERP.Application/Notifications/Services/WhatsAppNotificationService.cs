@@ -104,6 +104,16 @@ public class WhatsAppNotificationService : IWhatsAppNotificationService
         return new WhatsAppSendResultDto { Success = sendResult.Success, FailureReason = sendResult.FailureReason };
     }
 
+    public async Task<WhatsAppSendResultDto> SendTextAsync(string text, CancellationToken ct = default)
+    {
+        var credential = await _context.WhatsAppCredentials.FirstOrDefaultAsync(ct);
+        if (!IsUsable(credential) || !credential!.IsEnabled)
+            return NotConfiguredResult();
+
+        var result = await SendAsync(credential, text, ct);
+        return new WhatsAppSendResultDto { Success = result.Success, FailureReason = result.FailureReason };
+    }
+
     private Task<WhatsAppSendResult> SendAsync(WhatsAppCredential credential, string bodyText, CancellationToken ct) =>
         _sender.SendTemplateMessageAsync(
             credential.PhoneNumberId,
