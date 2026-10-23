@@ -202,4 +202,22 @@ public class ReservationAndMenuImportTests
         parser.MenuHandler = () => new MenuScanExtraction(new List<MenuScanItem>(), "الملف مش منيو");
         await Assert.ThrowsAsync<ValidationAppException>(() => import.ScanAsync(new byte[] { 1 }, "application/pdf"));
     }
+
+    [Fact]
+    public async Task MenuImport_NewCodes_NeverReuseTheCodeOfADeletedItem()
+    {
+        var seed = await RestaurantServiceTests.SeedAsync();
+        var import = new MenuImportService(seed.Ctx, new FakeClaudeExpenseParser());
+        await import.ImportAsync(new MenuImportRequestDto { Rows = new() { Row("مشروبات", "شاي", 15), Row("مشروبات", "قهوة", 25) }, Apply = true });
+        var coffee = await seed.Ctx.Items.FirstAsync(i => i.NameAr == "قهوة");
+        var lastCode = coffee.Code;
+        coffee.IsDeleted = true;                       // soft-deleted: hidden from queries, still owns its code
+        await seed.Ctx.SaveChangesAsync();
+
+        await import.ImportAsync(new MenuImportRequestDto { Rows = new() { Row("مشروبات", "عصير", 30) }, Apply = true });
+
+        var juice = await seed.Ctx.Items.FirstAsync(i => i.NameAr == "عصير");
+        Assert.NotEqual(lastCode, juice.Code);
+        Assert.Equal(1, await seed.Ctx.Items.IgnoreQueryFilters().CountAsync(i => i.Code == juice.Code));
+    }
 }

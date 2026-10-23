@@ -8,6 +8,17 @@ namespace RomaERP.UnitTests;
 
 public class RecurringExpenseTests
 {
+    private sealed class FixedClock : TimeProvider
+    {
+        private readonly DateTimeOffset _now;
+        public FixedClock(DateTime utc) => _now = new DateTimeOffset(DateTime.SpecifyKind(utc, DateTimeKind.Utc));
+        public override DateTimeOffset GetUtcNow() => _now;
+    }
+
+    /// <summary>A service whose clock says it is the first of October 2026, so a monthly day has not passed yet.</summary>
+    private static RecurringExpenseService Svc(RomaERP.Infrastructure.Persistence.ApplicationDbContext ctx, int day = 1)
+        => new(ctx, new FixedClock(new DateTime(2026, 10, day)));
+
     private static RecurringExpenseDto Rent(Guid accountId, decimal? amount = 12000, int day = 5, PaymentMethod pay = PaymentMethod.Cash)
         => new() { Description = "إيجار المحل", AccountId = accountId, Amount = amount, DayOfMonth = day, PaymentMethod = pay };
 
@@ -15,7 +26,7 @@ public class RecurringExpenseTests
     public async Task Item_IsPreparedOncePerMonth_OnceItsDayHasCome_AndNeverPostsAnything()
     {
         var (ctx, _, expense, _, _) = await ExpenseAssistantServiceTests.SeedAsync();
-        var service = new RecurringExpenseService(ctx);
+        var service = Svc(ctx);
         await service.SaveAsync(null, Rent(expense.Id, day: 5));
 
         Assert.Equal(0, await service.PrepareDueAsync(new DateTime(2026, 10, 4), "u"));
@@ -34,7 +45,7 @@ public class RecurringExpenseTests
     public async Task VariableAmount_IsPreparedWithoutAmount_AndCardWaitsForTheBank_AndInactiveIsSkipped()
     {
         var (ctx, _, expense, _, _) = await ExpenseAssistantServiceTests.SeedAsync();
-        var service = new RecurringExpenseService(ctx);
+        var service = Svc(ctx);
         await service.SaveAsync(null, new RecurringExpenseDto { Description = "كهرباء", AccountId = expense.Id, Amount = null, DayOfMonth = 1, PaymentMethod = PaymentMethod.Cash });
         await service.SaveAsync(null, new RecurringExpenseDto { Description = "اشتراك", AccountId = expense.Id, Amount = 500, DayOfMonth = 1, PaymentMethod = PaymentMethod.Card });
         var paused = await service.SaveAsync(null, new RecurringExpenseDto { Description = "موقوف", AccountId = expense.Id, Amount = 99, DayOfMonth = 1, PaymentMethod = PaymentMethod.Cash });
@@ -53,7 +64,7 @@ public class RecurringExpenseTests
     public async Task MarkingACapturedExpense_CreatesTheItem_WithoutDoublingThisMonth()
     {
         var (ctx, _, expense, _, _) = await ExpenseAssistantServiceTests.SeedAsync();
-        var service = new RecurringExpenseService(ctx);
+        var service = Svc(ctx);
         var capture = new ExpenseCapture
         {
             RawText = "ايجار", Amount = 8000, Currency = "EGP", Description = "إيجار المخزن", EntryDate = new DateTime(2026, 10, 3),
@@ -76,7 +87,7 @@ public class RecurringExpenseTests
     public async Task MarkingWithChangingAmount_DropsTheAmount_AndFixedNeedsOne()
     {
         var (ctx, _, expense, _, _) = await ExpenseAssistantServiceTests.SeedAsync();
-        var service = new RecurringExpenseService(ctx);
+        var service = Svc(ctx);
         var capture = new ExpenseCapture { RawText = "x", Amount = 640, Description = "كهرباء", EntryDate = new DateTime(2026, 10, 9), SuggestedAccountId = expense.Id,
             PaymentMethod = PaymentMethod.Cash, Status = ExpenseCaptureStatus.PendingApproval, SubmittedByUserId = "u" };
         var noAmount = new ExpenseCapture { RawText = "y", Amount = null, Description = "مياه", EntryDate = new DateTime(2026, 10, 9), SuggestedAccountId = expense.Id,
@@ -92,7 +103,7 @@ public class RecurringExpenseTests
     public async Task Save_RejectsBadDay_NonExpenseAccount_AndZeroAmount()
     {
         var (ctx, cash, expense, _, _) = await ExpenseAssistantServiceTests.SeedAsync();
-        var service = new RecurringExpenseService(ctx);
+        var service = Svc(ctx);
 
         await Assert.ThrowsAsync<ValidationAppException>(() => service.SaveAsync(null, Rent(expense.Id, day: 29)));
         await Assert.ThrowsAsync<ValidationAppException>(() => service.SaveAsync(null, Rent(cash.Id)));
@@ -104,7 +115,7 @@ public class RecurringExpenseTests
     public async Task Approver_CanTypeTheMissingAmount_ThenApprovePosts_AndApprovingWithoutOneIsRefused()
     {
         var (ctx, _, expense, _, _) = await ExpenseAssistantServiceTests.SeedAsync();
-        var recurring = new RecurringExpenseService(ctx);
+        var recurring = Svc(ctx);
         var assistant = new ExpenseAssistantService(ctx, new FakeClaudeExpenseParser());
         // The seeded fiscal period covers today ± 15 days, so use today's own day of the month as the due day.
         var dueDay = Math.Min(DateTime.UtcNow.Day, 28);
@@ -122,5 +133,23 @@ public class RecurringExpenseTests
         Assert.Equal(735.5m, posted.Amount);
         Assert.NotNull(posted.JournalEntryId);
         await Assert.ThrowsAsync<ValidationAppException>(() => assistant.SetPendingAmountAsync(pending.Id, 800));   // already posted
+    }
+
+    [Fact]
+    public async Task ItemAddedAfterItsDayHasPassed_StartsNextMonth_ButOneForTodayOrLaterIsPreparedAtOnce()
+    {
+        var (ctx, _, expense, _, _) = await ExpenseAssistantServiceTests.SeedAsync();
+        var today = new DateTime(2026, 10, 20);
+        var service = Svc(ctx, today.Day);
+
+        if (today.Day > 1)
+        {
+            await service.SaveAsync(null, Rent(expense.Id, day: 1));                       // day 1 already passed this month
+            Assert.Equal(0, await service.PrepareDueAsync(today, "u"));
+            Assert.Equal(1, await service.PrepareDueAsync(new DateTime(today.Year, today.Month, 1).AddMonths(1), "u"));
+        }
+        var dueToday = Math.Min(today.Day, 28);
+        await service.SaveAsync(null, new RecurringExpenseDto { Description = "اشتراك", AccountId = expense.Id, Amount = 100, DayOfMonth = dueToday, PaymentMethod = PaymentMethod.Cash });
+        Assert.Equal(1, await service.PrepareDueAsync(new DateTime(today.Year, today.Month, dueToday), "u"));
     }
 }

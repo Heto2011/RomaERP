@@ -46,10 +46,12 @@ public interface IRecurringExpenseService
 public class RecurringExpenseService : IRecurringExpenseService
 {
     private readonly IApplicationDbContext _context;
+    private readonly TimeProvider _time;
 
-    public RecurringExpenseService(IApplicationDbContext context)
+    public RecurringExpenseService(IApplicationDbContext context, TimeProvider? time = null)
     {
         _context = context;
+        _time = time ?? TimeProvider.System;
     }
 
     public async Task<List<RecurringExpenseDto>> GetAllAsync(CancellationToken ct = default)
@@ -77,6 +79,10 @@ public class RecurringExpenseService : IRecurringExpenseService
         else
         {
             item = new RecurringExpense();
+            // An item added after its day has already passed this month starts next month, instead of surprising the approver with a back-dated expense.
+            var now = _time.GetUtcNow().UtcDateTime;
+            if (dto.DayOfMonth < now.Day)
+                item.LastPreparedMonth = new DateTime(now.Year, now.Month, 1);
             _context.RecurringExpenses.Add(item);
         }
         item.Description = description;

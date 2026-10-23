@@ -56,8 +56,11 @@ public class MenuImportService : IMenuImportService
         var items = await _context.Items.ToListAsync(ct);
         var itemByName = items.GroupBy(i => Key(i.NameAr)).ToDictionary(g => g.Key, g => g.First());
 
-        var nextCategoryNo = NextNumber(categories.Select(c => c.Code), "MC-");
-        var nextItemNo = NextNumber(items.Select(i => i.Code), "M-");
+        // Deleted rows are hidden by the query filters but still hold their codes in the unique indexes, so count them too.
+        var allCategoryCodes = await _context.ItemCategories.IgnoreQueryFilters().Select(c => c.Code).ToListAsync(ct);
+        var allItemCodes = await _context.Items.IgnoreQueryFilters().Select(i => i.Code).ToListAsync(ct);
+        var nextCategoryNo = NextNumber(allCategoryCodes, "MC-");
+        var nextItemNo = NextNumber(allItemCodes, "M-");
 
         var result = new MenuImportResultDto { Applied = request.Apply };
         var seenInFile = new HashSet<string>();

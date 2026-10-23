@@ -10,6 +10,13 @@ namespace RomaERP.UnitTests;
 
 public class RecurringExpenseReminderTests
 {
+    private sealed class FixedClockR : TimeProvider
+    {
+        private readonly DateTimeOffset _now;
+        public FixedClockR(DateTime utc) => _now = new DateTimeOffset(DateTime.SpecifyKind(utc, DateTimeKind.Utc));
+        public override DateTimeOffset GetUtcNow() => _now;
+    }
+
     private class FakeWhatsApp : IWhatsAppNotificationService
     {
         public List<string> Sent { get; } = new();
@@ -46,7 +53,7 @@ public class RecurringExpenseReminderTests
     private static async Task<(RecurringExpenseReminderService svc, FakeWhatsApp wa, FakeEmail mail)> BuildAsync(bool withItem = true)
     {
         var (ctx, _, expense, _, _) = await ExpenseAssistantServiceTests.SeedAsync();
-        var recurring = new RecurringExpenseService(ctx);
+        var recurring = new RecurringExpenseService(ctx, new FixedClockR(new DateTime(2026, 10, 1)));
         if (withItem) await recurring.SaveAsync(null, new RecurringExpenseDto { Description = "إيجار", AccountId = expense.Id, Amount = 5000, DayOfMonth = 3, PaymentMethod = PaymentMethod.Cash });
         var wa = new FakeWhatsApp();
         var mail = new FakeEmail();
