@@ -1,5 +1,6 @@
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Domain.Tenancy;
+using RomaERP.Infrastructure.Identity;
 using RomaERP.Infrastructure.Tenancy;
 
 namespace RomaERP.UnitTests;
@@ -24,5 +25,29 @@ public class TenantDeletionPolicyTests
 
         var ex = Assert.Throws<ValidationAppException>(() => TenantProvisioningService.EnsureLegacyTestCompany(tenant));
         Assert.Contains("support@romagroup.app", ex.Message);
+    }
+
+    [Fact]
+    public void An_active_admin_of_the_company_is_an_official_requester()
+    {
+        TenantProvisioningService.EnsureOfficialRequester(new ApplicationUser { IsActive = true }, isAdmin: true);
+    }
+
+    [Fact]
+    public void An_unknown_email_is_refused()
+    {
+        Assert.Throws<ValidationAppException>(() => TenantProvisioningService.EnsureOfficialRequester(null, isAdmin: false));
+    }
+
+    [Fact]
+    public void A_user_who_is_not_an_admin_is_refused()
+    {
+        Assert.Throws<ValidationAppException>(() => TenantProvisioningService.EnsureOfficialRequester(new ApplicationUser { IsActive = true }, isAdmin: false));
+    }
+
+    [Fact]
+    public void A_deactivated_admin_is_refused()
+    {
+        Assert.Throws<ValidationAppException>(() => TenantProvisioningService.EnsureOfficialRequester(new ApplicationUser { IsActive = false }, isAdmin: true));
     }
 }

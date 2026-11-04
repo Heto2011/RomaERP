@@ -132,6 +132,11 @@ public class TenantProvisioningService : ITenantProvisioningService
         if (tenant.DataDeletedAtUtc is not null)
             throw new ValidationAppException("بيانات الشركة دي اتمسحت رسميًا قبل كده — مينفعش تتكرر.");
 
+        // A real customer's data is only erased on an official request, so the requester's e-mail must be an active
+        // Admin of that very company (the customer's official e-mail), not just whatever was typed in the form.
+        if (tenant.CreatedAtUtc >= LegacyTestCleanupCutoffUtc)
+            await EnsureRequesterIsCompanyAdminAsync(tenant, request.RequestedByEmail, ct);
+
         var record = new DataDeletionRecord
         {
             TenantId = tenant.Id,
@@ -220,6 +225,28 @@ public class TenantProvisioningService : ITenantProvisioningService
     /// customer: it can only go through the official data-deletion request (an admin's e-mail to support, recorded
     /// with the requester's address and a confirmation number), never through "delete forever".</summary>
     public static readonly DateTime LegacyTestCleanupCutoffUtc = new(2026, 11, 4, 3, 0, 0, DateTimeKind.Utc);
+
+    /// <summary>The decision itself, kept separate so it can be tested without a database.</summary>
+    public static void EnsureOfficialRequester(ApplicationUser? user, bool isAdmin)
+    {
+        if (user is null || !user.IsActive || !isAdmin)
+            throw new ValidationAppException("إيميل صاحب الطلب لازم يكون الإيميل الرسمي لأدمن الشركة نفسها (مستخدم Admin نشط جواها) — الطلب اترفض ومحدش اتمسح.");
+    }
+
+    private async Task EnsureRequesterIsCompanyAdminAsync(Tenant tenant, string? requestedByEmail, CancellationToken ct)
+    {
+        var email = requestedByEmail?.Trim();
+        if (string.IsNullOrEmpty(email))
+            throw new ValidationAppException("لازم تكتب إيميل صاحب الطلب (أدمن الشركة).");
+
+        using var scope = _scopeFactory.CreateScope();
+        var tenantContext = scope.ServiceProvider.GetRequiredService<TenantContext>();
+        tenantContext.Resolve(tenant, _registry.BuildConnectionString(tenant.DatabaseName));
+        var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+
+        var user = await userManager.FindByEmailAsync(email);
+        EnsureOfficialRequester(user, user is not null && await userManager.IsInRoleAsync(user, "Admin"));
+    }
 
     public static void EnsureLegacyTestCompany(Tenant tenant)
     {

@@ -9,3 +9,6 @@
   `/system/data-deletion`, which records the requester's e-mail, who processed it, the reason and a
   confirmation number (kept as durable proof).
 - The cut-off lives in `TenantProvisioningService.LegacyTestCleanupCutoffUtc`.
+- For a real company the program itself checks the request: the "requested by" e-mail must belong to an
+  **active Admin user of that company** (its official e-mail). Any other address is refused and nothing is
+  deleted or recorded as done.
