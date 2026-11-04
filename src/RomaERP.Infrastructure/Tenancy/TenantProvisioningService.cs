@@ -215,6 +215,18 @@ public class TenantProvisioningService : ITenantProvisioningService
         return MapTenant(tenant);
     }
 
+    /// <summary>Every company created before this moment was a test or demo company, so the system console may erase
+    /// it completely (even if its test invoices were marked paid). Every company created at or after it is a real
+    /// customer: it can only go through the official data-deletion request (an admin's e-mail to support, recorded
+    /// with the requester's address and a confirmation number), never through "delete forever".</summary>
+    public static readonly DateTime LegacyTestCleanupCutoffUtc = new(2026, 11, 4, 3, 0, 0, DateTimeKind.Utc);
+
+    public static void EnsureLegacyTestCompany(Tenant tenant)
+    {
+        if (tenant.CreatedAtUtc >= LegacyTestCleanupCutoffUtc)
+            throw new ValidationAppException("دي شركة عميل فعلية — مينفعش تتمسح من هنا. المسح بيتم بس بعد طلب رسمي من أدمن الشركة على support@romagroup.app، ومن صفحة Data deletion (بيتسجّل فيها إيميل صاحب الطلب ورقم تأكيد).");
+    }
+
     public async Task<DataDeletionRecordDto> DeleteTenantPermanentlyAsync(Guid tenantId, string confirmCompanyCode, string processedBy, CancellationToken ct = default)
     {
         var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, ct)
@@ -223,9 +235,7 @@ public class TenantProvisioningService : ITenantProvisioningService
         if (!string.Equals(confirmCompanyCode?.Trim(), tenant.CompanyCode, StringComparison.OrdinalIgnoreCase))
             throw new ValidationAppException("كود الشركة المكتوب مش مطابق — اتلغى الحذف.");
 
-        // Paid invoices are accounting records the business has to keep — never wipe those.
-        if (await _central.SubscriptionInvoices.AnyAsync(i => i.TenantId == tenantId && i.Status == SubscriptionInvoiceStatus.Paid, ct))
-            throw new ValidationAppException("الشركة دي ليها فواتير مدفوعة — لازم تتحفظ للمحاسبة، فمينفعش تتمسح بالكامل. اعمل لها Suspend بدل ما تمسحها.");
+        EnsureLegacyTestCompany(tenant);
 
         if (!DatabaseNamePattern.IsMatch(tenant.DatabaseName))
             throw new ValidationAppException("اسم قاعدة البيانات غير متوقع — راجع الدعم الفني قبل الحذف.");
