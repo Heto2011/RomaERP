@@ -1987,6 +1987,7 @@ export interface MenuItem {
   itemCategoryId: string;
   categoryName: string;
   hasRecipe: boolean;
+  isOpenPrice?: boolean;
 }
 
 export interface RecipeLine {
@@ -2041,6 +2042,8 @@ export interface CreateRestaurantOrderInput {
 export interface AddOrderLineInput {
   itemId: string;
   quantity: number;
+  /// Only for an open-price item: the amount typed by the cashier.
+  unitPrice?: number;
   notes?: string | null;
 }
 

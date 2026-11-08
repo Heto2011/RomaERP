@@ -29,6 +29,7 @@ public class MenuItemDto
     public Guid ItemCategoryId { get; set; }
     public string CategoryName { get; set; } = string.Empty;
     public bool HasRecipe { get; set; }
+    public bool IsOpenPrice { get; set; }
 }
 
 public class RecipeLineDto
@@ -54,6 +55,11 @@ public class SetMenuItemDto
     public List<SetRecipeLineInputDto> RecipeLines { get; set; } = new();
 }
 
+public class CreateOpenPriceItemDto
+{
+    public string Name { get; set; } = string.Empty;
+}
+
 public class CreateRestaurantOrderDto
 {
     public RestaurantOrderType OrderType { get; set; }
@@ -75,6 +81,8 @@ public class AddOrderLineDto
 {
     public Guid ItemId { get; set; }
     public decimal Quantity { get; set; } = 1;
+    /// <summary>Only used for an open-price item: the amount the cashier typed. Ignored for every other item.</summary>
+    public decimal? UnitPrice { get; set; }
     public string? Notes { get; set; }
 }
 

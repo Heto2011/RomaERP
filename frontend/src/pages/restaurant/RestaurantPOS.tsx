@@ -225,6 +225,19 @@ export default function RestaurantPOS() {
     if (!selectedOrder) return;
     setError(null);
     try {
+      // An open-price item (e.g. "daily sales") asks for the amount on every sale and always makes its own line.
+      if (menu.find((m) => m.id === itemId)?.isOpenPrice) {
+        const typed = window.prompt(t.restaurant.openPricePrompt);
+        if (typed === null) return;
+        const amount = Number(typed.replace(/[٠-٩]/g, (d) => String("٠١٢٣٤٥٦٧٨٩".indexOf(d))).replace(/,/g, ""));
+        if (!Number.isFinite(amount) || amount <= 0) {
+          setError(t.restaurant.openPriceInvalid);
+          return;
+        }
+        await RestaurantApi.addLine(selectedOrder.id, { itemId, quantity: 1, unitPrice: amount });
+        await load();
+        return;
+      }
       const existingLine = selectedOrder.lines.find((l) => l.itemId === itemId);
       if (existingLine) {
         await RestaurantApi.updateLineQuantity(selectedOrder.id, existingLine.id, existingLine.quantity + 1);
@@ -667,7 +680,7 @@ export default function RestaurantPOS() {
                 {activeItems.map((item) => (
                   <button key={item.id} type="button" className="pos-menu-item" onClick={() => handleAddItem(item.id)}>
                     <span className="pos-menu-item-name">{bilingualName(item.nameAr, item.nameEn, lang)}</span>
-                    <span className="pos-menu-item-price">{item.menuPrice.toLocaleString()}</span>
+                    <span className="pos-menu-item-price">{item.isOpenPrice ? t.restaurant.openPriceLabel : item.menuPrice.toLocaleString()}</span>
                   </button>
                 ))}
                 {menu.length === 0 && <div className="text-muted">{t.restaurant.noMenuItemsHint}</div>}

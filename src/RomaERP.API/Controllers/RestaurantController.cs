@@ -58,6 +58,14 @@ public class RestaurantController : ControllerBase
     public async Task<ActionResult<MenuImportResultDto>> ImportMenu(MenuImportRequestDto request, CancellationToken ct)
         => Ok(await _menuImport.ImportAsync(request, ct));
 
+    [HttpPost("menu/open-price-item")]
+    [Authorize(Roles = "Admin,Accountant")]
+    public async Task<IActionResult> CreateOpenPriceItem(CreateOpenPriceItemDto dto, CancellationToken ct)
+    {
+        await _menuImport.CreateOpenPriceItemAsync(dto.Name, ct);
+        return NoContent();
+    }
+
     /// <summary>Reads a menu from an Excel sheet (.xlsx) into import rows. Saves nothing.</summary>
     [HttpPost("menu/excel")]
     [Authorize(Roles = "Admin,Accountant")]

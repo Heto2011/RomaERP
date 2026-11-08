@@ -162,6 +162,30 @@ public class RestaurantServiceTests
     }
 
     [Fact]
+    public async Task OpenPriceItem_TakesTheTypedAmount_AndBillsIt()
+    {
+        var seed = await SeedAsync();
+        seed.Water.IsOpenPrice = true;
+        seed.Water.SoldWithoutStock = true;
+        await seed.Ctx.SaveChangesAsync();
+        var service = BuildService(seed.Ctx);
+        var order = await service.CreateOrderAsync(new CreateRestaurantOrderDto { OrderType = RestaurantOrderType.Takeaway, WarehouseId = seed.Warehouse.Id });
+
+        // No amount typed, or a non-positive one, is refused; the menu price is never used for an open-price item.
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Water.Id, Quantity = 1 }));
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Water.Id, Quantity = 1, UnitPrice = 0 }));
+
+        var updated = await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Water.Id, Quantity = 1, UnitPrice = 2500 });
+        var line = Assert.Single(updated.Lines);
+        Assert.Equal(2500, line.UnitPrice);
+        Assert.Equal(2500, line.LineTotal);
+
+        // An ordinary item ignores a typed price.
+        var normal = await service.AddLineAsync(order.Id, new AddOrderLineDto { ItemId = seed.Pizza.Id, Quantity = 1, UnitPrice = 1 });
+        Assert.Equal(seed.Pizza.MenuPrice, normal.Lines.Single(l => l.ItemId == seed.Pizza.Id).UnitPrice);
+    }
+
+    [Fact]
     public async Task BillOrder_NonRecipeItem_ReliesOnSalesServiceItemLineCogsOnly()
     {
         var seed = await SeedAsync();

@@ -31,6 +31,10 @@ public class Item : AuditableEntity
     public bool IsMenuItem { get; set; }
     public decimal MenuPrice { get; set; }
 
+    /// <summary>The price is typed by the cashier on each sale instead of coming from <see cref="MenuPrice"/> (for example a
+    /// "daily sales" line that carries a total from another system, or a custom order).</summary>
+    public bool IsOpenPrice { get; set; }
+
     /// <summary>A menu item that is not tracked in stock (typically imported straight from a customer's existing menu):
     /// billing never checks or decrements its quantity. Items with a recipe already behave this way for the dish itself.</summary>
     public bool SoldWithoutStock { get; set; }

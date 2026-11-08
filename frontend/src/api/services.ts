@@ -734,6 +734,7 @@ export const RestaurantApi = {
     form.append("file", file);
     return apiClient.post<MenuScanResult>("/restaurant/menu/scan", form, { headers: { "Content-Type": "multipart/form-data" } });
   },
+  createOpenPriceItem: (name: string) => apiClient.post("/restaurant/menu/open-price-item", { name }),
   readMenuExcel: (file: File) => {
     const form = new FormData();
     form.append("file", file);

@@ -79,7 +79,7 @@ export default function OfflinePos({ snapshot, queue, syncing, onSyncNow, onQueu
 
   const menuByCategory = useMemo(() => {
     const groups = new Map<string, MenuItem[]>();
-    for (const item of snapshot?.menu ?? []) {
+    for (const item of (snapshot?.menu ?? []).filter((m) => !m.isOpenPrice)) {   // an open price is typed per sale, which needs the server
       const list = groups.get(item.categoryName) ?? [];
       list.push(item);
       groups.set(item.categoryName, list);

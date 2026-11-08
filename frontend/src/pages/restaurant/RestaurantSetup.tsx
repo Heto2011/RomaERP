@@ -94,6 +94,21 @@ export default function RestaurantSetup() {
     }
   }
 
+  async function addOpenPriceItem() {
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      await RestaurantApi.createOpenPriceItem(r.setupOpenPriceName);
+      setMessage(r.setupOpenPriceDone);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function addCashier(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -136,6 +151,10 @@ export default function RestaurantSetup() {
         <p className="text-muted" style={{ margin: 0 }}>{r.setupMenuHint}</p>
         <div>
           <button className="btn" onClick={() => setShowImport(true)}>{menuDone ? r.setupMenuMore : r.setupMenuStart}</button>
+        </div>
+        <div className="text-muted" style={{ marginTop: 4 }}>{r.setupOpenPriceHint}</div>
+        <div>
+          <button className="btn btn-secondary btn-sm" onClick={addOpenPriceItem} disabled={busy}>{r.setupOpenPriceButton}</button>
         </div>
       </div>
 

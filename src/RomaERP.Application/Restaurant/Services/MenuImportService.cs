@@ -16,6 +16,9 @@ public interface IMenuImportService
 
     /// <summary>Reads an Excel sheet (.xlsx) into import rows. Columns: name and price, with an optional section before the name.</summary>
     MenuScanResultDto ReadExcel(byte[] fileBytes);
+
+    /// <summary>Creates a menu item whose price is typed on every sale (e.g. "daily sales" carrying a total from another system).</summary>
+    Task CreateOpenPriceItemAsync(string name, CancellationToken ct = default);
 }
 
 /// <summary>Loads a customer's existing menu in one go: categories are created as needed, each dish becomes a menu item
@@ -49,6 +52,22 @@ public class MenuImportService : IMenuImportService
         if (rows.Count == 0)
             throw new ValidationAppException(extraction.Note ?? "مقدرتش أقرا أصناف بأسعار من الملف ده. جرّب ملف أوضح أو الصق المنيو كنص.");
         return new MenuScanResultDto { Rows = rows, SkippedWithoutPrice = skipped, Note = extraction.Note };
+    }
+
+    public async Task CreateOpenPriceItemAsync(string name, CancellationToken ct = default)
+    {
+        name = (name ?? string.Empty).Trim();
+        if (name.Length == 0) throw new ValidationAppException("اكتب اسم الصنف.");
+        if (name.Length > 200) throw new ValidationAppException("الاسم طويل جدًا (أقصى حد 200 حرف).");
+
+        var result = await ImportAsync(new MenuImportRequestDto { Rows = new List<MenuImportRowDto> { new() { Category = string.Empty, NameAr = name, Price = 0 } }, Apply = true }, ct);
+        if (result.Errors > 0) throw new ValidationAppException(result.Lines.FirstOrDefault()?.Message ?? "مقدرتش أعمل الصنف.");
+
+        var key = Key(name);
+        var item = (await _context.Items.Where(i => i.IsMenuItem).ToListAsync(ct)).FirstOrDefault(i => Key(i.NameAr) == key)
+            ?? throw new ValidationAppException("مقدرتش ألاقي الصنف بعد ما اتعمل.");
+        item.IsOpenPrice = true;
+        await _context.SaveChangesAsync(ct);
     }
 
     public MenuScanResultDto ReadExcel(byte[] fileBytes)

@@ -2531,6 +2531,9 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Property<bool>("IsMenuItem")
                         .HasColumnType("bit");
 
+                    b.Property<bool>("IsOpenPrice")
+                        .HasColumnType("bit");
+
                     b.Property<Guid>("ItemCategoryId")
                         .HasColumnType("uniqueidentifier");
 

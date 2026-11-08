@@ -93,7 +93,8 @@ public class RestaurantService : IRestaurantService
             MenuPrice = i.MenuPrice,
             ItemCategoryId = i.ItemCategoryId,
             CategoryName = i.ItemCategory?.NameAr ?? string.Empty,
-            HasRecipe = i.RecipeLines.Count > 0
+            HasRecipe = i.RecipeLines.Count > 0,
+            IsOpenPrice = i.IsOpenPrice
         }).ToList();
     }
 
@@ -259,6 +260,14 @@ public class RestaurantService : IRestaurantService
         var item = await _context.Items.FirstOrDefaultAsync(i => i.Id == dto.ItemId && i.IsMenuItem && i.IsActive && !i.IsDeleted, ct)
             ?? throw new ValidationAppException("الصنف ده مش موجود في المنيو.");
 
+        decimal unitPrice = item.MenuPrice;
+        if (item.IsOpenPrice)
+        {
+            if (dto.UnitPrice is not > 0 or > 100_000_000)
+                throw new ValidationAppException("اكتب المبلغ (لازم يكون أكبر من صفر).");
+            unitPrice = Math.Round(dto.UnitPrice.Value, 2);
+        }
+
         var nextLineNumber = order.Lines.Count == 0 ? 1 : order.Lines.Max(l => l.LineNumber) + 1;
         // Added directly to the DbSet (rather than via order.Lines.Add(...)) because EF's change tracker
         // can misdetect a new child appended to an already-loaded collection on a previously-saved,
@@ -269,8 +278,8 @@ public class RestaurantService : IRestaurantService
             LineNumber = nextLineNumber,
             ItemId = item.Id,
             Quantity = dto.Quantity,
-            UnitPrice = item.MenuPrice,
-            LineTotal = Math.Round(dto.Quantity * item.MenuPrice, 2),
+            UnitPrice = unitPrice,
+            LineTotal = Math.Round(dto.Quantity * unitPrice, 2),
             Notes = dto.Notes
         });
 
