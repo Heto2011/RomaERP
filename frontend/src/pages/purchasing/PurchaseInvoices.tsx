@@ -389,6 +389,22 @@ export default function PurchaseInvoices() {
               </div>
             </div>
 
+            {warehouses.length > 0 && lines.some((l) => l.itemId) && (
+              <div className="form-field" style={{ marginTop: 14 }}>
+                <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: "normal" }}>
+                  <input type="checkbox" checked={receiveToStock} onChange={(e) => setReceiveToStock(e.target.checked)} />
+                  {t.purchasing.receiveToStock}
+                </label>
+                {receiveToStock && (
+                  <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
+                    {warehouses.map((w) => (
+                      <option key={w.id} value={w.id}>{w.nameAr}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
+
             <div className="form-field" style={{ marginTop: 14 }}>
               <label>{t.common.notes}</label>
               <input value={notes} onChange={(e) => setNotes(e.target.value)} />
