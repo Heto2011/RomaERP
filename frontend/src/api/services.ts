@@ -1,6 +1,8 @@
 import { apiClient, systemApiClient } from "./client";
 import type {
   Account,
+  GeneralLedger,
+  PartnerStatement,
   TenantActivity,
   AppUser,
   BalanceSheet,
@@ -556,6 +558,12 @@ export const OpeningBalanceApi = {
 };
 
 export const FinancialReportsApi = {
+  generalLedger: (accountId: string, fromDate: string, toDate: string) =>
+    apiClient.get<GeneralLedger>("/financialreports/general-ledger", { params: { accountId, fromDate, toDate } }),
+  customerStatement: (customerId: string, fromDate: string, toDate: string) =>
+    apiClient.get<PartnerStatement>("/financialreports/customer-statement", { params: { customerId, fromDate, toDate } }),
+  vendorStatement: (vendorId: string, fromDate: string, toDate: string) =>
+    apiClient.get<PartnerStatement>("/financialreports/vendor-statement", { params: { vendorId, fromDate, toDate } }),
   incomeStatement: (fromDate: string, toDate: string) =>
     apiClient.get<IncomeStatement>("/financialreports/income-statement", { params: { fromDate, toDate } }),
   balanceSheet: (asOfDate: string) =>

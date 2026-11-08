@@ -26,6 +26,7 @@ public static class DependencyInjection
         services.AddScoped<IAlertsService, AlertsService>();
         services.AddScoped<IWhatsAppNotificationService, WhatsAppNotificationService>();
         services.AddScoped<IFinancialReportService, FinancialReportService>();
+        services.AddScoped<ILedgerReportService, LedgerReportService>();
         services.AddScoped<IManualProfitEntryService, ManualProfitEntryService>();
         services.AddScoped<IFiscalPeriodService, FiscalPeriodService>();
         services.AddScoped<IOpeningBalanceService, OpeningBalanceService>();

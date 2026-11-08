@@ -87,6 +87,7 @@ export default function Layout({ children }: { children: ReactNode }) {
 
   const financialStatementItems: NavSubGroupItem["subItems"] = [
     { to: "/accounting/trial-balance", label: t.nav.trialBalance },
+    { to: "/accounting/general-ledger", label: t.nav.generalLedger },
     { to: "/accounting/income-statement", label: t.nav.incomeStatement },
     { to: "/accounting/balance-sheet", label: t.nav.balanceSheet },
     { to: "/accounting/cash-flow", label: t.nav.cashFlow },
@@ -227,6 +228,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/sales/invoices", label: t.nav.salesInvoices, icon: <IconFile /> },
         { to: "/sales/notes", label: t.nav.salesNotes, icon: <IconEdit /> },
         { to: "/sales/aging", label: t.nav.arAging, icon: <IconClock /> },
+        { to: "/sales/statement", label: t.nav.customerStatement, icon: <IconFile /> },
       ],
     },
     {
@@ -263,6 +265,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/purchasing/vendors/new", label: t.nav.addVendorFull, icon: <IconUser /> },
         { to: "/purchasing/invoices", label: t.nav.purchaseInvoices, icon: <IconCart /> },
         { to: "/purchasing/aging", label: t.nav.apAging, icon: <IconClock /> },
+        { to: "/purchasing/statement", label: t.nav.vendorStatement, icon: <IconFile /> },
       ],
     },
     ...(canManageHr

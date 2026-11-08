@@ -12,11 +12,28 @@ namespace RomaERP.API.Controllers;
 public class FinancialReportsController : ControllerBase
 {
     private readonly IFinancialReportService _financialReportService;
+    private readonly ILedgerReportService _ledgerReportService;
 
-    public FinancialReportsController(IFinancialReportService financialReportService)
+    public FinancialReportsController(IFinancialReportService financialReportService, ILedgerReportService ledgerReportService)
     {
         _financialReportService = financialReportService;
+        _ledgerReportService = ledgerReportService;
     }
+
+    [HttpGet("general-ledger")]
+    public async Task<ActionResult<GeneralLedgerDto>> GetGeneralLedger(
+        [FromQuery] Guid accountId, [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
+        => Ok(await _ledgerReportService.GetGeneralLedgerAsync(accountId, fromDate, toDate, ct));
+
+    [HttpGet("customer-statement")]
+    public async Task<ActionResult<PartnerStatementDto>> GetCustomerStatement(
+        [FromQuery] Guid customerId, [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
+        => Ok(await _ledgerReportService.GetCustomerStatementAsync(customerId, fromDate, toDate, ct));
+
+    [HttpGet("vendor-statement")]
+    public async Task<ActionResult<PartnerStatementDto>> GetVendorStatement(
+        [FromQuery] Guid vendorId, [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
+        => Ok(await _ledgerReportService.GetVendorStatementAsync(vendorId, fromDate, toDate, ct));
 
     [HttpGet("income-statement")]
     public async Task<ActionResult<IncomeStatementDto>> GetIncomeStatement(

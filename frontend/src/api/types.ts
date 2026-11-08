@@ -2694,3 +2694,59 @@ export interface RecurringExpense {
   isActive: boolean;
   lastPreparedMonth: string | null;
 }
+
+
+export interface GeneralLedgerLine {
+  entryDate: string;
+  entryNumber: string;
+  description: string | null;
+  reference: string | null;
+  debit: number;
+  credit: number;
+  balance: number;
+}
+
+export interface GeneralLedger {
+  accountId: string;
+  accountCode: string;
+  accountName: string;
+  nature: AccountNature;
+  fromDate: string;
+  toDate: string;
+  openingBalance: number;
+  lines: GeneralLedgerLine[];
+  totalDebit: number;
+  totalCredit: number;
+  closingBalance: number;
+}
+
+export enum PartnerStatementLineType {
+  Invoice = 1,
+  Payment = 2,
+  CreditNote = 3,
+  DebitNote = 4,
+}
+
+export interface PartnerStatementLine {
+  date: string;
+  type: PartnerStatementLineType;
+  number: string;
+  description: string | null;
+  debit: number;
+  credit: number;
+  balance: number;
+}
+
+export interface PartnerStatement {
+  partnerId: string;
+  partnerCode: string;
+  partnerName: string;
+  isCustomer: boolean;
+  fromDate: string;
+  toDate: string;
+  openingBalance: number;
+  lines: PartnerStatementLine[];
+  totalDebit: number;
+  totalCredit: number;
+  closingBalance: number;
+}
