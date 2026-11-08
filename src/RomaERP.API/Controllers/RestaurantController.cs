@@ -58,6 +58,19 @@ public class RestaurantController : ControllerBase
     public async Task<ActionResult<MenuImportResultDto>> ImportMenu(MenuImportRequestDto request, CancellationToken ct)
         => Ok(await _menuImport.ImportAsync(request, ct));
 
+    /// <summary>Reads a menu from an Excel sheet (.xlsx) into import rows. Saves nothing.</summary>
+    [HttpPost("menu/excel")]
+    [Authorize(Roles = "Admin,Accountant")]
+    [RequestSizeLimit(5 * 1024 * 1024)]
+    public async Task<ActionResult<MenuScanResultDto>> ReadMenuExcel(IFormFile file, CancellationToken ct)
+    {
+        if (file.Length == 0)
+            throw new RomaERP.Application.Common.Exceptions.ValidationAppException("الملف المرفوع فارغ.");
+        using var memoryStream = new MemoryStream();
+        await file.CopyToAsync(memoryStream, ct);
+        return Ok(_menuImport.ReadExcel(memoryStream.ToArray()));
+    }
+
     /// <summary>Reads a menu from a PDF or photo (AI) into import rows. Saves nothing.</summary>
     [HttpPost("menu/scan")]
     [Authorize(Roles = "Admin,Accountant")]

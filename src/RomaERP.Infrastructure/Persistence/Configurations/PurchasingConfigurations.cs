@@ -111,3 +111,20 @@ public class PurchasePaymentConfiguration : IEntityTypeConfiguration<PurchasePay
         builder.HasQueryFilter(p => !p.IsDeleted);
     }
 }
+
+public class PendingPurchaseInvoiceConfiguration : IEntityTypeConfiguration<PendingPurchaseInvoice>
+{
+    public void Configure(EntityTypeBuilder<PendingPurchaseInvoice> builder)
+    {
+        builder.Property(p => p.RequestedByUserId).HasMaxLength(64).IsRequired();
+        builder.Property(p => p.RequestedByName).HasMaxLength(200).IsRequired();
+        builder.Property(p => p.VendorName).HasMaxLength(200).IsRequired();
+        builder.Property(p => p.SubTotal).HasPrecision(18, 2);
+        builder.Property(p => p.PayloadJson).IsRequired();
+        builder.Property(p => p.DecidedByName).HasMaxLength(200);
+        builder.Property(p => p.RejectionReason).HasMaxLength(500);
+        builder.HasIndex(p => p.Status);
+
+        builder.HasQueryFilter(p => !p.IsDeleted);
+    }
+}

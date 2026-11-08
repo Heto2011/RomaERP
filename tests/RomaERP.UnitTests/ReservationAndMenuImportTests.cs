@@ -171,12 +171,51 @@ public class ReservationAndMenuImportTests
         var itemsBefore = await seed.Ctx.Items.CountAsync();
 
         var preview = await import.ImportAsync(new MenuImportRequestDto { Rows = rows });
-        Assert.Equal(4, preview.Errors);
+        Assert.Equal(3, preview.Errors);   // a missing section is no longer an error
         Assert.Equal("create", preview.Lines[0].Action);
+        Assert.Equal("create", preview.Lines[1].Action);
 
         await Assert.ThrowsAsync<ValidationAppException>(() => import.ImportAsync(new MenuImportRequestDto { Rows = rows, Apply = true }));
         Assert.Equal(itemsBefore, await seed.Ctx.Items.CountAsync());
         await Assert.ThrowsAsync<ValidationAppException>(() => import.ImportAsync(new MenuImportRequestDto()));
+    }
+
+    [Fact]
+    public async Task MenuImport_DishWithoutASection_GoesUnderNoSection()
+    {
+        var seed = await RestaurantServiceTests.SeedAsync();
+        var import = new MenuImportService(seed.Ctx, new FakeClaudeExpenseParser());
+
+        var result = await import.ImportAsync(new MenuImportRequestDto { Rows = new List<MenuImportRowDto> { Row("", "شاي", 15), Row("  ", "قهوة", 25) }, Apply = true });
+
+        Assert.Equal(0, result.Errors);
+        var tea = await seed.Ctx.Items.Include(i => i.ItemCategory).SingleAsync(i => i.NameAr == "شاي");
+        Assert.Equal(MenuImportService.NoCategoryName, tea.ItemCategory!.NameAr);
+        Assert.Equal(1, await seed.Ctx.ItemCategories.CountAsync(c => c.NameAr == MenuImportService.NoCategoryName));
+    }
+
+    [Fact]
+    public async Task MenuExcel_ReadsNameAndPrice_WithAnOptionalSection_AndSkipsTheHeader()
+    {
+        var seed = await RestaurantServiceTests.SeedAsync();
+        var import = new MenuImportService(seed.Ctx, new FakeClaudeExpenseParser());
+        using var workbook = new ClosedXML.Excel.XLWorkbook();
+        var sheet = workbook.Worksheets.Add("menu");
+        sheet.Cell(1, 1).Value = "الصنف"; sheet.Cell(1, 2).Value = "السعر";
+        sheet.Cell(2, 1).Value = "شاي"; sheet.Cell(2, 2).Value = 15;
+        sheet.Cell(3, 1).Value = "مشروبات"; sheet.Cell(3, 2).Value = "قهوة"; sheet.Cell(3, 3).Value = 25;
+        using var ms = new MemoryStream();
+        workbook.SaveAs(ms);
+
+        var result = import.ReadExcel(ms.ToArray());
+
+        Assert.Equal(2, result.Rows.Count);
+        Assert.Equal("", result.Rows[0].Category);
+        Assert.Equal("شاي", result.Rows[0].NameAr);
+        Assert.Equal(15, result.Rows[0].Price);
+        Assert.Equal("مشروبات", result.Rows[1].Category);
+        Assert.Equal("قهوة", result.Rows[1].NameAr);
+        Assert.Equal(1, result.SkippedWithoutPrice);   // the header row
     }
 
     [Fact]

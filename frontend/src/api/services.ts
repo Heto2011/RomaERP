@@ -710,6 +710,9 @@ export const PurchasingApi = {
     });
   },
   createInvoice: (data: CreatePurchaseInvoiceInput) => apiClient.post<PurchaseInvoice>("/purchasing/invoices", data),
+  getPendingInvoices: () => apiClient.get<import("./types").PendingPurchaseInvoice[]>("/purchasing/invoices/pending"),
+  approvePendingInvoice: (id: string) => apiClient.post<PurchaseInvoice>(`/purchasing/invoices/pending/${id}/approve`),
+  rejectPendingInvoice: (id: string, reason: string) => apiClient.post(`/purchasing/invoices/pending/${id}/reject`, { reason }),
   recordPayment: (id: string, data: RecordPurchasePaymentInput) => apiClient.post<PurchaseInvoice>(`/purchasing/invoices/${id}/payments`, data),
   getAging: () => apiClient.get<VendorAging[]>("/purchasing/aging"),
   downloadInvoicePdf: (id: string) => apiClient.get(`/purchasing/invoices/${id}/pdf`, { responseType: "blob" }),
@@ -730,6 +733,11 @@ export const RestaurantApi = {
     const form = new FormData();
     form.append("file", file);
     return apiClient.post<MenuScanResult>("/restaurant/menu/scan", form, { headers: { "Content-Type": "multipart/form-data" } });
+  },
+  readMenuExcel: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return apiClient.post<MenuScanResult>("/restaurant/menu/excel", form, { headers: { "Content-Type": "multipart/form-data" } });
   },
   getRecipe: (itemId: string) => apiClient.get<RecipeLine[]>(`/restaurant/menu/${itemId}/recipe`),
   setMenuItem: (itemId: string, data: SetMenuItemInput) => apiClient.put(`/restaurant/menu/${itemId}`, data),

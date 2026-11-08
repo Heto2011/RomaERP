@@ -57,6 +57,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
   const navRef = useRef<HTMLDivElement>(null);
+  // Someone given only the Purchasing module records invoices; vendors, aging and statements stay with approvers.
+  const canApprovePurchases = user?.roles.some((r) => r === "Admin" || r === "Accountant") ?? false;
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
   function matchesPath(to: string) {
@@ -266,7 +268,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/purchasing/invoices", label: t.nav.purchaseInvoices, icon: <IconCart /> },
         { to: "/purchasing/aging", label: t.nav.apAging, icon: <IconClock /> },
         { to: "/purchasing/statement", label: t.nav.vendorStatement, icon: <IconFile /> },
-      ],
+      ].filter((item) => canApprovePurchases || item.to === "/purchasing/invoices"),
     },
     ...(canManageHr
       ? [

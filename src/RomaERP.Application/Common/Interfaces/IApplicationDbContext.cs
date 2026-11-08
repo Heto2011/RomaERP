@@ -97,6 +97,7 @@ public interface IApplicationDbContext
 
     DbSet<Vendor> Vendors { get; }
     DbSet<PurchaseInvoice> PurchaseInvoices { get; }
+    DbSet<PendingPurchaseInvoice> PendingPurchaseInvoices { get; }
     DbSet<PurchaseInvoiceLine> PurchaseInvoiceLines { get; }
     DbSet<PurchasePayment> PurchasePayments { get; }
 

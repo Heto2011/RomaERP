@@ -1755,7 +1755,22 @@ export interface CreatePurchaseInvoiceInput {
   notes?: string | null;
   /// Optional — omit to invoice in the tenant's own functional currency.
   currencyCode?: string | null;
+  /// Used only when the invoice waits for approval: the warehouse to add the linked items to once approved.
+  receiveToWarehouseId?: string | null;
   lines: PurchaseInvoiceLineInput[];
+}
+
+export interface PendingPurchaseInvoice {
+  id: string;
+  requestedByName: string;
+  requestedAtUtc: string;
+  vendorName: string;
+  invoiceDate: string;
+  subTotal: number;
+  lineCount: number;
+  status: "Pending" | "Approved" | "Rejected";
+  decidedByName: string | null;
+  rejectionReason: string | null;
 }
 
 export interface RecordPurchasePaymentInput {

@@ -49,6 +49,72 @@ public class PurchasingServiceTests
         return (ctx, cash, bank, ap, expense, inputVat, vendor, period);
     }
 
+    private static (PurchasingService purchasing, PendingPurchaseService pending) PendingServices(ApplicationDbContext ctx)
+    {
+        var purchasing = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
+        return (purchasing, new PendingPurchaseService(ctx, purchasing));
+    }
+
+    private static CreatePurchaseInvoiceDto Dto(Vendor vendor, FiscalPeriod period, Account expense) => new()
+    {
+        VendorId = vendor.Id,
+        InvoiceDate = DateTime.UtcNow.Date,
+        FiscalPeriodId = period.Id,
+        PaymentTerm = PaymentTerm.Cash,
+        Lines = new List<PurchaseInvoiceLineInputDto> { new() { Description = "خضار", AccountId = expense.Id, Quantity = 2, UnitPrice = 50 } }
+    };
+
+    [Fact]
+    public async Task PendingPurchase_Submit_PostsNothingUntilApproved()
+    {
+        var (ctx, _, _, _, expense, _, vendor, period) = await SeedAsync();
+        var (_, pending) = PendingServices(ctx);
+
+        var submitted = await pending.SubmitAsync(Dto(vendor, period, expense), "user-1", "عبدالله");
+
+        Assert.Equal("Pending", submitted.Status);
+        Assert.Equal(100, submitted.SubTotal);
+        Assert.Equal(0, await ctx.PurchaseInvoices.CountAsync());
+        Assert.Equal(0, await ctx.JournalEntries.CountAsync());
+        // The requester sees their own; another non-approver sees none; an approver sees all.
+        Assert.Single(await pending.ListAsync("user-1", canApprove: false));
+        Assert.Empty(await pending.ListAsync("user-2", canApprove: false));
+        Assert.Single(await pending.ListAsync("user-2", canApprove: true));
+    }
+
+    [Fact]
+    public async Task PendingPurchase_Approve_PostsTheRealInvoiceOnce()
+    {
+        var (ctx, _, _, _, expense, _, vendor, period) = await SeedAsync();
+        var (_, pending) = PendingServices(ctx);
+        var submitted = await pending.SubmitAsync(Dto(vendor, period, expense), "user-1", "عبدالله");
+
+        var invoice = await pending.ApproveAsync(submitted.Id, "المدير");
+
+        Assert.Equal(1, await ctx.PurchaseInvoices.CountAsync());
+        Assert.Equal(1, await ctx.JournalEntries.CountAsync());
+        var row = await ctx.PendingPurchaseInvoices.SingleAsync();
+        Assert.Equal(PendingPurchaseStatus.Approved, row.Status);
+        Assert.Equal(invoice.Id, row.ApprovedInvoiceId);
+        await Assert.ThrowsAsync<RomaERP.Application.Common.Exceptions.ValidationAppException>(() => pending.ApproveAsync(submitted.Id, "المدير"));
+    }
+
+    [Fact]
+    public async Task PendingPurchase_Reject_KeepsTheBooksUntouched()
+    {
+        var (ctx, _, _, _, expense, _, vendor, period) = await SeedAsync();
+        var (_, pending) = PendingServices(ctx);
+        var submitted = await pending.SubmitAsync(Dto(vendor, period, expense), "user-1", "عبدالله");
+
+        await pending.RejectAsync(submitted.Id, "المدير", "السعر غلط");
+
+        var row = await ctx.PendingPurchaseInvoices.SingleAsync();
+        Assert.Equal(PendingPurchaseStatus.Rejected, row.Status);
+        Assert.Equal("السعر غلط", row.RejectionReason);
+        Assert.Equal(0, await ctx.PurchaseInvoices.CountAsync());
+        await Assert.ThrowsAsync<RomaERP.Application.Common.Exceptions.ValidationAppException>(() => pending.RejectAsync(submitted.Id, "المدير", null));
+    }
+
     [Fact]
     public async Task CreateInvoice_WithCashTerm_SettlesImmediatelyWithoutTouchingAp()
     {

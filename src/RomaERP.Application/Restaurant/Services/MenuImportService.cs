@@ -13,6 +13,9 @@ public interface IMenuImportService
 
     /// <summary>Reads a menu from a PDF or photo into import rows. Nothing is saved — the rows go through the normal preview and confirm.</summary>
     Task<MenuScanResultDto> ScanAsync(byte[] fileBytes, string mediaType, CancellationToken ct = default);
+
+    /// <summary>Reads an Excel sheet (.xlsx) into import rows. Columns: name and price, with an optional section before the name.</summary>
+    MenuScanResultDto ReadExcel(byte[] fileBytes);
 }
 
 /// <summary>Loads a customer's existing menu in one go: categories are created as needed, each dish becomes a menu item
@@ -22,6 +25,8 @@ public class MenuImportService : IMenuImportService
 {
     public const int MaxRows = 1000;
     private const string DefaultUnit = "طبق";
+    /// <summary>Section given to a dish that came without one — the menu is usable straight away and sections can be organised later.</summary>
+    public const string NoCategoryName = "بدون قسم";
 
     private readonly IApplicationDbContext _context;
     private readonly IClaudeExpenseParser _parser;
@@ -44,6 +49,43 @@ public class MenuImportService : IMenuImportService
         if (rows.Count == 0)
             throw new ValidationAppException(extraction.Note ?? "مقدرتش أقرا أصناف بأسعار من الملف ده. جرّب ملف أوضح أو الصق المنيو كنص.");
         return new MenuScanResultDto { Rows = rows, SkippedWithoutPrice = skipped, Note = extraction.Note };
+    }
+
+    public MenuScanResultDto ReadExcel(byte[] fileBytes)
+    {
+        var rows = new List<MenuImportRowDto>();
+        var skipped = 0;
+        try
+        {
+            using var workbook = new ClosedXML.Excel.XLWorkbook(new MemoryStream(fileBytes));
+            var sheet = workbook.Worksheets.First();
+            foreach (var row in sheet.RowsUsed())
+            {
+                var cells = row.CellsUsed().Select(c => c.GetString().Trim()).Where(s => s.Length > 0).ToList();
+                if (cells.Count < 2) continue;
+                // The price is the last cell; what comes before it is "name" or "section, name".
+                if (!TryParsePrice(cells[^1], out var price)) { skipped++; continue; }
+                var text = cells.Take(cells.Count - 1).ToList();
+                rows.Add(text.Count == 1
+                    ? new MenuImportRowDto { Category = string.Empty, NameAr = text[0], Price = price }
+                    : new MenuImportRowDto { Category = text[0], NameAr = string.Join(" - ", text.Skip(1)), Price = price });
+                if (rows.Count >= MaxRows) break;
+            }
+        }
+        catch (Exception ex) when (ex is not ValidationAppException)
+        {
+            throw new ValidationAppException("مقدرتش أفتح ملف الإكسل ده. اتأكد إنه ملف .xlsx سليم.");
+        }
+        if (rows.Count == 0)
+            throw new ValidationAppException("ملقتش أصناف بأسعار في الملف. اكتب في كل سطر: اسم الصنف ثم السعر (والقسم قبل الاسم لو عايز).");
+        return new MenuScanResultDto { Rows = rows, SkippedWithoutPrice = skipped };
+    }
+
+    private static bool TryParsePrice(string raw, out decimal price)
+    {
+        var western = new string(raw.Select(c => c is >= '٠' and <= '٩' ? (char)('0' + (c - '٠')) : c).ToArray()).Replace('٫', '.').Replace(',', '.');
+        var digits = new string(western.Where(c => char.IsDigit(c) || c == '.').ToArray());
+        return decimal.TryParse(digits, System.Globalization.NumberStyles.Number, System.Globalization.CultureInfo.InvariantCulture, out price) && digits.Any(char.IsDigit);
     }
 
     public async Task<MenuImportResultDto> ImportAsync(MenuImportRequestDto request, CancellationToken ct = default)
@@ -69,7 +111,7 @@ public class MenuImportService : IMenuImportService
         foreach (var row in request.Rows)
         {
             rowNo++;
-            var line = new MenuImportLineResultDto { Row = rowNo, Category = (row.Category ?? "").Trim(), NameAr = (row.NameAr ?? "").Trim(), Price = row.Price };
+            var line = new MenuImportLineResultDto { Row = rowNo, Category = string.IsNullOrWhiteSpace(row.Category) ? NoCategoryName : row.Category.Trim(), NameAr = (row.NameAr ?? "").Trim(), Price = row.Price };
             result.Lines.Add(line);
 
             var error = Validate(line, row);
@@ -119,7 +161,6 @@ public class MenuImportService : IMenuImportService
     {
         if (line.NameAr.Length == 0) return "اسم الصنف فاضي.";
         if (line.NameAr.Length > 200) return "اسم الصنف طويل جدًا (أقصى حد 200 حرف).";
-        if (line.Category.Length == 0) return "القسم فاضي.";
         if (line.Category.Length > 200) return "اسم القسم طويل جدًا (أقصى حد 200 حرف).";
         if (row.NameEn is { Length: > 200 }) return "الاسم بالإنجليزي طويل جدًا.";
         if (row.Price < 0 || row.Price > 1_000_000) return "السعر غير صحيح.";

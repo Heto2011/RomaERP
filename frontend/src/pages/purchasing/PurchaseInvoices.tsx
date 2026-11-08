@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { AccountsApi, ExchangeRatesApi, ItemsApi, LookupsApi, PurchasingApi, WarehousesApi } from "../../api/services";
-import { PaymentTerm, type InvoiceScanResult, type Account, type FiscalPeriod, type Item, type Warehouse, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
+import { PaymentTerm, type InvoiceScanResult, type Account, type FiscalPeriod, type Item, type Warehouse, type PendingPurchaseInvoice, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { useAuth } from "../../context/AuthContext";
 import { bilingualName } from "../../i18n/bilingual";
 import QuickAddItemsPicker from "../../components/QuickAddItemsPicker";
 
@@ -28,6 +29,10 @@ export default function PurchaseInvoices() {
   const [paymentTerm, setPaymentTerm] = useState<PaymentTerm>(PaymentTerm.Cash);
   const [currencyCode, setCurrencyCode] = useState("");
   const [notes, setNotes] = useState("");
+  const { user } = useAuth();
+  const canApprove = user?.roles.some((r) => r === "Admin" || r === "Accountant") ?? false;
+  const [pending, setPending] = useState<PendingPurchaseInvoice[]>([]);
+  const [info, setInfo] = useState<string | null>(null);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [receiveToStock, setReceiveToStock] = useState(true);
   const [warehouseId, setWarehouseId] = useState("");
@@ -63,6 +68,7 @@ export default function PurchaseInvoices() {
     setPeriods(periodRes.data);
     setAccounts(accRes.data);
     setItems(itemsRes.data);
+    PurchasingApi.getPendingInvoices().then((r) => setPending(r.data)).catch(() => setPending([]));
     // Optional: a user without inventory access simply doesn't get the "add to stock" choice.
     WarehousesApi.getAll()
       .then((r) => {
@@ -131,23 +137,45 @@ export default function PurchaseInvoices() {
     });
   }
 
+  async function decidePending(id: string, approve: boolean) {
+    setError(null);
+    setInfo(null);
+    try {
+      if (approve) {
+        await PurchasingApi.approvePendingInvoice(id);
+        setInfo(t.purchasing.pendingApproved);
+      } else {
+        const reason = window.prompt(t.purchasing.pendingRejectReason) ?? "";
+        await PurchasingApi.rejectPendingInvoice(id, reason);
+      }
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
+    setInfo(null);
     try {
       const stockLines = lines.filter((l) => l.itemId && l.quantity > 0);
-      await PurchasingApi.createInvoice({
+      const res = await PurchasingApi.createInvoice({
         vendorId,
         invoiceDate,
         fiscalPeriodId,
         paymentTerm,
         notes: notes || null,
         currencyCode: currencyCode || null,
+        receiveToWarehouseId: receiveToStock && warehouseId ? warehouseId : null,
         lines,
       });
+      // A user who can record but not approve purchases gets 202: the invoice is waiting for an approver and nothing is posted yet.
+      const waiting = res.status === 202;
+      if (waiting) setInfo(t.purchasing.sentForApproval);
       // Stock is a separate record from the accounting entry (it posts no journal), so adding the linked items to
       // the warehouse here cannot double-count the invoice.
-      if (receiveToStock && warehouseId && stockLines.length > 0) {
+      if (!waiting && receiveToStock && warehouseId && stockLines.length > 0) {
         try {
           await PurchasingApi.receiveInventoryPurchase({
             vendorId,
@@ -229,6 +257,52 @@ export default function PurchaseInvoices() {
       </div>
 
       {error && <div className="alert-error">{error}</div>}
+      {info && <div className="alert alert-success">{info}</div>}
+
+      {pending.some((p) => canApprove ? p.status === "Pending" : true) && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ marginTop: 0 }}>{canApprove ? t.purchasing.pendingTitleApprover : t.purchasing.pendingTitleMine}</h3>
+          <div style={{ overflowX: "auto" }}>
+            <table className="table">
+              <thead>
+                <tr>
+                  <th>{t.common.date}</th>
+                  <th>{t.purchasing.vendor}</th>
+                  <th>{t.purchasing.pendingBy}</th>
+                  <th>{t.purchasing.pendingLines}</th>
+                  <th>{t.purchasing.pendingSubtotal}</th>
+                  <th>{t.common.status}</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {pending.filter((p) => canApprove ? p.status === "Pending" : true).map((p) => (
+                  <tr key={p.id}>
+                    <td>{p.invoiceDate.slice(0, 10)}</td>
+                    <td>{p.vendorName}</td>
+                    <td>{p.requestedByName}</td>
+                    <td>{p.lineCount}</td>
+                    <td>{p.subTotal.toLocaleString()}</td>
+                    <td>
+                      {p.status === "Pending" && t.purchasing.pendingStatusWaiting}
+                      {p.status === "Approved" && t.purchasing.pendingStatusApproved}
+                      {p.status === "Rejected" && `${t.purchasing.pendingStatusRejected}${p.rejectionReason ? ` — ${p.rejectionReason}` : ""}`}
+                    </td>
+                    <td>
+                      {canApprove && p.status === "Pending" && (
+                        <div style={{ display: "flex", gap: 6 }}>
+                          <button className="btn btn-sm" onClick={() => decidePending(p.id, true)}>{t.purchasing.pendingApprove}</button>
+                          <button className="btn btn-secondary btn-sm" onClick={() => decidePending(p.id, false)}>{t.purchasing.pendingReject}</button>
+                        </div>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {showForm && (
         <div className="card">

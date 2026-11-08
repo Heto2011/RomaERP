@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using RomaERP.Application.Common;
 using Microsoft.AspNetCore.Mvc;
@@ -13,12 +14,18 @@ public class PurchasingController : ControllerBase
 {
     private readonly IPurchasingService _purchasingService;
     private readonly IInvoiceScanService _invoiceScanService;
+    private readonly IPendingPurchaseService _pendingPurchases;
 
-    public PurchasingController(IPurchasingService purchasingService, IInvoiceScanService invoiceScanService)
+    public PurchasingController(IPurchasingService purchasingService, IInvoiceScanService invoiceScanService, IPendingPurchaseService pendingPurchases)
     {
         _purchasingService = purchasingService;
         _invoiceScanService = invoiceScanService;
+        _pendingPurchases = pendingPurchases;
     }
+
+    private bool CanApprove => User.IsInRole("Admin") || User.IsInRole("Accountant");
+    private string CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier) ?? User.Identity?.Name ?? string.Empty;
+    private string CurrentUserName => User.FindFirstValue("fullName") ?? User.FindFirstValue(ClaimTypes.Name) ?? User.Identity?.Name ?? string.Empty;
 
     [HttpGet("vendors")]
     public async Task<ActionResult<List<VendorDto>>> GetVendors(CancellationToken ct)
@@ -62,9 +69,34 @@ public class PurchasingController : ControllerBase
         return Ok(await _invoiceScanService.ScanAsync(memoryStream.ToArray(), mediaType, ct));
     }
 
+    /// <summary>Admins and Accountants post the invoice immediately. Anyone else who was given the Purchasing module only
+    /// records it: it waits as a pending request (HTTP 202) and posts nothing until an approver accepts it.</summary>
     [HttpPost("invoices")]
-    public async Task<ActionResult<PurchaseInvoiceDto>> CreateInvoice(CreatePurchaseInvoiceDto dto, CancellationToken ct)
-        => Ok(await _purchasingService.CreateInvoiceAsync(dto, ct));
+    public async Task<ActionResult> CreateInvoice(CreatePurchaseInvoiceDto dto, CancellationToken ct)
+    {
+        if (CanApprove)
+            return Ok(await _purchasingService.CreateInvoiceAsync(dto, ct));
+
+        var pending = await _pendingPurchases.SubmitAsync(dto, CurrentUserId, CurrentUserName, ct);
+        return Accepted(pending);
+    }
+
+    [HttpGet("invoices/pending")]
+    public async Task<ActionResult<List<PendingPurchaseInvoiceDto>>> GetPending(CancellationToken ct)
+        => Ok(await _pendingPurchases.ListAsync(CurrentUserId, CanApprove, ct));
+
+    [HttpPost("invoices/pending/{id:guid}/approve")]
+    [Authorize(Roles = "Admin,Accountant")]
+    public async Task<ActionResult<PurchaseInvoiceDto>> ApprovePending(Guid id, CancellationToken ct)
+        => Ok(await _pendingPurchases.ApproveAsync(id, CurrentUserName, ct));
+
+    [HttpPost("invoices/pending/{id:guid}/reject")]
+    [Authorize(Roles = "Admin,Accountant")]
+    public async Task<IActionResult> RejectPending(Guid id, RejectPendingPurchaseDto dto, CancellationToken ct)
+    {
+        await _pendingPurchases.RejectAsync(id, CurrentUserName, dto.Reason, ct);
+        return NoContent();
+    }
 
     /// <summary>Item-based purchase receiving — used by the Restaurant "Purchase Receiving" screen as an
     /// internal-control record of what physically arrived. Updates stock quantity/cost per line only; it
@@ -75,6 +107,7 @@ public class PurchasingController : ControllerBase
         => Ok(await _purchasingService.ReceiveInventoryPurchaseAsync(dto, ct));
 
     [HttpPost("invoices/{id:guid}/payments")]
+    [Authorize(Roles = "Admin,Accountant")]
     public async Task<ActionResult<PurchaseInvoiceDto>> RecordPayment(Guid id, RecordPurchasePaymentDto dto, CancellationToken ct)
         => Ok(await _purchasingService.RecordPaymentAsync(id, dto, ct));
 

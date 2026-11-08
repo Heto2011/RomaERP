@@ -19,8 +19,15 @@ export function parseMenuText(text: string): MenuImportRow[] {
   lines.forEach((line, index) => {
     const delimiter = line.includes("\t") ? /\t/ : line.includes(";") || line.includes("؛") ? /[;؛]/ : /[,،]/;
     const cells = line.split(delimiter).map((c) => c.trim().replace(/^"|"$/g, ""));
-    if (cells.length < 3) {
-      rows.push({ category: cells[0] ?? "", nameAr: cells[1] ?? "", price: -1 });
+    // "dish, price" (no section) is fine: the section is optional.
+    if (cells.length === 2) {
+      const p = toNumber(cells[1]);
+      if (index === 0 && p === -1 && !/\d/.test(cells[1])) return;
+      rows.push({ category: "", nameAr: cells[0], price: p });
+      return;
+    }
+    if (cells.length < 2) {
+      rows.push({ category: "", nameAr: cells[0] ?? "", price: -1 });
       return;
     }
     const price = toNumber(cells[cells.length - 1]);
@@ -29,6 +36,10 @@ export function parseMenuText(text: string): MenuImportRow[] {
     rows.push({ category: cells[0], nameAr: cells.slice(1, -1).join("، "), price });
   });
   return rows;
+}
+
+function rowsToText(rows: MenuImportRow[]): string {
+  return rows.map((r) => (r.category ? `${r.category}، ${r.nameAr}، ${r.price}` : `${r.nameAr}، ${r.price}`)).join("\n");
 }
 
 export default function MenuImportDialog({ onClose, onDone }: { onClose: () => void; onDone: () => void }) {
@@ -74,7 +85,7 @@ export default function MenuImportDialog({ onClose, onDone }: { onClose: () => v
     setScanning(true);
     try {
       const res = await RestaurantApi.scanMenu(file);
-      setText(res.data.rows.map((r) => `${r.category}، ${r.nameAr}، ${r.price}`).join("\n"));
+      setText(rowsToText(res.data.rows));
       setInfo(t.restaurant.importScanDone + (res.data.skippedWithoutPrice > 0 ? ` ${t.restaurant.importScanSkipped} ${res.data.skippedWithoutPrice}` : ""));
     } catch (err) {
       setError(getErrorMessage(err));
@@ -85,10 +96,19 @@ export default function MenuImportDialog({ onClose, onDone }: { onClose: () => v
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file) return;
-    setText(await file.text());
-    setPreview(null);
     e.target.value = "";
+    if (!file) return;
+    setPreview(null);
+    setError(null);
+    if (/\.xlsx$/i.test(file.name)) {
+      try {
+        setText(rowsToText((await RestaurantApi.readMenuExcel(file)).data.rows));
+      } catch (err) {
+        setError(getErrorMessage(err));
+      }
+      return;
+    }
+    setText(await file.text());
   }
 
   const actionLabel = (a: string) =>
@@ -119,7 +139,7 @@ export default function MenuImportDialog({ onClose, onDone }: { onClose: () => v
               </label>
               <label className="btn btn-secondary btn-sm" style={{ cursor: "pointer" }}>
                 {t.restaurant.importUploadFile}
-                <input type="file" accept=".csv,.txt,text/csv,text/plain" onChange={onFile} style={{ display: "none" }} />
+                <input type="file" accept=".xlsx,.csv,.txt,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" onChange={onFile} style={{ display: "none" }} />
               </label>
               <label>
                 <input type="checkbox" checked={updatePrices} onChange={(e) => { setUpdatePrices(e.target.checked); setPreview(null); }} style={{ marginInlineEnd: 6 }} />

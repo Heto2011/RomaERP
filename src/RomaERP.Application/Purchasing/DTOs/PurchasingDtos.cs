@@ -88,6 +88,8 @@ public class CreatePurchaseInvoiceDto
     /// tenant's own functional currency (CompanySettings.DefaultCurrency). A foreign currency needs an
     /// exchange rate already set up (see Exchange Rates screen) for this invoice's date.</summary>
     public string? CurrencyCode { get; set; }
+    /// <summary>Optional. Only used when the invoice waits for approval: the warehouse to add the linked items to once approved.</summary>
+    public Guid? ReceiveToWarehouseId { get; set; }
     public List<PurchaseInvoiceLineInputDto> Lines { get; set; } = new();
 }
 
