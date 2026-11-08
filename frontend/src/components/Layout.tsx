@@ -201,7 +201,6 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/accounting/chart-of-accounts", label: t.nav.chartOfAccounts, icon: <IconList /> },
         { to: "/accounting/opening-balances", label: t.nav.openingBalances, icon: <IconWallet /> },
         { to: "/accounting/journal-entries", label: t.nav.journalEntries, icon: <IconBook /> },
-        { to: "/accounting/daily-sales", label: t.nav.dailySales, icon: <IconBook /> },
         { to: "/accounting/fiscal-periods", label: t.nav.fiscalPeriods, icon: <IconCalendar /> },
         { to: "/accounting/exchange-rates", label: t.nav.exchangeRates, icon: <IconSwap /> },
         { to: "/accounting/budgets", label: t.nav.budgets, icon: <IconBarChart /> },

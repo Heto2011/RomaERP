@@ -222,17 +222,6 @@ export const AccountsApi = {
   remove: (id: string) => apiClient.delete(`/accounts/${id}`),
 };
 
-export const DailySalesApi = {
-  recent: (take = 30) => apiClient.get<import("./types").DailySalesEntry[]>("/dailysales", { params: { take } }),
-  create: (data: {
-    salesDate: string;
-    cashAmount: number;
-    cardAmount: number;
-    vatRatePercent: number;
-    label?: string;
-  }) => apiClient.post<import("./types").DailySalesEntry>("/dailysales", data),
-};
-
 export const JournalEntriesApi = {
   getAll: () => apiClient.get<JournalEntry[]>("/journalentries"),
   getById: (id: string) => apiClient.get<JournalEntry>(`/journalentries/${id}`),
