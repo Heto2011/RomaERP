@@ -258,6 +258,10 @@ public class UsersController : ControllerBase
                 return BadRequest(new { error = "الرقم السري ده مستخدم بالفعل من مستخدم تاني، اختار رقم مختلف." });
 
             user.PosPinHash = _passwordHasher.HashPassword(user, request.Pin);
+
+            // The POS opens cashier shifts against an employee record, so a cashier without one is created automatically.
+            if (await GetLinkedEmployeeAsync(id, ct) is null)
+                await _employeeService.EnsureMyProfileAsync(id, user.FullName, user.Email, ct);
         }
 
         await _userManager.UpdateAsync(user);

@@ -113,7 +113,9 @@ export default function RestaurantPOS() {
     // Started with no internet: wait for the connection before asking who the cashier is and which shift is open.
     if (!online || employeeId) return;
     setEmployeeError(null);
+    // A cashier created before auto-linking existed has no employee record yet: create it once instead of blocking them.
     EmployeesApi.getMyProfile()
+      .catch(() => EmployeesApi.createMyProfile())
       .then((res) => {
         setEmployeeId(res.data.id);
         return CashierShiftsApi.getActive(res.data.id);

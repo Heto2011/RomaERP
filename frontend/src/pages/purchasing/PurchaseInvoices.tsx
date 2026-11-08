@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
-import { AccountsApi, ExchangeRatesApi, ItemsApi, LookupsApi, PurchasingApi } from "../../api/services";
-import { PaymentTerm, type InvoiceScanResult, type Account, type FiscalPeriod, type Item, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
+import { AccountsApi, ExchangeRatesApi, ItemsApi, LookupsApi, PurchasingApi, WarehousesApi } from "../../api/services";
+import { PaymentTerm, type InvoiceScanResult, type Account, type FiscalPeriod, type Item, type Warehouse, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
@@ -28,6 +28,9 @@ export default function PurchaseInvoices() {
   const [paymentTerm, setPaymentTerm] = useState<PaymentTerm>(PaymentTerm.Cash);
   const [currencyCode, setCurrencyCode] = useState("");
   const [notes, setNotes] = useState("");
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [receiveToStock, setReceiveToStock] = useState(true);
+  const [warehouseId, setWarehouseId] = useState("");
   const [lines, setLines] = useState<PurchaseInvoiceLineInput[]>([]);
 
   const [scanning, setScanning] = useState(false);
@@ -60,6 +63,14 @@ export default function PurchaseInvoices() {
     setPeriods(periodRes.data);
     setAccounts(accRes.data);
     setItems(itemsRes.data);
+    // Optional: a user without inventory access simply doesn't get the "add to stock" choice.
+    WarehousesApi.getAll()
+      .then((r) => {
+        const active = r.data.filter((w) => w.isActive);
+        setWarehouses(active);
+        setWarehouseId((cur) => cur || active[0]?.id || "");
+      })
+      .catch(() => setWarehouses([]));
     setVatRate(settingsRes.data.vatRate);
     setFunctionalCurrency(settingsRes.data.defaultCurrency);
     setForeignCurrencies([...new Set(ratesRes.data.map((r) => r.currencyCode))]);
@@ -124,6 +135,7 @@ export default function PurchaseInvoices() {
     e.preventDefault();
     setError(null);
     try {
+      const stockLines = lines.filter((l) => l.itemId && l.quantity > 0);
       await PurchasingApi.createInvoice({
         vendorId,
         invoiceDate,
@@ -133,6 +145,21 @@ export default function PurchaseInvoices() {
         currencyCode: currencyCode || null,
         lines,
       });
+      // Stock is a separate record from the accounting entry (it posts no journal), so adding the linked items to
+      // the warehouse here cannot double-count the invoice.
+      if (receiveToStock && warehouseId && stockLines.length > 0) {
+        try {
+          await PurchasingApi.receiveInventoryPurchase({
+            vendorId,
+            receiptDate: invoiceDate,
+            warehouseId,
+            notes: notes || null,
+            lines: stockLines.map((l) => ({ itemId: l.itemId as string, quantity: l.quantity, unitCost: l.unitPrice })),
+          });
+        } catch (err) {
+          setError(t.purchasing.stockReceiveFailed + " " + getErrorMessage(err));
+        }
+      }
       setShowForm(false);
       setScanResult(null);
       setVendorId("");

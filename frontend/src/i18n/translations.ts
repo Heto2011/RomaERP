@@ -416,6 +416,8 @@ const ar = {
     createNoteTitle: "إشعار جديد",
   },
   purchasing: {
+    receiveToStock: "ضيف الأصناف دي للمخزن (الكمية والتكلفة)",
+    stockReceiveFailed: "الفاتورة اتسجّلت، لكن إضافة الأصناف للمخزن فشلت — سجّلها من استلام مشتريات.",
     vendorsTitle: "الموردون",
     newVendor: "+ مورد جديد",
     partySectionContact: "بيانات التواصل",
@@ -2323,6 +2325,8 @@ const en: typeof ar = {
     createNoteTitle: "New Note",
   },
   purchasing: {
+    receiveToStock: "Also add these items to stock (quantity and cost)",
+    stockReceiveFailed: "The invoice was saved, but adding the items to stock failed — record them under Purchase Receiving.",
     vendorsTitle: "Vendors",
     newVendor: "+ New Vendor",
     partySectionContact: "Contact",

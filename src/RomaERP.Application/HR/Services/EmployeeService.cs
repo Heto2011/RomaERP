@@ -151,8 +151,18 @@ public class EmployeeService : IEmployeeService
             .Include(p => p.Department)
             .Where(p => !p.IsDeleted && p.IsActive && p.Department != null && !p.Department.IsDeleted)
             .OrderBy(p => p.Code)
-            .FirstOrDefaultAsync(ct)
-            ?? throw new ValidationAppException("لازم يكون فيه قسم ووظيفة الأول — أضفهم من شاشة الأقسام والوظائف وحاول تاني.");
+            .FirstOrDefaultAsync(ct);
+
+        if (position is null)
+        {
+            // A brand-new company has no departments yet (a restaurant that only uses the POS never opens the HR screens),
+            // so create a minimal one rather than blocking the cashier.
+            var department = new Department { Code = "GEN", NameAr = "عام", NameEn = "General" };
+            position = new Position { Code = "STAFF", TitleAr = "موظف", TitleEn = "Staff", Department = department };
+            _context.Departments.Add(department);
+            _context.Positions.Add(position);
+            await _context.SaveChangesAsync(ct);
+        }
 
         var name = string.IsNullOrWhiteSpace(fullName) ? (email ?? "Owner").Split('@')[0] : fullName.Trim();
 

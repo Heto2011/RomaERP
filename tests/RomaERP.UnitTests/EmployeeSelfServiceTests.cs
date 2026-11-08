@@ -105,11 +105,17 @@ public class EmployeeSelfServiceTests
     }
 
     [Fact]
-    public async Task EnsureMyProfile_WithNoDepartmentOrPosition_ExplainsWhatToAddFirst()
+    public async Task EnsureMyProfile_WithNoDepartmentOrPosition_CreatesADefaultOneSoACashierIsNotBlocked()
     {
-        var service = new EmployeeService(CreateContext());
+        var ctx = CreateContext();
+        var service = new EmployeeService(ctx);
 
-        await Assert.ThrowsAsync<ValidationAppException>(() => service.EnsureMyProfileAsync(Guid.NewGuid(), "Owner", null));
+        var created = await service.EnsureMyProfileAsync(Guid.NewGuid(), "Cashier", null);
+
+        Assert.Equal(1, await ctx.Departments.CountAsync());
+        Assert.Equal(1, await ctx.Positions.CountAsync());
+        Assert.Equal("Cashier", created.FullNameEn);
+        Assert.Equal(0m, created.BasicSalary);
     }
 
     [Fact]
