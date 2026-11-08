@@ -1,4 +1,6 @@
+using System.Net;
 using System.Text.Json;
+using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
@@ -12,10 +14,18 @@ public class PendingPurchaseService : IPendingPurchaseService
     private readonly IApplicationDbContext _context;
     private readonly IPurchasingService _purchasing;
 
-    public PendingPurchaseService(IApplicationDbContext context, IPurchasingService purchasing)
+    private readonly IEmailSender? _email;
+    private readonly IAdminEmailProvider? _admins;
+    private readonly ILogger<PendingPurchaseService>? _logger;
+
+    public PendingPurchaseService(IApplicationDbContext context, IPurchasingService purchasing,
+        IEmailSender? email = null, IAdminEmailProvider? admins = null, ILogger<PendingPurchaseService>? logger = null)
     {
         _context = context;
         _purchasing = purchasing;
+        _email = email;
+        _admins = admins;
+        _logger = logger;
     }
 
     public async Task<PendingPurchaseInvoiceDto> SubmitAsync(CreatePurchaseInvoiceDto dto, string userId, string userName, CancellationToken ct = default)
@@ -42,7 +52,28 @@ public class PendingPurchaseService : IPendingPurchaseService
         };
         _context.PendingPurchaseInvoices.Add(pending);
         await _context.SaveChangesAsync(ct);
+        await NotifyApproversAsync(pending, ct);
         return Map(pending);
+    }
+
+    /// <summary>Best effort: a failed email never blocks the invoice from being saved — the approver still sees it on the page.</summary>
+    private async Task NotifyApproversAsync(PendingPurchaseInvoice pending, CancellationToken ct)
+    {
+        if (_email is null || _admins is null || !_email.IsConfigured) return;
+        try
+        {
+            var subject = $"فاتورة مشتريات مستنية اعتمادك — {pending.VendorName}";
+            var html = $"<div dir=\"rtl\" style=\"font-family:Tahoma,Arial,sans-serif\"><p>أهلاً __NAME__،</p>" +
+                       $"<p><strong>{WebUtility.HtmlEncode(pending.RequestedByName)}</strong> سجّل فاتورة مشتريات من <strong>{WebUtility.HtmlEncode(pending.VendorName)}</strong> " +
+                       $"بإجمالي {pending.SubTotal:0.##} قبل الضريبة ({pending.LineCount} سطر)، وهي مستنية اعتمادك.</p>" +
+                       "<p>ادخل على المشتريات ← فواتير المشتريات، راجعها واضغط اعتمد أو ارفض.</p></div>";
+            foreach (var admin in await _admins.GetAdminContactsAsync(ct))
+                await _email.SendAsync(admin.Email, subject, html.Replace("__NAME__", WebUtility.HtmlEncode(admin.Name)), ct);
+        }
+        catch (Exception ex)
+        {
+            _logger?.LogWarning(ex, "Could not email approvers about pending purchase invoice {Id}", pending.Id);
+        }
     }
 
     public async Task<List<PendingPurchaseInvoiceDto>> ListAsync(string userId, bool canApprove, CancellationToken ct = default)
