@@ -222,6 +222,14 @@ export const AccountsApi = {
   remove: (id: string) => apiClient.delete(`/accounts/${id}`),
 };
 
+export const CustomerFollowUpsApi = {
+  overdue: () => apiClient.get<import("./types").OverdueCustomer[]>("/customer-followups/overdue"),
+  add: (data: { customerId: string; followUpDate: string; method: string; note?: string; promisedPayDate?: string }) =>
+    apiClient.post("/customer-followups", data),
+  emailReminder: (customerId: string) =>
+    apiClient.post<{ sent: boolean; message: string | null }>(`/customer-followups/${customerId}/email-reminder`),
+};
+
 export const JournalEntriesApi = {
   getAll: () => apiClient.get<JournalEntry[]>("/journalentries"),
   getById: (id: string) => apiClient.get<JournalEntry>(`/journalentries/${id}`),

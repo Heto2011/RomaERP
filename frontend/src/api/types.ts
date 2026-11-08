@@ -2768,3 +2768,33 @@ export interface PartnerStatement {
   totalCredit: number;
   closingBalance: number;
 }
+
+export interface OverdueInvoice {
+  invoiceId: string;
+  invoiceNumber: string;
+  invoiceDate: string;
+  dueDate: string;
+  daysOverdue: number;
+  outstanding: number;
+}
+
+export interface CustomerFollowUp {
+  id: string;
+  followUpDate: string;
+  method: string;
+  note: string | null;
+  promisedPayDate: string | null;
+}
+
+export interface OverdueCustomer {
+  customerId: string;
+  customerCode: string;
+  customerName: string;
+  phone: string | null;
+  email: string | null;
+  paymentTermsDays: number;
+  totalOverdue: number;
+  oldestDaysOverdue: number;
+  invoices: OverdueInvoice[];
+  lastFollowUp: CustomerFollowUp | null;
+}

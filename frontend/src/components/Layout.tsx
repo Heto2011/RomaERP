@@ -229,6 +229,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/sales/invoices", label: t.nav.salesInvoices, icon: <IconFile /> },
         { to: "/sales/notes", label: t.nav.salesNotes, icon: <IconEdit /> },
         { to: "/sales/aging", label: t.nav.arAging, icon: <IconClock /> },
+        { to: "/sales/follow-ups", label: t.nav.customerFollowUps, icon: <IconClock /> },
         { to: "/sales/statement", label: t.nav.customerStatement, icon: <IconFile /> },
       ],
     },

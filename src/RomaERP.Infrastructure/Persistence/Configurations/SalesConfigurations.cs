@@ -181,3 +181,16 @@ public class SalesNoteLineConfiguration : IEntityTypeConfiguration<SalesNoteLine
         builder.Property(l => l.LineTotal).HasPrecision(18, 2);
     }
 }
+
+public class CustomerFollowUpConfiguration : IEntityTypeConfiguration<CustomerFollowUp>
+{
+    public void Configure(EntityTypeBuilder<CustomerFollowUp> builder)
+    {
+        builder.Property(f => f.Method).HasMaxLength(40).IsRequired();
+        builder.Property(f => f.Note).HasMaxLength(500);
+        builder.HasIndex(f => new { f.CustomerId, f.FollowUpDate });
+        builder.HasOne(f => f.Customer).WithMany().HasForeignKey(f => f.CustomerId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(f => !f.IsDeleted);
+    }
+}

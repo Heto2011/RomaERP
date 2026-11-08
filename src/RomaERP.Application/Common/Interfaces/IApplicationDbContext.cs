@@ -88,6 +88,7 @@ public interface IApplicationDbContext
     DbSet<CompanySettings> CompanySettings { get; }
 
     DbSet<Customer> Customers { get; }
+    DbSet<CustomerFollowUp> CustomerFollowUps { get; }
     DbSet<SalesInvoice> SalesInvoices { get; }
     DbSet<SalesInvoiceLine> SalesInvoiceLines { get; }
     DbSet<SalesPayment> SalesPayments { get; }
