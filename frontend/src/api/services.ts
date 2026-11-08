@@ -790,6 +790,7 @@ export const UsersApi = {
   deactivate: (id: string) => apiClient.post<AppUser>(`/users/${id}/deactivate`),
   activate: (id: string) => apiClient.post<AppUser>(`/users/${id}/activate`),
   linkEmployee: (id: string, employeeId: string | null) => apiClient.put<AppUser>(`/users/${id}/employee-link`, { employeeId }),
+  createPosCashier: (data: { fullName: string; pin: string }) => apiClient.post<AppUser>("/users/pos-cashier", data),
   setPosPin: (id: string, pin: string | null) => apiClient.put<AppUser>(`/users/${id}/pos-pin`, { pin }),
   rename: (id: string, fullName: string) => apiClient.put(`/users/${id}/name`, { fullName }),
   resetPassword: (id: string, newPassword: string) => apiClient.put(`/users/${id}/password`, { newPassword }),

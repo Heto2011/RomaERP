@@ -140,6 +140,48 @@ public class UsersController : ControllerBase
         return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, Array.Empty<string>(), null, null, false));
     }
 
+    /// <summary>One-step cashier for restaurants: creates an Employee-role user limited to the POS module, gives it a PIN and
+    /// links an employee record. The cashier only ever signs in with the PIN, so the login email and password are generated
+    /// (random, never shown) instead of being asked for.</summary>
+    [HttpPost("pos-cashier")]
+    public async Task<ActionResult<UserDto>> CreatePosCashier(CreatePosCashierRequest request, CancellationToken ct)
+    {
+        if (!IsAdmin) return AdminOnlyResult();
+        if (_planLimits is not null) await _planLimits.EnsureCanAddUserAsync(ct);
+        if (string.IsNullOrWhiteSpace(request.FullName))
+            return BadRequest(new { error = "اكتب اسم الكاشير." });
+        if (!PinPattern.IsMatch(request.Pin ?? ""))
+            return BadRequest(new { error = "الرقم السري لازم يكون أرقام بس، من 4 لـ 6 أرقام." });
+
+        var otherUsers = await _userManager.Users.Where(u => u.IsActive && u.PosPinHash != null).ToListAsync(ct);
+        if (otherUsers.Any(u => _passwordHasher.VerifyHashedPassword(u, u.PosPinHash!, request.Pin!) == PasswordVerificationResult.Success))
+            return BadRequest(new { error = "الرقم السري ده مستخدم بالفعل من مستخدم تاني، اختار رقم مختلف." });
+
+        var email = $"cashier-{Guid.NewGuid():N}"[..20] + "@pos.local";
+        var user = new ApplicationUser
+        {
+            UserName = email,
+            Email = email,
+            FullName = request.FullName.Trim(),
+            EmailConfirmed = true,
+            IsActive = true
+        };
+        var password = "Pc1!" + Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(24));
+        var created = await _userManager.CreateAsync(user, password);
+        if (!created.Succeeded)
+            return BadRequest(new { error = string.Join("، ", created.Errors.Select(e => e.Description)) });
+
+        await _userManager.AddToRoleAsync(user, "Employee");
+        await _userManager.AddClaimAsync(user, new Claim(ModulePermissions.ClaimType, ModulePermissions.POS));
+        user.PosPinHash = _passwordHasher.HashPassword(user, request.Pin!);
+        await _userManager.UpdateAsync(user);
+        await _employeeService.EnsureMyProfileAsync(user.Id, user.FullName, null, ct);
+        await LogAsync("Users", "POS cashier created", user.FullName);
+
+        var linkedEmployee = await GetLinkedEmployeeAsync(user.Id, ct);
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, new List<string> { "Employee" }, new List<string> { ModulePermissions.POS }, linkedEmployee?.Id, linkedEmployee?.FullNameAr, true));
+    }
+
     [HttpPut("{id:guid}/roles")]
     public async Task<ActionResult<UserDto>> UpdateRoles(Guid id, UpdateUserRolesRequest request, CancellationToken ct)
     {

@@ -111,6 +111,7 @@ import MySchedule from "./pages/hr/MySchedule";
 import PartyForm from "./pages/PartyForm";
 import RestaurantReservations from "./pages/restaurant/RestaurantReservations";
 import RestaurantMenu from "./pages/restaurant/RestaurantMenu";
+import RestaurantSetup from "./pages/restaurant/RestaurantSetup";
 import LoyaltyPage from "./pages/restaurant/Loyalty";
 import PurchaseReceivingPage from "./pages/restaurant/PurchaseReceiving";
 import DeliveryReconciliationPage from "./pages/restaurant/DeliveryReconciliation";
@@ -290,6 +291,7 @@ export default function App() {
       <Route path="/restaurant/reservations" element={<ProtectedRoute><RestaurantReservations /></ProtectedRoute>} />
       <Route path="/restaurant/tables" element={<ProtectedRoute><RestaurantTables /></ProtectedRoute>} />
       <Route path="/restaurant/loyalty" element={<ProtectedRoute><LoyaltyPage /></ProtectedRoute>} />
+      <Route path="/restaurant/setup" element={<ProtectedRoute><RestaurantSetup /></ProtectedRoute>} />
       <Route path="/restaurant/menu" element={<ProtectedRoute><RestaurantMenu /></ProtectedRoute>} />
       <Route path="/restaurant/purchase-receiving" element={<ProtectedRoute><PurchaseReceivingPage /></ProtectedRoute>} />
       <Route path="/restaurant/delivery-reconciliation" element={<ProtectedRoute><DeliveryReconciliationPage /></ProtectedRoute>} />

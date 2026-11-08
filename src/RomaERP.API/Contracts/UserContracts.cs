@@ -12,6 +12,7 @@ public record LinkEmployeeRequest(Guid? EmployeeId);
 
 /// <summary>Set a null/empty Pin to clear it (disabling PIN login for this user).</summary>
 public record SetPosPinRequest(string? Pin);
+public record CreatePosCashierRequest(string FullName, string Pin);
 
 public record ResetPasswordRequest(string NewPassword);
 
