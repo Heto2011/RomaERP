@@ -242,3 +242,18 @@ public class ManualProfitEntryConfiguration : IEntityTypeConfiguration<ManualPro
         builder.HasQueryFilter(e => !e.IsDeleted);
     }
 }
+
+public class DeferralScheduleConfiguration : IEntityTypeConfiguration<DeferralSchedule>
+{
+    public void Configure(EntityTypeBuilder<DeferralSchedule> builder)
+    {
+        builder.Property(d => d.Description).HasMaxLength(200).IsRequired();
+        builder.Property(d => d.TotalAmount).HasPrecision(18, 2);
+        builder.Property(d => d.RecognizedAmount).HasPrecision(18, 2);
+        builder.HasIndex(d => d.Status);
+        builder.HasOne(d => d.TargetAccount).WithMany().HasForeignKey(d => d.TargetAccountId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(d => d.SettlementAccount).WithMany().HasForeignKey(d => d.SettlementAccountId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(d => !d.IsDeleted);
+    }
+}

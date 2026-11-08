@@ -230,6 +230,22 @@ export const CustomerFollowUpsApi = {
     apiClient.post<{ sent: boolean; message: string | null }>(`/customer-followups/${customerId}/email-reminder`),
 };
 
+export const DeferralsApi = {
+  getAll: () => apiClient.get<import("./types").DeferralSchedule[]>("/deferrals"),
+  create: (data: {
+    kind: number;
+    description: string;
+    totalAmount: number;
+    entryDate: string;
+    startMonth: string;
+    months: number;
+    targetAccountId: string;
+    settlementAccountId: string;
+  }) => apiClient.post("/deferrals", data),
+  run: () => apiClient.post<{ entriesPosted: number; amountReleased: number; skipped: string[] }>("/deferrals/run"),
+  cancel: (id: string) => apiClient.post(`/deferrals/${id}/cancel`),
+};
+
 export const JournalEntriesApi = {
   getAll: () => apiClient.get<JournalEntry[]>("/journalentries"),
   getById: (id: string) => apiClient.get<JournalEntry>(`/journalentries/${id}`),

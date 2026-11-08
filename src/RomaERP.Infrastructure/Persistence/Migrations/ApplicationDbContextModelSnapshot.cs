@@ -339,6 +339,75 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.ToTable("CostCenters");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Accounting.DeferralSchedule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Kind")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Months")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("RecognizedAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("RecognizedMonths")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("SettlementAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid?>("SourceJournalEntryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("StartMonth")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TargetAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("TotalAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SettlementAccountId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TargetAccountId");
+
+                    b.ToTable("DeferralSchedules");
+                });
+
             modelBuilder.Entity("RomaERP.Domain.Accounting.DepreciationRun", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5038,6 +5107,25 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Navigation("Account");
 
                     b.Navigation("FiscalPeriod");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Accounting.DeferralSchedule", b =>
+                {
+                    b.HasOne("RomaERP.Domain.Accounting.Account", "SettlementAccount")
+                        .WithMany()
+                        .HasForeignKey("SettlementAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RomaERP.Domain.Accounting.Account", "TargetAccount")
+                        .WithMany()
+                        .HasForeignKey("TargetAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("SettlementAccount");
+
+                    b.Navigation("TargetAccount");
                 });
 
             modelBuilder.Entity("RomaERP.Domain.Accounting.DepreciationRun", b =>

@@ -23,6 +23,9 @@ public static class AccountingConstants
     public const string SalesDebitNoteReference = "SALES-DEBIT-NOTE";
     public const string DepreciationExpenseAccountCode = "5400";
     public const string DepreciationRunReference = "DEPRECIATION-RUN";
+    public const string PrepaidExpensesAccountCode = "1140";
+    public const string UnearnedRevenueAccountCode = "2140";
+    public const string DeferralReference = "DEFERRAL";
     public const string FxGainAccountCode = "4210";
     public const string FxLossAccountCode = "5450";
     public const string GosiPayableAccountCode = "2170";

@@ -2798,3 +2798,18 @@ export interface OverdueCustomer {
   invoices: OverdueInvoice[];
   lastFollowUp: CustomerFollowUp | null;
 }
+
+export interface DeferralSchedule {
+  id: string;
+  kind: number; // 0 = prepaid expense, 1 = deferred revenue
+  description: string;
+  totalAmount: number;
+  startMonth: string;
+  months: number;
+  recognizedMonths: number;
+  recognizedAmount: number;
+  remaining: number;
+  monthlyAmount: number;
+  targetAccountName: string;
+  status: number; // 0 = active, 1 = completed, 2 = cancelled
+}

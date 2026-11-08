@@ -53,6 +53,7 @@ import Budgets from "./pages/accounting/Budgets";
 import BankFeedReconciliation from "./pages/accounting/BankFeedReconciliation";
 import FixedAssets from "./pages/accounting/FixedAssets";
 import DepreciationRuns from "./pages/accounting/DepreciationRuns";
+import Deferrals from "./pages/accounting/Deferrals";
 import Customers from "./pages/sales/Customers";
 import SalesInvoices from "./pages/sales/SalesInvoices";
 import SalesNotes from "./pages/sales/SalesNotes";
@@ -235,6 +236,7 @@ export default function App() {
       <Route path="/accounting/budgets" element={<ProtectedRoute><Budgets /></ProtectedRoute>} />
       <Route path="/accounting/bank-feed-reconciliation" element={<ProtectedRoute><BankFeedReconciliation /></ProtectedRoute>} />
       <Route path="/accounting/fixed-assets" element={<ProtectedRoute><FixedAssets /></ProtectedRoute>} />
+      <Route path="/accounting/deferrals" element={<ProtectedRoute><Deferrals /></ProtectedRoute>} />
       <Route path="/accounting/depreciation-runs" element={<ProtectedRoute><DepreciationRuns /></ProtectedRoute>} />
       <Route path="/sales/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
       <Route path="/sales/customers/new" element={<ProtectedRoute><PartyForm kind="customer" /></ProtectedRoute>} />

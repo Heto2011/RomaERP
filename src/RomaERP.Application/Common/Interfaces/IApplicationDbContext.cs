@@ -26,6 +26,7 @@ public interface IApplicationDbContext
     DbSet<JournalEntryLine> JournalEntryLines { get; }
     DbSet<FixedAsset> FixedAssets { get; }
     DbSet<DepreciationRun> DepreciationRuns { get; }
+    DbSet<DeferralSchedule> DeferralSchedules { get; }
     DbSet<DepreciationRunLine> DepreciationRunLines { get; }
 
     DbSet<Department> Departments { get; }

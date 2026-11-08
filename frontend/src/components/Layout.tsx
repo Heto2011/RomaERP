@@ -209,6 +209,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/accounting/bank-feed-reconciliation", label: t.nav.bankFeedReconciliation, icon: <IconRefresh /> },
         { to: "/accounting/fixed-assets", label: t.nav.fixedAssets, icon: <IconBox /> },
         { to: "/accounting/depreciation-runs", label: t.nav.depreciationRuns, icon: <IconTrendDown /> },
+        { to: "/accounting/deferrals", label: t.nav.deferrals, icon: <IconTrendDown /> },
       ],
     },
     {
