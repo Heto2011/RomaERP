@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import {
   AccountsApi,
@@ -12,6 +12,7 @@ import {
 } from "../api/services";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
+import { useAuth } from "../context/AuthContext";
 import {
   IconChat,
   IconList,
@@ -36,6 +37,98 @@ function addDays(dateStr: string, days: number) {
   return d.toISOString().slice(0, 10);
 }
 
+
+interface Bucket {
+  label: string;
+  value: number;
+  tone: "ok" | "warn" | "late" | "bad";
+}
+
+function useCountUp(target: number, ms = 900) {
+  const [value, setValue] = useState(0);
+  useEffect(() => {
+    if (typeof window === "undefined" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setValue(target);
+      return;
+    }
+    let raf = 0;
+    const start = performance.now();
+    const tick = (now: number) => {
+      const p = Math.min(1, (now - start) / ms);
+      setValue(target * (1 - Math.pow(1 - p, 3)));
+      if (p < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [target, ms]);
+  return value;
+}
+
+function Delta({ current, previous, points }: { current: number; previous: number; points?: boolean }) {
+  if (!previous && !points) return null;
+  const diff = points ? current - previous : ((current - previous) / Math.abs(previous)) * 100;
+  if (!Number.isFinite(diff)) return null;
+  const up = diff >= 0;
+  return (
+    <span className={`d2-delta ${up ? "up" : "down"}`}>
+      {up ? "▲" : "▼"} {Math.abs(diff).toFixed(1)}
+      {points ? "pt" : "%"}
+    </span>
+  );
+}
+
+function Kpi({ icon, label, value, suffix, tone, delta, delay }: { icon: ReactNode; label: string; value: number; suffix?: string; tone?: "good" | "bad"; delta?: ReactNode; delay: number }) {
+  const shown = useCountUp(value);
+  const decimals = suffix === "%" ? 1 : 0;
+  return (
+    <div className={`d2-kpi ${tone ?? ""}`} style={{ animationDelay: `${delay}ms` }}>
+      <div className="d2-kpi-top">
+        <span className="d2-kpi-icon">{icon}</span>
+        {delta}
+      </div>
+      <div className="d2-kpi-value">
+        {shown.toLocaleString(undefined, { maximumFractionDigits: decimals, minimumFractionDigits: decimals })}
+        {suffix ? <small>{suffix}</small> : null}
+      </div>
+      <div className="d2-kpi-label">{label}</div>
+    </div>
+  );
+}
+
+function Ring({ score }: { score: number | null }) {
+  const r = 52;
+  const c = 2 * Math.PI * r;
+  const v = score ?? 0;
+  const tone = v >= 70 ? "ok" : v >= 40 ? "warn" : "bad";
+  return (
+    <svg className={`d2-ring ${tone}`} viewBox="0 0 128 128" role="img" aria-label={String(score ?? "")}>
+      <circle className="d2-ring-track" cx="64" cy="64" r={r} />
+      <circle className="d2-ring-bar" cx="64" cy="64" r={r} strokeDasharray={c} strokeDashoffset={c - (c * v) / 100} />
+      <text x="64" y="72" textAnchor="middle" className="d2-ring-text">
+        {score ?? "…"}
+      </text>
+    </svg>
+  );
+}
+
+function BarChart({ items, empty }: { items: { label: string; value: number; tone?: Bucket["tone"] }[]; empty: string }) {
+  const max = Math.max(...items.map((i) => i.value), 0);
+  if (max <= 0) return <div className="d2-empty">{empty}</div>;
+  return (
+    <div className="d2-bars">
+      {items.map((i, idx) => (
+        <div key={i.label} className="d2-bar-col" title={`${i.label}: ${i.value.toLocaleString()}`}>
+          <span className="d2-bar-val">{i.value > 0 ? Math.round(i.value).toLocaleString() : ""}</span>
+          <div className="d2-bar-track">
+            <div className={`d2-bar ${i.tone ?? "brand"}`} style={{ height: `${Math.max(3, (i.value / max) * 100)}%`, animationDelay: `${idx * 70}ms` }} />
+          </div>
+          <span className="d2-bar-label">{i.label}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 interface Alert {
   to: string;
   badge: string;
@@ -44,7 +137,7 @@ interface Alert {
 }
 
 export default function Dashboard() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [qaQuestion, setQaQuestion] = useState("");
   const [qaAnswer, setQaAnswer] = useState<string | null>(null);
   const [qaError, setQaError] = useState<string | null>(null);
@@ -67,6 +160,14 @@ export default function Dashboard() {
   const [collectionRate, setCollectionRate] = useState(0);
   const [inventoryValue, setInventoryValue] = useState(0);
   const [healthScore, setHealthScore] = useState<number | null>(null);
+  const [monthRevenue, setMonthRevenue] = useState(0);
+  const [priorRevenue, setPriorRevenue] = useState(0);
+  const [priorProfit, setPriorProfit] = useState(0);
+  const [priorMarginPct, setPriorMarginPct] = useState(0);
+  const [monthlySales, setMonthlySales] = useState<{ key: string; value: number }[]>([]);
+  const [arBuckets, setArBuckets] = useState<number[]>([0, 0, 0, 0]);
+  const [apBuckets, setApBuckets] = useState<number[]>([0, 0, 0, 0]);
+  const { user } = useAuth();
   const [smartAlerts, setSmartAlerts] = useState<Alert[]>([]);
 
   useEffect(() => {
@@ -130,6 +231,27 @@ export default function Dashboard() {
       const monthInvoicePaid = monthInvoices.reduce((sum, i) => sum + i.paidAmount, 0);
       const collection = monthInvoiceTotal > 0 ? (monthInvoicePaid / monthInvoiceTotal) * 100 : 100;
 
+      setMonthRevenue(current.totalRevenue);
+      setPriorRevenue(prior.totalRevenue);
+      setPriorProfit(prior.netIncome);
+      setPriorMarginPct(priorMargin);
+      const buckets = (rows: { current: number; days31To60: number; days61To90: number; over90Days: number }[]) =>
+        rows.reduce((acc, r) => [acc[0] + r.current, acc[1] + r.days31To60, acc[2] + r.days61To90, acc[3] + r.over90Days], [0, 0, 0, 0]);
+      setArBuckets(buckets(arAgingRes.data));
+      setApBuckets(buckets(apAgingRes.data));
+      const monthTotals = new Map<string, number>();
+      for (const inv of invoicesRes.data) {
+        const key = inv.invoiceDate.slice(0, 7);
+        monthTotals.set(key, (monthTotals.get(key) ?? 0) + inv.totalAmount);
+      }
+      const now = new Date();
+      setMonthlySales(
+        Array.from({ length: 6 }, (_, i) => {
+          const d = new Date(now.getFullYear(), now.getMonth() - (5 - i), 1);
+          const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+          return { key, value: monthTotals.get(key) ?? 0 };
+        })
+      );
       setNetProfit(current.netIncome);
       setProfitMargin(currentMargin);
       setCogs(currentCogs);
@@ -213,175 +335,157 @@ export default function Dashboard() {
   const salesVsPurchasesMax = Math.max(totalSales, totalPurchases, 1);
   const arVsApMax = Math.max(arOutstanding, apOutstanding, 1);
 
-  const severityDot: Record<Alert["severity"], string> = { 1: "🔴", 2: "🟠", 3: "🟡" };
+  const severityTone: Record<Alert["severity"], string> = { 1: "bad", 2: "warn", 3: "info" };
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? t.dashboard.greetingMorning : t.dashboard.greetingEvening;
+  const firstName = (user?.fullName ?? "").split(" ")[0];
+  const today = new Date().toLocaleDateString(lang === "ar" ? "ar" : "en", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const monthLabels = useMemo(
+    () => monthlySales.map((m) => ({ label: new Date(`${m.key}-01T12:00:00`).toLocaleDateString(lang === "ar" ? "ar" : "en", { month: "short" }), value: m.value })),
+    [monthlySales, lang]
+  );
+  const bucketLabels = [t.dashboard.bucketCurrent, t.dashboard.bucket31, t.dashboard.bucket61, t.dashboard.bucket90];
+  const tones: Bucket["tone"][] = ["ok", "warn", "late", "bad"];
+  const toBuckets = (values: number[]) => values.map((value, i) => ({ label: bucketLabels[i], value, tone: tones[i] }));
 
   return (
-    <div>
-      <div className="page-header">
-        <h1>{t.dashboard.title}</h1>
-      </div>
+    <div className="d2">
+      <section className="d2-hero">
+        <div className="d2-hero-text">
+          <div className="d2-date">{today}</div>
+          <h1>
+            {greeting}
+            {firstName ? `، ${firstName}` : ""}
+          </h1>
+          <p>{t.dashboard.greetingSub}</p>
+          <form onSubmit={handleAskQuestion} className="d2-ask">
+            <input
+              type="text"
+              value={qaQuestion}
+              onChange={(e) => setQaQuestion(e.target.value)}
+              placeholder={t.dashboard.askQuestionPlaceholder}
+              disabled={qaLoading}
+              aria-label={t.dashboard.askQuestionTitle}
+            />
+            <button type="submit" disabled={qaLoading || !qaQuestion.trim()}>
+              {qaLoading ? t.common.loading : t.dashboard.askQuestionSubmit}
+            </button>
+          </form>
+          {qaError && <div className="d2-ask-note bad">{qaError}</div>}
+          {qaAnswer && <div className="d2-ask-note">{qaAnswer}</div>}
+        </div>
+        <div className="d2-hero-health">
+          <Ring score={healthScore} />
+          <div className="d2-hero-health-label">{t.dashboard.healthScore}</div>
+          <div className="d2-hero-health-note">{t.dashboard.healthScoreNote}</div>
+        </div>
+      </section>
 
-      <div className="card" style={{ marginBottom: 20 }}>
-        <div style={{ fontWeight: 700, marginBottom: 8 }}>💬 {t.dashboard.askQuestionTitle}</div>
-        <form onSubmit={handleAskQuestion} style={{ display: "flex", gap: 8 }}>
-          <input
-            type="text"
-            value={qaQuestion}
-            onChange={(e) => setQaQuestion(e.target.value)}
-            placeholder={t.dashboard.askQuestionPlaceholder}
-            style={{ flex: 1 }}
-            disabled={qaLoading}
-          />
-          <button className="btn btn-primary" type="submit" disabled={qaLoading || !qaQuestion.trim()}>
-            {qaLoading ? t.common.loading : t.dashboard.askQuestionSubmit}
-          </button>
-        </form>
-        {qaError && <div className="alert-error" style={{ marginTop: 10 }}>{qaError}</div>}
-        {qaAnswer && <div style={{ marginTop: 10, padding: 12, background: "var(--color-bg-subtle, #f6f4ee)", borderRadius: 8, lineHeight: 1.8 }}>{qaAnswer}</div>}
-      </div>
+      <section className="d2-kpis">
+        <Kpi delay={0} icon={<IconList />} label={t.dashboard.monthRevenue} value={monthRevenue} delta={<Delta current={monthRevenue} previous={priorRevenue} />} />
+        <Kpi delay={60} icon={<IconBook />} label={t.dashboard.netProfit} value={netProfit} tone={netProfit >= 0 ? "good" : "bad"} delta={<Delta current={netProfit} previous={priorProfit} />} />
+        <Kpi delay={120} icon={<IconChat />} label={t.dashboard.profitMargin} value={profitMargin} suffix="%" delta={<Delta current={profitMargin} previous={priorMarginPct} points />} />
+        <Kpi delay={180} icon={<IconCart />} label={t.dashboard.availableLiquidity} value={availableLiquidity} tone={cashFlowNet >= 0 ? "good" : "bad"} delta={<span className={`d2-delta ${cashFlowNet >= 0 ? "up" : "down"}`}>{cashFlowNet >= 0 ? "▲" : "▼"} {Math.abs(cashFlowNet).toLocaleString()}</span>} />
+      </section>
 
-      <div className="dash-app-grid">
-        {quickLinks.map((item) => (
-          <Link key={item.to} to={item.to} className="dash-app-tile">
-            <span className="dash-app-tile-icon">{item.icon}</span>
-            <span>{item.label}</span>
-          </Link>
-        ))}
-      </div>
-
-      <div className="dash-hero-grid" style={{ marginTop: 24 }}>
-        <div className="stat-grid" style={{ flex: 1 }}>
-          <div className="stat-card">
-            <div className="label">{t.dashboard.totalSales}</div>
-            <div className="value">{totalSales.toLocaleString()}</div>
+      <section className="d2-grid">
+        <div className="d2-panel d2-span-2">
+          <header>
+            <h3>{t.dashboard.sales6Months}</h3>
+          </header>
+          <BarChart items={monthLabels} empty={t.dashboard.noChartData} />
+        </div>
+        <div className="d2-panel">
+          <header>
+            <h3>🚨 {t.dashboard.needsAttention}</h3>
+          </header>
+          <div className="d2-alerts">
+            {smartAlerts.length === 0 && <div className="d2-alert clear">✓ {t.dashboard.allClear}</div>}
+            {smartAlerts.map((a) => (
+              <Link key={a.to + a.label} to={a.to} className={`d2-alert ${severityTone[a.severity]}`}>
+                <span className="d2-alert-count">{a.badge}</span>
+                <span className="d2-alert-label">{a.label}</span>
+                <span className="d2-alert-go">›</span>
+              </Link>
+            ))}
           </div>
-          <div className="stat-card">
-            <div className="label">{t.dashboard.netProfit}</div>
-            <div className="value" style={{ color: netProfit >= 0 ? "var(--color-success)" : "var(--color-danger)" }}>
-              {netProfit.toLocaleString()}
+        </div>
+
+        <div className="d2-panel">
+          <header>
+            <h3>{t.dashboard.receivablesAging}</h3>
+            <span className="d2-panel-total">{arBuckets.reduce((a, b) => a + b, 0).toLocaleString()}</span>
+          </header>
+          <BarChart items={toBuckets(arBuckets)} empty={t.dashboard.noChartData} />
+        </div>
+        <div className="d2-panel">
+          <header>
+            <h3>{t.dashboard.payablesAging}</h3>
+            <span className="d2-panel-total">{apBuckets.reduce((a, b) => a + b, 0).toLocaleString()}</span>
+          </header>
+          <BarChart items={toBuckets(apBuckets)} empty={t.dashboard.noChartData} />
+        </div>
+        <div className="d2-panel">
+          <header>
+            <h3>{t.dashboard.salesVsPurchases}</h3>
+          </header>
+          <div className="d2-hbars">
+            <div className="d2-hbar">
+              <span>{t.dashboard.totalSales}</span>
+              <div className="d2-hbar-track"><div className="d2-hbar-fill brand" style={{ width: `${(totalSales / salesVsPurchasesMax) * 100}%` }} /></div>
+              <b>{totalSales.toLocaleString()}</b>
+            </div>
+            <div className="d2-hbar">
+              <span>{t.dashboard.totalPurchases}</span>
+              <div className="d2-hbar-track"><div className="d2-hbar-fill gold" style={{ width: `${(totalPurchases / salesVsPurchasesMax) * 100}%` }} /></div>
+              <b>{totalPurchases.toLocaleString()}</b>
+            </div>
+            <div className="d2-hbar">
+              <span>{t.dashboard.arOutstanding}</span>
+              <div className="d2-hbar-track"><div className="d2-hbar-fill brand" style={{ width: `${(arOutstanding / arVsApMax) * 100}%` }} /></div>
+              <b>{arOutstanding.toLocaleString()}</b>
+            </div>
+            <div className="d2-hbar">
+              <span>{t.dashboard.apOutstanding}</span>
+              <div className="d2-hbar-track"><div className="d2-hbar-fill gold" style={{ width: `${(apOutstanding / arVsApMax) * 100}%` }} /></div>
+              <b>{apOutstanding.toLocaleString()}</b>
             </div>
           </div>
-          <div className="stat-card">
-            <div className="label">{t.dashboard.profitMargin}</div>
-            <div className="value">{profitMargin.toFixed(1)}%</div>
-          </div>
-          <div className="stat-card">
-            <div className="label">{t.dashboard.cogsLabel}</div>
-            <div className="value">{cogs.toLocaleString()}</div>
-          </div>
         </div>
-        <div className="dash-health-card">
-          <div className="dash-health-score">{healthScore ?? "…"}</div>
-          <div className="dash-health-label">{t.dashboard.healthScore}</div>
-          <div className="dash-health-note">{t.dashboard.healthScoreNote}</div>
-        </div>
-      </div>
+      </section>
 
-      <div className="stat-grid" style={{ marginTop: 16 }}>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.cashFlowNet}</div>
-          <div className="value" style={{ color: cashFlowNet >= 0 ? "var(--color-success)" : "var(--color-danger)" }}>
-            {cashFlowNet.toLocaleString()}
-          </div>
+      <section className="d2-section">
+        <h3>{t.dashboard.quickActions}</h3>
+        <div className="d2-quick">
+          {quickLinks.map((item, i) => (
+            <Link key={item.to} to={item.to} className="d2-quick-tile" style={{ animationDelay: `${i * 40}ms` }}>
+              <span className="d2-quick-icon">{item.icon}</span>
+              <span>{item.label}</span>
+            </Link>
+          ))}
         </div>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.availableLiquidity}</div>
-          <div className="value">{availableLiquidity.toLocaleString()}</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.breakEvenLabel}</div>
-          <div className="value">{breakEvenSales.toLocaleString()}</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.collectionRate}</div>
-          <div className="value">{collectionRate.toFixed(1)}%</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.inventoryValue}</div>
-          <div className="value">{inventoryValue.toLocaleString()}</div>
-        </div>
-      </div>
+      </section>
 
-      <h3 style={{ marginTop: 24 }}>🚨 {t.dashboard.needsAttention}</h3>
-      <div className="dash-alerts">
-        {smartAlerts.length === 0 && <div className="dash-alert dash-alert-clear">✓ {t.dashboard.allClear}</div>}
-        {smartAlerts.map((a) => (
-          <Link key={a.to + a.label} to={a.to} className="dash-alert">
-            <span>{severityDot[a.severity]}</span>
-            <span className="dash-alert-count">{a.badge}</span>
-            <span>{a.label}</span>
-          </Link>
-        ))}
-      </div>
-
-      <div className="stat-grid" style={{ marginTop: 24 }}>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.accountsCount}</div>
-          <div className="value">{accountsCount}</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.employeesCount}</div>
-          <div className="value">{employeesCount}</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.totalDebit}</div>
-          <div className="value">{totalDebit.toLocaleString()}</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.totalCredit}</div>
-          <div className="value">{totalCredit.toLocaleString()}</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.totalPurchases}</div>
-          <div className="value">{totalPurchases.toLocaleString()}</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.arOutstanding}</div>
-          <div className="value">{arOutstanding.toLocaleString()}</div>
-        </div>
-        <div className="stat-card">
-          <div className="label">{t.dashboard.apOutstanding}</div>
-          <div className="value">{apOutstanding.toLocaleString()}</div>
-        </div>
-      </div>
-
-      <h3 style={{ marginTop: 24 }}>{t.dashboard.financialSnapshot}</h3>
-      <div className="dash-snapshot-grid">
-        <div className="card">
-          <div className="dash-snapshot-title">{t.dashboard.salesVsPurchases}</div>
-          <div className="dash-bar-row">
-            <span className="dash-bar-label">{t.dashboard.totalSales}</span>
-            <div className="dash-bar-track">
-              <div className="dash-bar-fill dash-bar-primary" style={{ width: `${(totalSales / salesVsPurchasesMax) * 100}%` }} />
+      <section className="d2-section">
+        <h3>{t.dashboard.financialSnapshot}</h3>
+        <div className="d2-facts">
+          {[
+            [t.dashboard.cogsLabel, cogs.toLocaleString()],
+            [t.dashboard.breakEvenLabel, breakEvenSales.toLocaleString()],
+            [t.dashboard.collectionRate, `${collectionRate.toFixed(1)}%`],
+            [t.dashboard.inventoryValue, inventoryValue.toLocaleString()],
+            [t.dashboard.accountsCount, String(accountsCount)],
+            [t.dashboard.employeesCount, String(employeesCount)],
+            [t.dashboard.totalDebit, totalDebit.toLocaleString()],
+            [t.dashboard.totalCredit, totalCredit.toLocaleString()],
+          ].map(([label, value]) => (
+            <div key={label} className="d2-fact">
+              <span>{label}</span>
+              <b>{value}</b>
             </div>
-            <span className="dash-bar-value">{totalSales.toLocaleString()}</span>
-          </div>
-          <div className="dash-bar-row">
-            <span className="dash-bar-label">{t.dashboard.totalPurchases}</span>
-            <div className="dash-bar-track">
-              <div className="dash-bar-fill dash-bar-accent" style={{ width: `${(totalPurchases / salesVsPurchasesMax) * 100}%` }} />
-            </div>
-            <span className="dash-bar-value">{totalPurchases.toLocaleString()}</span>
-          </div>
+          ))}
         </div>
-        <div className="card">
-          <div className="dash-snapshot-title">{t.dashboard.arVsAp}</div>
-          <div className="dash-bar-row">
-            <span className="dash-bar-label">{t.dashboard.arOutstanding}</span>
-            <div className="dash-bar-track">
-              <div className="dash-bar-fill dash-bar-primary" style={{ width: `${(arOutstanding / arVsApMax) * 100}%` }} />
-            </div>
-            <span className="dash-bar-value">{arOutstanding.toLocaleString()}</span>
-          </div>
-          <div className="dash-bar-row">
-            <span className="dash-bar-label">{t.dashboard.apOutstanding}</span>
-            <div className="dash-bar-track">
-              <div className="dash-bar-fill dash-bar-accent" style={{ width: `${(apOutstanding / arVsApMax) * 100}%` }} />
-            </div>
-            <span className="dash-bar-value">{apOutstanding.toLocaleString()}</span>
-          </div>
-        </div>
-      </div>
+      </section>
     </div>
   );
 }
