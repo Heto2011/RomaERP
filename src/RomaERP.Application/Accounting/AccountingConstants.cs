@@ -18,6 +18,7 @@ public static class AccountingConstants
     public const string OutputVatAccountCode = "2161";
     public const string InputVatAccountCode = "1180";
     public const string SalesInvoiceReference = "SALES-INVOICE";
+    public const string DailySalesReference = "DAILY-SALES";
     public const string PurchaseInvoiceReference = "PURCHASE-INVOICE";
     public const string SalesCreditNoteReference = "SALES-CREDIT-NOTE";
     public const string SalesDebitNoteReference = "SALES-DEBIT-NOTE";

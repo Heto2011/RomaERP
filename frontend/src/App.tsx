@@ -90,6 +90,7 @@ import WasteAnalysisPage from "./pages/inventory/WasteAnalysis";
 import HiddenProfitPage from "./pages/accounting/HiddenProfit";
 import ExecutiveBriefPage from "./pages/accounting/ExecutiveBrief";
 import GeneralLedgerPage from "./pages/accounting/GeneralLedger";
+import DailySalesPage from "./pages/accounting/DailySales";
 import PartnerStatementPage from "./pages/accounting/PartnerStatement";
 import ComparisonToolPage from "./pages/accounting/ComparisonTool";
 import SmartPricingPage from "./pages/accounting/SmartPricing";
@@ -333,6 +334,7 @@ export default function App() {
       <Route path="/inventory-portal/reports/recipe-cost" element={<InventoryPortalRoute><RecipeCostPage /></InventoryPortalRoute>} />
       <Route path="/inventory-portal/reports/waste-analysis" element={<InventoryPortalRoute><WasteAnalysisPage /></InventoryPortalRoute>} />
       <Route path="/accounting/hidden-profit" element={<ProtectedRoute><HiddenProfitPage /></ProtectedRoute>} />
+      <Route path="/accounting/daily-sales" element={<ProtectedRoute><DailySalesPage /></ProtectedRoute>} />
       <Route path="/accounting/general-ledger" element={<ProtectedRoute><GeneralLedgerPage /></ProtectedRoute>} />
       <Route path="/sales/statement" element={<ProtectedRoute><PartnerStatementPage kind="customer" /></ProtectedRoute>} />
       <Route path="/purchasing/statement" element={<ProtectedRoute><PartnerStatementPage kind="vendor" /></ProtectedRoute>} />

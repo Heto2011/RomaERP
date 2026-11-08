@@ -2750,3 +2750,16 @@ export interface PartnerStatement {
   totalCredit: number;
   closingBalance: number;
 }
+
+export interface DailySalesEntry {
+  journalEntryId: string;
+  entryNumber: string;
+  salesDate: string;
+  label: string | null;
+  cashAmount: number;
+  cardAmount: number;
+  netSales: number;
+  vatAmount: number;
+  total: number;
+  status: string;
+}
