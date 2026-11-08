@@ -2254,3 +2254,17 @@ textarea:focus {
 @media (prefers-reduced-motion: reduce) {
   .d2 *, .d2-hero, .d2-kpi, .d2-panel, .d2-quick-tile { animation: none !important; transition: none !important; }
 }
+
+/* Hover dropdown: panel floats over the page instead of pushing it down. */
+.topnav-menu { position: relative; }
+.topnav-menu > .topnav-panel {
+  position: absolute;
+  inset-inline: 0;
+  top: 100%;
+  z-index: 60;
+  max-height: 70vh;
+  overflow-y: auto;
+  border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  animation: d2-rise 0.16s ease both;
+}

@@ -33,7 +33,6 @@ import {
   IconSwap,
   IconEdit,
   IconShield,
-  IconChevron,
   IconSun,
   IconMoon,
   IconDollar,
@@ -391,16 +390,16 @@ export default function Layout({ children }: { children: ReactNode }) {
             </button>
           </div>
         </div>
-        <div ref={navRef}>
+        <div ref={navRef} className="topnav-menu" onPointerLeave={(e) => { if (e.pointerType === "mouse") setOpenDropdown(null); }}>
           <nav className="topnav-links">
             {links.map((group) => (
               <button
                 key={group.section}
                 className={"topnav-link" + (activeSection === group.section ? " active" : "")}
+                onPointerEnter={(e) => { if (e.pointerType === "mouse") setOpenDropdown(group.section); }}
                 onClick={() => setOpenDropdown((cur) => (cur === group.section ? null : group.section))}
               >
                 <span>{group.section}</span>
-                <IconChevron open={openDropdown === group.section} />
               </button>
             ))}
           </nav>
