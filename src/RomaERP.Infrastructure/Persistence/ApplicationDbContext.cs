@@ -105,6 +105,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
 
     public DbSet<Customer> Customers => Set<Customer>();
     public DbSet<DeferralSchedule> DeferralSchedules => Set<DeferralSchedule>();
+    public DbSet<Loan> Loans => Set<Loan>();
+    public DbSet<LoanInstallment> LoanInstallments => Set<LoanInstallment>();
     public DbSet<CustomerFollowUp> CustomerFollowUps => Set<CustomerFollowUp>();
     public DbSet<SalesInvoice> SalesInvoices => Set<SalesInvoice>();
     public DbSet<SalesInvoiceLine> SalesInvoiceLines => Set<SalesInvoiceLine>();

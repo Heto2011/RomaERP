@@ -26,6 +26,8 @@ public static class AccountingConstants
     public const string PrepaidExpensesAccountCode = "1140";
     public const string UnearnedRevenueAccountCode = "2140";
     public const string DeferralReference = "DEFERRAL";
+    public const string LoanReference = "LOAN";
+    public const string LoanInterestExpenseAccountCode = "5600";
     public const string FxGainAccountCode = "4210";
     public const string FxLossAccountCode = "5450";
     public const string GosiPayableAccountCode = "2170";

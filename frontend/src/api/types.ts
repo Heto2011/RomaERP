@@ -2813,3 +2813,31 @@ export interface DeferralSchedule {
   targetAccountName: string;
   status: number; // 0 = active, 1 = completed, 2 = cancelled
 }
+
+export interface LoanInstallment {
+  id: string;
+  number: number;
+  dueDate: string;
+  principalPart: number;
+  interestPart: number;
+  total: number;
+  isPaid: boolean;
+  paidDate: string | null;
+}
+
+export interface Loan {
+  id: string;
+  description: string;
+  lender: string | null;
+  principal: number;
+  annualInterestPercent: number;
+  termMonths: number;
+  monthlyPayment: number;
+  remaining: number;
+  paidInstallments: number;
+  nextDueDate: string | null;
+  nextDueAmount: number | null;
+  nextIsOverdue: boolean;
+  status: number; // 0 = active, 1 = paid off
+  installments: LoanInstallment[];
+}

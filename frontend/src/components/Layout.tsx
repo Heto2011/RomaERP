@@ -210,6 +210,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/accounting/fixed-assets", label: t.nav.fixedAssets, icon: <IconBox /> },
         { to: "/accounting/depreciation-runs", label: t.nav.depreciationRuns, icon: <IconTrendDown /> },
         { to: "/accounting/deferrals", label: t.nav.deferrals, icon: <IconTrendDown /> },
+        { to: "/accounting/loans", label: t.nav.loans, icon: <IconTrendDown /> },
       ],
     },
     {

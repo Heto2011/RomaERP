@@ -257,3 +257,34 @@ public class DeferralScheduleConfiguration : IEntityTypeConfiguration<DeferralSc
         builder.HasQueryFilter(d => !d.IsDeleted);
     }
 }
+
+public class LoanConfiguration : IEntityTypeConfiguration<Loan>
+{
+    public void Configure(EntityTypeBuilder<Loan> builder)
+    {
+        builder.Property(l => l.Description).HasMaxLength(200).IsRequired();
+        builder.Property(l => l.Lender).HasMaxLength(200);
+        builder.Property(l => l.Principal).HasPrecision(18, 2);
+        builder.Property(l => l.AnnualInterestPercent).HasPrecision(9, 4);
+        builder.HasIndex(l => l.Status);
+        builder.HasOne(l => l.LoanAccount).WithMany().HasForeignKey(l => l.LoanAccountId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(l => l.BankAccount).WithMany().HasForeignKey(l => l.BankAccountId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(l => l.InterestExpenseAccount).WithMany().HasForeignKey(l => l.InterestExpenseAccountId).OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasQueryFilter(l => !l.IsDeleted);
+    }
+}
+
+public class LoanInstallmentConfiguration : IEntityTypeConfiguration<LoanInstallment>
+{
+    public void Configure(EntityTypeBuilder<LoanInstallment> builder)
+    {
+        builder.Property(i => i.PrincipalPart).HasPrecision(18, 2);
+        builder.Property(i => i.InterestPart).HasPrecision(18, 2);
+        builder.Property(i => i.Total).HasPrecision(18, 2);
+        builder.HasIndex(i => new { i.LoanId, i.Number }).IsUnique();
+        builder.HasOne(i => i.Loan).WithMany(l => l.Installments).HasForeignKey(i => i.LoanId).OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasQueryFilter(i => !i.IsDeleted);
+    }
+}

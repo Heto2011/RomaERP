@@ -246,6 +246,23 @@ export const DeferralsApi = {
   cancel: (id: string) => apiClient.post(`/deferrals/${id}/cancel`),
 };
 
+export const LoansApi = {
+  getAll: () => apiClient.get<import("./types").Loan[]>("/loans"),
+  create: (data: {
+    description: string;
+    lender?: string;
+    principal: number;
+    annualInterestPercent: number;
+    termMonths: number;
+    disbursementDate: string;
+    firstInstallmentDate: string;
+    loanAccountId: string;
+    bankAccountId: string;
+  }) => apiClient.post("/loans", data),
+  payInstallment: (installmentId: string, paymentDate: string) =>
+    apiClient.post(`/loans/installments/${installmentId}/pay`, { paymentDate }),
+};
+
 export const JournalEntriesApi = {
   getAll: () => apiClient.get<JournalEntry[]>("/journalentries"),
   getById: (id: string) => apiClient.get<JournalEntry>(`/journalentries/${id}`),

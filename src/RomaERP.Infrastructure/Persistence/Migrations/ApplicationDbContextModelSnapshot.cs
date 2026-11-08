@@ -789,6 +789,134 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.ToTable("JournalEntryLines");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Accounting.Loan", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("AnnualInterestPercent")
+                        .HasPrecision(9, 4)
+                        .HasColumnType("decimal(9,4)");
+
+                    b.Property<Guid>("BankAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime>("DisbursementDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("FirstInstallmentDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("InterestExpenseAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Lender")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("LoanAccountId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Principal")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TermMonths")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankAccountId");
+
+                    b.HasIndex("InterestExpenseAccountId");
+
+                    b.HasIndex("LoanAccountId");
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("Loans");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Accounting.LoanInstallment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("InterestPart")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPaid")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("LoanId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Number")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("PaidDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("PrincipalPart")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal>("Total")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoanId", "Number")
+                        .IsUnique();
+
+                    b.ToTable("LoanInstallments");
+                });
+
             modelBuilder.Entity("RomaERP.Domain.Accounting.ManualProfitEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5232,6 +5360,44 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Navigation("JournalEntry");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Accounting.Loan", b =>
+                {
+                    b.HasOne("RomaERP.Domain.Accounting.Account", "BankAccount")
+                        .WithMany()
+                        .HasForeignKey("BankAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RomaERP.Domain.Accounting.Account", "InterestExpenseAccount")
+                        .WithMany()
+                        .HasForeignKey("InterestExpenseAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RomaERP.Domain.Accounting.Account", "LoanAccount")
+                        .WithMany()
+                        .HasForeignKey("LoanAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BankAccount");
+
+                    b.Navigation("InterestExpenseAccount");
+
+                    b.Navigation("LoanAccount");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Accounting.LoanInstallment", b =>
+                {
+                    b.HasOne("RomaERP.Domain.Accounting.Loan", "Loan")
+                        .WithMany("Installments")
+                        .HasForeignKey("LoanId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Loan");
+                });
+
             modelBuilder.Entity("RomaERP.Domain.Assistant.BankStatementImport", b =>
                 {
                     b.HasOne("RomaERP.Domain.Accounting.Account", "BankAccount")
@@ -6125,6 +6291,11 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("RomaERP.Domain.Accounting.JournalEntry", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Accounting.Loan", b =>
+                {
+                    b.Navigation("Installments");
                 });
 
             modelBuilder.Entity("RomaERP.Domain.Assistant.BankStatementImport", b =>
