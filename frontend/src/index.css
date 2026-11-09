@@ -2268,3 +2268,76 @@ textarea:focus {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
   animation: d2-rise 0.16s ease both;
 }
+
+/* ---------- Design system v2: polish for every other page ---------- */
+
+/* Login and other auth cards: brand block centred, whatever the language. */
+.login-card > h1,
+.login-card > h1 + p {
+  text-align: center;
+}
+
+/* Tables follow the reading direction instead of always sticking to the right. */
+th,
+td {
+  text-align: start;
+}
+
+/* A table with nothing in it reads as a calm empty state, not a broken row. */
+td.text-muted[colspan] {
+  padding: 40px 12px;
+  text-align: center;
+  font-size: 14px;
+  background: transparent;
+}
+tr:hover td.text-muted[colspan] {
+  background: transparent;
+}
+
+/* Links styled as buttons keep the button look. */
+a.btn,
+a.btn:hover {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Filter bars: fields and their button sit on one baseline. */
+.card.toolbar,
+.toolbar {
+  align-items: flex-end;
+}
+
+/* Money columns line up digit under digit. */
+td,
+.d2-kpi,
+.card strong {
+  font-variant-numeric: tabular-nums;
+}
+
+/* Section cards stack with even breathing room. */
+.page-header + .card,
+.page-header + p + .card,
+.card + .card {
+  margin-top: 16px;
+}
+
+/* Badges: one calm pill style for statuses. */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .card {
+    padding: 14px;
+  }
+}
