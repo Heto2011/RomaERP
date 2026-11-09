@@ -18,3 +18,12 @@ export function makeSequentialCodeGenerator(existingCodes: string[], pad = 3) {
     return String(next).padStart(pad, "0");
   };
 }
+
+/**
+ * The next code for a form that opens empty: a fixed prefix plus the next number after the highest one already
+ * used (whatever prefix those carry), e.g. ["DEP-001", "7"] -> "DEP-008". The user can still type their own.
+ */
+export function nextPrefixedCode(existingCodes: string[], prefix: string, pad = 3) {
+  const next = makeSequentialCodeGenerator(existingCodes, pad)();
+  return `${prefix}${next}`;
+}

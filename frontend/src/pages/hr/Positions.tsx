@@ -3,6 +3,7 @@ import { DepartmentsApi, PositionsApi } from "../../api/services";
 import type { Department, Position } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { nextPrefixedCode } from "../../utils/sequentialCode";
 import { bilingualName } from "../../i18n/bilingual";
 
 export default function Positions() {
@@ -42,6 +43,7 @@ export default function Positions() {
 
   function startCreate() {
     resetForm();
+    setCode(nextPrefixedCode(positions.map((x) => x.code), "JOB-"));
     setShowForm(true);
   }
 

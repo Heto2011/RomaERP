@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { WarehousesApi } from "../../api/services";
 import type { Warehouse } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
+import { nextPrefixedCode } from "../../utils/sequentialCode";
 import { useLanguage } from "../../i18n/LanguageContext";
 
 export default function Warehouses() {
@@ -51,7 +52,7 @@ export default function Warehouses() {
     <div>
       <div className="page-header">
         <h1>{t.inventory.warehousesTitle}</h1>
-        <button className="btn" onClick={() => setShowForm((v) => !v)}>
+        <button className="btn" onClick={() => { if (!showForm) setCode(nextPrefixedCode(warehouses.map((w) => w.code), "WH-")); setShowForm((v) => !v); }}>
           {showForm ? t.common.cancel : t.inventory.newWarehouse}
         </button>
       </div>

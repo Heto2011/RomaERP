@@ -19,6 +19,7 @@ import { useLanguage } from "../../i18n/LanguageContext";
 import { COUNTRIES } from "../../utils/countries";
 import { bilingualName } from "../../i18n/bilingual";
 import { useAuth } from "../../context/AuthContext";
+import { nextPrefixedCode } from "../../utils/sequentialCode";
 import PasswordInput from "../../components/PasswordInput";
 
 export default function Employees() {
@@ -169,6 +170,7 @@ export default function Employees() {
 
   function startCreate() {
     resetForm();
+    setEmployeeCode(nextPrefixedCode(employees.map((e) => e.employeeCode), "EMP-"));
     setShowForm(true);
   }
 

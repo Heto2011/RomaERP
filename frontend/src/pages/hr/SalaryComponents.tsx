@@ -4,6 +4,7 @@ import { CalculationType, SalaryComponentType, type Account, type SalaryComponen
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
+import { nextPrefixedCode } from "../../utils/sequentialCode";
 import InfoTooltip from "../../components/InfoTooltip";
 
 export default function SalaryComponentsPage() {
@@ -72,7 +73,7 @@ export default function SalaryComponentsPage() {
     <div>
       <div className="page-header">
         <h1>{t.hr.salaryComponentsTitle}<InfoTooltip text={t.hr.salaryComponentsIntro} /></h1>
-        <button className="btn" onClick={() => setShowForm((v) => !v)}>
+        <button className="btn" onClick={() => { if (!showForm) setCode(nextPrefixedCode(components.map((c) => c.code), "SC-")); setShowForm((v) => !v); }}>
           {showForm ? t.common.cancel : t.hr.newSalaryComponent}
         </button>
       </div>

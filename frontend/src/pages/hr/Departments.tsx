@@ -3,6 +3,7 @@ import { DepartmentsApi } from "../../api/services";
 import type { Department } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import { nextPrefixedCode } from "../../utils/sequentialCode";
 import { bilingualName } from "../../i18n/bilingual";
 
 export default function Departments() {
@@ -35,6 +36,7 @@ export default function Departments() {
 
   function startCreate() {
     resetForm();
+    setCode(nextPrefixedCode(departments.map((d) => d.code), "DEP-"));
     setShowForm(true);
   }
 
