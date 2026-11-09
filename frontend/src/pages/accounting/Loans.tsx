@@ -96,6 +96,26 @@ export default function Loans() {
     }
   }
 
+  async function settle(loanId: string) {
+    if (!window.confirm(d.loanSettleConfirm)) return;
+    const date = window.prompt(d.loanPayDatePrompt, today());
+    if (!date) return;
+    const extra = window.prompt(d.loanSettleExtraPrompt, "0");
+    if (extra === null) return;
+    setBusy(true);
+    setError(null);
+    setMessage(null);
+    try {
+      await LoansApi.settle(loanId, date, Number(extra) || 0);
+      setMessage(d.loanSettled);
+      await load();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <div>
       <div className="page-header">
@@ -182,6 +202,11 @@ export default function Loans() {
             <button className="btn btn-secondary btn-sm" style={{ marginTop: 8 }} onClick={() => setOpen(open === l.id ? null : l.id)}>
               {open === l.id ? d.loanHideSchedule : d.loanShowSchedule}
             </button>
+            {l.status === 0 && (
+              <button className="btn btn-secondary btn-sm" style={{ marginTop: 8, marginInlineStart: 8 }} disabled={busy} onClick={() => settle(l.id)}>
+                {d.loanSettle}
+              </button>
+            )}
             {open === l.id && (
               <div style={{ overflowX: "auto", marginTop: 8 }}>
                 <table className="table">

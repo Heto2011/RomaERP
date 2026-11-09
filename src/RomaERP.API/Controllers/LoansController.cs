@@ -24,6 +24,9 @@ public class LoansController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<LoanDto>> Create(CreateLoanDto dto, CancellationToken ct) => Ok(await _service.CreateAsync(dto, ct));
 
+    [HttpPost("{id:guid}/settle")]
+    public async Task<ActionResult<LoanDto>> Settle(Guid id, SettleLoanDto dto, CancellationToken ct) => Ok(await _service.SettleAsync(id, dto, ct));
+
     [HttpPost("installments/{id:guid}/pay")]
     public async Task<ActionResult<LoanDto>> Pay(Guid id, PayInstallmentDto dto, CancellationToken ct) => Ok(await _service.PayInstallmentAsync(id, dto, ct));
 }

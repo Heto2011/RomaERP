@@ -83,6 +83,32 @@ public class LoanServiceTests
     }
 
     [Fact]
+    public async Task Settle_PaysTheRemainingPrincipalAtOnce_WithAnOptionalCharge_AndClosesTheLoan()
+    {
+        var (ctx, bank, loanAccount) = await SeedAsync();
+        var svc = new LoanService(ctx);
+        var created = await svc.CreateAsync(new CreateLoanDto
+        {
+            Description = "قرض", Principal = 6000, AnnualInterestPercent = 12, TermMonths = 6,
+            DisbursementDate = new DateTime(2026, 11, 1), FirstInstallmentDate = new DateTime(2026, 12, 1),
+            LoanAccountId = loanAccount.Id, BankAccountId = bank.Id
+        });
+        await svc.PayInstallmentAsync(created.Installments[0].Id, new PayInstallmentDto { PaymentDate = new DateTime(2026, 12, 1) });
+        var remainingPrincipal = (await svc.GetAllAsync()).Single().Remaining;
+
+        var settled = await svc.SettleAsync(created.Id, new SettleLoanDto { PaymentDate = new DateTime(2027, 1, 15), ExtraCharge = 25 });
+
+        Assert.Equal(LoanStatus.Paid, settled.Status);
+        Assert.Equal(0, settled.Remaining);
+        Assert.All(settled.Installments, i => Assert.True(i.IsPaid));
+        var entry = (await ctx.JournalEntries.Include(e => e.Lines).ToListAsync()).Last();
+        Assert.True(entry.IsBalanced);
+        Assert.Equal(remainingPrincipal + 25, entry.Lines.Single(l => l.AccountId == bank.Id).Credit);
+        Assert.Equal(remainingPrincipal, entry.Lines.Single(l => l.AccountId == loanAccount.Id).Debit);
+        await Assert.ThrowsAsync<ValidationAppException>(() => svc.SettleAsync(created.Id, new SettleLoanDto()));   // already closed
+    }
+
+    [Fact]
     public async Task Create_RejectsBadInput()
     {
         var (ctx, bank, loanAccount) = await SeedAsync();

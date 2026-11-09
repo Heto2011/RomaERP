@@ -168,6 +168,53 @@ public class LoanService : ILoanService
         return Map(loan);
     }
 
+    public async Task<LoanDto> SettleAsync(Guid loanId, SettleLoanDto dto, CancellationToken ct = default)
+    {
+        var loan = await _context.Loans.Include(l => l.Installments).FirstOrDefaultAsync(l => l.Id == loanId, ct)
+            ?? throw new NotFoundException(nameof(Loan), loanId);
+        var unpaid = loan.Installments.Where(i => !i.IsPaid).OrderBy(i => i.Number).ToList();
+        if (unpaid.Count == 0) throw new ValidationAppException("القرض ده اتسدد بالكامل قبل كده.");
+        if (dto.ExtraCharge < 0) throw new ValidationAppException("رسوم السداد المبكر لا تكون بالسالب.");
+
+        var date = dto.PaymentDate == default ? DateTime.UtcNow.Date : dto.PaymentDate.Date;
+        var period = await _context.FiscalPeriods.FirstOrDefaultAsync(p => p.StartDate <= date && p.EndDate >= date && !p.IsClosed, ct)
+            ?? throw new ValidationAppException("مفيش فترة مالية مفتوحة لتاريخ السداد ده.");
+
+        var principal = unpaid.Sum(i => i.PrincipalPart);
+        var extra = Math.Round(dto.ExtraCharge, 2);
+        var text = $"سداد مبكر للقرض - {loan.Description}";
+        var lines = new List<JournalEntryLine>
+        {
+            new() { LineNumber = 1, AccountId = loan.LoanAccountId, Debit = principal, Credit = 0, Description = text }
+        };
+        if (extra > 0)
+            lines.Add(new JournalEntryLine { LineNumber = 2, AccountId = loan.InterestExpenseAccountId, Debit = extra, Credit = 0, Description = "فايدة ورسوم سداد مبكر - " + loan.Description });
+        lines.Add(new JournalEntryLine { LineNumber = lines.Count + 1, AccountId = loan.BankAccountId, Debit = 0, Credit = principal + extra, Description = text });
+
+        _context.JournalEntries.Add(new JournalEntry
+        {
+            EntryNumber = $"JV-{(await _context.JournalEntries.CountAsync(ct) + 1):D6}",
+            EntryDate = date,
+            FiscalPeriodId = period.Id,
+            Description = text,
+            Reference = AccountingConstants.LoanReference,
+            Status = JournalEntryStatus.Posted,
+            Lines = lines
+        });
+
+        // The future interest is never charged, so the schedule rows that were still open now show principal only (plus the early charge on the first).
+        foreach (var installment in unpaid)
+        {
+            installment.InterestPart = installment == unpaid[0] ? extra : 0;
+            installment.Total = installment.PrincipalPart + installment.InterestPart;
+            installment.IsPaid = true;
+            installment.PaidDate = date;
+        }
+        loan.Status = LoanStatus.Paid;
+        await _context.SaveChangesAsync(ct);
+        return Map(loan);
+    }
+
     private async Task<Account> GetOrCreateInterestAccountAsync(CancellationToken ct)
     {
         var existing = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == AccountingConstants.LoanInterestExpenseAccountCode && !a.IsDeleted, ct);

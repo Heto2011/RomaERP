@@ -47,6 +47,13 @@ public class LoanDto
     public List<LoanInstallmentDto> Installments { get; set; } = new();
 }
 
+public class SettleLoanDto
+{
+    public DateTime PaymentDate { get; set; }
+    /// <summary>Interest or fees charged for settling early (0 when the lender asks only for the remaining principal).</summary>
+    public decimal ExtraCharge { get; set; }
+}
+
 public class PayInstallmentDto
 {
     public DateTime PaymentDate { get; set; }

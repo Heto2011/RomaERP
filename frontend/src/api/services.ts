@@ -259,6 +259,8 @@ export const LoansApi = {
     loanAccountId: string;
     bankAccountId: string;
   }) => apiClient.post("/loans", data),
+  settle: (loanId: string, paymentDate: string, extraCharge: number) =>
+    apiClient.post(`/loans/${loanId}/settle`, { paymentDate, extraCharge }),
   payInstallment: (installmentId: string, paymentDate: string) =>
     apiClient.post(`/loans/installments/${installmentId}/pay`, { paymentDate }),
 };
