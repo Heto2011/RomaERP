@@ -238,6 +238,7 @@ export default function DemoTenantsPage() {
                 <option value={ProductScope.Full}>Full RomaERP</option>
                 <option value={ProductScope.PeopleOnly}>Roma HR only</option>
                 <option value={ProductScope.BooksOnly}>Roma Books (free)</option>
+                <option value={ProductScope.PosOnly}>Roma POS</option>
               </select>
             </div>
             <div className="form-field" style={{ justifyContent: "flex-end" }}>
@@ -371,7 +372,7 @@ export default function DemoTenantsPage() {
                   <td>{t.companyCode}</td>
                   <td>{t.companyNameEn}</td>
                   <td>{countryLabel[t.country]}</td>
-                  <td>{t.productScope === ProductScope.PeopleOnly ? "Roma HR" : t.productScope === ProductScope.BooksOnly ? "Books" : "Full"}</td>
+                  <td>{t.productScope === ProductScope.PeopleOnly ? "Roma HR" : t.productScope === ProductScope.BooksOnly ? "Books" : t.productScope === ProductScope.PosOnly ? "POS" : "Full"}</td>
                   <td className={t.isActive ? "text-success" : "text-danger"}>{t.isActive ? "Active" : "Deactivated"}</td>
                   <td>{t.expiresAtUtc ? new Date(t.expiresAtUtc).toLocaleDateString() : "—"}</td>
                   <td>{new Date(t.createdAtUtc).toLocaleDateString()}</td>

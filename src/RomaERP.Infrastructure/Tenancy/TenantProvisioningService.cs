@@ -224,6 +224,7 @@ public class TenantProvisioningService : ITenantProvisioningService
     {
         ProductScope.PeopleOnly => "Roma HR only",
         ProductScope.BooksOnly => "Roma Books (free)",
+        ProductScope.PosOnly => "Roma POS",
         _ => "Full ERP + HR"
     };
 

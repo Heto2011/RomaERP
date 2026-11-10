@@ -2503,6 +2503,7 @@ export enum ProductScope {
   Full = 1,
   PeopleOnly = 2,
   BooksOnly = 3,
+  PosOnly = 4,
 }
 
 /** Bit flags: a company can pick up to three activities, e.g. Restaurant | Contracting = 33. 0 = not chosen. */

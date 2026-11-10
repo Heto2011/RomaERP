@@ -171,19 +171,21 @@ export default function Dashboard() {
   const [smartAlerts, setSmartAlerts] = useState<Alert[]>([]);
 
   useEffect(() => {
-    AccountsApi.getAll().then((r) => setAccountsCount(r.data.length));
-    EmployeesApi.getAll().then((r) => setEmployeesCount(r.data.length));
+    // A company's product may not include every area (HR, journal screens, ...): a refused call just leaves that figure empty.
+    const ignore = () => undefined;
+    AccountsApi.getAll().then((r) => setAccountsCount(r.data.length)).catch(ignore);
+    EmployeesApi.getAll().then((r) => setEmployeesCount(r.data.length)).catch(ignore);
     JournalEntriesApi.trialBalance().then((r) => {
       setTotalDebit(r.data.reduce((sum, l) => sum + l.totalDebit, 0));
       setTotalCredit(r.data.reduce((sum, l) => sum + l.totalCredit, 0));
-    });
+    }).catch(ignore);
     PurchasingApi.getInvoices().then((r) => {
       setTotalPurchases(r.data.reduce((sum, i) => sum + i.totalAmount, 0));
       setApOutstanding(r.data.reduce((sum, i) => sum + i.outstandingAmount, 0));
-    });
+    }).catch(ignore);
     ItemsApi.getAll().then((r) => {
       setInventoryValue(r.data.reduce((sum, i) => sum + i.quantityOnHand * i.averageCost, 0));
-    });
+    }).catch(ignore);
 
     const today = new Date().toISOString().slice(0, 10);
     const monthStart = firstDayOfMonth();
@@ -198,9 +200,9 @@ export default function Dashboard() {
       FinancialReportsApi.cashFlow(priorMonthStart, priorMonthEnd),
       FinancialReportsApi.itemProfitability(monthStart, today),
       SalesApi.getInvoices(),
-      SalesApi.getAging(),
-      PurchasingApi.getAging(),
-      AiAssistantApi.getPendingApproval(),
+      SalesApi.getAging().catch(() => ({ data: [] as never[] })),
+      PurchasingApi.getAging().catch(() => ({ data: [] as never[] })),
+      AiAssistantApi.getPendingApproval().catch(() => ({ data: [] as never[] })),
     ]).then(([currentRes, priorRes, cashRes, priorCashRes, itemProfitRes, invoicesRes, arAgingRes, apAgingRes, pendingApprovalRes]) => {
       const current = currentRes.data;
       const prior = priorRes.data;

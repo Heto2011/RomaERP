@@ -293,7 +293,7 @@ export default function MySubscriptionPage() {
             <tbody>
               <tr><td>{t.mySubscription.usersUsage}</td><td>{freePlan.usedUsers} / {freePlan.includedUsers}</td></tr>
               <tr><td>{t.mySubscription.branchesUsage}</td><td>{freePlan.usedBranches} / {freePlan.includedBranches}</td></tr>
-              <tr><td>{t.mySubscription.freePlanInvoices}</td><td>{freePlan.usedInvoicesThisMonth} / {freePlan.includedInvoicesPerMonth}</td></tr>
+              <tr><td>{t.mySubscription.freePlanInvoices}</td><td>{freePlan.usedInvoicesThisMonth}{freePlan.includedInvoicesPerMonth > 0 ? ` / ${freePlan.includedInvoicesPerMonth}` : ""}</td></tr>
             </tbody>
           </table>
         </div>

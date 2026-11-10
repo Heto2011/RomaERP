@@ -98,9 +98,13 @@ public class MySubscriptionController : ControllerBase
     private bool IsUk() => _tenantContext.Country is RomaERP.Domain.Tenancy.Country.UnitedKingdom or RomaERP.Domain.Tenancy.Country.Guernsey;
 
     private string[] AllowedCardPlans()
-        => _tenantContext.ProductScope == RomaERP.Domain.Tenancy.ProductScope.PeopleOnly
-            ? new[] { "people" }
-            : new[] { "essential", "business", "professional" };
+        => _tenantContext.ProductScope switch
+        {
+            RomaERP.Domain.Tenancy.ProductScope.PeopleOnly => new[] { "people" },
+            // Roma POS has no price yet, so there is nothing to pay for by card until one is added.
+            RomaERP.Domain.Tenancy.ProductScope.PosOnly => Array.Empty<string>(),
+            _ => new[] { "essential", "business", "professional" }
+        };
 
     // Monthly USD price of one extra, per price set: Gulf/other vs Europe (UK, Guernsey). An extra Roma HR employee costs the same as an extra user.
     private decimal BranchPrice() => IsUk() ? 7m : 4m;

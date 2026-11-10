@@ -16,7 +16,11 @@ public enum ProductScope
 
     /// <summary>The free Roma Books plan: accounting, sales and purchasing only, with small limits (see
     /// <see cref="SubscriptionPriceList.BooksIncludedUsers"/> and friends). No POS, inventory, HR, AI or e-invoicing.</summary>
-    BooksOnly = 3
+    BooksOnly = 3,
+
+    /// <summary>Roma POS: point of sale, restaurant, inventory and costing, purchasing and the reports, with the accounting
+    /// running quietly behind it (sales and purchases post their own entries). No journal screens, no HR.</summary>
+    PosOnly = 4
 }
 
 /// <summary>Registry row in the central database — points a company code at its own isolated database.</summary>

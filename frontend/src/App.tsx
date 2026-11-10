@@ -120,6 +120,7 @@ import PurchaseReceivingPage from "./pages/restaurant/PurchaseReceiving";
 import DeliveryReconciliationPage from "./pages/restaurant/DeliveryReconciliation";
 import DeliveryPlatforms from "./pages/restaurant/DeliveryPlatforms";
 import RestaurantPOS from "./pages/restaurant/RestaurantPOS";
+import { extraModuleHome, isEmployeeWithExtraModules, isPureCashier } from "./utils/userHome";
 import KitchenDisplay from "./pages/restaurant/KitchenDisplay";
 
 function ProtectedRoute({ children, layout = true, loginPath = "/login" }: { children: React.ReactNode; layout?: boolean; loginPath?: string }) {
@@ -157,8 +158,8 @@ function InventoryPortalRoute({ children }: { children: React.ReactNode }) {
 // ROMA People only (not the full suite) lands straight in the People portal instead of the ERP dashboard.
 function HomeRoute() {
   const { user } = useAuth();
-  const isCashierOnly = user?.roles.length === 1 && user.roles[0] === "Employee";
-  if (isCashierOnly) return <Navigate to="/restaurant/pos" replace />;
+  if (isPureCashier(user)) return <Navigate to="/restaurant/pos" replace />;
+  if (user && isEmployeeWithExtraModules(user)) return <Navigate to={extraModuleHome(user)} replace />;
   if (user?.productScope === ProductScope.PeopleOnly) return <Navigate to="/people" replace />;
   return <Dashboard />;
 }

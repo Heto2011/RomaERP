@@ -7,6 +7,7 @@ import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import GlobalSearch from "./GlobalSearch";
 import UsageIndicator from "./UsageIndicator";
+import { isEmployeeWithExtraModules, isPureCashier } from "../utils/userHome";
 import {
   IconArchive,
   IconBuilding,
@@ -146,7 +147,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   // A user whose only role is Employee is a cashier — the nav collapses to just what a cashier needs,
   // so they never see accounting/HR/purchasing data even if they bypass the standalone POS login and
   // land in the regular app shell.
-  const isCashierOnly = user?.roles.length === 1 && user.roles[0] === "Employee";
+  const isCashierOnly = isPureCashier(user);
+  // An Employee given extra modules (e.g. Purchasing) keeps the cashier nav and also sees the sections they were granted.
+  const isEmployeeWithExtras = isEmployeeWithExtraModules(user);
 
   const cashierLinks: { section: string; items: NavItem[] }[] = [
     {
@@ -317,6 +320,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   const isPeopleOnly = user?.productScope === ProductScope.PeopleOnly;
   const peopleOnlyAllowedSections = new Set([t.nav.general, t.nav.administration]);
   // The free Roma Books plan: accounting, reports, sales and purchasing only — no POS, inventory, HR or AI.
+  const isPosOnly = user?.productScope === ProductScope.PosOnly;
+  const posOnlyAllowedSections = new Set([t.nav.general, t.nav.restaurant, t.nav.inventory, t.nav.purchasing, t.nav.reports, t.nav.administration]);
   const isBooksOnly = user?.productScope === ProductScope.BooksOnly;
   const booksOnlyAllowedSections = new Set([t.nav.general, t.nav.accounting, t.nav.reports, t.nav.sales, t.nav.purchasing, t.nav.administration]);
 
@@ -349,12 +354,19 @@ export default function Layout({ children }: { children: ReactNode }) {
     if (!showAll && sectionKeys[section] && hiddenKeys.includes(sectionKeys[section])) return false;
     if (isPeopleOnly && !peopleOnlyAllowedSections.has(section)) return false;
     if (isBooksOnly && !booksOnlyAllowedSections.has(section)) return false;
+    if (isPosOnly && !posOnlyAllowedSections.has(section)) return false;
     const access = sectionAccess[section];
     if (!access) return true;
     return isAdmin || access.fallbackRoles.some((r) => user?.roles.includes(r)) || (user?.modules.includes(access.module) ?? false);
   }
 
-  const links = (isCashierOnly ? cashierLinks : fullLinks).filter((group) => canSeeSection(group.section));
+  const extraSections = new Set([t.nav.accounting, t.nav.reports, t.nav.sales, t.nav.purchasing, t.nav.inventory]);
+  const links = (isCashierOnly
+    ? cashierLinks
+    : isEmployeeWithExtras
+      ? [...cashierLinks, ...fullLinks.filter((group) => extraSections.has(group.section))]
+      : fullLinks
+  ).filter((group) => canSeeSection(group.section));
 
   const activeSection = useMemo(() => {
     for (const group of links) {

@@ -116,7 +116,7 @@ public class PlanLimitGuard : IPlanLimitGuard
 
     public async Task EnsureCanCreateInvoiceAsync(CancellationToken ct = default)
     {
-        if (!IsFreeBooks) return;
+        if (!IsFreeBooks || SubscriptionPriceList.BooksMonthlyInvoiceLimit <= 0) return;
         var used = await InvoicesThisMonthAsync(ct);
         if (used >= SubscriptionPriceList.BooksMonthlyInvoiceLimit)
             throw new ValidationAppException($"وصلت للحد الشهري في النسخة المجانية (Roma Books): {SubscriptionPriceList.BooksMonthlyInvoiceLimit} فاتورة (مبيعات ومشتريات). يتجدد أول الشهر الجاي، أو رقّي الباقة من «اشتراكي».");

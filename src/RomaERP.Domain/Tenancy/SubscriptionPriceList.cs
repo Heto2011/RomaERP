@@ -22,8 +22,16 @@ public static class SubscriptionPriceList
     public const string BooksPlanCode = "books";
     public const int BooksIncludedBranches = 1;
     public const int BooksIncludedUsers = 3;
-    /// <summary>Sales plus purchase invoices created in one calendar month.</summary>
-    public const int BooksMonthlyInvoiceLimit = 100;
+    /// <summary>Sales plus purchase invoices a free company may create in a calendar month. 0 = unlimited: an invoice costs
+    /// us a few kilobytes in that company's own database, so the cost of the free plan is the number of companies, not
+    /// invoices. The check stays in place so a cap can be switched on later by changing this one number.</summary>
+    public const int BooksMonthlyInvoiceLimit = 0;
+
+    /// <summary>Roma POS (point of sale, restaurant, inventory and costing, purchasing). Its price is not set yet, so it is
+    /// seeded as a negotiated plan — billing skips it until a real price list is added.</summary>
+    public const string PosPlanCode = "pos";
+    public const int PosPlanIncludedBranches = 3;
+    public const int PosPlanIncludedUsers = 10;
 
     /// <summary>Egypt-only entry plan: one branch, five users, no extras (more means moving up to Essential).</summary>
     public const string MiniPlanCode = "mini";
@@ -85,6 +93,11 @@ public static class SubscriptionPriceList
         // ROMA People (HR only): up to 25 employees, branches unlimited (so no per-branch overage) and a small
         // per-employee overage. Launch offer: the first FoundingCustomerLimit customers pay FoundingBase for their
         // first FoundingInvoiceCount invoices (any country). EGP and GBP are independent prices, like the ERP ones.
+        // Roma POS: no price yet.
+        [(PosPlanCode, Sar)] = new(Sar, 0, 0, 0, 0),
+        [(PosPlanCode, Egp)] = new(Egp, 0, 0, 0, 0),
+        [(PosPlanCode, Gbp)] = new(Gbp, 0, 0, 0, 0),
+
         // Roma Books is free everywhere.
         [(BooksPlanCode, Sar)] = new(Sar, 0, 0, 0, 0),
         [(BooksPlanCode, Egp)] = new(Egp, 0, 0, 0, 0),
@@ -99,7 +112,7 @@ public static class SubscriptionPriceList
     {
         foreach (var (currency, rate, decimals) in GulfCurrencies)
         {
-            foreach (var plan in new[] { "essential", "business", "professional", "enterprise", PeoplePlanCode, BooksPlanCode })
+            foreach (var plan in new[] { "essential", "business", "professional", "enterprise", PeoplePlanCode, BooksPlanCode, PosPlanCode })
             {
                 var sar = Prices[(plan, Sar)];
                 Prices[(plan, currency)] = new PlanPriceSet(currency,

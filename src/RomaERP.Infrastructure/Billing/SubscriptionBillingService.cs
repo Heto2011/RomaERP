@@ -494,7 +494,9 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             : null;
         var booksPlan = tenant.ProductScope == ProductScope.BooksOnly
             ? await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Code == SubscriptionPriceList.BooksPlanCode, ct)
-            : null;
+            : tenant.ProductScope == ProductScope.PosOnly
+                ? await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Code == SubscriptionPriceList.PosPlanCode, ct)
+                : null;
 
         var existing = await _central.Subscriptions.FirstOrDefaultAsync(s => s.TenantId == tenant.Id, ct);
         if (existing is not null)
@@ -530,14 +532,25 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         return subscription;
     }
 
-    /// <summary>A free Roma Books company that moves to a paid ERP plan becomes a full-product company.</summary>
+    /// <summary>A Roma Books or Roma POS company that moves to a full ERP plan becomes a full-product company; a Roma Books
+    /// company that moves to the Roma POS plan becomes a POS company.</summary>
     private async Task UpgradeFromBooksIfNeededAsync(Guid tenantId, string planCode, CancellationToken ct)
     {
-        if (planCode.ToLowerInvariant() is not ("essential" or "business" or "professional" or "enterprise" or SubscriptionPriceList.MiniPlanCode)) return;
         var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, ct);
-        if (tenant is null || tenant.ProductScope != ProductScope.BooksOnly) return;
-        tenant.ProductScope = ProductScope.Full;
-        Log(tenant, "Company", "Product access changed", "Roma Books (free) → Full ERP + HR", "automatic");
+        if (tenant is null) return;
+        var code = planCode.ToLowerInvariant();
+        var toFull = code is "essential" or "business" or "professional" or "enterprise" or SubscriptionPriceList.MiniPlanCode;
+        if (toFull && tenant.ProductScope is ProductScope.BooksOnly or ProductScope.PosOnly)
+        {
+            var before = tenant.ProductScope;
+            tenant.ProductScope = ProductScope.Full;
+            Log(tenant, "Company", "Product access changed", $"{(before == ProductScope.PosOnly ? "Roma POS" : "Roma Books (free)")} → Full ERP + HR", "automatic");
+        }
+        else if (code == SubscriptionPriceList.PosPlanCode && tenant.ProductScope == ProductScope.BooksOnly)
+        {
+            tenant.ProductScope = ProductScope.PosOnly;
+            Log(tenant, "Company", "Product access changed", "Roma Books (free) → Roma POS", "automatic");
+        }
     }
 
     private async Task<Tenant> GetTenantOrThrowAsync(Guid tenantId, CancellationToken ct)

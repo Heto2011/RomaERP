@@ -19,12 +19,15 @@ export default function Users() {
   const roleOptions = !isAdmin ? AppRoles.filter((r) => hrOnlyRoles.includes(r)) : peopleOnly ? AppRoles.filter((r) => r !== "Accountant") : AppRoles;
   const canManage = (u: AppUser) => isAdmin || u.roles.every((r) => hrOnlyRoles.includes(r));
   const booksOnly = currentUser?.productScope === ProductScope.BooksOnly;
+  const posOnly = currentUser?.productScope === ProductScope.PosOnly;
   const hidePin = peopleOnly || booksOnly || !isAdmin;
   const moduleOptions = peopleOnly
     ? ModulePermissions.filter((m) => m === "HR")
     : booksOnly
       ? ModulePermissions.filter((m) => !["HR", "Inventory", "POS"].includes(m))
-      : ModulePermissions;
+      : posOnly
+        ? ModulePermissions.filter((m) => ["POS", "Inventory", "Purchasing", "Reports"].includes(m))
+        : ModulePermissions;
   const [users, setUsers] = useState<AppUser[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [showForm, setShowForm] = useState(false);

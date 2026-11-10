@@ -99,7 +99,7 @@ export default function SubscriptionsPage() {
 
   async function handleToggleScope(s: TenantSubscription) {
     if (!systemKey) return;
-    const toFull = s.productScope === ProductScope.PeopleOnly || s.productScope === ProductScope.BooksOnly;
+    const toFull = s.productScope !== ProductScope.Full;
     if (!confirm(toFull
       ? `Give "${s.companyNameEn}" the FULL ERP + HR? Everyone signed in must log in again to see it.`
       : `Limit "${s.companyNameEn}" to Roma HR only? Everyone signed in must log in again.`)) return;
@@ -273,7 +273,7 @@ export default function SubscriptionsPage() {
                 {subscriptions.map((s) => (
                   <tr key={s.tenantId}>
                     <td>{s.companyNameEn} <span className="text-muted">({s.companyCode})</span>
-                      <div className="text-muted">{s.productScope === ProductScope.PeopleOnly ? "Roma HR only" : s.productScope === ProductScope.BooksOnly ? "Roma Books (free)" : "Full ERP + HR"}</div></td>
+                      <div className="text-muted">{s.productScope === ProductScope.PeopleOnly ? "Roma HR only" : s.productScope === ProductScope.BooksOnly ? "Roma Books (free)" : s.productScope === ProductScope.PosOnly ? "Roma POS" : "Full ERP + HR"}</div></td>
                     <td>
                       <select value={s.planId} onChange={(e) => handleSetPlan(s.tenantId, e.target.value)}>
                         {(plans ?? []).map((p) => <option key={p.id} value={p.id}>{p.nameEn}</option>)}
@@ -296,7 +296,7 @@ export default function SubscriptionsPage() {
                       ) : (
                         <button className="btn btn-secondary btn-sm" onClick={() => handleReactivate(s.tenantId)}>Reactivate</button>
                       )}
-                      <button className="btn btn-secondary btn-sm" onClick={() => handleToggleScope(s)}>{s.productScope === ProductScope.PeopleOnly || s.productScope === ProductScope.BooksOnly ? "Open full ERP" : "HR only"}</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleToggleScope(s)}>{s.productScope !== ProductScope.Full ? "Open full ERP" : "HR only"}</button>
                       <button className="btn btn-secondary btn-sm" onClick={() => handleChangeCode(s)}>Change code</button>
                       <button className="btn btn-sm" style={{ background: "#b42318", color: "#fff" }} onClick={() => handleDeleteForever(s)}>Delete forever</button>
                     </td>

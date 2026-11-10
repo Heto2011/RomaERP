@@ -26,7 +26,7 @@ export default function StartTrial() {
   const [searchParams] = useSearchParams();
 
   const [productScope] = useState<ProductScope>(
-    searchParams.get("product") === "hr" ? ProductScope.PeopleOnly : searchParams.get("product") === "books" ? ProductScope.BooksOnly : ProductScope.Full
+    searchParams.get("product") === "hr" ? ProductScope.PeopleOnly : searchParams.get("product") === "books" ? ProductScope.BooksOnly : searchParams.get("product") === "pos" ? ProductScope.PosOnly : ProductScope.Full
   );
   const [businessTypes, setBusinessTypes] = useState<number>(0);
   const [activityOpen, setActivityOpen] = useState(false);
