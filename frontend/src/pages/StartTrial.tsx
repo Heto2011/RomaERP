@@ -107,7 +107,7 @@ export default function StartTrial() {
             {t.language}
           </button>
         </div>
-        <h1>{t.trial.title}</h1>
+        <h1>{productScope === ProductScope.BooksOnly ? t.trial.booksTitle : t.trial.title}</h1>
         <p>{productScope === ProductScope.BooksOnly ? t.trial.booksNote : t.trial.subtitle}</p>
         {error && <div className="alert-error">{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
@@ -194,7 +194,7 @@ export default function StartTrial() {
             </span>
           </label>
           <button className="btn" type="submit" disabled={loading || !agreedToTerms || (productScope === ProductScope.Full && businessTypes === 0)}>
-            {loading ? t.trial.submitting : t.trial.submit}
+            {loading ? t.trial.submitting : productScope === ProductScope.BooksOnly ? t.trial.booksSubmit : t.trial.submit}
           </button>
         </form>
         <p style={{ marginTop: 16, fontSize: 13 }} className="text-muted">

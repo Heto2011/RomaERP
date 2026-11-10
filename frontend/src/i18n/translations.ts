@@ -284,6 +284,8 @@ const ar = {
     wrongPin: "الرقم السري غير صحيح",
   },
   trial: {
+    booksTitle: "افتح حسابك المجاني",
+    booksSubmit: "افتح الحساب المجاني",
     booksNote: "Roma Books ببلاش: محاسبة ومبيعات ومشتريات وتقارير، من غير بطاقة ومن غير مدة تجربة. حدودها: 3 مستخدمين، فرع واحد، 100 فاتورة في الشهر.",
     activityTitle: "نشاطك إيه؟",
     activityPlaceholder: "اختار نشاطك",
@@ -2331,6 +2333,8 @@ const en: typeof ar = {
     wrongPin: "Incorrect PIN",
   },
   trial: {
+    booksTitle: "Open your free account",
+    booksSubmit: "Open the free account",
     booksNote: "Roma Books is free: accounting, sales, purchasing and reports, no card and no trial period. Limits: 3 users, 1 branch, 100 invoices a month.",
     activityTitle: "What does your business do?",
     activityPlaceholder: "Choose your activity",
