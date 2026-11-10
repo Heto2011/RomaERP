@@ -12,6 +12,7 @@ public record MarkInvoicePaidRequest(string? PaymentReference);
 public record ActivatePaidRequest(Guid PlanId, string? PaymentReference, bool Annual = false);
 
 public record SetBillingPeriodRequest(bool Annual);
+public record GrantAiCreditsRequest(int Credits, string? Reason);
 
 /// <summary>Platform-level billing console — spans every tenant, so (like SystemController) it's excluded
 /// from TenantResolutionMiddleware and protected by a system key instead of a JWT/company code.</summary>
@@ -22,9 +23,11 @@ public class SubscriptionsController : ControllerBase
 {
     private readonly ISubscriptionBillingService _billing;
     private readonly IConfiguration _configuration;
+    private readonly RomaERP.Infrastructure.Persistence.Central.CentralDbContext _central;
 
-    public SubscriptionsController(ISubscriptionBillingService billing, IConfiguration configuration)
+    public SubscriptionsController(ISubscriptionBillingService billing, IConfiguration configuration, RomaERP.Infrastructure.Persistence.Central.CentralDbContext central)
     {
+        _central = central;
         _billing = billing;
         _configuration = configuration;
     }
@@ -78,6 +81,26 @@ public class SubscriptionsController : ControllerBase
         if (keyCheck is not null) return keyCheck;
 
         return Ok(await _billing.SetBillingAccountAsync(tenantId, request.BillingAccountId, ct));
+    }
+
+    /// <summary>Adds prepaid AI credits to a company (a purchase made off-platform, or a gift). Negative numbers correct a mistake.</summary>
+    [HttpPost("tenants/{tenantId:guid}/ai-credits")]
+    public async Task<ActionResult> GrantAiCredits(Guid tenantId, GrantAiCreditsRequest request, CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+        if (request.Credits == 0 || Math.Abs(request.Credits) > 100000) return BadRequest(new { error = "عدد الرصيد غير صالح." });
+
+        _central.TenantCreditEntries.Add(new RomaERP.Domain.Tenancy.TenantCreditEntry
+        {
+            TenantId = tenantId, Delta = request.Credits,
+            Reason = string.IsNullOrWhiteSpace(request.Reason) ? "System console grant" : request.Reason.Trim(),
+            Actor = "system console"
+        });
+        await _central.SaveChangesAsync(ct);
+        var balance = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.SumAsync(
+            System.Linq.Queryable.Select(System.Linq.Queryable.Where(_central.TenantCreditEntries, e => e.TenantId == tenantId), e => (int?)e.Delta), ct) ?? 0;
+        return Ok(new { balance });
     }
 
     [HttpPost("tenants/{tenantId:guid}/suspend")]

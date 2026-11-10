@@ -4,6 +4,7 @@ using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
+using RomaERP.Application.Notifications.Services;
 using RomaERP.Application.Purchasing.DTOs;
 using RomaERP.Domain.Purchasing;
 
@@ -18,9 +19,13 @@ public class PendingPurchaseService : IPendingPurchaseService
     private readonly IAdminEmailProvider? _admins;
     private readonly ILogger<PendingPurchaseService>? _logger;
 
+    private readonly IWhatsAppNotificationService? _whatsApp;
+
     public PendingPurchaseService(IApplicationDbContext context, IPurchasingService purchasing,
-        IEmailSender? email = null, IAdminEmailProvider? admins = null, ILogger<PendingPurchaseService>? logger = null)
+        IEmailSender? email = null, IAdminEmailProvider? admins = null, ILogger<PendingPurchaseService>? logger = null,
+        IWhatsAppNotificationService? whatsApp = null)
     {
+        _whatsApp = whatsApp;
         _context = context;
         _purchasing = purchasing;
         _email = email;
@@ -59,6 +64,20 @@ public class PendingPurchaseService : IPendingPurchaseService
     /// <summary>Best effort: a failed email never blocks the invoice from being saved — the approver still sees it on the page.</summary>
     private async Task NotifyApproversAsync(PendingPurchaseInvoice pending, CancellationToken ct)
     {
+        // Optional WhatsApp copy through the company's OWN WhatsApp Business account (set up by the company itself, so Meta bills
+        // the company directly and it costs nothing here). It does nothing unless the company configured and enabled WhatsApp.
+        if (_whatsApp is not null)
+        {
+            try
+            {
+                await _whatsApp.SendTextAsync($"فاتورة مشتريات مستنية اعتمادك: {pending.VendorName} — {pending.SubTotal:0.##} (سجّلها {pending.RequestedByName}).", ct);
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogWarning(ex, "WhatsApp notice for pending purchase invoice {Id} failed", pending.Id);
+            }
+        }
+
         if (_email is null || _admins is null || !_email.IsConfigured) return;
         try
         {

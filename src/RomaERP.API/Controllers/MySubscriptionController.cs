@@ -120,6 +120,16 @@ public class MySubscriptionController : ControllerBase
         return Ok(usage);
     }
 
+    /// <summary>Prepaid AI credits left. On the free Books plan every AI call spends one; on paid plans they only cover use above the plan's allowance.</summary>
+    [HttpGet("ai-credits")]
+    public async Task<ActionResult> GetAiCredits(CancellationToken ct)
+    {
+        var tenantId = _tenantContext.TenantId;
+        var balance = await Microsoft.EntityFrameworkCore.EntityFrameworkQueryableExtensions.SumAsync(
+            System.Linq.Queryable.Select(System.Linq.Queryable.Where(_central.TenantCreditEntries, e => e.TenantId == tenantId), e => (int?)e.Delta), ct) ?? 0;
+        return Ok(new { balance });
+    }
+
     /// <summary>What the company's plan includes, how many paid extras it has, and what it can still buy (card-paid companies only).</summary>
     [HttpGet("extras")]
     public async Task<ActionResult<ExtrasInfoDto>> GetExtras(CancellationToken ct)

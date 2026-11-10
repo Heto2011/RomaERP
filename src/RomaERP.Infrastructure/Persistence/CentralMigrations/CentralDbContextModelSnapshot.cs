@@ -634,6 +634,37 @@ namespace RomaERP.Infrastructure.Persistence.CentralMigrations
                     b.ToTable("TenantActivities");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Tenancy.TenantCreditEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Actor")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<int>("Delta")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("OccurredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("TenantCreditEntries");
+                });
+
             modelBuilder.Entity("RomaERP.Domain.Support.SupportTicketAttachment", b =>
                 {
                     b.HasOne("RomaERP.Domain.Support.SupportTicketMessage", null)

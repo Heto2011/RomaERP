@@ -25,10 +25,15 @@ public class AiUsageLimiter : IAiUsageLimiter
 
     public async Task EnsureWithinDailyLimitAsync(string featureKey, CancellationToken ct = default)
     {
+        // Free Roma Books: AI is an optional paid add-on. Each call spends one prepaid credit (we charge cost + margin for them).
         if (_tenantContext.IsResolved && _tenantContext.ProductScope == RomaERP.Domain.Tenancy.ProductScope.BooksOnly)
-            throw new ValidationAppException(_language.PrefersArabic
-                ? "المساعد الذكي مش متاح في النسخة المجانية (Roma Books). رقّي الباقة من «اشتراكي» لتفعيله."
-                : "The AI assistant is not included in the free Roma Books plan. Upgrade from \"My subscription\" to enable it.");
+        {
+            if (!await TryConsumeCreditAsync(ct))
+                throw new ValidationAppException(_language.PrefersArabic
+                    ? "المساعد الذكي خدمة إضافية مدفوعة في النسخة المجانية (Roma Books) — رصيدك صفر. اطلب رصيد من «اشتراكي» أو رقّي الباقة."
+                    : "The AI assistant is a paid add-on on the free Roma Books plan and your credit balance is zero. Buy credits from \"My subscription\" or upgrade.");
+            return;
+        }
 
         var planCode = await _central.Subscriptions
             .Where(s => s.TenantId == _tenantContext.TenantId)
@@ -48,9 +53,12 @@ public class AiUsageLimiter : IAiUsageLimiter
                 .Where(c => c.UsageDate >= monthStart)
                 .SumAsync(c => (int?)c.Count, ct) ?? 0;
             if (usedThisMonth >= cap)
+            {
+                if (await TryConsumeCreditAsync(ct)) return; // over the plan's allowance: extra uses cost a prepaid credit
                 throw new ValidationAppException(_language.PrefersArabic
                     ? $"وصلتوا للحد الشهري لاستخدام الذكاء الاصطناعي في باقتكم ({cap} مرة) — يتجدد أول الشهر الجاي."
                     : $"You've reached this month's AI usage limit for your plan ({cap} uses) — it resets at the start of next month.");
+            }
         }
 
         var counter = await _db.AiUsageCounters
@@ -63,11 +71,26 @@ public class AiUsageLimiter : IAiUsageLimiter
         }
 
         if (counter.Count >= dailyLimit)
+        {
+            if (await TryConsumeCreditAsync(ct)) return;
             throw new ValidationAppException(_language.PrefersArabic
                 ? $"وصلتوا للحد الأقصى من استخدام هذه الميزة اليوم ({dailyLimit} مرة) — جربوا تاني بكرة."
                 : $"You've reached today's limit for this feature ({dailyLimit} uses) — please try again tomorrow.");
+        }
 
         counter.Count++;
         await _db.SaveChangesAsync(ct);
+    }
+
+    /// <summary>Spends one prepaid credit if the company has any. Credits live in the central database so a company cannot edit its balance.</summary>
+    private async Task<bool> TryConsumeCreditAsync(CancellationToken ct)
+    {
+        if (!_tenantContext.IsResolved) return false;
+        var tenantId = _tenantContext.TenantId;
+        var balance = await _central.TenantCreditEntries.Where(e => e.TenantId == tenantId).SumAsync(e => (int?)e.Delta, ct) ?? 0;
+        if (balance <= 0) return false;
+        _central.TenantCreditEntries.Add(new RomaERP.Domain.Tenancy.TenantCreditEntry { TenantId = tenantId, Delta = -1, Reason = "AI call" });
+        await _central.SaveChangesAsync(ct);
+        return true;
     }
 }

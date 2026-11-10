@@ -34,6 +34,7 @@ export default function MySubscriptionPage() {
   const [cardAnnual, setCardAnnual] = useState(false);
   const [startingCheckout, setStartingCheckout] = useState(false);
   const [extras, setExtras] = useState<ExtrasInfo | null>(null);
+  const [aiCredits, setAiCredits] = useState<number | null>(null);
   const [freePlan, setFreePlan] = useState<FreePlanUsage | null>(null);
   const [extrasBusy, setExtrasBusy] = useState(false);
   const [extrasMessage, setExtrasMessage] = useState<string | null>(null);
@@ -52,6 +53,7 @@ export default function MySubscriptionPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
+    MySubscriptionApi.getAiCredits().then((r) => setAiCredits(r.data.balance)).catch(() => setAiCredits(null));
     MySubscriptionApi.getFreePlan().then((r) => setFreePlan(r.data)).catch(() => setFreePlan(null));
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -280,8 +282,10 @@ export default function MySubscriptionPage() {
                   )}
                 </td>
               </tr>
+              {aiCredits !== null && <tr><td>{t.mySubscription.aiCredits}</td><td>{aiCredits}</td></tr>}
             </tbody>
           </table>
+          <p className="text-muted" style={{ marginBottom: 0 }}>{t.mySubscription.aiCreditsHint}</p>
         </div>
       )}
 

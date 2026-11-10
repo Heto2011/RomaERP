@@ -987,6 +987,7 @@ export const MySubscriptionApi = {
   getCardPaymentOptions: () =>
     apiClient.get<{ enabled: boolean; plans: { planCode: string; monthly: boolean; annual: boolean }[] }>("/my-subscription/card-payments"),
   getExtras: () => apiClient.get<ExtrasInfo>("/my-subscription/extras"),
+  getAiCredits: () => apiClient.get<{ balance: number }>("/my-subscription/ai-credits"),
   getFreePlan: () => apiClient.get<import("./types").FreePlanUsage | null>("/my-subscription/free-plan"),
   changeExtras: (kind: "branch" | "user", delta: number) =>
     apiClient.post<{ checkoutUrl: string | null; newQuantity: number }>("/my-subscription/extras", { kind, delta }),

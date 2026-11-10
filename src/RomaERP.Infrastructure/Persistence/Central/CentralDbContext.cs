@@ -21,10 +21,18 @@ public class CentralDbContext : DbContext
     public DbSet<DataDeletionRecord> DataDeletionRecords => Set<DataDeletionRecord>();
     public DbSet<MarketingPageView> MarketingPageViews => Set<MarketingPageView>();
     public DbSet<TenantActivity> TenantActivities => Set<TenantActivity>();
+    public DbSet<TenantCreditEntry> TenantCreditEntries => Set<TenantCreditEntry>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<TenantCreditEntry>(b =>
+        {
+            b.Property(e => e.Reason).HasMaxLength(200).IsRequired();
+            b.Property(e => e.Actor).HasMaxLength(200);
+            b.HasIndex(e => e.TenantId);
+        });
 
         builder.Entity<TenantActivity>(b =>
         {
