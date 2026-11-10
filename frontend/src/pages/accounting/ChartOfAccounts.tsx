@@ -4,6 +4,7 @@ import { AccountNature, AccountType, type Account } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import type { dictionaries, Lang } from "../../i18n/translations";
+import { suggestAccountCode } from "../../utils/sequentialCode";
 import { bilingualName } from "../../i18n/bilingual";
 
 function TreeNode({ account, t, lang }: { account: Account; t: (typeof dictionaries)["ar"]; lang: Lang }) {
@@ -57,6 +58,18 @@ export default function ChartOfAccounts() {
     load();
   }, []);
 
+  // The code is suggested from the chosen parent (and re-suggested if the parent changes) until the user types their own.
+  const [codeEdited, setCodeEdited] = useState(false);
+
+  function applySuggestion(parentId: string) {
+    const parent = flat.find((a) => a.id === parentId) ?? null;
+    if (parent) {
+      setAccountType(parent.accountType);
+      setNature(parent.nature);
+    }
+    if (!codeEdited) setCode(suggestAccountCode(parent, flat));
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -71,6 +84,7 @@ export default function ChartOfAccounts() {
         isControlAccount,
       });
       setShowForm(false);
+      setCodeEdited(false);
       setCode("");
       setNameAr("");
       setNameEn("");
@@ -86,7 +100,7 @@ export default function ChartOfAccounts() {
     <div>
       <div className="page-header">
         <h1>{t.nav.chartOfAccounts}</h1>
-        <button className="btn" onClick={() => setShowForm((v) => !v)}>
+        <button className="btn" onClick={() => { if (!showForm) { setCodeEdited(false); setCode(suggestAccountCode(null, flat)); } setShowForm((v) => !v); }}>
           {showForm ? t.common.cancel : t.accounting.newAccount}
         </button>
       </div>
@@ -98,7 +112,7 @@ export default function ChartOfAccounts() {
             <div className="form-grid">
               <div className="form-field">
                 <label>{t.accounting.accountCode}</label>
-                <input value={code} onChange={(e) => setCode(e.target.value)} required />
+                <input value={code} onChange={(e) => { setCode(e.target.value); setCodeEdited(true); }} required />
               </div>
               <div className="form-field">
                 <label>{t.common.nameAr}</label>
@@ -127,7 +141,7 @@ export default function ChartOfAccounts() {
               </div>
               <div className="form-field">
                 <label>{t.accounting.parentAccount}</label>
-                <select value={parentAccountId} onChange={(e) => setParentAccountId(e.target.value)}>
+                <select value={parentAccountId} onChange={(e) => { setParentAccountId(e.target.value); applySuggestion(e.target.value); }}>
                   <option value="">{t.common.none}</option>
                   {flat.map((a) => (
                     <option key={a.id} value={a.id}>

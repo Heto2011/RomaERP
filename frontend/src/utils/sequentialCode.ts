@@ -27,3 +27,23 @@ export function nextPrefixedCode(existingCodes: string[], prefix: string, pad = 
   const next = makeSequentialCodeGenerator(existingCodes, pad)();
   return `${prefix}${next}`;
 }
+
+/**
+ * Next code for a chart-of-accounts entry. Children continue the parent's numbering at the next level, matching the
+ * standard chart: 1000 -> 1100, 1100 -> 1110, 1110 -> 1111. Siblings continue from the highest sibling (1111 -> 1112).
+ * A parent with no trailing zero gets "<parent>1". Without a parent it is the next thousand (1000, 2000, ...).
+ */
+export function suggestAccountCode(parent: { id: string; code: string } | null, all: { code: string; parentAccountId: string | null }[]): string {
+  const num = (c: string) => (/^\d+$/.test(c.trim()) ? parseInt(c.trim(), 10) : NaN);
+  if (!parent) {
+    const roots = all.filter((a) => a.parentAccountId === null).map((a) => num(a.code)).filter((n) => !Number.isNaN(n));
+    return String((roots.length ? Math.max(...roots) : 0) + 1000);
+  }
+  const parentNum = num(parent.code);
+  if (Number.isNaN(parentNum)) return "";
+  const trailingZeros = /0+$/.exec(parent.code.trim())?.[0].length ?? 0;
+  const step = trailingZeros > 0 ? Math.pow(10, trailingZeros - 1) : 0;
+  if (step === 0) return `${parent.code.trim()}1`;
+  const siblings = all.filter((a) => (a as { parentAccountId: string | null }).parentAccountId === parent.id).map((a) => num(a.code)).filter((n) => !Number.isNaN(n));
+  return String(siblings.length ? Math.max(...siblings) + step : parentNum + step);
+}
