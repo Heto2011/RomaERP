@@ -21,7 +21,7 @@ public static class SubscriptionPriceList
     /// (essential and above) switches the company to the full product.</summary>
     public const string BooksPlanCode = "books";
     public const int BooksIncludedBranches = 1;
-    public const int BooksIncludedUsers = 3;
+    public const int BooksIncludedUsers = 2;
     /// <summary>Sales plus purchase invoices a free company may create in a calendar month. 0 = unlimited: an invoice costs
     /// us a few kilobytes in that company's own database, so the cost of the free plan is the number of companies, not
     /// invoices. The check stays in place so a cap can be switched on later by changing this one number.</summary>

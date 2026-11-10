@@ -286,7 +286,7 @@ const ar = {
   trial: {
     booksTitle: "افتح حسابك المجاني",
     booksSubmit: "افتح الحساب المجاني",
-    booksNote: "Roma Books ببلاش: محاسبة ومبيعات ومشتريات وتقارير، من غير بطاقة ومن غير مدة تجربة. حدودها: 3 مستخدمين وفرع واحد.",
+    booksNote: "Roma Books ببلاش: محاسبة ومبيعات ومشتريات وتقارير، من غير بطاقة ومن غير مدة تجربة. حدودها: مستخدمين اتنين وفرع واحد.",
     activityTitle: "نشاطك إيه؟",
     activityPlaceholder: "اختار نشاطك",
     activityHint: "اختار نشاط واحد أو أكتر (لحد 3). هنظهرلك الأقسام اللي تخص نشاطك أول، وتقدر تفتح باقي الأقسام في أي وقت.",
@@ -2335,7 +2335,7 @@ const en: typeof ar = {
   trial: {
     booksTitle: "Open your free account",
     booksSubmit: "Open the free account",
-    booksNote: "Roma Books is free: accounting, sales, purchasing and reports, no card and no trial period. Limits: 3 users and 1 branch.",
+    booksNote: "Roma Books is free: accounting, sales, purchasing and reports, no card and no trial period. Limits: 2 users and 1 branch.",
     activityTitle: "What does your business do?",
     activityPlaceholder: "Choose your activity",
     activityHint: "Pick one or more activities (up to 3). We show the sections that fit your business first, and you can open the rest at any time.",
