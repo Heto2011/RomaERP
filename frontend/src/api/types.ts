@@ -2502,6 +2502,7 @@ export interface Usage {
 export enum ProductScope {
   Full = 1,
   PeopleOnly = 2,
+  BooksOnly = 3,
 }
 
 /** Bit flags: a company can pick up to three activities, e.g. Restaurant | Contracting = 33. 0 = not chosen. */
@@ -2840,4 +2841,14 @@ export interface Loan {
   nextIsOverdue: boolean;
   status: number; // 0 = active, 1 = paid off
   installments: LoanInstallment[];
+}
+
+export interface FreePlanUsage {
+  isFreeBooks: boolean;
+  includedBranches: number;
+  usedBranches: number;
+  includedUsers: number;
+  usedUsers: number;
+  includedInvoicesPerMonth: number;
+  usedInvoicesThisMonth: number;
 }

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { MySubscriptionApi, type ExtrasInfo } from "../api/services";
+import type { FreePlanUsage } from "../api/types";
 import { ProductScope, type TenantSubscription, type SubscriptionInvoice, type BankTransferInfo } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../api/client";
@@ -33,6 +34,7 @@ export default function MySubscriptionPage() {
   const [cardAnnual, setCardAnnual] = useState(false);
   const [startingCheckout, setStartingCheckout] = useState(false);
   const [extras, setExtras] = useState<ExtrasInfo | null>(null);
+  const [freePlan, setFreePlan] = useState<FreePlanUsage | null>(null);
   const [extrasBusy, setExtrasBusy] = useState(false);
   const [extrasMessage, setExtrasMessage] = useState<string | null>(null);
   const extrasPaid = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("extras") === "1";
@@ -50,6 +52,7 @@ export default function MySubscriptionPage() {
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   useEffect(() => {
+    MySubscriptionApi.getFreePlan().then((r) => setFreePlan(r.data)).catch(() => setFreePlan(null));
     load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -277,6 +280,20 @@ export default function MySubscriptionPage() {
                   )}
                 </td>
               </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {freePlan?.isFreeBooks && (
+        <div className="card" style={{ marginBottom: 16 }}>
+          <h3 style={{ marginTop: 0 }}>{t.mySubscription.freePlanTitle}</h3>
+          <p className="text-muted" style={{ marginTop: 0 }}>{t.mySubscription.freePlanHint}</p>
+          <table>
+            <tbody>
+              <tr><td>{t.mySubscription.usersUsage}</td><td>{freePlan.usedUsers} / {freePlan.includedUsers}</td></tr>
+              <tr><td>{t.mySubscription.branchesUsage}</td><td>{freePlan.usedBranches} / {freePlan.includedBranches}</td></tr>
+              <tr><td>{t.mySubscription.freePlanInvoices}</td><td>{freePlan.usedInvoicesThisMonth} / {freePlan.includedInvoicesPerMonth}</td></tr>
             </tbody>
           </table>
         </div>

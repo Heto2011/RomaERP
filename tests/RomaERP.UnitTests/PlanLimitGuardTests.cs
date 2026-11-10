@@ -41,6 +41,48 @@ public class PlanLimitGuardTests
         db.SaveChanges();
     }
 
+    private static (PlanLimitGuard Guard, ApplicationDbContext Db) BuildFree(ProductScope scope)
+    {
+        var central = new CentralDbContext(new DbContextOptionsBuilder<CentralDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        var db = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        return (new PlanLimitGuard(central, new FakeTenant { ProductScope = scope }, db, null!), db);
+    }
+
+    [Fact]
+    public async Task FreeBooks_IsHeldToOneBranch_AndAHundredInvoicesAMonth()
+    {
+        var (guard, db) = BuildFree(ProductScope.BooksOnly);
+
+        await guard.EnsureCanAddBranchAsync();
+        AddBranches(db, 1);
+        await Assert.ThrowsAsync<ValidationAppException>(() => guard.EnsureCanAddBranchAsync());
+
+        // 60 sales + 39 purchase invoices this month: the 100th is still allowed, the 101st is not.
+        for (var i = 0; i < 60; i++) db.SalesInvoices.Add(new RomaERP.Domain.Sales.SalesInvoice { InvoiceNumber = "S" + i });
+        for (var i = 0; i < 39; i++) db.PurchaseInvoices.Add(new RomaERP.Domain.Purchasing.PurchaseInvoice { InvoiceNumber = "P" + i });
+        db.SaveChanges();
+        await guard.EnsureCanCreateInvoiceAsync();
+
+        db.PurchaseInvoices.Add(new RomaERP.Domain.Purchasing.PurchaseInvoice { InvoiceNumber = "P-last" });
+        db.SaveChanges();
+        await Assert.ThrowsAsync<ValidationAppException>(() => guard.EnsureCanCreateInvoiceAsync());
+    }
+
+    [Fact]
+    public async Task InvoicesFromLastMonthDoNotCount_AndPaidPlansAreNeverInvoiceLimited()
+    {
+        var (books, db) = BuildFree(ProductScope.BooksOnly);
+        var lastMonth = DateTime.UtcNow.AddMonths(-1);
+        for (var i = 0; i < 150; i++) db.SalesInvoices.Add(new RomaERP.Domain.Sales.SalesInvoice { InvoiceNumber = "S" + i, CreatedAtUtc = lastMonth });
+        db.SaveChanges();
+        await books.EnsureCanCreateInvoiceAsync();
+
+        var (full, db2) = BuildFree(ProductScope.Full);
+        for (var i = 0; i < 150; i++) db2.SalesInvoices.Add(new RomaERP.Domain.Sales.SalesInvoice { InvoiceNumber = "S" + i });
+        db2.SaveChanges();
+        await full.EnsureCanCreateInvoiceAsync();
+    }
+
     [Fact]
     public async Task CardPaidCompany_IsBlockedAtItsPlanBranchLimit()
     {

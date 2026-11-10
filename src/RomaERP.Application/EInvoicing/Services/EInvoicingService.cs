@@ -14,11 +14,20 @@ public class EInvoicingService : IEInvoicingService
     private readonly ISecretProtector _secretProtector;
     private readonly IEnumerable<IEInvoicingProvider> _providers;
 
-    public EInvoicingService(IApplicationDbContext context, ISecretProtector secretProtector, IEnumerable<IEInvoicingProvider> providers)
+    private readonly ITenantContext? _tenant;
+
+    public EInvoicingService(IApplicationDbContext context, ISecretProtector secretProtector, IEnumerable<IEInvoicingProvider> providers, ITenantContext? tenant = null)
     {
+        _tenant = tenant;
         _context = context;
         _secretProtector = secretProtector;
         _providers = providers;
+    }
+
+    private void EnsureNotFreeBooks()
+    {
+        if (_tenant is { IsResolved: true, ProductScope: ProductScope.BooksOnly })
+            throw new ValidationAppException("الفاتورة الإلكترونية مش متاحة في النسخة المجانية (Roma Books). رقّي الباقة من «اشتراكي».");
     }
 
     public async Task<EInvoicingSettingsDto> GetSettingsAsync(CancellationToken ct = default)
@@ -50,6 +59,7 @@ public class EInvoicingService : IEInvoicingService
 
     public async Task<EInvoiceStatusDto> SubmitInvoiceAsync(Guid salesInvoiceId, CancellationToken ct = default)
     {
+        EnsureNotFreeBooks();
         var invoice = await _context.SalesInvoices
             .Include(i => i.Customer)
             .Include(i => i.Lines)
@@ -87,6 +97,7 @@ public class EInvoicingService : IEInvoicingService
 
     public async Task<EInvoiceNoteStatusDto> SubmitNoteAsync(Guid salesNoteId, CancellationToken ct = default)
     {
+        EnsureNotFreeBooks();
         var note = await _context.SalesNotes
             .Include(n => n.Customer)
             .Include(n => n.OriginalInvoice)

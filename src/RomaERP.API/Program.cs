@@ -279,6 +279,8 @@ static async Task SeedSubscriptionPlansAsync(CentralDbContext central)
         (RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanCode, int.MaxValue, RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanIncludedEmployees, false, 5),
         // The Egypt-only entry plan. Sorted after Roma HR so it is never the default plan of a new trial.
         (RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanCode, RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanIncludedBranches, RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanIncludedUsers, false, 6),
+        // The free accounting plan. Sorted last so it is never the default plan of a new trial.
+        (RomaERP.Domain.Tenancy.SubscriptionPriceList.BooksPlanCode, RomaERP.Domain.Tenancy.SubscriptionPriceList.BooksIncludedBranches, RomaERP.Domain.Tenancy.SubscriptionPriceList.BooksIncludedUsers, false, 7),
     };
 
     var existing = await central.SubscriptionPlans.ToListAsync();
@@ -286,7 +288,8 @@ static async Task SeedSubscriptionPlansAsync(CentralDbContext central)
     {
         var isHr = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.PeoplePlanCode;
         var isMini = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanCode;
-        var name = isHr ? "Roma HR" : char.ToUpperInvariant(code[0]) + code[1..];
+        var isBooks = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.BooksPlanCode;
+        var name = isHr ? "Roma HR" : isBooks ? "Roma Books" : char.ToUpperInvariant(code[0]) + code[1..];
         // Mini exists only in Egypt, so it has no SAR price; its base price column holds the EGP figure.
         var sarPrice = (isMini
             ? RomaERP.Domain.Tenancy.SubscriptionPriceList.Find(code, RomaERP.Domain.Tenancy.SubscriptionPriceList.Egp)
@@ -296,7 +299,7 @@ static async Task SeedSubscriptionPlansAsync(CentralDbContext central)
         {
             central.SubscriptionPlans.Add(new RomaERP.Domain.Tenancy.SubscriptionPlan
             {
-                Code = code, NameAr = isHr ? "روما إتش آر" : isMini ? "ميني" : name, NameEn = name, MonthlyBasePrice = sarPrice,
+                Code = code, NameAr = isHr ? "روما إتش آر" : isMini ? "ميني" : isBooks ? "روما بوكس (مجاني)" : name, NameEn = name, MonthlyBasePrice = sarPrice,
                 IncludedBranches = branches, IncludedUsers = users, IsCustomPricing = custom, SortOrder = sort
             });
             continue;

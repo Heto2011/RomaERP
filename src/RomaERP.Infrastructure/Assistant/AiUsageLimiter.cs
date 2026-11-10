@@ -25,6 +25,11 @@ public class AiUsageLimiter : IAiUsageLimiter
 
     public async Task EnsureWithinDailyLimitAsync(string featureKey, CancellationToken ct = default)
     {
+        if (_tenantContext.IsResolved && _tenantContext.ProductScope == RomaERP.Domain.Tenancy.ProductScope.BooksOnly)
+            throw new ValidationAppException(_language.PrefersArabic
+                ? "المساعد الذكي مش متاح في النسخة المجانية (Roma Books). رقّي الباقة من «اشتراكي» لتفعيله."
+                : "The AI assistant is not included in the free Roma Books plan. Upgrade from \"My subscription\" to enable it.");
+
         var planCode = await _central.Subscriptions
             .Where(s => s.TenantId == _tenantContext.TenantId)
             .Join(_central.SubscriptionPlans, s => s.PlanId, p => p.Id, (s, p) => p.Code)

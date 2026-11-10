@@ -215,10 +215,17 @@ public class TenantProvisioningService : ITenantProvisioningService
         var before = tenant.ProductScope;
         tenant.ProductScope = scope;
         _central.TenantActivities.Add(TenantActivityLog.Build(tenant.Id, tenant.CompanyCode, "Company", "Product access changed",
-            $"{(before == ProductScope.PeopleOnly ? "Roma HR only" : "Full ERP + HR")} → {(scope == ProductScope.PeopleOnly ? "Roma HR only" : "Full ERP + HR")}", "system console"));
+            $"{ScopeLabel(before)} → {ScopeLabel(scope)}", "system console"));
         await _central.SaveChangesAsync(ct);
         return MapTenant(tenant);
     }
+
+    private static string ScopeLabel(ProductScope scope) => scope switch
+    {
+        ProductScope.PeopleOnly => "Roma HR only",
+        ProductScope.BooksOnly => "Roma Books (free)",
+        _ => "Full ERP + HR"
+    };
 
     /// <summary>Every company created before this moment was a test or demo company, so the system console may erase
     /// it completely (even if its test invoices were marked paid). Every company created at or after it is a real

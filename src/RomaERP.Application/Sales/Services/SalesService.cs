@@ -19,8 +19,11 @@ public class SalesService : ISalesService
     private readonly IHtmlToPdfRenderer _pdfRenderer;
     private readonly IExchangeRateService _exchangeRateService;
 
-    public SalesService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer, IExchangeRateService exchangeRateService)
+    private readonly IPlanLimitGuard? _planLimits;
+
+    public SalesService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer, IExchangeRateService exchangeRateService, IPlanLimitGuard? planLimits = null)
     {
+        _planLimits = planLimits;
         _context = context;
         _pdfRenderer = pdfRenderer;
         _exchangeRateService = exchangeRateService;
@@ -129,6 +132,7 @@ public class SalesService : ISalesService
 
     public async Task<SalesInvoiceDto> CreateInvoiceAsync(CreateSalesInvoiceDto dto, CancellationToken ct = default)
     {
+        if (_planLimits is not null) await _planLimits.EnsureCanCreateInvoiceAsync(ct);
         if (dto.Lines.Count == 0)
             throw new ValidationAppException("لازم يكون في بند واحد على الأقل في الفاتورة.");
 

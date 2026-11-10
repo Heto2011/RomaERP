@@ -284,6 +284,7 @@ const ar = {
     wrongPin: "الرقم السري غير صحيح",
   },
   trial: {
+    booksNote: "Roma Books ببلاش: محاسبة ومبيعات ومشتريات وتقارير، من غير بطاقة ومن غير مدة تجربة. حدودها: 3 مستخدمين، فرع واحد، 100 فاتورة في الشهر.",
     activityTitle: "نشاطك إيه؟",
     activityPlaceholder: "اختار نشاطك",
     activityHint: "اختار نشاط واحد أو أكتر (لحد 3). هنظهرلك الأقسام اللي تخص نشاطك أول، وتقدر تفتح باقي الأقسام في أي وقت.",
@@ -1776,6 +1777,9 @@ const ar = {
     whatsAppSentSuccess: "اترسلت الرسالة بنجاح.",
   },
   mySubscription: {
+    freePlanTitle: "نسختك المجانية (Roma Books)",
+    freePlanHint: "المحاسبة والمبيعات والمشتريات والتقارير مجانًا بحدود شهرية. لو احتجت أكتر، رقّي لباقة مدفوعة من تحت وكل بياناتك بتفضل زي ما هي.",
+    freePlanInvoices: "فواتير الشهر ده (مبيعات ومشتريات)",
     title: "اشتراكي وفواتيري",
     intro: "تفاصيل باقتك الحالية وفواتيرك. تحوّل المبلغ وتبلغنا، وفريقنا بيراجع ويأكد خلال يوم شغل.",
     introCard: "تفاصيل باقتك الحالية وفواتيرك. تقدر تدفع بالبطاقة من قسم «الدفع» تحت، وبيتفعّل اشتراكك على طول.",
@@ -2327,6 +2331,7 @@ const en: typeof ar = {
     wrongPin: "Incorrect PIN",
   },
   trial: {
+    booksNote: "Roma Books is free: accounting, sales, purchasing and reports, no card and no trial period. Limits: 3 users, 1 branch, 100 invoices a month.",
     activityTitle: "What does your business do?",
     activityPlaceholder: "Choose your activity",
     activityHint: "Pick one or more activities (up to 3). We show the sections that fit your business first, and you can open the rest at any time.",
@@ -3819,6 +3824,9 @@ const en: typeof ar = {
     whatsAppSentSuccess: "Message sent successfully.",
   },
   mySubscription: {
+    freePlanTitle: "Your free plan (Roma Books)",
+    freePlanHint: "Accounting, sales, purchasing and reports are free within monthly limits. If you need more, upgrade to a paid plan below and all your data stays as it is.",
+    freePlanInvoices: "Invoices this month (sales and purchase)",
     title: "My Subscription & Invoices",
     intro: "Your current plan and invoices. Pay the amount and report it, and our team reviews and confirms within one business day.",
     introCard: "Your current plan and invoices. You can pay by card in the Payment section below, and your subscription is activated right away.",

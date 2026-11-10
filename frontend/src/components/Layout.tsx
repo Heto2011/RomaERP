@@ -316,6 +316,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   // direct URL, since HomeRoute/PeopleLogin already send them straight to /people.
   const isPeopleOnly = user?.productScope === ProductScope.PeopleOnly;
   const peopleOnlyAllowedSections = new Set([t.nav.general, t.nav.administration]);
+  // The free Roma Books plan: accounting, reports, sales and purchasing only — no POS, inventory, HR or AI.
+  const isBooksOnly = user?.productScope === ProductScope.BooksOnly;
+  const booksOnlyAllowedSections = new Set([t.nav.general, t.nav.accounting, t.nav.reports, t.nav.sales, t.nav.purchasing, t.nav.administration]);
 
   // Each of these sections requires either the base role that's always had it, or the matching
   // per-user "module" grant (see ModulePermissions on the backend) — Admin always sees everything.
@@ -345,6 +348,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   function canSeeSection(section: string) {
     if (!showAll && sectionKeys[section] && hiddenKeys.includes(sectionKeys[section])) return false;
     if (isPeopleOnly && !peopleOnlyAllowedSections.has(section)) return false;
+    if (isBooksOnly && !booksOnlyAllowedSections.has(section)) return false;
     const access = sectionAccess[section];
     if (!access) return true;
     return isAdmin || access.fallbackRoles.some((r) => user?.roles.includes(r)) || (user?.modules.includes(access.module) ?? false);

@@ -307,6 +307,8 @@ public class LemonSqueezyService : ILemonSqueezyService
 
         sub.PlanId = newPlan.Id;
         var tenant = await _central.Tenants.FirstAsync(t => t.Id == tenantId, ct);
+        if (tenant.ProductScope == ProductScope.BooksOnly && newPlan.Code is "essential" or "business" or "professional" or "enterprise")
+            tenant.ProductScope = ProductScope.Full;
         Log(tenant, "Billing", "Plan upgraded (card)", $"{currentPlan.Code} → {newCode}");
         await _central.SaveChangesAsync(ct);
     }
@@ -577,6 +579,9 @@ public class LemonSqueezyService : ILemonSqueezyService
         tenant.IsActive = true;
 
         if (plan is not null) subscription.PlanId = plan.Id;
+        // A free Roma Books company that pays for a full plan becomes a full-product company.
+        if (plan is not null && tenant.ProductScope == ProductScope.BooksOnly && plan.Code is "essential" or "business" or "professional" or "enterprise")
+            tenant.ProductScope = ProductScope.Full;
         subscription.Status = SubscriptionStatus.Active;
         subscription.SuspendedAtUtc = null;
         subscription.PaymentProvider = ProviderName;

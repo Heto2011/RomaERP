@@ -108,6 +108,14 @@ public class MySubscriptionController : ControllerBase
 
     private static readonly string[] PlanOrder = { "essential", "business", "professional" };
 
+    /// <summary>Limits and usage of the free Roma Books plan (null for every other plan).</summary>
+    [HttpGet("free-plan")]
+    public async Task<ActionResult<PlanUsageDto?>> GetFreePlanUsage(CancellationToken ct)
+    {
+        var usage = _tenantContext.ProductScope == RomaERP.Domain.Tenancy.ProductScope.BooksOnly ? await _planLimits.GetUsageAsync(ct) : null;
+        return Ok(usage);
+    }
+
     /// <summary>What the company's plan includes, how many paid extras it has, and what it can still buy (card-paid companies only).</summary>
     [HttpGet("extras")]
     public async Task<ActionResult<ExtrasInfoDto>> GetExtras(CancellationToken ct)

@@ -14,6 +14,9 @@ public interface IPlanLimitGuard
     /// <summary>Throws when adding one more active employee would exceed a card-paid Roma HR plan plus its paid extras.</summary>
     Task EnsureCanAddEmployeeAsync(CancellationToken ct = default);
 
+    /// <summary>Throws when a free Roma Books company has already created its monthly allowance of invoices (sales plus purchase). Other plans are never limited here.</summary>
+    Task EnsureCanCreateInvoiceAsync(CancellationToken ct = default);
+
     /// <summary>Included, paid-extra and used counts for the "Subscription" page, or null when this company isn't card-paid.</summary>
     Task<PlanUsageDto?> GetUsageAsync(CancellationToken ct = default);
 }
@@ -23,4 +26,5 @@ public record PlanUsageDto(
     string PlanCode,
     string PlanName,
     int IncludedBranches, int PaidBranches, int UsedBranches,
-    int IncludedUsers, int PaidUsers, int UsedUsers);
+    int IncludedUsers, int PaidUsers, int UsedUsers,
+    bool IsFreeBooks = false, int IncludedInvoicesPerMonth = 0, int UsedInvoicesThisMonth = 0);

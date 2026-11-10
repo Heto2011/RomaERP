@@ -26,7 +26,7 @@ export default function StartTrial() {
   const [searchParams] = useSearchParams();
 
   const [productScope] = useState<ProductScope>(
-    searchParams.get("product") === "hr" ? ProductScope.PeopleOnly : ProductScope.Full
+    searchParams.get("product") === "hr" ? ProductScope.PeopleOnly : searchParams.get("product") === "books" ? ProductScope.BooksOnly : ProductScope.Full
   );
   const [businessTypes, setBusinessTypes] = useState<number>(0);
   const [activityOpen, setActivityOpen] = useState(false);
@@ -108,7 +108,7 @@ export default function StartTrial() {
           </button>
         </div>
         <h1>{t.trial.title}</h1>
-        <p>{t.trial.subtitle}</p>
+        <p>{productScope === ProductScope.BooksOnly ? t.trial.booksNote : t.trial.subtitle}</p>
         {error && <div className="alert-error">{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {productScope === ProductScope.Full && (

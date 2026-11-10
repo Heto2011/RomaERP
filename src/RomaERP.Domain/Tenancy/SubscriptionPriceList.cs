@@ -17,6 +17,14 @@ public static class SubscriptionPriceList
     public const string PeoplePlanCode = "people";
     public const int PeoplePlanIncludedEmployees = 25;
 
+    /// <summary>The free accounting-only plan. It never expires and never produces an invoice; moving up to a paid plan
+    /// (essential and above) switches the company to the full product.</summary>
+    public const string BooksPlanCode = "books";
+    public const int BooksIncludedBranches = 1;
+    public const int BooksIncludedUsers = 3;
+    /// <summary>Sales plus purchase invoices created in one calendar month.</summary>
+    public const int BooksMonthlyInvoiceLimit = 100;
+
     /// <summary>Egypt-only entry plan: one branch, five users, no extras (more means moving up to Essential).</summary>
     public const string MiniPlanCode = "mini";
     public const int MiniPlanIncludedBranches = 1;
@@ -77,6 +85,11 @@ public static class SubscriptionPriceList
         // ROMA People (HR only): up to 25 employees, branches unlimited (so no per-branch overage) and a small
         // per-employee overage. Launch offer: the first FoundingCustomerLimit customers pay FoundingBase for their
         // first FoundingInvoiceCount invoices (any country). EGP and GBP are independent prices, like the ERP ones.
+        // Roma Books is free everywhere.
+        [(BooksPlanCode, Sar)] = new(Sar, 0, 0, 0, 0),
+        [(BooksPlanCode, Egp)] = new(Egp, 0, 0, 0, 0),
+        [(BooksPlanCode, Gbp)] = new(Gbp, 0, 0, 0, 0),
+
         [(PeoplePlanCode, Sar)] = new(Sar, 99, 49.99m, 0, 5),
         [(PeoplePlanCode, Egp)] = new(Egp, 799, 400, 0, 100),
         [(PeoplePlanCode, Gbp)] = new(Gbp, 49, 24.5m, 0, 1.25m),
@@ -86,7 +99,7 @@ public static class SubscriptionPriceList
     {
         foreach (var (currency, rate, decimals) in GulfCurrencies)
         {
-            foreach (var plan in new[] { "essential", "business", "professional", "enterprise", PeoplePlanCode })
+            foreach (var plan in new[] { "essential", "business", "professional", "enterprise", PeoplePlanCode, BooksPlanCode })
             {
                 var sar = Prices[(plan, Sar)];
                 Prices[(plan, currency)] = new PlanPriceSet(currency,

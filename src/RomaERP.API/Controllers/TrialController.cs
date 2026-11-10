@@ -59,8 +59,9 @@ public class TrialController : ControllerBase
                         request.AdminEmail,
                         request.AdminPassword,
                         TaxRegistrationNumber: null,
-                        IsDemo: true,
-                        DemoExpiryDays: 21,
+                        // The free Roma Books plan is not a trial: it never expires.
+                        IsDemo: request.ProductScope != RomaERP.Domain.Tenancy.ProductScope.BooksOnly,
+                        DemoExpiryDays: request.ProductScope == RomaERP.Domain.Tenancy.ProductScope.BooksOnly ? null : 21,
                         SeedDemoData: false,
                         ProductScope: request.ProductScope,
                         BusinessTypes: SanitizeBusinessTypes(request.BusinessTypes)),

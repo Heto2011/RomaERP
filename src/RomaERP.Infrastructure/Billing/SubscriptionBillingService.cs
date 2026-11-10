@@ -112,6 +112,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
 
         subscription.PlanId = plan.Id;
         Log(tenant, "Subscription", "Plan changed", plan.NameEn);
+        await UpgradeFromBooksIfNeededAsync(tenant.Id, plan.Code, ct);
         await _central.SaveChangesAsync(ct);
 
         return await BuildDtoAsync(tenant, subscription, plan, ct);
@@ -158,6 +159,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         tenant.IsActive = true;
 
         subscription.PlanId = plan.Id;
+        await UpgradeFromBooksIfNeededAsync(tenant.Id, plan.Code, ct);
         subscription.Status = SubscriptionStatus.Active;
         subscription.SuspendedAtUtc = null;
         subscription.BillingPeriod = billingPeriod;
@@ -264,6 +266,13 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == subscription.TenantId, ct);
             if (tenant is null) continue;
             var plan = await _central.SubscriptionPlans.FirstAsync(p => p.Id == subscription.PlanId, ct);
+            if (plan.Code == SubscriptionPriceList.BooksPlanCode)
+            {
+                // The free plan never produces an invoice; its period just rolls forward so it is not picked up every run.
+                subscription.CurrentPeriodStart = subscription.CurrentPeriodEnd;
+                subscription.CurrentPeriodEnd = subscription.CurrentPeriodEnd.AddMonths(1);
+                continue;
+            }
             if (plan.IsCustomPricing)
             {
                 // Negotiated plans (Enterprise) have no list price, so there is nothing to invoice automatically.
@@ -483,6 +492,9 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var peoplePlan = tenant.ProductScope == ProductScope.PeopleOnly
             ? await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Code == SubscriptionPriceList.PeoplePlanCode, ct)
             : null;
+        var booksPlan = tenant.ProductScope == ProductScope.BooksOnly
+            ? await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Code == SubscriptionPriceList.BooksPlanCode, ct)
+            : null;
 
         var existing = await _central.Subscriptions.FirstOrDefaultAsync(s => s.TenantId == tenant.Id, ct);
         if (existing is not null)
@@ -501,7 +513,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             return existing;
         }
 
-        var defaultPlan = peoplePlan ?? await _central.SubscriptionPlans.OrderBy(p => p.SortOrder).FirstAsync(ct);
+        var defaultPlan = peoplePlan ?? booksPlan ?? await _central.SubscriptionPlans.OrderBy(p => p.SortOrder).FirstAsync(ct);
         var now = DateTime.UtcNow;
 
         var subscription = new Subscription
@@ -516,6 +528,16 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         _central.Subscriptions.Add(subscription);
         await _central.SaveChangesAsync(ct);
         return subscription;
+    }
+
+    /// <summary>A free Roma Books company that moves to a paid ERP plan becomes a full-product company.</summary>
+    private async Task UpgradeFromBooksIfNeededAsync(Guid tenantId, string planCode, CancellationToken ct)
+    {
+        if (planCode.ToLowerInvariant() is not ("essential" or "business" or "professional" or "enterprise" or SubscriptionPriceList.MiniPlanCode)) return;
+        var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, ct);
+        if (tenant is null || tenant.ProductScope != ProductScope.BooksOnly) return;
+        tenant.ProductScope = ProductScope.Full;
+        Log(tenant, "Company", "Product access changed", "Roma Books (free) → Full ERP + HR", "automatic");
     }
 
     private async Task<Tenant> GetTenantOrThrowAsync(Guid tenantId, CancellationToken ct)

@@ -23,8 +23,16 @@ public class PlanLimitGuard : IPlanLimitGuard
         _users = users;
     }
 
+    private bool IsFreeBooks => _tenant.IsResolved && _tenant.ProductScope == ProductScope.BooksOnly;
+
     public async Task EnsureCanAddBranchAsync(CancellationToken ct = default)
     {
+        if (IsFreeBooks)
+        {
+            if (await _db.Warehouses.CountAsync(w => w.IsActive, ct) >= SubscriptionPriceList.BooksIncludedBranches)
+                throw new ValidationAppException($"النسخة المجانية (Roma Books) بتشمل {SubscriptionPriceList.BooksIncludedBranches} فرع. للمزيد رقّي الباقة من «اشتراكي».");
+            return;
+        }
         var card = await CardPlanAsync(ct);
         if (card is null)
         {
@@ -44,6 +52,12 @@ public class PlanLimitGuard : IPlanLimitGuard
 
     public async Task EnsureCanAddUserAsync(CancellationToken ct = default)
     {
+        if (IsFreeBooks)
+        {
+            if (await _users.Users.CountAsync(u => u.IsActive, ct) >= SubscriptionPriceList.BooksIncludedUsers)
+                throw new ValidationAppException($"النسخة المجانية (Roma Books) بتشمل {SubscriptionPriceList.BooksIncludedUsers} مستخدمين. للمزيد رقّي الباقة من «اشتراكي».");
+            return;
+        }
         var card = await CardPlanAsync(ct);
         if (card is null)
         {
@@ -100,8 +114,30 @@ public class PlanLimitGuard : IPlanLimitGuard
             : $"باقتك ({plan.NameAr}) بتشمل {included} {what} + {extras} إضافي كحد أقصى، وده العدد الحالي. لزيادة {what} أكتر رقّي الباقة — كلّمنا من «الدعم».");
     }
 
+    public async Task EnsureCanCreateInvoiceAsync(CancellationToken ct = default)
+    {
+        if (!IsFreeBooks) return;
+        var used = await InvoicesThisMonthAsync(ct);
+        if (used >= SubscriptionPriceList.BooksMonthlyInvoiceLimit)
+            throw new ValidationAppException($"وصلت للحد الشهري في النسخة المجانية (Roma Books): {SubscriptionPriceList.BooksMonthlyInvoiceLimit} فاتورة (مبيعات ومشتريات). يتجدد أول الشهر الجاي، أو رقّي الباقة من «اشتراكي».");
+    }
+
+    private async Task<int> InvoicesThisMonthAsync(CancellationToken ct)
+    {
+        var now = DateTime.UtcNow;
+        var monthStart = new DateTime(now.Year, now.Month, 1);
+        return await _db.SalesInvoices.CountAsync(i => i.CreatedAtUtc >= monthStart, ct)
+             + await _db.PurchaseInvoices.CountAsync(i => i.CreatedAtUtc >= monthStart, ct);
+    }
+
     public async Task<PlanUsageDto?> GetUsageAsync(CancellationToken ct = default)
     {
+        if (IsFreeBooks)
+            return new PlanUsageDto(false, SubscriptionPriceList.BooksPlanCode, "Roma Books",
+                SubscriptionPriceList.BooksIncludedBranches, 0, await _db.Warehouses.CountAsync(w => w.IsActive, ct),
+                SubscriptionPriceList.BooksIncludedUsers, 0, await _users.Users.CountAsync(u => u.IsActive, ct),
+                true, SubscriptionPriceList.BooksMonthlyInvoiceLimit, await InvoicesThisMonthAsync(ct));
+
         var card = await CardPlanAsync(ct);
         if (card is null) return null;
         var (plan, sub) = card.Value;
