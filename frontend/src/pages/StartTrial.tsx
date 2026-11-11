@@ -25,7 +25,7 @@ export default function StartTrial() {
   const { t, lang, setLang } = useLanguage();
   const [searchParams] = useSearchParams();
 
-  const [productScope] = useState<ProductScope>(
+  const [productScope, setProductScope] = useState<ProductScope>(
     searchParams.get("product") === "hr" ? ProductScope.PeopleOnly : searchParams.get("product") === "books" ? ProductScope.BooksOnly : searchParams.get("product") === "pos" ? ProductScope.PosOnly : ProductScope.Full
   );
   const [businessTypes, setBusinessTypes] = useState<number>(0);
@@ -109,6 +109,27 @@ export default function StartTrial() {
         </div>
         <h1>{productScope === ProductScope.BooksOnly ? t.trial.booksTitle : t.trial.title}</h1>
         <p>{productScope === ProductScope.BooksOnly ? t.trial.booksNote : t.trial.subtitle}</p>
+        <div className="form-field">
+          <label>{t.trial.chooseProduct}</label>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+            {([
+              [ProductScope.Full, t.trial.productFull],
+              [ProductScope.PeopleOnly, t.trial.productHr],
+              [ProductScope.BooksOnly, t.trial.productBooks],
+              [ProductScope.PosOnly, t.trial.productPos],
+            ] as [ProductScope, string][]).map(([value, label]) => (
+              <button
+                key={value}
+                type="button"
+                className={productScope === value ? "btn" : "btn btn-secondary"}
+                aria-pressed={productScope === value}
+                onClick={() => setProductScope(value)}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
         {error && <div className="alert-error">{error}</div>}
         <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {productScope === ProductScope.Full && (

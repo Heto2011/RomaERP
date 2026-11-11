@@ -284,6 +284,11 @@ const ar = {
     wrongPin: "الرقم السري غير صحيح",
   },
   trial: {
+    chooseProduct: "اختار المنتج",
+    productFull: "النظام الكامل",
+    productHr: "الموارد البشرية",
+    productBooks: "محاسبة (مجاني)",
+    productPos: "كاشير ومطاعم",
     booksTitle: "افتح حسابك المجاني",
     booksSubmit: "افتح الحساب المجاني",
     booksNote: "Roma Books ببلاش: محاسبة ومبيعات ومشتريات وتقارير، من غير بطاقة ومن غير مدة تجربة. حدودها: مستخدمين اتنين وفرع واحد.",
@@ -2335,6 +2340,11 @@ const en: typeof ar = {
     wrongPin: "Incorrect PIN",
   },
   trial: {
+    chooseProduct: "Choose your product",
+    productFull: "Full system",
+    productHr: "HR",
+    productBooks: "Accounting (free)",
+    productPos: "POS & restaurants",
     booksTitle: "Open your free account",
     booksSubmit: "Open the free account",
     booksNote: "Roma Books is free: accounting, sales, purchasing and reports, no card and no trial period. Limits: 2 users and 1 branch.",
