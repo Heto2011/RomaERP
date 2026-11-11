@@ -10,7 +10,8 @@ public record TrialSignupRequest(
     string AdminEmail,
     string AdminPassword,
     ProductScope ProductScope = ProductScope.Full,
-    BusinessType BusinessTypes = BusinessType.None);
+    BusinessType BusinessTypes = BusinessType.None,
+    string? MarketerCode = null);
 
 /// <summary>Carries a ready-to-use login token so the new tenant lands straight in the app —
 /// no separate login step right after signing up.</summary>

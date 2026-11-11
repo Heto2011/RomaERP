@@ -1,3 +1,4 @@
+(function(){try{var r=new URLSearchParams(location.search).get("ref");if(r)localStorage.setItem("roma_ref",r.slice(0,40));}catch(e){}})();
 /* Shared language chooser for the static marketing pages (hub, RomaERP, Roma HR).
    English is the default; Arabic is chosen explicitly (toggle button or a ?lang=ar link) and remembered
    in localStorage under the SAME "lang" key the app and pricing.html use, so one choice follows the

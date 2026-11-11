@@ -285,6 +285,7 @@ const ar = {
   },
   trial: {
     chooseProduct: "اختار المنتج",
+    marketerCode: "كود المسوّق (اختياري)",
     openAccountTitle: "افتح حسابك",
     openAccountSubmit: "افتح الحساب",
     hrFreeNote: "Roma HR ببلاش: حضور وإجازات وملفات الموظفين، من غير بطاقة ومن غير مدة تجربة. حدودها: مستخدم واحد و10 موظفين.",
@@ -2349,6 +2350,7 @@ const en: typeof ar = {
   },
   trial: {
     chooseProduct: "Choose your product",
+    marketerCode: "Referral code (optional)",
     openAccountTitle: "Open your account",
     openAccountSubmit: "Open the account",
     hrFreeNote: "Roma HR is free: attendance, leave and employee files, no card and no trial period. Limits: 1 user and 10 employees.",

@@ -28,6 +28,14 @@ export default function StartTrial() {
   const [productScope, setProductScope] = useState<ProductScope>(
     searchParams.get("product") === "hr" ? ProductScope.PeopleOnly : searchParams.get("product") === "books" ? ProductScope.BooksOnly : searchParams.get("product") === "pos" ? ProductScope.PosOnly : ProductScope.Full
   );
+  const [marketerCode, setMarketerCode] = useState<string>(() => {
+    // The referral code comes from ?ref= on this page, or was remembered from an earlier visit to the website.
+    const fromUrl = searchParams.get("ref");
+    try {
+      if (fromUrl) localStorage.setItem("roma_ref", fromUrl);
+      return fromUrl ?? localStorage.getItem("roma_ref") ?? "";
+    } catch { return fromUrl ?? ""; }
+  });
   const [businessTypes, setBusinessTypes] = useState<number>(0);
   const [activityOpen, setActivityOpen] = useState(false);
   const activityRef = useRef<HTMLDivElement>(null);
@@ -88,6 +96,7 @@ export default function StartTrial() {
         adminPassword: password,
         productScope,
         businessTypes,
+        marketerCode: marketerCode.trim() || undefined,
       });
       const { data } = res;
       loginWithToken(data.companyCode, data.token, data.email, data.fullName, data.roles, [], data.productScope, data.businessTypes);
@@ -192,6 +201,10 @@ export default function StartTrial() {
                 <option key={value} value={value}>{lang === "ar" ? label.ar : label.en}</option>
               ))}
             </select>
+          </div>
+          <div className="form-field">
+            <label>{t.trial.marketerCode}</label>
+            <input value={marketerCode} onChange={(e) => setMarketerCode(e.target.value)} maxLength={40} autoComplete="off" />
           </div>
           <div className="form-field">
             <label>{t.trial.adminFullName}</label>

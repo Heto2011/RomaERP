@@ -1052,3 +1052,17 @@ export const AiUsageApi = {
   getOverview: (systemKey: string) =>
     systemApiClient.get<AiUsageOverview>("/system/ai-usage", { headers: { "X-System-Key": systemKey } }),
 };
+
+export const MarketersApi = {
+  list: (key: string) => systemApiClient.get<import("./types").MarketerSummary[]>("/system/marketers", { headers: { "X-System-Key": key } }),
+  create: (key: string, body: { name: string; code: string; email?: string; notes?: string }) =>
+    systemApiClient.post("/system/marketers", body, { headers: { "X-System-Key": key } }),
+  setActive: (key: string, id: string, active: boolean) =>
+    systemApiClient.post(`/system/marketers/${id}/active`, { active }, { headers: { "X-System-Key": key } }),
+  commissions: (key: string, id: string) =>
+    systemApiClient.get<import("./types").MarketerCommission[]>(`/system/marketers/${id}/commissions`, { headers: { "X-System-Key": key } }),
+  payOut: (key: string, id: string, note?: string) =>
+    systemApiClient.post<import("./types").MarketerCurrencyTotals[]>(`/system/marketers/${id}/pay-out`, { note }, { headers: { "X-System-Key": key } }),
+  voidCommission: (key: string, commissionId: string, reason?: string) =>
+    systemApiClient.post(`/system/marketers/commissions/${commissionId}/void`, { reason }, { headers: { "X-System-Key": key } }),
+};

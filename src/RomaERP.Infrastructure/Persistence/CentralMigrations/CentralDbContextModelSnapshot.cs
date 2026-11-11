@@ -249,6 +249,127 @@ namespace RomaERP.Infrastructure.Persistence.CentralMigrations
                     b.ToTable("DataDeletionRecords");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Tenancy.Marketer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Marketers");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Tenancy.MarketerCommission", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("Currency")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
+
+                    b.Property<DateTime>("EligibleAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("InvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MarketerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<DateTime?>("PaidOutAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("PaymentAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<DateTime>("PaymentPaidAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<decimal>("Rate")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("InvoiceId")
+                        .IsUnique();
+
+                    b.HasIndex("MarketerId", "Status");
+
+                    b.ToTable("MarketerCommissions");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Tenancy.MarketerReferral", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("MarketerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("ReferredAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MarketerId");
+
+                    b.HasIndex("TenantId")
+                        .IsUnique();
+
+                    b.ToTable("MarketerReferrals");
+                });
+
             modelBuilder.Entity("RomaERP.Domain.Tenancy.MarketingPageView", b =>
                 {
                     b.Property<Guid>("Id")

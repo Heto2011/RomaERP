@@ -22,10 +22,37 @@ public class CentralDbContext : DbContext
     public DbSet<MarketingPageView> MarketingPageViews => Set<MarketingPageView>();
     public DbSet<TenantActivity> TenantActivities => Set<TenantActivity>();
     public DbSet<TenantCreditEntry> TenantCreditEntries => Set<TenantCreditEntry>();
+    public DbSet<Marketer> Marketers => Set<Marketer>();
+    public DbSet<MarketerReferral> MarketerReferrals => Set<MarketerReferral>();
+    public DbSet<MarketerCommission> MarketerCommissions => Set<MarketerCommission>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+
+        builder.Entity<Marketer>(b =>
+        {
+            b.Property(m => m.Name).HasMaxLength(200).IsRequired();
+            b.Property(m => m.Code).HasMaxLength(40).IsRequired();
+            b.HasIndex(m => m.Code).IsUnique();
+            b.Property(m => m.Email).HasMaxLength(200);
+            b.Property(m => m.Notes).HasMaxLength(500);
+        });
+        builder.Entity<MarketerReferral>(b =>
+        {
+            b.HasIndex(r => r.TenantId).IsUnique();
+            b.HasIndex(r => r.MarketerId);
+        });
+        builder.Entity<MarketerCommission>(b =>
+        {
+            b.Property(c => c.Currency).HasMaxLength(10).IsRequired();
+            b.Property(c => c.PaymentAmount).HasPrecision(18, 2);
+            b.Property(c => c.Rate).HasPrecision(5, 4);
+            b.Property(c => c.Amount).HasPrecision(18, 2);
+            b.Property(c => c.Note).HasMaxLength(300);
+            b.HasIndex(c => c.InvoiceId).IsUnique();
+            b.HasIndex(c => new { c.MarketerId, c.Status });
+        });
 
         builder.Entity<TenantCreditEntry>(b =>
         {

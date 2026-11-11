@@ -2526,6 +2526,7 @@ export interface TrialSignupRequest {
   adminPassword: string;
   productScope: ProductScope;
   businessTypes: BusinessType;
+  marketerCode?: string;
 }
 
 export interface TrialSignupResponse {
@@ -2856,4 +2857,14 @@ export interface FreePlanUsage {
   planName?: string;
   includedEmployees?: number;
   usedEmployees?: number;
+}
+
+export interface MarketerCurrencyTotals { currency: string; waiting: number; payable: number; paidOut: number }
+export interface MarketerSummary {
+  id: string; name: string; code: string; email: string | null; notes: string | null; isActive: boolean;
+  referrals: number; payingCustomers: number; totals: MarketerCurrencyTotals[];
+}
+export interface MarketerCommission {
+  id: string; companyCode: string; companyName: string; paymentPaidAtUtc: string; paymentAmount: number; currency: string;
+  rate: number; amount: number; eligibleAtUtc: string; status: number; paidOutAtUtc: string | null; note: string | null;
 }

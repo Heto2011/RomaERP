@@ -25,13 +25,16 @@ public class TrialController : ControllerBase
     private readonly ITenantRegistry _registry;
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ITokenService _tokenService;
+    private readonly RomaERP.Infrastructure.Billing.MarketerCommissionService _marketers;
 
     public TrialController(
         ITenantProvisioningService provisioning,
         ITenantRegistry registry,
         IServiceScopeFactory scopeFactory,
-        ITokenService tokenService)
+        ITokenService tokenService,
+        RomaERP.Infrastructure.Billing.MarketerCommissionService marketers)
     {
+        _marketers = marketers;
         _provisioning = provisioning;
         _registry = registry;
         _scopeFactory = scopeFactory;
@@ -75,6 +78,9 @@ public class TrialController : ControllerBase
 
         if (tenant is null)
             return BadRequest(new { error = "حصل خطأ أثناء إنشاء الحساب، جرّب اسم شركة مختلف." });
+
+        try { await _marketers.RecordReferralAsync(tenant.Id, request.MarketerCode, ct); }
+        catch { /* a referral problem must never block a new account */ }
 
         // Issue a login token immediately so the visitor lands straight in the app.
         using var scope = _scopeFactory.CreateScope();

@@ -16,6 +16,7 @@ import DataDeletionPage from "./pages/system/DataDeletion";
 import MarketingViewsPage from "./pages/system/MarketingViews";
 import MySubscriptionPage from "./pages/MySubscription";
 import SubscriptionsPage from "./pages/system/Subscriptions";
+import MarketersPage from "./pages/system/Marketers";
 import SupportTicketsPage from "./pages/system/SupportTickets";
 import AiUsagePage from "./pages/system/AiUsage";
 import Dashboard from "./pages/Dashboard";
@@ -198,6 +199,7 @@ export default function App() {
       <Route path="/system/data-deletion" element={<DataDeletionPage />} />
       <Route path="/system/marketing-views" element={<MarketingViewsPage />} />
       <Route path="/system/subscriptions" element={<SubscriptionsPage />} />
+      <Route path="/system/marketers" element={<MarketersPage />} />
       <Route path="/system/ai-usage" element={<AiUsagePage />} />
       <Route path="/system/support-tickets" element={<SupportTicketsPage />} />
       <Route path="/" element={<RootRoute />} />
