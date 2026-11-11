@@ -123,16 +123,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   ];
 
   const costReportItems: NavSubGroupItem["subItems"] = [
-    { to: "", label: t.inventory.navActualVsStandardCost, comingSoon: true },
-    { to: "/inventory/reports/purchase-price-variance", label: t.inventory.purchasePriceVarianceTitle },
-    { to: "", label: t.inventory.navQuantityVariance, comingSoon: true },
-    { to: "", label: t.inventory.navMaterialCostVariance, comingSoon: true },
-    { to: "", label: t.inventory.navLaborCostVariance, comingSoon: true },
-    { to: "", label: t.inventory.navOverheadVariance, comingSoon: true },
     { to: "/inventory/reports/stock-valuation", label: t.inventory.navCostPerUnit },
     { to: "/inventory/reports/recipe-cost", label: t.inventory.navRealProductCost },
-    { to: "/inventory/reports/recipe-cost", label: t.inventory.navRecipeCostSlash },
-    { to: "", label: t.inventory.navRecipeVsActualUsage, comingSoon: true },
+    { to: "/inventory/reports/purchase-price-variance", label: t.inventory.purchasePriceVarianceTitle },
   ];
 
   const inventoryReportItems: NavSubGroupItem["subItems"] = [
