@@ -6,7 +6,7 @@ using RomaERP.Infrastructure.Billing;
 
 namespace RomaERP.API.Controllers;
 
-public record CreateMarketerRequest(string Name, string Code, string? Email, string? Notes);
+public record CreateMarketerRequest(string Name, string? Code, string? Email, string? Notes);
 public record SetMarketerActiveRequest(bool Active);
 public record PayOutRequest(string? Note);
 public record VoidCommissionRequest(string? Reason);

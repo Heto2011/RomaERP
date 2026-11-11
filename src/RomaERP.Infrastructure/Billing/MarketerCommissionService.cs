@@ -22,9 +22,22 @@ public class MarketerCommissionService
 
     public static string NormalizeCode(string? code) => (code ?? string.Empty).Trim().ToUpperInvariant();
 
-    public async Task<MarketerSummaryDto> CreateAsync(string name, string code, string? email, string? notes, CancellationToken ct = default)
+    private const string CodeAlphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I, easy to read out loud
+
+    private async Task<string> GenerateCodeAsync(CancellationToken ct)
     {
-        var normalized = NormalizeCode(code);
+        for (var attempt = 0; attempt < 20; attempt++)
+        {
+            var code = new string(Enumerable.Range(0, 6).Select(_ => CodeAlphabet[System.Security.Cryptography.RandomNumberGenerator.GetInt32(CodeAlphabet.Length)]).ToArray());
+            if (!await _central.Marketers.AnyAsync(m => m.Code == code, ct)) return code;
+        }
+        throw new InvalidOperationException("Could not generate a unique marketer code.");
+    }
+
+    /// <summary>Creates a marketer. The code is generated automatically (6 easy-to-read characters) unless one is given.</summary>
+    public async Task<MarketerSummaryDto> CreateAsync(string name, string? code, string? email, string? notes, CancellationToken ct = default)
+    {
+        var normalized = string.IsNullOrWhiteSpace(code) ? await GenerateCodeAsync(ct) : NormalizeCode(code);
         if (string.IsNullOrWhiteSpace(name)) throw new ValidationAppException("اسم المسوّق مطلوب.");
         if (normalized.Length < 3 || normalized.Length > 40 || normalized.Any(c => !(char.IsAsciiLetterOrDigit(c) || c is '-' or '_')))
             throw new ValidationAppException("الكود لازم يكون من 3 لـ 40 حرف إنجليزي أو رقم (ممكن - أو _).");

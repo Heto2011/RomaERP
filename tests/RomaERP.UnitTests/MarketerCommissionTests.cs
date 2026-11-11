@@ -84,6 +84,19 @@ public class MarketerCommissionTests
     }
 
     [Fact]
+    public async Task EmptyCode_IsGeneratedAutomatically_AndUnique()
+    {
+        using var central = NewCentral();
+        var service = new MarketerCommissionService(central);
+        var a = await service.CreateAsync("A", null, null, null);
+        var b = await service.CreateAsync("B", "  ", null, null);
+        Assert.Equal(6, a.Code.Length);
+        Assert.Equal(6, b.Code.Length);
+        Assert.NotEqual(a.Code, b.Code);
+        Assert.Matches("^[A-Z2-9]{6}$", a.Code);
+    }
+
+    [Fact]
     public async Task UnknownOrInactiveCode_IsIgnored_AndDuplicateCodesAreRejected()
     {
         using var central = NewCentral();

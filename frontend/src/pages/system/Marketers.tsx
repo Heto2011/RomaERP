@@ -59,10 +59,10 @@ export default function MarketersPage() {
         <>
           <form
             className="card" style={{ marginTop: 16, display: "grid", gridTemplateColumns: "1fr 1fr 1fr auto", gap: 10, alignItems: "end" }}
-            onSubmit={(e) => { e.preventDefault(); run(async () => { await MarketersApi.create(systemKey, { name: form.name, code: form.code, email: form.email || undefined }); setForm({ name: "", code: "", email: "" }); }, "Marketer added."); }}
+            onSubmit={(e) => { e.preventDefault(); run(async () => { await MarketersApi.create(systemKey, { name: form.name, code: form.code || undefined, email: form.email || undefined }); setForm({ name: "", code: "", email: "" }); }, "Marketer added."); }}
           >
             <div className="form-field"><label>Name</label><input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required /></div>
-            <div className="form-field"><label>Code (letters/numbers)</label><input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required /></div>
+            <div className="form-field"><label>Code (leave empty for automatic)</label><input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} placeholder="Automatic" /></div>
             <div className="form-field"><label>Email (optional)</label><input value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
             <button className="btn" type="submit">Add marketer</button>
           </form>
@@ -77,7 +77,7 @@ export default function MarketersPage() {
                 {marketers.map((m) => (
                   <tr key={m.id} style={{ opacity: m.isActive ? 1 : 0.55 }}>
                     <td><strong>{m.name}</strong>{m.email && <div className="text-muted" style={{ fontSize: 12 }}>{m.email}</div>}</td>
-                    <td><code>{m.code}</code></td>
+                    <td><code>{m.code}</code><div className="text-muted" style={{ fontSize: 11 }}>/start-trial?ref={m.code}</div></td>
                     <td>{m.referrals}</td>
                     <td>{m.payingCustomers}</td>
                     <td>{m.totals.length ? m.totals.map((t) => <div key={t.currency}>{money(t.waiting, t.currency)}</div>) : "—"}</td>

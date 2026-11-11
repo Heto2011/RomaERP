@@ -1055,7 +1055,7 @@ export const AiUsageApi = {
 
 export const MarketersApi = {
   list: (key: string) => systemApiClient.get<import("./types").MarketerSummary[]>("/system/marketers", { headers: { "X-System-Key": key } }),
-  create: (key: string, body: { name: string; code: string; email?: string; notes?: string }) =>
+  create: (key: string, body: { name: string; code?: string; email?: string; notes?: string }) =>
     systemApiClient.post("/system/marketers", body, { headers: { "X-System-Key": key } }),
   setActive: (key: string, id: string, active: boolean) =>
     systemApiClient.post(`/system/marketers/${id}/active`, { active }, { headers: { "X-System-Key": key } }),
