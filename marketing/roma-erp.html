@@ -257,6 +257,10 @@
   .currency-select { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 0 0 28px; }
   .currency-select label { font-size: 13.5px; color: var(--ink-soft); font-weight: 700; }
   .currency-select select { font-family: inherit; font-size: 14px; font-weight: 700; color: var(--ink); background: var(--surface); border: 1px solid var(--border); border-radius: 999px; padding: 8px 16px; cursor: pointer; }
+  .free-strip { margin: 40px auto 0; max-width: 760px; text-align: center; padding: 22px 20px; border: 1px dashed var(--ink-soft); border-radius: 14px; display: flex; flex-direction: column; gap: 12px; }
+  .free-strip-links { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+  .free-strip-links a { padding: 9px 16px; border-radius: 999px; border: 1px solid var(--primary-dark); color: var(--primary-dark); text-decoration: none; font-weight: 600; font-size: 14px; }
+  .free-strip small { color: var(--ink-soft); }
   .currency-note { text-align: center; font-size: 12px; color: var(--ink-soft); max-width: 480px; margin: -16px auto 32px; }
   .tier-emoji { font-size: 22px; margin-bottom: 10px; }
   .tier-name { font-weight: 900; font-size: 19px; margin: 0 0 4px; }
@@ -556,6 +560,15 @@
     </div>
     <p class="currency-note" id="currencyNote"></p>
     <div class="tiers" id="tiersGrid"></div>
+    <div class="free-strip" id="freeStrip">
+      <strong id="freeStripTitle"></strong>
+      <div class="free-strip-links">
+        <a href="/start-trial?product=books" id="freeBooks"></a>
+        <a href="/start-trial?product=hr" id="freeHr"></a>
+        <a href="/start-trial?product=pos" id="freePos"></a>
+      </div>
+      <small id="freeStripNote"></small>
+    </div>
   </div>
 </section>
 
@@ -824,6 +837,11 @@
         ["📊", "النتيجة", "قيد محاسبي وحركة مخزون فوريين، ويظهروا في التقارير على طول"],
       ],
       tiersEyebrow: "الباقات", tiersHeading: "نقطة بداية، مش قالب جاهز",
+      freeStripTitle: "مش جاهز تدفع؟ ابدأ مجانًا بدون بطاقة",
+      freeBooks: "محاسبة مجانية — Roma Books",
+      freeHr: "موارد بشرية مجانية — Roma HR",
+      freePos: "كاشير ومطاعم مجانًا — Roma POS",
+      freeStripNote: "كل نسخة مجانية بحدود (مستخدمين وفرع واحد، وموظفين في HR)، وبتترقّى لباقة مدفوعة من غير ما تضيع بياناتك.",
       tiersDesc: "الأسعار دي بداية معقولة لكل حجم نشاط. استخدم الحاسبة تحت عشان تشوف السعر الفعلي المناسب لك بالظبط.",
       currencyLabel: "اعرض الأسعار بعملة:",
       launchBadge: `عرض تأسيسي — أول ${LAUNCH_OFFER_LIMIT} عميل (٣ شهور)`, recommendedBadge: "الأكثر طلبًا",
@@ -968,6 +986,11 @@
         ["📊", "Result", "An instant journal entry and stock movement, showing up in reports right away"],
       ],
       tiersEyebrow: "Plans", tiersHeading: "A starting point, not a rigid template",
+      freeStripTitle: "Not ready to pay? Start free, no card",
+      freeBooks: "Free accounting — Roma Books",
+      freeHr: "Free HR — Roma HR",
+      freePos: "Free POS and restaurant — Roma POS",
+      freeStripNote: "Each free plan has limits (users and one branch, employees for HR) and upgrades to a paid plan without losing your data.",
       tiersDesc: "These prices are a reasonable start for every business size. Use the calculator below to see the exact price that fits you.",
       currencyLabel: "Show prices in:",
       launchBadge: `Founding offer — first ${LAUNCH_OFFER_LIMIT} customers (3 months)`, recommendedBadge: "Most popular",
@@ -1181,6 +1204,7 @@
     document.getElementById("tiersEyebrow").textContent = t.tiersEyebrow;
     document.getElementById("tiersHeading").textContent = t.tiersHeading;
     document.getElementById("tiersDesc").textContent = t.tiersDesc;
+    for (const id of ["freeStripTitle", "freeBooks", "freeHr", "freePos", "freeStripNote"]) document.getElementById(id).textContent = t[id];
     document.getElementById("currencyLabel").textContent = t.currencyLabel;
 
     document.getElementById("calcEyebrow").textContent = t.calcEyebrow;
