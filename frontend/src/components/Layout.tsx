@@ -359,7 +359,20 @@ export default function Layout({ children }: { children: ReactNode }) {
     : isEmployeeWithExtras
       ? [...cashierLinks, ...fullLinks.filter((group) => extraSections.has(group.section))]
       : fullLinks
-  ).filter((group) => canSeeSection(group.section));
+  ).filter((group) => canSeeSection(group.section)).map((group) => {
+    // The free Books plan keeps only the basic reports: the financial statements and item/customer profitability.
+    if (!isBooksOnly || group.section !== t.nav.reports) return group;
+    const keep = new Set([t.nav.financialStatementsGroup, t.nav.profitabilityReports]);
+    const basicProfit = new Set(["/accounting/item-profitability", "/accounting/customer-profitability"]);
+    return {
+      ...group,
+      items: group.items
+        .filter((item) => !("subGroup" in item) || keep.has(item.subGroup))
+        .map((item) => "subGroup" in item && item.subGroup === t.nav.profitabilityReports
+          ? { ...item, subItems: item.subItems.filter((sub) => basicProfit.has(sub.to)) }
+          : item),
+    };
+  });
 
   const activeSection = useMemo(() => {
     for (const group of links) {
