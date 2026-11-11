@@ -11,7 +11,11 @@ const LanguageContext = createContext<LanguageContextValue | undefined>(undefine
 
 function getInitialLang(): Lang {
   const stored = localStorage.getItem("lang");
-  return stored === "ar" ? "ar" : "en";
+  if (stored === "ar" || stored === "en") return stored;
+  // First visit: follow the browser's language, so an Arabic phone opens the Arabic site.
+  const detected: Lang = typeof navigator !== "undefined" && navigator.language?.toLowerCase().startsWith("ar") ? "ar" : "en";
+  try { localStorage.setItem("lang", detected); } catch { /* ignore */ } // keep API messages in the same language
+  return detected;
 }
 
 export function LanguageProvider({ children }: { children: ReactNode }) {

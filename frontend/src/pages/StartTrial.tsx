@@ -49,7 +49,7 @@ export default function StartTrial() {
   }, [activityOpen]);
   const [companyNameAr, setCompanyNameAr] = useState("");
   const [companyNameEn, setCompanyNameEn] = useState("");
-  const [country, setCountry] = useState<Country>(Country.SaudiArabia);
+  const [country, setCountry] = useState<Country | "">("");
   const [adminFullName, setAdminFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -82,7 +82,7 @@ export default function StartTrial() {
       const res = await TrialApi.signUp({
         companyNameAr,
         companyNameEn,
-        country,
+        country: country as Country,
         adminFullName,
         adminEmail: email,
         adminPassword: password,
@@ -186,7 +186,8 @@ export default function StartTrial() {
           </div>
           <div className="form-field">
             <label>{t.trial.country}</label>
-            <select value={country} onChange={(e) => setCountry(Number(e.target.value) as Country)}>
+            <select value={country} required onChange={(e) => setCountry(Number(e.target.value) as Country)}>
+              <option value="" disabled>{t.trial.countryPlaceholder}</option>
               {Object.entries(countryLabel).map(([value, label]) => (
                 <option key={value} value={value}>{lang === "ar" ? label.ar : label.en}</option>
               ))}
