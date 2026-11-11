@@ -260,6 +260,7 @@
   .free-strip { margin: 40px auto 0; max-width: 760px; text-align: center; padding: 22px 20px; border: 1px dashed var(--ink-soft); border-radius: 14px; display: flex; flex-direction: column; gap: 12px; }
   .free-strip-links { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
   .free-strip-links a { padding: 9px 16px; border-radius: 999px; border: 1px solid var(--primary-dark); color: var(--primary-dark); text-decoration: none; font-weight: 600; font-size: 14px; }
+  .free-slogan { font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-soft); }
   .free-strip small { color: var(--ink-soft); }
   .currency-note { text-align: center; font-size: 12px; color: var(--ink-soft); max-width: 480px; margin: -16px auto 32px; }
   .tier-emoji { font-size: 22px; margin-bottom: 10px; }
@@ -561,6 +562,7 @@
     <p class="currency-note" id="currencyNote"></p>
     <div class="tiers" id="tiersGrid"></div>
     <div class="free-strip" id="freeStrip">
+      <span class="free-slogan" id="freeStripSlogan"></span>
       <strong id="freeStripTitle"></strong>
       <div class="free-strip-links">
         <a href="/start-trial?product=books" id="freeBooks"></a>
@@ -837,7 +839,8 @@
         ["📊", "النتيجة", "قيد محاسبي وحركة مخزون فوريين، ويظهروا في التقارير على طول"],
       ],
       tiersEyebrow: "الباقات", tiersHeading: "نقطة بداية، مش قالب جاهز",
-      freeStripTitle: "ابدأ النهارده.. وفلوسك تروح للمشروع مش للبرامج",
+      freeStripSlogan: "اشتغل أذكى.. وقُد أقوى",
+      freeStripTitle: "بداية النجاح خطوة.. وأول خطوة ببلاش.",
       freeBooks: "محاسبة مجانية — Roma Books",
       freeHr: "موارد بشرية مجانية — Roma HR",
       freePos: "كاشير ومطاعم مجانًا — Roma POS",
@@ -986,7 +989,8 @@
         ["📊", "Result", "An instant journal entry and stock movement, showing up in reports right away"],
       ],
       tiersEyebrow: "Plans", tiersHeading: "A starting point, not a rigid template",
-      freeStripTitle: "Start today. Keep your money for the business, not the software.",
+      freeStripSlogan: "Run Smarter. Lead Stronger",
+      freeStripTitle: "Success starts with one step, and the first step is free.",
       freeBooks: "Free accounting — Roma Books",
       freeHr: "Free HR — Roma HR",
       freePos: "Free POS and restaurant — Roma POS",
@@ -1204,7 +1208,7 @@
     document.getElementById("tiersEyebrow").textContent = t.tiersEyebrow;
     document.getElementById("tiersHeading").textContent = t.tiersHeading;
     document.getElementById("tiersDesc").textContent = t.tiersDesc;
-    for (const id of ["freeStripTitle", "freeBooks", "freeHr", "freePos", "freeStripNote"]) document.getElementById(id).textContent = t[id];
+    for (const id of ["freeStripSlogan", "freeStripTitle", "freeBooks", "freeHr", "freePos", "freeStripNote"]) document.getElementById(id).textContent = t[id];
     document.getElementById("currencyLabel").textContent = t.currencyLabel;
 
     document.getElementById("calcEyebrow").textContent = t.calcEyebrow;
