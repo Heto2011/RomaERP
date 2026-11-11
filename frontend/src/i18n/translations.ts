@@ -1869,6 +1869,8 @@ const ar = {
     copied: "اتنسخ!",
   },
   support: {
+    faqTitle: "إجابات جاهزة",
+    faqFooter: "ما لقيتش إجابتك؟ افتح تذكرة جديدة وهنرد عليك.",
     title: "الدعم الفني",
     intro: "افتح تذكرة لو محتاج مساعدة — المساعد الذكي بيحاول يجاوبك فورًا، ولو محتاج فريق الدعم البشري هيتواصل معاك.",
     newTicket: "تذكرة جديدة",
@@ -3928,6 +3930,8 @@ const en: typeof ar = {
     copied: "Copied!",
   },
   support: {
+    faqTitle: "Quick answers",
+    faqFooter: "Did not find your answer? Open a new ticket and we will reply.",
     title: "Support",
     intro: "Open a ticket if you need help — the AI assistant tries to answer right away, and the human support team follows up if needed.",
     newTicket: "New ticket",

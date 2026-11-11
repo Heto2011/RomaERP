@@ -3,6 +3,7 @@ import { SupportApi } from "../api/services";
 import type { SupportTicket, SupportTicketSummary } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
+import { helpTopics } from "./helpTopics";
 
 const STATUS_KEY: Record<string, string> = {
   Open: "statusOpen",
@@ -19,7 +20,7 @@ const SENDER_KEY: Record<string, string> = {
 };
 
 export default function SupportPage() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [tickets, setTickets] = useState<SupportTicketSummary[] | null>(null);
   const [selected, setSelected] = useState<SupportTicket | null>(null);
   const [creating, setCreating] = useState(false);
@@ -157,6 +158,19 @@ export default function SupportPage() {
       </div>
       <p className="text-muted">{t.support.intro}</p>
       {error && <div className="alert-error">{error}</div>}
+
+      <div className="card" style={{ marginBottom: 16 }}>
+        <h3 style={{ marginTop: 0 }}>{t.support.faqTitle}</h3>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {helpTopics[lang === "ar" ? "ar" : "en"].map((h) => (
+            <details key={h.q}>
+              <summary style={{ cursor: "pointer", fontWeight: 600 }}>{h.q}</summary>
+              <p className="text-muted" style={{ margin: "6px 0 10px" }}>{h.a}</p>
+            </details>
+          ))}
+        </div>
+        <p className="text-muted" style={{ marginBottom: 0, fontSize: 13 }}>{t.support.faqFooter}</p>
+      </div>
 
       {creating && (
         <form onSubmit={handleCreate} className="card">
