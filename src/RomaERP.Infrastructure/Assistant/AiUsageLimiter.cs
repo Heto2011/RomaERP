@@ -26,7 +26,7 @@ public class AiUsageLimiter : IAiUsageLimiter
     public async Task EnsureWithinDailyLimitAsync(string featureKey, CancellationToken ct = default)
     {
         // Free Roma Books: AI is an optional paid add-on. Each call spends one prepaid credit (we charge cost + margin for them).
-        if (_tenantContext.IsResolved && _tenantContext.ProductScope == RomaERP.Domain.Tenancy.ProductScope.BooksOnly)
+        if (_tenantContext.IsResolved && _tenantContext.ProductScope is RomaERP.Domain.Tenancy.ProductScope.BooksOnly or RomaERP.Domain.Tenancy.ProductScope.PosOnly)
         {
             if (!await TryConsumeCreditAsync(ct))
                 throw new ValidationAppException(_language.PrefersArabic

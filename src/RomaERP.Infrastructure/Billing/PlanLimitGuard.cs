@@ -25,12 +25,34 @@ public class PlanLimitGuard : IPlanLimitGuard
 
     private bool IsFreeBooks => _tenant.IsResolved && _tenant.ProductScope == ProductScope.BooksOnly;
 
+    private enum FreeTier { None, Books, HrFree, Pos }
+
+    /// <summary>Which free plan (if any) this company is on. Books is decided by its product; free HR and POS by their plan code,
+    /// so a company that paid for the HR plan is never treated as free.</summary>
+    private async Task<FreeTier> FreeTierAsync(CancellationToken ct)
+    {
+        if (!_tenant.IsResolved) return FreeTier.None;
+        if (_tenant.ProductScope == ProductScope.BooksOnly) return FreeTier.Books;
+        if (_tenant.ProductScope is not (ProductScope.PeopleOnly or ProductScope.PosOnly)) return FreeTier.None;
+        var code = await _central.Subscriptions.AsNoTracking()
+            .Where(s => s.TenantId == _tenant.TenantId)
+            .Join(_central.SubscriptionPlans, s => s.PlanId, p => p.Id, (s, p) => p.Code)
+            .FirstOrDefaultAsync(ct);
+        return code == SubscriptionPriceList.HrFreePlanCode ? FreeTier.HrFree
+             : code == SubscriptionPriceList.PosPlanCode ? FreeTier.Pos
+             : FreeTier.None;
+    }
+
+    private static string TierName(FreeTier t) => t switch { FreeTier.HrFree => "Roma HR", FreeTier.Pos => "Roma POS", _ => "Roma Books" };
+
     public async Task EnsureCanAddBranchAsync(CancellationToken ct = default)
     {
-        if (IsFreeBooks)
+        var tier = await FreeTierAsync(ct);
+        if (tier is FreeTier.Books or FreeTier.Pos)
         {
-            if (await _db.Warehouses.CountAsync(w => w.IsActive, ct) >= SubscriptionPriceList.BooksIncludedBranches)
-                throw new ValidationAppException($"النسخة المجانية (Roma Books) بتشمل {SubscriptionPriceList.BooksIncludedBranches} فرع. للمزيد رقّي الباقة من «اشتراكي».");
+            var allowedBranches = tier == FreeTier.Pos ? SubscriptionPriceList.PosPlanIncludedBranches : SubscriptionPriceList.BooksIncludedBranches;
+            if (await _db.Warehouses.CountAsync(w => w.IsActive, ct) >= allowedBranches)
+                throw new ValidationAppException($"النسخة المجانية ({TierName(tier)}) بتشمل {allowedBranches} فرع. للمزيد رقّي الباقة من «اشتراكي».");
             return;
         }
         var card = await CardPlanAsync(ct);
@@ -52,10 +74,17 @@ public class PlanLimitGuard : IPlanLimitGuard
 
     public async Task EnsureCanAddUserAsync(CancellationToken ct = default)
     {
-        if (IsFreeBooks)
+        var tier = await FreeTierAsync(ct);
+        if (tier != FreeTier.None)
         {
-            if (await _users.Users.CountAsync(u => u.IsActive, ct) >= SubscriptionPriceList.BooksIncludedUsers)
-                throw new ValidationAppException($"النسخة المجانية (Roma Books) بتشمل {SubscriptionPriceList.BooksIncludedUsers} مستخدمين. للمزيد رقّي الباقة من «اشتراكي».");
+            var allowedUsers = tier switch
+            {
+                FreeTier.HrFree => SubscriptionPriceList.HrFreeIncludedUsers,
+                FreeTier.Pos => SubscriptionPriceList.PosPlanIncludedUsers,
+                _ => SubscriptionPriceList.BooksIncludedUsers
+            };
+            if (await _users.Users.CountAsync(u => u.IsActive, ct) >= allowedUsers)
+                throw new ValidationAppException($"النسخة المجانية ({TierName(tier)}) بتشمل {allowedUsers} مستخدم. للمزيد رقّي الباقة من «اشتراكي».");
             return;
         }
         var card = await CardPlanAsync(ct);
@@ -77,6 +106,12 @@ public class PlanLimitGuard : IPlanLimitGuard
 
     public async Task EnsureCanAddEmployeeAsync(CancellationToken ct = default)
     {
+        if (await FreeTierAsync(ct) == FreeTier.HrFree)
+        {
+            if (await ActiveEmployeesAsync(ct) >= SubscriptionPriceList.HrFreeIncludedEmployees)
+                throw new ValidationAppException($"النسخة المجانية (Roma HR) بتشمل {SubscriptionPriceList.HrFreeIncludedEmployees} موظفين. للمزيد رقّي لباقة HR المدفوعة من «اشتراكي».");
+            return;
+        }
         var card = await CardPlanAsync(ct);
         if (card is null || _tenant.ProductScope != ProductScope.PeopleOnly) return;
         var (plan, sub) = card.Value;
@@ -132,7 +167,16 @@ public class PlanLimitGuard : IPlanLimitGuard
 
     public async Task<PlanUsageDto?> GetUsageAsync(CancellationToken ct = default)
     {
-        if (IsFreeBooks)
+        var tier = await FreeTierAsync(ct);
+        if (tier == FreeTier.HrFree)
+            return new PlanUsageDto(true, SubscriptionPriceList.HrFreePlanCode, "Roma HR (free)",
+                0, 0, 0, SubscriptionPriceList.HrFreeIncludedUsers, 0, await _users.Users.CountAsync(u => u.IsActive, ct),
+                true, 0, 0, SubscriptionPriceList.HrFreeIncludedEmployees, await ActiveEmployeesAsync(ct));
+        if (tier == FreeTier.Pos)
+            return new PlanUsageDto(false, SubscriptionPriceList.PosPlanCode, "Roma POS (free)",
+                SubscriptionPriceList.PosPlanIncludedBranches, 0, await _db.Warehouses.CountAsync(w => w.IsActive, ct),
+                SubscriptionPriceList.PosPlanIncludedUsers, 0, await _users.Users.CountAsync(u => u.IsActive, ct), true);
+        if (tier == FreeTier.Books)
             return new PlanUsageDto(false, SubscriptionPriceList.BooksPlanCode, "Roma Books",
                 SubscriptionPriceList.BooksIncludedBranches, 0, await _db.Warehouses.CountAsync(w => w.IsActive, ct),
                 SubscriptionPriceList.BooksIncludedUsers, 0, await _users.Users.CountAsync(u => u.IsActive, ct),

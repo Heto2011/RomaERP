@@ -266,7 +266,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == subscription.TenantId, ct);
             if (tenant is null) continue;
             var plan = await _central.SubscriptionPlans.FirstAsync(p => p.Id == subscription.PlanId, ct);
-            if (plan.Code == SubscriptionPriceList.BooksPlanCode)
+            if (plan.Code is SubscriptionPriceList.BooksPlanCode or SubscriptionPriceList.HrFreePlanCode or SubscriptionPriceList.PosPlanCode)
             {
                 // The free plan never produces an invoice; its period just rolls forward so it is not picked up every run.
                 subscription.CurrentPeriodStart = subscription.CurrentPeriodEnd;
@@ -490,7 +490,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
     private async Task<Subscription> GetOrCreateSubscriptionAsync(Tenant tenant, CancellationToken ct)
     {
         var peoplePlan = tenant.ProductScope == ProductScope.PeopleOnly
-            ? await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Code == SubscriptionPriceList.PeoplePlanCode, ct)
+            ? await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Code == (tenant.IsDemo ? SubscriptionPriceList.PeoplePlanCode : SubscriptionPriceList.HrFreePlanCode), ct)
             : null;
         var booksPlan = tenant.ProductScope == ProductScope.BooksOnly
             ? await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Code == SubscriptionPriceList.BooksPlanCode, ct)

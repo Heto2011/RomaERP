@@ -107,8 +107,8 @@ export default function StartTrial() {
             {t.language}
           </button>
         </div>
-        <h1>{productScope === ProductScope.BooksOnly ? t.trial.booksTitle : t.trial.title}</h1>
-        <p>{productScope === ProductScope.BooksOnly ? t.trial.booksNote : t.trial.subtitle}</p>
+        <h1>{productScope !== ProductScope.Full ? t.trial.booksTitle : t.trial.title}</h1>
+        <p>{productScope === ProductScope.BooksOnly ? t.trial.booksNote : productScope === ProductScope.PeopleOnly ? t.trial.hrFreeNote : productScope === ProductScope.PosOnly ? t.trial.posFreeNote : t.trial.subtitle}</p>
         <div className="form-field">
           <label>{t.trial.chooseProduct}</label>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
@@ -215,7 +215,7 @@ export default function StartTrial() {
             </span>
           </label>
           <button className="btn" type="submit" disabled={loading || !agreedToTerms || (productScope === ProductScope.Full && businessTypes === 0)}>
-            {loading ? t.trial.submitting : productScope === ProductScope.BooksOnly ? t.trial.booksSubmit : t.trial.submit}
+            {loading ? t.trial.submitting : productScope !== ProductScope.Full ? t.trial.booksSubmit : t.trial.submit}
           </button>
         </form>
         <p style={{ marginTop: 16, fontSize: 13 }} className="text-muted">

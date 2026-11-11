@@ -2852,4 +2852,8 @@ export interface FreePlanUsage {
   usedUsers: number;
   includedInvoicesPerMonth: number;
   usedInvoicesThisMonth: number;
+  isHr?: boolean;
+  planName?: string;
+  includedEmployees?: number;
+  usedEmployees?: number;
 }

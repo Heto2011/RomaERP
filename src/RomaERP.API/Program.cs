@@ -283,8 +283,10 @@ static async Task SeedSubscriptionPlansAsync(CentralDbContext central)
         (RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanCode, RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanIncludedBranches, RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanIncludedUsers, false, 6),
         // The free accounting plan. Sorted last so it is never the default plan of a new trial.
         (RomaERP.Domain.Tenancy.SubscriptionPriceList.BooksPlanCode, RomaERP.Domain.Tenancy.SubscriptionPriceList.BooksIncludedBranches, RomaERP.Domain.Tenancy.SubscriptionPriceList.BooksIncludedUsers, false, 7),
-        // Roma POS: no price yet, so it is a "custom" plan that billing never invoices automatically.
-        (RomaERP.Domain.Tenancy.SubscriptionPriceList.PosPlanCode, RomaERP.Domain.Tenancy.SubscriptionPriceList.PosPlanIncludedBranches, RomaERP.Domain.Tenancy.SubscriptionPriceList.PosPlanIncludedUsers, true, 8),
+        // Roma POS: free for now (1 branch, owner + 1 cashier); a paid POS plan is added later.
+        (RomaERP.Domain.Tenancy.SubscriptionPriceList.PosPlanCode, RomaERP.Domain.Tenancy.SubscriptionPriceList.PosPlanIncludedBranches, RomaERP.Domain.Tenancy.SubscriptionPriceList.PosPlanIncludedUsers, false, 8),
+        // The free HR plan: one login and up to 10 employees (IncludedUsers counts employees for HR plans).
+        (RomaERP.Domain.Tenancy.SubscriptionPriceList.HrFreePlanCode, int.MaxValue, RomaERP.Domain.Tenancy.SubscriptionPriceList.HrFreeIncludedEmployees, false, 9),
     };
 
     var existing = await central.SubscriptionPlans.ToListAsync();
@@ -294,7 +296,8 @@ static async Task SeedSubscriptionPlansAsync(CentralDbContext central)
         var isMini = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.MiniPlanCode;
         var isBooks = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.BooksPlanCode;
         var isPos = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.PosPlanCode;
-        var name = isHr ? "Roma HR" : isBooks ? "Roma Books" : isPos ? "Roma POS" : char.ToUpperInvariant(code[0]) + code[1..];
+        var isHrFree = code == RomaERP.Domain.Tenancy.SubscriptionPriceList.HrFreePlanCode;
+        var name = isHr ? "Roma HR" : isBooks ? "Roma Books" : isPos ? "Roma POS (free)" : isHrFree ? "Roma HR (free)" : char.ToUpperInvariant(code[0]) + code[1..];
         // Mini exists only in Egypt, so it has no SAR price; its base price column holds the EGP figure.
         var sarPrice = (isMini
             ? RomaERP.Domain.Tenancy.SubscriptionPriceList.Find(code, RomaERP.Domain.Tenancy.SubscriptionPriceList.Egp)
@@ -304,7 +307,7 @@ static async Task SeedSubscriptionPlansAsync(CentralDbContext central)
         {
             central.SubscriptionPlans.Add(new RomaERP.Domain.Tenancy.SubscriptionPlan
             {
-                Code = code, NameAr = isHr ? "روما إتش آر" : isMini ? "ميني" : isBooks ? "روما بوكس (مجاني)" : isPos ? "روما بوس" : name, NameEn = name, MonthlyBasePrice = sarPrice,
+                Code = code, NameAr = isHr ? "روما إتش آر" : isMini ? "ميني" : isBooks ? "روما بوكس (مجاني)" : isPos ? "روما بوس (مجاني)" : isHrFree ? "روما إتش آر (مجاني)" : name, NameEn = name, MonthlyBasePrice = sarPrice,
                 IncludedBranches = branches, IncludedUsers = users, IsCustomPricing = custom, SortOrder = sort
             });
             continue;

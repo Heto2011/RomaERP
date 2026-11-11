@@ -116,8 +116,8 @@ public class MySubscriptionController : ControllerBase
     [HttpGet("free-plan")]
     public async Task<ActionResult<PlanUsageDto?>> GetFreePlanUsage(CancellationToken ct)
     {
-        var usage = _tenantContext.ProductScope == RomaERP.Domain.Tenancy.ProductScope.BooksOnly ? await _planLimits.GetUsageAsync(ct) : null;
-        return Ok(usage);
+        var usage = await _planLimits.GetUsageAsync(ct);
+        return Ok(usage is { IsFreeBooks: true } ? usage : null);
     }
 
     /// <summary>Prepaid AI credits left. On the free Books plan every AI call spends one; on paid plans they only cover use above the plan's allowance.</summary>

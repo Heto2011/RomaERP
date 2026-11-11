@@ -27,4 +27,5 @@ public record PlanUsageDto(
     string PlanName,
     int IncludedBranches, int PaidBranches, int UsedBranches,
     int IncludedUsers, int PaidUsers, int UsedUsers,
-    bool IsFreeBooks = false, int IncludedInvoicesPerMonth = 0, int UsedInvoicesThisMonth = 0);
+    bool IsFreeBooks = false, int IncludedInvoicesPerMonth = 0, int UsedInvoicesThisMonth = 0,
+    int IncludedEmployees = 0, int UsedEmployees = 0);

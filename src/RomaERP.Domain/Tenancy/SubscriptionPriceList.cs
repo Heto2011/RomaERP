@@ -17,6 +17,11 @@ public static class SubscriptionPriceList
     public const string PeoplePlanCode = "people";
     public const int PeoplePlanIncludedEmployees = 25;
 
+    /// <summary>The free HR plan: one login (the owner) and a small team. Moving to <see cref="PeoplePlanCode"/> lifts the limit.</summary>
+    public const string HrFreePlanCode = "hrfree";
+    public const int HrFreeIncludedEmployees = 10;
+    public const int HrFreeIncludedUsers = 1;
+
     /// <summary>The free accounting-only plan. It never expires and never produces an invoice; moving up to a paid plan
     /// (essential and above) switches the company to the full product.</summary>
     public const string BooksPlanCode = "books";
@@ -30,8 +35,9 @@ public static class SubscriptionPriceList
     /// <summary>Roma POS (point of sale, restaurant, inventory and costing, purchasing). Its price is not set yet, so it is
     /// seeded as a negotiated plan — billing skips it until a real price list is added.</summary>
     public const string PosPlanCode = "pos";
-    public const int PosPlanIncludedBranches = 3;
-    public const int PosPlanIncludedUsers = 10;
+    public const int PosPlanIncludedBranches = 1;
+    /// <summary>The owner plus one cashier.</summary>
+    public const int PosPlanIncludedUsers = 2;
 
     /// <summary>Egypt-only entry plan: one branch, five users, no extras (more means moving up to Essential).</summary>
     public const string MiniPlanCode = "mini";
@@ -98,6 +104,10 @@ public static class SubscriptionPriceList
         [(PosPlanCode, Egp)] = new(Egp, 0, 0, 0, 0),
         [(PosPlanCode, Gbp)] = new(Gbp, 0, 0, 0, 0),
 
+        [(HrFreePlanCode, Sar)] = new(Sar, 0, 0, 0, 0),
+        [(HrFreePlanCode, Egp)] = new(Egp, 0, 0, 0, 0),
+        [(HrFreePlanCode, Gbp)] = new(Gbp, 0, 0, 0, 0),
+
         // Roma Books is free everywhere.
         [(BooksPlanCode, Sar)] = new(Sar, 0, 0, 0, 0),
         [(BooksPlanCode, Egp)] = new(Egp, 0, 0, 0, 0),
@@ -112,7 +122,7 @@ public static class SubscriptionPriceList
     {
         foreach (var (currency, rate, decimals) in GulfCurrencies)
         {
-            foreach (var plan in new[] { "essential", "business", "professional", "enterprise", PeoplePlanCode, BooksPlanCode, PosPlanCode })
+            foreach (var plan in new[] { "essential", "business", "professional", "enterprise", PeoplePlanCode, HrFreePlanCode, BooksPlanCode, PosPlanCode })
             {
                 var sar = Prices[(plan, Sar)];
                 Prices[(plan, currency)] = new PlanPriceSet(currency,

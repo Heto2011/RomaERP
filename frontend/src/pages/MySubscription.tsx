@@ -291,13 +291,17 @@ export default function MySubscriptionPage() {
 
       {freePlan?.isFreeBooks && (
         <div className="card" style={{ marginBottom: 16 }}>
-          <h3 style={{ marginTop: 0 }}>{t.mySubscription.freePlanTitle}</h3>
+          <h3 style={{ marginTop: 0 }}>{freePlan.planName ? `${t.mySubscription.freePlanTitleGeneric} (${freePlan.planName})` : t.mySubscription.freePlanTitle}</h3>
           <p className="text-muted" style={{ marginTop: 0 }}>{t.mySubscription.freePlanHint}</p>
           <table>
             <tbody>
               <tr><td>{t.mySubscription.usersUsage}</td><td>{freePlan.usedUsers} / {freePlan.includedUsers}</td></tr>
-              <tr><td>{t.mySubscription.branchesUsage}</td><td>{freePlan.usedBranches} / {freePlan.includedBranches}</td></tr>
-              <tr><td>{t.mySubscription.freePlanInvoices}</td><td>{freePlan.usedInvoicesThisMonth}{freePlan.includedInvoicesPerMonth > 0 ? ` / ${freePlan.includedInvoicesPerMonth}` : ""}</td></tr>
+              {freePlan.isHr
+                ? <tr><td>{t.mySubscription.employeesUsage}</td><td>{freePlan.usedEmployees ?? 0} / {freePlan.includedEmployees ?? 0}</td></tr>
+                : <tr><td>{t.mySubscription.branchesUsage}</td><td>{freePlan.usedBranches} / {freePlan.includedBranches}</td></tr>}
+              {!freePlan.isHr && freePlan.planName === "Roma Books" && (
+                <tr><td>{t.mySubscription.freePlanInvoices}</td><td>{freePlan.usedInvoicesThisMonth}{freePlan.includedInvoicesPerMonth > 0 ? ` / ${freePlan.includedInvoicesPerMonth}` : ""}</td></tr>
+              )}
             </tbody>
           </table>
         </div>

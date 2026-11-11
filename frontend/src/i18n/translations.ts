@@ -285,6 +285,8 @@ const ar = {
   },
   trial: {
     chooseProduct: "اختار المنتج",
+    hrFreeNote: "Roma HR ببلاش: حضور وإجازات وملفات الموظفين، من غير بطاقة ومن غير مدة تجربة. حدودها: مستخدم واحد و10 موظفين.",
+    posFreeNote: "Roma POS ببلاش: كاشير ومطاعم ومخزون، من غير بطاقة ومن غير مدة تجربة. حدودها: فرع واحد ومستخدمين (أنت وكاشير واحد).",
     productFull: "النظام الكامل",
     productHr: "الموارد البشرية",
     productBooks: "محاسبة (مجاني)",
@@ -1785,6 +1787,7 @@ const ar = {
   },
   mySubscription: {
     freePlanTitle: "نسختك المجانية (Roma Books)",
+    freePlanTitleGeneric: "نسختك المجانية",
     freePlanHint: "المحاسبة والمبيعات والمشتريات والتقارير مجانًا بحدود شهرية. لو احتجت أكتر، رقّي لباقة مدفوعة من تحت وكل بياناتك بتفضل زي ما هي.",
     freePlanInvoices: "فواتير الشهر ده (مبيعات ومشتريات)",
     aiCredits: "رصيد المساعد الذكي (مرات)",
@@ -2341,6 +2344,8 @@ const en: typeof ar = {
   },
   trial: {
     chooseProduct: "Choose your product",
+    hrFreeNote: "Roma HR is free: attendance, leave and employee files, no card and no trial period. Limits: 1 user and 10 employees.",
+    posFreeNote: "Roma POS is free: cashier, restaurant and inventory, no card and no trial period. Limits: 1 branch and 2 users (you and one cashier).",
     productFull: "Full system",
     productHr: "HR",
     productBooks: "Accounting (free)",
@@ -3841,6 +3846,7 @@ const en: typeof ar = {
   },
   mySubscription: {
     freePlanTitle: "Your free plan (Roma Books)",
+    freePlanTitleGeneric: "Your free plan",
     freePlanHint: "Accounting, sales, purchasing and reports are free within monthly limits. If you need more, upgrade to a paid plan below and all your data stays as it is.",
     freePlanInvoices: "Invoices this month (sales and purchase)",
     aiCredits: "AI assistant credits (uses)",
