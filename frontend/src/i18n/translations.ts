@@ -285,6 +285,8 @@ const ar = {
   },
   trial: {
     chooseProduct: "اختار المنتج",
+    openAccountTitle: "افتح حسابك",
+    openAccountSubmit: "افتح الحساب",
     hrFreeNote: "Roma HR ببلاش: حضور وإجازات وملفات الموظفين، من غير بطاقة ومن غير مدة تجربة. حدودها: مستخدم واحد و10 موظفين.",
     posFreeNote: "Roma POS ببلاش: كاشير ومطاعم ومخزون، من غير بطاقة ومن غير مدة تجربة. حدودها: فرع واحد ومستخدمين (أنت وكاشير واحد).",
     productFull: "النظام الكامل",
@@ -2347,6 +2349,8 @@ const en: typeof ar = {
   },
   trial: {
     chooseProduct: "Choose your product",
+    openAccountTitle: "Open your account",
+    openAccountSubmit: "Open the account",
     hrFreeNote: "Roma HR is free: attendance, leave and employee files, no card and no trial period. Limits: 1 user and 10 employees.",
     posFreeNote: "Roma POS is free: cashier, restaurant and inventory, no card and no trial period. Limits: 1 branch and 2 users (you and one cashier).",
     productFull: "Full system",
