@@ -60,6 +60,8 @@ public interface IApplicationDbContext
     DbSet<Warehouse> Warehouses { get; }
     DbSet<Item> Items { get; }
     DbSet<StockMovement> StockMovements { get; }
+    DbSet<RomaERP.Domain.Inventory.StockTransfer> StockTransfers { get; }
+    DbSet<RomaERP.Domain.Inventory.StockTransferLine> StockTransferLines { get; }
     DbSet<PhysicalStockCount> PhysicalStockCounts { get; }
     DbSet<WasteEntry> WasteEntries { get; }
     DbSet<ManufacturingBom> ManufacturingBoms { get; }

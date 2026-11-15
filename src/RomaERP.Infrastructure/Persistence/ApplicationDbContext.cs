@@ -73,6 +73,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
     public DbSet<Item> Items => Set<Item>();
     public DbSet<StockMovement> StockMovements => Set<StockMovement>();
+    public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
+    public DbSet<StockTransferLine> StockTransferLines => Set<StockTransferLine>();
     public DbSet<PhysicalStockCount> PhysicalStockCounts => Set<PhysicalStockCount>();
     public DbSet<WasteEntry> WasteEntries => Set<WasteEntry>();
     public DbSet<ManufacturingBom> ManufacturingBoms => Set<ManufacturingBom>();

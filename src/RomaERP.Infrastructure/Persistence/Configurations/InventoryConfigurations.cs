@@ -228,3 +228,31 @@ public class ItemLotConfiguration : IEntityTypeConfiguration<ItemLot>
         builder.HasQueryFilter(l => !l.IsDeleted);
     }
 }
+
+public class StockTransferConfiguration : IEntityTypeConfiguration<StockTransfer>
+{
+    public void Configure(EntityTypeBuilder<StockTransfer> builder)
+    {
+        builder.Property(t => t.Number).HasMaxLength(20).IsRequired();
+        builder.HasIndex(t => t.Number).IsUnique();
+        builder.Property(t => t.Notes).HasMaxLength(500);
+        builder.Property(t => t.SentBy).HasMaxLength(200);
+        builder.Property(t => t.ReceivedBy).HasMaxLength(200);
+        builder.Property(t => t.ReceiveNote).HasMaxLength(500);
+        builder.HasOne(t => t.FromWarehouse).WithMany().HasForeignKey(t => t.FromWarehouseId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(t => t.ToWarehouse).WithMany().HasForeignKey(t => t.ToWarehouseId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(t => t.Status);
+        builder.HasMany(t => t.Lines).WithOne(l => l.StockTransfer).HasForeignKey(l => l.StockTransferId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class StockTransferLineConfiguration : IEntityTypeConfiguration<StockTransferLine>
+{
+    public void Configure(EntityTypeBuilder<StockTransferLine> builder)
+    {
+        builder.Property(l => l.Quantity).HasPrecision(18, 4);
+        builder.Property(l => l.UnitCost).HasPrecision(18, 4);
+        builder.Property(l => l.LotNumber).HasMaxLength(60);
+        builder.HasOne(l => l.Item).WithMany().HasForeignKey(l => l.ItemId).OnDelete(DeleteBehavior.Restrict);
+    }
+}

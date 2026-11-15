@@ -1465,6 +1465,8 @@ export interface CreateManufacturingOrderInput {
 export enum StockMovementType {
   Receipt = 1,
   Issue = 2,
+  TransferOut = 3,
+  TransferIn = 4,
 }
 
 export interface StockMovement {
@@ -2875,4 +2877,14 @@ export interface IntegrationInboxItem {
   id: string; type: string; externalRef: string; title: string; amount: number | null; status: string; source: string;
   receivedAtUtc: string; reviewedAtUtc: string | null; reviewedBy: string | null; reviewNote: string | null;
   errorMessage: string | null; resultEntityId: string | null; payloadJson?: string | null;
+}
+
+export interface StockTransferLine { itemId: string; itemCode: string; itemName: string; quantity: number; unitCost: number; lotNumber: string | null }
+export interface StockTransfer {
+  id: string; number: string; transferDate: string; fromWarehouseId: string; fromWarehouseName: string; toWarehouseId: string; toWarehouseName: string;
+  status: string; notes: string | null; sentBy: string | null; sentAtUtc: string; receivedBy: string | null; receivedAtUtc: string | null;
+  receiveNote: string | null; totalCost: number; lines: StockTransferLine[];
+}
+export interface WarehouseStockRow {
+  itemId: string; itemCode: string; itemName: string; unitOfMeasure: string; warehouseId: string; warehouseName: string; quantity: number; incomingQuantity: number;
 }

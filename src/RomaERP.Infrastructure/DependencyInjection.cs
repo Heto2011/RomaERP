@@ -45,6 +45,7 @@ public static class DependencyInjection
         services.AddScoped<ISubscriptionBillingService, RomaERP.Infrastructure.Billing.SubscriptionBillingService>();
         services.AddScoped<RomaERP.Infrastructure.Billing.MarketerCommissionService>();
         services.AddScoped<RomaERP.Application.Integration.IIntegrationApiKeyService, RomaERP.Application.Integration.IntegrationApiKeyService>();
+        services.AddScoped<RomaERP.Application.Inventory.Services.IStockTransferService, RomaERP.Application.Inventory.Services.StockTransferService>();
         services.AddScoped<RomaERP.Application.Integration.IIntegrationInboxService, RomaERP.Application.Integration.IntegrationInboxService>();
         services.AddScoped<IPlanLimitGuard, RomaERP.Infrastructure.Billing.PlanLimitGuard>();
         services.AddHttpClient<ILemonSqueezyService, RomaERP.Infrastructure.Billing.LemonSqueezyService>();

@@ -84,6 +84,8 @@ import Warehouses from "./pages/inventory/Warehouses";
 import Manufacturing from "./pages/inventory/Manufacturing";
 import ExpiringStock from "./pages/inventory/ExpiringStock";
 import StockMovements from "./pages/inventory/StockMovements";
+import StockTransfers from "./pages/inventory/StockTransfers";
+import WarehouseStock from "./pages/inventory/WarehouseStock";
 import StockValuationPage from "./pages/inventory/StockValuation";
 import InventoryMovementPage from "./pages/inventory/InventoryMovement";
 import PurchasePriceVariancePage from "./pages/inventory/PurchasePriceVariance";
@@ -323,6 +325,8 @@ export default function App() {
       <Route path="/inventory/manufacturing" element={<ProtectedRoute><Manufacturing /></ProtectedRoute>} />
       <Route path="/inventory/expiring-stock" element={<ProtectedRoute><ExpiringStock /></ProtectedRoute>} />
       <Route path="/inventory/movements" element={<ProtectedRoute><StockMovements /></ProtectedRoute>} />
+      <Route path="/inventory/transfers" element={<ProtectedRoute><StockTransfers /></ProtectedRoute>} />
+      <Route path="/inventory/warehouse-stock" element={<ProtectedRoute><WarehouseStock /></ProtectedRoute>} />
       <Route path="/inventory/reports/stock-valuation" element={<ProtectedRoute><StockValuationPage /></ProtectedRoute>} />
       <Route path="/inventory/reports/reorder-suggestions" element={<ProtectedRoute><ReorderSuggestionsPage /></ProtectedRoute>} />
       <Route path="/inventory/reports/movement-analysis" element={<ProtectedRoute><InventoryMovementPage /></ProtectedRoute>} />

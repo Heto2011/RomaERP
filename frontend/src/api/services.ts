@@ -1079,3 +1079,12 @@ export const IntegrationApi = {
   importItems: (items: unknown[]) =>
     apiClient.post<{ accepted: number; duplicates: number; rejected: number; results: { externalRef: string; type: string; error: string | null }[] }>("/integration-admin/inbox/import", { items }),
 };
+
+export const StockTransfersApi = {
+  getAll: (status?: string) => apiClient.get<import("./types").StockTransfer[]>("/inventory/transfers", { params: status ? { status } : {} }),
+  send: (data: { fromWarehouseId: string; toWarehouseId: string; transferDate: string; notes?: string; lines: { itemId: string; quantity: number; lotNumber?: string }[] }) =>
+    apiClient.post<import("./types").StockTransfer>("/inventory/transfers", data),
+  receive: (id: string, note?: string) => apiClient.post<import("./types").StockTransfer>(`/inventory/transfers/${id}/receive`, { note }),
+  cancel: (id: string) => apiClient.post<import("./types").StockTransfer>(`/inventory/transfers/${id}/cancel`),
+  warehouseStock: (warehouseId?: string) => apiClient.get<import("./types").WarehouseStockRow[]>("/inventory/warehouse-stock", { params: warehouseId ? { warehouseId } : {} }),
+};

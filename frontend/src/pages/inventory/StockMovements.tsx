@@ -10,6 +10,8 @@ export default function StockMovements() {
   const typeLabel: Record<StockMovementType, { text: string; cls: string }> = {
     [StockMovementType.Receipt]: { text: t.inventory.receipt, cls: "badge-posted" },
     [StockMovementType.Issue]: { text: t.inventory.issue, cls: "badge-draft" },
+    [StockMovementType.TransferOut]: { text: lang === "ar" ? "تحويل صادر (Out)" : "Transfer out", cls: "badge-draft" },
+    [StockMovementType.TransferIn]: { text: lang === "ar" ? "تحويل وارد (In)" : "Transfer in", cls: "badge-posted" },
   };
   const [movements, setMovements] = useState<StockMovement[]>([]);
   const [items, setItems] = useState<Item[]>([]);
