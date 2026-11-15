@@ -118,6 +118,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<Vendor> Vendors => Set<Vendor>();
     public DbSet<PurchaseInvoice> PurchaseInvoices => Set<PurchaseInvoice>();
     public DbSet<PendingPurchaseInvoice> PendingPurchaseInvoices => Set<PendingPurchaseInvoice>();
+    public DbSet<RomaERP.Domain.Integration.IntegrationApiKey> IntegrationApiKeys => Set<RomaERP.Domain.Integration.IntegrationApiKey>();
+    public DbSet<RomaERP.Domain.Integration.IntegrationInboxItem> IntegrationInboxItems => Set<RomaERP.Domain.Integration.IntegrationInboxItem>();
     public DbSet<PurchaseInvoiceLine> PurchaseInvoiceLines => Set<PurchaseInvoiceLine>();
     public DbSet<PurchasePayment> PurchasePayments => Set<PurchasePayment>();
 

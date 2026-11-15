@@ -1066,3 +1066,14 @@ export const MarketersApi = {
   voidCommission: (key: string, commissionId: string, reason?: string) =>
     systemApiClient.post(`/system/marketers/commissions/${commissionId}/void`, { reason }, { headers: { "X-System-Key": key } }),
 };
+
+export const IntegrationApi = {
+  getKeys: () => apiClient.get<import("./types").IntegrationApiKey[]>("/integration-admin/keys"),
+  createKey: (name: string) => apiClient.post<import("./types").CreatedIntegrationApiKey>("/integration-admin/keys", { name }),
+  revokeKey: (id: string) => apiClient.delete(`/integration-admin/keys/${id}`),
+  getInbox: (status?: string) => apiClient.get<import("./types").IntegrationInboxItem[]>("/integration-admin/inbox", { params: status ? { status } : {} }),
+  getItem: (id: string) => apiClient.get<import("./types").IntegrationInboxItem>(`/integration-admin/inbox/${id}`),
+  approve: (id: string) => apiClient.post<import("./types").IntegrationInboxItem>(`/integration-admin/inbox/${id}/approve`),
+  reject: (id: string, reason?: string) => apiClient.post<import("./types").IntegrationInboxItem>(`/integration-admin/inbox/${id}/reject`, { reason }),
+  approveAll: () => apiClient.post<{ approved: number; failed: number }>("/integration-admin/inbox/approve-all"),
+};

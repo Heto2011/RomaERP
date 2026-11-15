@@ -164,6 +164,11 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0,
         }));
 
+    // An outside bot sending a company's data: generous enough for batches, per IP. (The API key check itself is in the controller.)
+    options.AddPolicy("integration", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions { PermitLimit = 120, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+
     // Guards the platform-wide system-key endpoints (tenant provisioning, billing console) against
     // brute-forcing the key — a full compromise of these is a cross-tenant compromise.
     options.AddPolicy("system-key", httpContext => RateLimitPartition.GetFixedWindowLimiter(

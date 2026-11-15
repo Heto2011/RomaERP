@@ -298,6 +298,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             section: t.nav.administration,
             items: [
               { to: "/users", label: t.nav.users, icon: <IconShield /> },
+              { to: "/integrations", label: t.nav.integrations, icon: <IconRefresh /> },
               { to: "/einvoicing", label: t.nav.eInvoicing, icon: <IconFile /> },
               { to: "/audit-log", label: t.nav.auditLog, icon: <IconList /> },
               { to: "/login-history", label: t.nav.loginHistory, icon: <IconList /> },

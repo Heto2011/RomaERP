@@ -2868,3 +2868,11 @@ export interface MarketerCommission {
   id: string; companyCode: string; companyName: string; paymentPaidAtUtc: string; paymentAmount: number; currency: string;
   rate: number; amount: number; eligibleAtUtc: string; status: number; paidOutAtUtc: string | null; note: string | null;
 }
+
+export interface IntegrationApiKey { id: string; name: string; keyPrefix: string; isActive: boolean; createdAtUtc: string; lastUsedAtUtc: string | null }
+export interface CreatedIntegrationApiKey extends IntegrationApiKey { key: string }
+export interface IntegrationInboxItem {
+  id: string; type: string; externalRef: string; title: string; amount: number | null; status: string; source: string;
+  receivedAtUtc: string; reviewedAtUtc: string | null; reviewedBy: string | null; reviewNote: string | null;
+  errorMessage: string | null; resultEntityId: string | null; payloadJson?: string | null;
+}

@@ -17,6 +17,7 @@ import MarketingViewsPage from "./pages/system/MarketingViews";
 import MySubscriptionPage from "./pages/MySubscription";
 import SubscriptionsPage from "./pages/system/Subscriptions";
 import MarketersPage from "./pages/system/Marketers";
+import Integrations from "./pages/Integrations";
 import SupportTicketsPage from "./pages/system/SupportTickets";
 import AiUsagePage from "./pages/system/AiUsage";
 import Dashboard from "./pages/Dashboard";
@@ -204,6 +205,7 @@ export default function App() {
       <Route path="/system/support-tickets" element={<SupportTicketsPage />} />
       <Route path="/" element={<RootRoute />} />
       <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
+      <Route path="/integrations" element={<ProtectedRoute><Integrations /></ProtectedRoute>} />
       <Route path="/my-profile" element={<ProtectedRoute><MyProfile /></ProtectedRoute>} />
       <Route path="/alerts" element={<ProtectedRoute><AlertsPage /></ProtectedRoute>} />
       <Route path="/support" element={<ProtectedRoute><SupportPage /></ProtectedRoute>} />

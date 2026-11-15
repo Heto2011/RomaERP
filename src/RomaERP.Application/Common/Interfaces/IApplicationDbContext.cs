@@ -102,6 +102,8 @@ public interface IApplicationDbContext
     DbSet<Vendor> Vendors { get; }
     DbSet<PurchaseInvoice> PurchaseInvoices { get; }
     DbSet<PendingPurchaseInvoice> PendingPurchaseInvoices { get; }
+    DbSet<RomaERP.Domain.Integration.IntegrationApiKey> IntegrationApiKeys { get; }
+    DbSet<RomaERP.Domain.Integration.IntegrationInboxItem> IntegrationInboxItems { get; }
     DbSet<PurchaseInvoiceLine> PurchaseInvoiceLines { get; }
     DbSet<PurchasePayment> PurchasePayments { get; }
 
