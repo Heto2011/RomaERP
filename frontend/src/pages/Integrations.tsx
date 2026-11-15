@@ -17,6 +17,8 @@ const TEXT = {
     approveAllConfirm: "تعتمد كل اللي في الانتظار؟ هيتسجل في الحسابات.", rejectReason: "سبب الرفض (اختياري):",
     empty: "مفيش حاجة هنا.", type: "النوع", item: "العنصر", amount: "المبلغ", reference: "المرجع", received: "وصل", status: "الحالة", source: "المصدر",
     errorLabel: "سبب الفشل", reviewedBy: "راجعه", noKeys: "لسه مفيش مفاتيح.", done: "تم.",
+    upload: "رفع ملف", uploadHint: "عندك ملف بيانات (JSON) من غير البوت؟ ارفعه هنا وهيروح الصندوق يستنى اعتمادك.",
+    uploadBad: "الملف مش JSON صالح. لازم يكون فيه قايمة items.", uploadResult: "اتقبل", uploadDup: "متكرر (اتبعت قبل كده)", uploadErr: "مرفوض",
     typeNames: { Customer: "عميل", Vendor: "مورد", SalesInvoice: "فاتورة مبيعات", PurchaseInvoice: "فاتورة مشتريات", SalesPayment: "دفعة من عميل", PurchasePayment: "دفعة لمورد", Expense: "مصروف", JournalEntry: "قيد يومية", Item: "صنف", BankStatementLine: "حركة بنك", Data: "بيانات أخرى" } as Record<string, string>,
   },
   en: {
@@ -31,6 +33,8 @@ const TEXT = {
     approveAllConfirm: "Approve everything pending? It will be posted to the books.", rejectReason: "Reason for rejecting (optional):",
     empty: "Nothing here.", type: "Type", item: "Item", amount: "Amount", reference: "Reference", received: "Received", status: "Status", source: "Source",
     errorLabel: "Why it failed", reviewedBy: "Reviewed by", noKeys: "No keys yet.", done: "Done.",
+    upload: "Upload a file", uploadHint: "Have a data file (JSON) without the bot? Upload it here and it goes to the inbox to wait for your approval.",
+    uploadBad: "That is not a valid JSON file. It needs an items list.", uploadResult: "Accepted", uploadDup: "Duplicates (sent before)", uploadErr: "Rejected",
     typeNames: { Customer: "Customer", Vendor: "Vendor", SalesInvoice: "Sales invoice", PurchaseInvoice: "Purchase invoice", SalesPayment: "Customer payment", PurchasePayment: "Vendor payment", Expense: "Expense", JournalEntry: "Journal entry", Item: "Stock item", BankStatementLine: "Bank statement line", Data: "Other data" } as Record<string, string>,
   },
 };
@@ -50,6 +54,24 @@ export default function Integrations() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [uploadErrors, setUploadErrors] = useState<string[]>([]);
+
+  async function uploadFile(file: File) {
+    setError(null); setMessage(null); setUploadErrors([]);
+    let items: unknown[];
+    try {
+      const parsed = JSON.parse(await file.text());
+      items = Array.isArray(parsed) ? parsed : parsed.items;
+      if (!Array.isArray(items) || items.length === 0) throw new Error("no items");
+    } catch { setError(x.uploadBad); return; }
+    try {
+      const r = (await IntegrationApi.importItems(items)).data;
+      setMessage(`${x.uploadResult}: ${r.accepted} · ${x.uploadDup}: ${r.duplicates} · ${x.uploadErr}: ${r.rejected}`);
+      setUploadErrors(r.results.filter((e) => e.error).map((e) => `${e.externalRef || "—"}: ${e.error}`));
+      setFilter("Pending");
+      await loadInbox("Pending");
+    } catch (e) { setError(getErrorMessage(e)); }
+  }
 
   const companyCode = (() => { try { return localStorage.getItem("companyCode") ?? "YOUR-COMPANY"; } catch { return "YOUR-COMPANY"; } })();
   const baseUrl = `${window.location.origin}/api/integration`;
@@ -141,6 +163,17 @@ export default function Integrations() {
           <h3 style={{ margin: 0 }}>{x.inbox}</h3>
           <button className="btn btn-sm" onClick={() => { if (window.confirm(x.approveAllConfirm)) act(async () => { const r = (await IntegrationApi.approveAll()).data; setMessage(`${x.approved}: ${r.approved} · ${x.failed}: ${r.failed}`); }, false); }}>{x.approveAll}</button>
         </div>
+        <div className="text-muted" style={{ marginTop: 10, fontSize: 13 }}>{x.uploadHint}</div>
+        <div style={{ margin: "8px 0" }}>
+          <label className="btn btn-secondary btn-sm" style={{ cursor: "pointer" }}>
+            {x.upload}
+            <input type="file" accept=".json,application/json" style={{ display: "none" }}
+              onChange={(e) => { const file = e.target.files?.[0]; if (file) uploadFile(file); e.target.value = ""; }} />
+          </label>
+        </div>
+        {uploadErrors.length > 0 && (
+          <ul style={{ color: "#c0392b", fontSize: 13, margin: "0 0 8px", paddingInlineStart: 18 }}>{uploadErrors.map((m) => <li key={m}>{m}</li>)}</ul>
+        )}
         <div style={{ display: "flex", gap: 6, flexWrap: "wrap", margin: "12px 0" }}>
           {FILTERS.map((f) => (
             <button key={f || "all"} className={filter === f ? "btn btn-sm" : "btn btn-secondary btn-sm"} onClick={() => setFilter(f)}>{f ? statusLabel(f) : x.all}</button>

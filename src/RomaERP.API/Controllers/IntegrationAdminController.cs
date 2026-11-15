@@ -59,6 +59,30 @@ public class IntegrationAdminController : ControllerBase
     public async Task<ActionResult<InboxItemDto>> Reject(Guid id, RejectInboxRequest request, CancellationToken ct)
         => Ok(await _inbox.RejectAsync(id, request.Reason, Reviewer, ct));
 
+    /// <summary>Loads a file of items (the same shape the bot sends) into the inbox, for when a person has the data and no bot is connected yet.
+    /// Everything still waits for approval. Each item succeeds or fails on its own.</summary>
+    [HttpPost("inbox/import")]
+    public async Task<ActionResult> Import(IntegrationBatchRequest request, CancellationToken ct)
+    {
+        if (request.Items.Count == 0 || request.Items.Count > 100)
+            return BadRequest(new { error = "الملف لازم يكون فيه من 1 لـ 100 عنصر." });
+
+        var source = $"رفع يدوي: {Reviewer}";
+        var results = new List<IntegrationBatchEntry>();
+        foreach (var item in request.Items)
+        {
+            var entry = new IntegrationBatchEntry { ExternalRef = item.ExternalRef, Type = item.Type };
+            try
+            {
+                var r = await _inbox.ReceiveAsync(source, item.Type, item.ExternalRef, item.Data, ct);
+                entry.Id = r.Id; entry.Status = r.Status; entry.Duplicate = r.Duplicate;
+            }
+            catch (RomaERP.Application.Common.Exceptions.ValidationAppException ex) { entry.Error = ex.Message; }
+            results.Add(entry);
+        }
+        return Ok(new { accepted = results.Count(r => r.Error is null && !r.Duplicate), duplicates = results.Count(r => r.Duplicate), rejected = results.Count(r => r.Error is not null), results });
+    }
+
     [HttpPost("inbox/approve-all")]
     public async Task<ActionResult<ApproveAllResult>> ApproveAll(CancellationToken ct) => Ok(await _inbox.ApproveAllPendingAsync(Reviewer, ct));
 }

@@ -38,6 +38,10 @@ the answer lists them in order: `{ accepted, rejected, results: [{ externalRef, 
 `GET /items/{id}` tells you what happened to an item: `Pending`, `Approved`, `Rejected` or `Failed`, with `errorMessage`
 (why it failed), `reviewNote` and `resultEntityId`.
 
+**No bot yet?** The same items can be loaded from a file: on the Bot connection page choose **Upload a file** and pick a JSON file shaped
+`{ "items": [ {type, externalRef, data}, ... ] }` (up to 100). A complete worked example (a real client's sales report and two
+supplier invoices) is in `docs/examples/salad-bar-samples.json`.
+
 ## 3. What to send in `data`
 
 Numbers may be sent as numbers or strings. Dates are `YYYY-MM-DD`. Customers, vendors, items, warehouses and accounts are named by

@@ -1076,4 +1076,6 @@ export const IntegrationApi = {
   approve: (id: string) => apiClient.post<import("./types").IntegrationInboxItem>(`/integration-admin/inbox/${id}/approve`),
   reject: (id: string, reason?: string) => apiClient.post<import("./types").IntegrationInboxItem>(`/integration-admin/inbox/${id}/reject`, { reason }),
   approveAll: () => apiClient.post<{ approved: number; failed: number }>("/integration-admin/inbox/approve-all"),
+  importItems: (items: unknown[]) =>
+    apiClient.post<{ accepted: number; duplicates: number; rejected: number; results: { externalRef: string; type: string; error: string | null }[] }>("/integration-admin/inbox/import", { items }),
 };

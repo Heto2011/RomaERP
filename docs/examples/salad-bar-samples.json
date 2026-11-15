@@ -1,0 +1,167 @@
+{
+  "items": [
+    {
+      "type": "Vendor",
+      "externalRef": "vendor-anud",
+      "data": {
+        "code": "ANUD",
+        "nameAr": "شركة العنود العربية التجارية",
+        "nameEn": "Al Anud Arabia Trading Company",
+        "taxRegistrationNumber": "310717314700003",
+        "city": "الدمام",
+        "paymentTermsDays": 0
+      }
+    },
+    {
+      "type": "PurchaseInvoice",
+      "externalRef": "26-438743-AD",
+      "data": {
+        "vendorCode": "ANUD",
+        "invoiceDate": "2026-11-07",
+        "paymentTerm": "Cash",
+        "notes": "فاتورة العنود رقم 26-438743-AD — مدفوعة نقدًا",
+        "lines": [
+          {
+            "description": "ذرة حبوب كاملة (6×2.84 كجم)",
+            "quantity": 2,
+            "unitPrice": 16.09,
+            "accountCode": "5500"
+          },
+          {
+            "description": "زيت عافية ذرة (2×9 لتر)",
+            "quantity": 1,
+            "unitPrice": 86.09,
+            "accountCode": "5500"
+          },
+          {
+            "description": "لبنة فرسانا (6×1 كجم)",
+            "quantity": 1,
+            "unitPrice": 18.0,
+            "accountCode": "5500"
+          },
+          {
+            "description": "خل بيدر (4×3.7 لتر)",
+            "quantity": 1,
+            "unitPrice": 10.43,
+            "accountCode": "5500"
+          },
+          {
+            "description": "خل بلسمك عنب (12×500 مل)",
+            "quantity": 1,
+            "unitPrice": 180.0,
+            "accountCode": "5500"
+          },
+          {
+            "description": "صوص محار شاهلوت (12×600 مل)",
+            "quantity": 1,
+            "unitPrice": 138.04,
+            "accountCode": "5500"
+          },
+          {
+            "description": "عسل فوزي (6×2 كجم)",
+            "quantity": 1,
+            "unitPrice": 30.43,
+            "accountCode": "5500"
+          },
+          {
+            "description": "دجاج تندر بريست سادية (5×2 كجم)",
+            "quantity": 1,
+            "unitPrice": 178.0,
+            "accountCode": "5500"
+          },
+          {
+            "description": "شرائح هالبينو (6×3 كجم)",
+            "quantity": 1,
+            "unitPrice": 34.0,
+            "accountCode": "5500"
+          },
+          {
+            "description": "كينزا كولا دايت (30×250 مل)",
+            "quantity": 1,
+            "unitPrice": 32.0,
+            "accountCode": "5500"
+          },
+          {
+            "description": "شاي مثلج ليبتون (24×240 مل)",
+            "quantity": 1,
+            "unitPrice": 26.09,
+            "accountCode": "5500"
+          }
+        ]
+      }
+    },
+    {
+      "type": "PurchaseInvoice",
+      "externalRef": "26-438769-AD",
+      "data": {
+        "vendorCode": "ANUD",
+        "invoiceDate": "2026-11-07",
+        "paymentTerm": "Cash",
+        "notes": "فاتورة العنود رقم 26-438769-AD (البنود الخاضعة 15%) — مدفوعة نقدًا",
+        "lines": [
+          {
+            "description": "مناديل نابكن (40×100)",
+            "quantity": 1,
+            "unitPrice": 51.95,
+            "accountCode": "5300"
+          },
+          {
+            "description": "كلور مبيض فلاش (4×5 لتر)",
+            "quantity": 2,
+            "unitPrice": 10.49,
+            "accountCode": "5300"
+          },
+          {
+            "description": "سائل غسيل أطباق موبي ليمون (4×3 لتر)",
+            "quantity": 1,
+            "unitPrice": 20.98,
+            "accountCode": "5300"
+          }
+        ]
+      }
+    },
+    {
+      "type": "Expense",
+      "externalRef": "26-438769-AD-ZR",
+      "data": {
+        "date": "2026-11-07",
+        "description": "قفازات فينيل — بنود صفرية الضريبة من فاتورة العنود 26-438769-AD",
+        "amount": 65.0,
+        "expenseAccountCode": "5300",
+        "paidFrom": "cash",
+        "reference": "26-438769-AD"
+      }
+    },
+    {
+      "type": "JournalEntry",
+      "externalRef": "sales-2026-11-14",
+      "data": {
+        "date": "2026-11-14",
+        "description": "مبيعات يوم 14 نوفمبر 2026 — تقرير إغلاق الوردية",
+        "reference": "SALES-2026-11-14",
+        "lines": [
+          {
+            "accountCode": "1111",
+            "debit": 17.0,
+            "description": "مبيعات نقدية"
+          },
+          {
+            "accountCode": "1112",
+            "debit": 149.5,
+            "description": "مبيعات شبكة (مدى 64.00 + فيزا 85.50)"
+          },
+          {
+            "accountCode": "4100",
+            "credit": 144.78,
+            "description": "مبيعات بدون ضريبة"
+          },
+          {
+            "accountCode": "2161",
+            "credit": 21.72,
+            "description": "ضريبة القيمة المضافة 15%"
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -249,6 +249,48 @@ public class IntegrationInboxTests
         Assert.Single(ctx.Customers);
     }
 
+    private static string FindExample(string name)
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "docs", "examples", name))) dir = dir.Parent;
+        return Path.Combine(dir!.FullName, "docs", "examples", name);
+    }
+
+    /// <summary>The documented sample batch (a real client's sales report and two supplier invoices) must go through end to end and
+    /// reproduce the printed totals: invoice 1 = 880.05, invoice 2's taxable part = 108.00 with its zero-rated part 65.00 = 173.00.</summary>
+    [Fact]
+    public async Task TheSaladBarSampleBatch_ApprovesCleanly_AndMatchesThePrintedInvoiceTotals()
+    {
+        var (ctx, inbox) = await CreateAsync();
+        ctx.Accounts.AddRange(
+            new Account { Code = "5500", NameAr = "تكلفة", NameEn = "COGS", AccountType = AccountType.Expense, Nature = AccountNature.Debit },
+            new Account { Code = "1180", NameAr = "ضريبة مدخلات", NameEn = "Input VAT", AccountType = AccountType.Asset, Nature = AccountNature.Debit });
+        await ctx.SaveChangesAsync();
+        var settings = await ctx.CompanySettings.SingleAsync();
+        settings.VatRate = 0.15m;
+        await ctx.SaveChangesAsync();
+
+        using var doc = JsonDocument.Parse(await File.ReadAllTextAsync(FindExample("salad-bar-samples.json")));
+        foreach (var item in doc.RootElement.GetProperty("items").EnumerateArray())
+        {
+            var data = item.GetProperty("data").Clone();
+            // the sample's dates are real ones from the client; move them into the test's open fiscal period
+            var text = System.Text.RegularExpressions.Regex.Replace(data.GetRawText(), "2026-11-(07|14)", Today);
+            await inbox.ReceiveAsync("bot", item.GetProperty("type").GetString()!, item.GetProperty("externalRef").GetString()!, JsonDocument.Parse(text).RootElement.Clone());
+        }
+
+        var result = await inbox.ApproveAllPendingAsync("x");
+        Assert.Equal(5, result.Approved);
+        Assert.Equal(0, result.Failed);
+
+        var invoices = await ctx.PurchaseInvoices.OrderBy(i => i.TotalAmount).ToListAsync();
+        Assert.Equal(new[] { 108.00m, 880.05m }, invoices.Select(i => i.TotalAmount).ToArray());
+        Assert.Equal(new[] { 14.09m, 114.79m }, invoices.Select(i => i.VatAmount).ToArray());
+        var sales = await ctx.JournalEntries.Include(e => e.Lines).SingleAsync(e => e.Reference!.StartsWith("SALES-"));
+        Assert.Equal(sales.Lines.Sum(l => l.Debit), sales.Lines.Sum(l => l.Credit));
+        Assert.Equal(166.50m, sales.Lines.Sum(l => l.Debit));
+    }
+
     [Fact]
     public async Task ApiKeys_AreStoredHashedOnly_ValidateWhileActive_AndStopWorkingWhenRevoked()
     {
