@@ -11,6 +11,10 @@ public class CompanySettings : AuditableEntity
     public Country Country { get; set; }
     public string? TaxRegistrationNumber { get; set; }
     public decimal VatRate { get; set; }
+
+    /// <summary>When on, selling or issuing an item from a branch needs that branch to hold enough of it (its own stock), not just the
+    /// company as a whole. Off by default, so existing companies keep working as they always have.</summary>
+    public bool EnforceBranchStock { get; set; }
     public string DefaultCurrency { get; set; } = "EGP";
 
     /// <summary>Days per month used to derive a daily salary rate for unpaid-leave payroll deductions

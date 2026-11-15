@@ -45,6 +45,8 @@ public class StockTransferLine : BaseEntity
     public Item? Item { get; set; }
 
     public decimal Quantity { get; set; }
+    /// <summary>What the receiving branch actually counted. Less than <see cref="Quantity"/> means a shortage, written off as waste.</summary>
+    public decimal? ReceivedQuantity { get; set; }
     /// <summary>The item's weighted-average cost when it was sent: the transfer carries the same cost to the other branch.</summary>
     public decimal UnitCost { get; set; }
 

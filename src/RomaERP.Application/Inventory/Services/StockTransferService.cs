@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using RomaERP.Application.Accounting;
+using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.Inventory.DTOs;
@@ -13,7 +15,7 @@ public interface IStockTransferService
     /// <summary>Records "Out" at the sending branch: the stock leaves it and travels until the other branch records "In".</summary>
     Task<StockTransferDto> SendAsync(CreateStockTransferDto dto, string? userName, CancellationToken ct = default);
     /// <summary>Records "In" at the receiving branch.</summary>
-    Task<StockTransferDto> ReceiveAsync(Guid id, string? note, string? userName, CancellationToken ct = default);
+    Task<StockTransferDto> ReceiveAsync(Guid id, ReceiveStockTransferDto dto, string? userName, CancellationToken ct = default);
     /// <summary>Calls a transfer back before it was received: the stock returns to the sending branch.</summary>
     Task<StockTransferDto> CancelAsync(Guid id, string? userName, CancellationToken ct = default);
     /// <summary>Quantity of each item in each branch (and what is on its way there).</summary>
@@ -27,11 +29,13 @@ public class StockTransferService : IStockTransferService
 {
     private readonly IApplicationDbContext _context;
     private readonly IItemLotService _lots;
+    private readonly IBranchAccessService? _access;
 
-    public StockTransferService(IApplicationDbContext context, IItemLotService lots)
+    public StockTransferService(IApplicationDbContext context, IItemLotService lots, IBranchAccessService? access = null)
     {
         _context = context;
         _lots = lots;
+        _access = access;
     }
 
     private async Task<decimal> BalanceAsync(Guid itemId, Guid warehouseId, CancellationToken ct)
@@ -47,6 +51,8 @@ public class StockTransferService : IStockTransferService
         var query = _context.StockTransfers.AsNoTracking()
             .Include(t => t.FromWarehouse).Include(t => t.ToWarehouse).Include(t => t.Lines).ThenInclude(l => l.Item).AsQueryable();
         if (status is not null) query = query.Where(t => t.Status == status);
+        if (_access is not null && await _access.GetRestrictedBranchAsync(ct) is { } branch)
+            query = query.Where(t => t.FromWarehouseId == branch || t.ToWarehouseId == branch);
         return (await query.OrderByDescending(t => t.SentAtUtc).Take(300).ToListAsync(ct)).Select(Map).ToList();
     }
 
@@ -61,6 +67,7 @@ public class StockTransferService : IStockTransferService
 
     public async Task<StockTransferDto> SendAsync(CreateStockTransferDto dto, string? userName, CancellationToken ct = default)
     {
+        if (_access is not null) await _access.EnsureMayUseAsync(dto.FromWarehouseId, ct);
         if (dto.FromWarehouseId == dto.ToWarehouseId)
             throw new ValidationAppException("الفرع المرسل والفرع المستلم لازم يكونوا مختلفين.");
         var warehouses = await _context.Warehouses.Where(w => (w.Id == dto.FromWarehouseId || w.Id == dto.ToWarehouseId) && !w.IsDeleted).ToListAsync(ct);
@@ -122,17 +129,78 @@ public class StockTransferService : IStockTransferService
         return await GetAsync(transfer.Id, ct);
     }
 
-    public async Task<StockTransferDto> ReceiveAsync(Guid id, string? note, string? userName, CancellationToken ct = default)
+    public async Task<StockTransferDto> ReceiveAsync(Guid id, ReceiveStockTransferDto dto, string? userName, CancellationToken ct = default)
     {
         var transfer = await LoadAsync(id, true, ct);
+        if (_access is not null) await _access.EnsureMayUseAsync(transfer.ToWarehouseId, ct);
         if (transfer.Status != StockTransferStatus.InTransit)
             throw new ValidationAppException("التحويل ده اتقفل قبل كده (اتستلم أو اتلغى).");
 
-        await ApplyLegAsync(transfer, transfer.ToWarehouseId, $"استلام من {transfer.FromWarehouse?.NameAr}", ct);
+        // What the receiving branch counted, per line (default: everything that was sent).
+        var counted = (dto.Lines ?? new()).ToDictionary(l => (l.ItemId, Lot: (l.LotNumber ?? string.Empty).Trim()), l => l.ReceivedQuantity);
+        foreach (var line in transfer.Lines)
+        {
+            var received = counted.TryGetValue((line.ItemId, (line.LotNumber ?? string.Empty).Trim()), out var q) ? q : line.Quantity;
+            if (received < 0 || received > line.Quantity)
+                throw new ValidationAppException($"الكمية المستلمة من {line.Item?.Code} لازم تكون من صفر لـ {line.Quantity:0.####} (المبعوت).");
+            line.ReceivedQuantity = received;
+        }
+
+        var shortages = transfer.Lines.Where(l => l.ReceivedQuantity < l.Quantity).ToList();
+        Guid? periodId = null;
+        if (shortages.Count > 0)
+        {
+            var today = DateTime.UtcNow.Date;
+            var period = await _context.FiscalPeriods.AsNoTracking().FirstOrDefaultAsync(p => p.StartDate <= today && p.EndDate >= today && !p.IsClosed, ct)
+                ?? throw new ValidationAppException("في نقص في الكمية المستلمة، ومفيش فترة محاسبية مفتوحة النهارده تسجّل عليها الهالك.");
+            periodId = period.Id;
+        }
+
+        var movementCount = await _context.StockMovements.CountAsync(ct);
+        var date = DateTime.UtcNow.Date;
+        foreach (var line in transfer.Lines)
+        {
+            // The whole sent quantity arrives in the books, then any shortage is written off in the same step.
+            _context.StockMovements.Add(new StockMovement
+            {
+                MovementNumber = $"SM-{++movementCount:D6}", MovementDate = date, MovementType = StockMovementType.TransferIn,
+                ItemId = line.ItemId, WarehouseId = transfer.ToWarehouseId, Quantity = line.Quantity, UnitCost = line.UnitCost,
+                TotalCost = Math.Round(line.Quantity * line.UnitCost, 2), Reference = transfer.Number, Description = $"استلام من {transfer.FromWarehouse?.NameAr}"
+            });
+            await _lots.ReceiveLotAsync(line.ItemId, transfer.ToWarehouseId, line.LotNumber, line.ReceivedQuantity ?? line.Quantity, line.UnitCost, line.ExpiryDate, date, ct);
+        }
+
+        foreach (var line in shortages)
+        {
+            var shortage = line.Quantity - (line.ReceivedQuantity ?? 0);
+            var item = await _context.Items.FirstAsync(i => i.Id == line.ItemId, ct);
+            var cost = Math.Round(shortage * line.UnitCost, 2);
+            var inventory = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == AccountingConstants.InventoryAccountCode && !a.IsDeleted, ct)
+                ?? throw new ValidationAppException($"حساب المخزون ({AccountingConstants.InventoryAccountCode}) غير موجود في دليل الحسابات.");
+            var cogs = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == AccountingConstants.CostOfGoodsSoldAccountCode && !a.IsDeleted, ct)
+                ?? throw new ValidationAppException($"حساب تكلفة البضاعة ({AccountingConstants.CostOfGoodsSoldAccountCode}) غير موجود في دليل الحسابات.");
+
+            item.QuantityOnHand -= shortage;
+            var entry = await SimpleJournalEntryFactory.CreatePostedAsync(_context, date, periodId!.Value, $"نقص تحويل {transfer.Number} - {item.NameAr}",
+                cogs.Id, inventory.Id, cost, "TRANSFER-SHORTAGE", ct);
+            var writeOff = new StockMovement
+            {
+                MovementNumber = $"SM-{++movementCount:D6}", MovementDate = date, MovementType = StockMovementType.Issue,
+                ItemId = line.ItemId, WarehouseId = transfer.ToWarehouseId, Quantity = shortage, UnitCost = line.UnitCost, TotalCost = cost,
+                Reference = transfer.Number, Description = $"هالك: نقص عند استلام التحويل {transfer.Number}", JournalEntry = entry
+            };
+            _context.StockMovements.Add(writeOff);
+            _context.WasteEntries.Add(new WasteEntry
+            {
+                ItemId = line.ItemId, WasteDate = date, Quantity = shortage, UnitCost = line.UnitCost, TotalCost = cost,
+                Reason = WasteReason.Unknown, Notes = $"نقص عند استلام التحويل {transfer.Number}", StockMovement = writeOff
+            });
+        }
+
         transfer.Status = StockTransferStatus.Received;
         transfer.ReceivedBy = userName;
         transfer.ReceivedAtUtc = DateTime.UtcNow;
-        transfer.ReceiveNote = note?.Trim();
+        transfer.ReceiveNote = dto.Note?.Trim();
         await _context.SaveChangesAsync(ct);
         return Map(transfer);
     }
@@ -140,6 +208,7 @@ public class StockTransferService : IStockTransferService
     public async Task<StockTransferDto> CancelAsync(Guid id, string? userName, CancellationToken ct = default)
     {
         var transfer = await LoadAsync(id, true, ct);
+        if (_access is not null) await _access.EnsureMayUseAsync(transfer.FromWarehouseId, ct);
         if (transfer.Status != StockTransferStatus.InTransit)
             throw new ValidationAppException("التحويل ده اتقفل قبل كده (اتستلم أو اتلغى).");
 
@@ -170,6 +239,7 @@ public class StockTransferService : IStockTransferService
 
     public async Task<List<WarehouseStockRowDto>> GetWarehouseStockAsync(Guid? warehouseId, CancellationToken ct = default)
     {
+        if (_access is not null && await _access.GetRestrictedBranchAsync(ct) is { } ownBranch) warehouseId = ownBranch;
         var movements = await _context.StockMovements.AsNoTracking()
             .Where(m => warehouseId == null || m.WarehouseId == warehouseId)
             .Select(m => new { m.ItemId, m.WarehouseId, m.MovementType, m.Quantity }).ToListAsync(ct);
@@ -206,7 +276,7 @@ public class StockTransferService : IStockTransferService
         Lines = t.Lines.Select(l => new StockTransferLineDto
         {
             ItemId = l.ItemId, ItemCode = l.Item?.Code ?? string.Empty, ItemName = l.Item?.NameAr ?? string.Empty,
-            Quantity = l.Quantity, UnitCost = l.UnitCost, LotNumber = l.LotNumber
+            Quantity = l.Quantity, ReceivedQuantity = l.ReceivedQuantity, UnitCost = l.UnitCost, LotNumber = l.LotNumber
         }).ToList()
     };
 }

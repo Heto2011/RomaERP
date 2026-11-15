@@ -3397,6 +3397,9 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
 
+                    b.Property<decimal?>("ReceivedQuantity")
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<Guid>("StockTransferId")
                         .HasColumnType("uniqueidentifier");
 
@@ -5198,6 +5201,9 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
+                    b.Property<bool>("EnforceBranchStock")
+                        .HasColumnType("bit");
+
                     b.Property<decimal>("GgEmployeeSocialRatePercent")
                         .HasPrecision(5, 2)
                         .HasColumnType("decimal(5,2)");
@@ -5366,6 +5372,9 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Property<string>("UserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<Guid?>("WarehouseId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 

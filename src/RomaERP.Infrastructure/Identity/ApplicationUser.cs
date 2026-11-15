@@ -10,6 +10,10 @@ public class ApplicationUser : IdentityUser<Guid>
     /// <summary>Hashed short PIN (set by an Admin) letting this user open the POS quickly without
     /// typing their full email/password — same idea as Foodics' cashier PIN login.</summary>
     public string? PosPinHash { get; set; }
+
+    /// <summary>The branch (warehouse) this user works in. When set, a non-Admin user can only see and act on that branch's stock.
+    /// Empty means all branches.</summary>
+    public Guid? WarehouseId { get; set; }
 }
 
 public class ApplicationRole : IdentityRole<Guid>

@@ -25,8 +25,24 @@ public class StockTransferLineDto
     public string ItemCode { get; set; } = string.Empty;
     public string ItemName { get; set; } = string.Empty;
     public decimal Quantity { get; set; }
+    /// <summary>What the receiving branch counted (null until received).</summary>
+    public decimal? ReceivedQuantity { get; set; }
     public decimal UnitCost { get; set; }
     public string? LotNumber { get; set; }
+}
+
+public class ReceivedLineDto
+{
+    public Guid ItemId { get; set; }
+    public string? LotNumber { get; set; }
+    public decimal ReceivedQuantity { get; set; }
+}
+
+public class ReceiveStockTransferDto
+{
+    public string? Note { get; set; }
+    /// <summary>The counted quantity per line. Left out, everything is taken as received in full. A line below what was sent is a shortage.</summary>
+    public List<ReceivedLineDto>? Lines { get; set; } = new();
 }
 
 public class StockTransferDto

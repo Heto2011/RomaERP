@@ -836,6 +836,7 @@ export const CashierShiftsApi = {
 
 export const UsersApi = {
   getAll: () => apiClient.get<AppUser[]>("/users"),
+  setBranch: (id: string, warehouseId: string | null) => apiClient.put<AppUser>(`/users/${id}/branch`, { warehouseId }),
   create: (data: CreateUserInput) => apiClient.post<AppUser>("/users", data),
   updateRoles: (id: string, roles: string[]) => apiClient.put<AppUser>(`/users/${id}/roles`, { roles }),
   updateModules: (id: string, modules: string[]) => apiClient.put<AppUser>(`/users/${id}/modules`, { modules }),
@@ -1084,7 +1085,10 @@ export const StockTransfersApi = {
   getAll: (status?: string) => apiClient.get<import("./types").StockTransfer[]>("/inventory/transfers", { params: status ? { status } : {} }),
   send: (data: { fromWarehouseId: string; toWarehouseId: string; transferDate: string; notes?: string; lines: { itemId: string; quantity: number; lotNumber?: string }[] }) =>
     apiClient.post<import("./types").StockTransfer>("/inventory/transfers", data),
-  receive: (id: string, note?: string) => apiClient.post<import("./types").StockTransfer>(`/inventory/transfers/${id}/receive`, { note }),
+  receive: (id: string, note: string | undefined, lines?: { itemId: string; lotNumber?: string | null; receivedQuantity: number }[]) =>
+    apiClient.post<import("./types").StockTransfer>(`/inventory/transfers/${id}/receive`, { note, lines }),
   cancel: (id: string) => apiClient.post<import("./types").StockTransfer>(`/inventory/transfers/${id}/cancel`),
+  getBranchStockSetting: () => apiClient.get<{ enforced: boolean }>("/inventory/branch-stock-setting"),
+  setBranchStockSetting: (enforced: boolean) => apiClient.put<{ enforced: boolean }>("/inventory/branch-stock-setting", { enforced }),
   warehouseStock: (warehouseId?: string) => apiClient.get<import("./types").WarehouseStockRow[]>("/inventory/warehouse-stock", { params: warehouseId ? { warehouseId } : {} }),
 };

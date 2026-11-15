@@ -21,8 +21,14 @@ public class SalesService : ISalesService
 
     private readonly IPlanLimitGuard? _planLimits;
 
-    public SalesService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer, IExchangeRateService exchangeRateService, IPlanLimitGuard? planLimits = null)
+    private readonly RomaERP.Application.Inventory.Services.IBranchStockService? _branchStock;
+    private readonly IBranchAccessService? _branchAccess;
+
+    public SalesService(IApplicationDbContext context, IHtmlToPdfRenderer pdfRenderer, IExchangeRateService exchangeRateService, IPlanLimitGuard? planLimits = null,
+        RomaERP.Application.Inventory.Services.IBranchStockService? branchStock = null, IBranchAccessService? branchAccess = null)
     {
+        _branchStock = branchStock;
+        _branchAccess = branchAccess;
         _planLimits = planLimits;
         _context = context;
         _pdfRenderer = pdfRenderer;
@@ -171,10 +177,12 @@ public class SalesService : ISalesService
                 itemsById[itemId] = item;
             }
 
+            if (_branchAccess is not null) await _branchAccess.EnsureMayUseAsync(warehouse.Id, ct);
             var requestedQuantities = itemLineInputs.GroupBy(l => l.ItemId!.Value).ToDictionary(g => g.Key, g => g.Sum(l => l.Quantity));
             foreach (var (itemId, requestedQty) in requestedQuantities)
             {
                 var item = itemsById[itemId];
+                if (_branchStock is not null) await _branchStock.EnsureAvailableAsync(item, warehouse.Id, requestedQty, ct);
                 if (requestedQty > item.QuantityOnHand)
                     throw new ValidationAppException($"الكمية المطلوبة ({requestedQty}) من الصنف {item.Code} أكبر من الرصيد المتاح ({item.QuantityOnHand}).");
             }

@@ -23,8 +23,14 @@ public class RestaurantService : IRestaurantService
     private readonly IItemLotService _lotService;
     private readonly IJournalEntryService _journalEntryService;
 
-    public RestaurantService(IApplicationDbContext context, ISalesService salesService, IItemLotService lotService, IJournalEntryService journalEntryService)
+    private readonly RomaERP.Application.Inventory.Services.IBranchStockService? _branchStock;
+    private readonly IBranchAccessService? _branchAccess;
+
+    public RestaurantService(IApplicationDbContext context, ISalesService salesService, IItemLotService lotService, IJournalEntryService journalEntryService,
+        RomaERP.Application.Inventory.Services.IBranchStockService? branchStock = null, IBranchAccessService? branchAccess = null)
     {
+        _branchStock = branchStock;
+        _branchAccess = branchAccess;
         _context = context;
         _salesService = salesService;
         _lotService = lotService;
@@ -193,6 +199,8 @@ public class RestaurantService : IRestaurantService
 
     public async Task<RestaurantOrderDto> CreateOrderAsync(CreateRestaurantOrderDto dto, CancellationToken ct = default)
     {
+        // A cashier tied to a branch always works in that branch.
+        if (_branchAccess is not null && await _branchAccess.GetRestrictedBranchAsync(ct) is { } ownBranch) dto.WarehouseId = ownBranch;
         var warehouse = await _context.Warehouses.FirstOrDefaultAsync(w => w.Id == dto.WarehouseId && !w.IsDeleted, ct)
             ?? throw new NotFoundException(nameof(Warehouse), dto.WarehouseId);
 
@@ -734,6 +742,7 @@ public class RestaurantService : IRestaurantService
         {
             if (qty > item.QuantityOnHand)
                 throw new ValidationAppException($"الكمية المطلوبة من مكوّن ({item.Code} - {item.NameAr}) أكبر من الرصيد المتاح ({item.QuantityOnHand}).");
+            if (_branchStock is not null) await _branchStock.EnsureAvailableAsync(item, order.WarehouseId, qty, ct);
         }
 
         var customer = dto.PaymentTerm == PaymentTerm.Credit

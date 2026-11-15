@@ -1877,6 +1877,7 @@ export interface AppUser {
   employeeId: string | null;
   employeeName: string | null;
   hasPosPin: boolean;
+  warehouseId?: string | null;
 }
 
 export interface CreateUserInput {
@@ -2879,7 +2880,7 @@ export interface IntegrationInboxItem {
   errorMessage: string | null; resultEntityId: string | null; payloadJson?: string | null;
 }
 
-export interface StockTransferLine { itemId: string; itemCode: string; itemName: string; quantity: number; unitCost: number; lotNumber: string | null }
+export interface StockTransferLine { itemId: string; itemCode: string; itemName: string; quantity: number; receivedQuantity: number | null; unitCost: number; lotNumber: string | null }
 export interface StockTransfer {
   id: string; number: string; transferDate: string; fromWarehouseId: string; fromWarehouseName: string; toWarehouseId: string; toWarehouseName: string;
   status: string; notes: string | null; sentBy: string | null; sentAtUtc: string; receivedBy: string | null; receivedAtUtc: string | null;

@@ -8,7 +8,7 @@ using RomaERP.Domain.Inventory;
 
 namespace RomaERP.API.Controllers;
 
-public record ReceiveTransferRequest(string? Note);
+public record BranchStockSettingRequest(bool Enforced);
 
 /// <summary>Branch-to-branch transfers: "Out" at the sending branch, "In" at the receiving one. No effect on the books.</summary>
 [ApiController]
@@ -17,10 +17,12 @@ public record ReceiveTransferRequest(string? Note);
 public class StockTransfersController : ControllerBase
 {
     private readonly IStockTransferService _transfers;
+    private readonly IBranchStockService _branchStock;
     private readonly ICurrentUserService _user;
 
-    public StockTransfersController(IStockTransferService transfers, ICurrentUserService user)
+    public StockTransfersController(IStockTransferService transfers, IBranchStockService branchStock, ICurrentUserService user)
     {
+        _branchStock = branchStock;
         _transfers = transfers;
         _user = user;
     }
@@ -39,11 +41,23 @@ public class StockTransfersController : ControllerBase
         => Ok(await _transfers.SendAsync(dto, Who, ct));
 
     [HttpPost("transfers/{id:guid}/receive")]
-    public async Task<ActionResult<StockTransferDto>> Receive(Guid id, ReceiveTransferRequest request, CancellationToken ct)
-        => Ok(await _transfers.ReceiveAsync(id, request.Note, Who, ct));
+    public async Task<ActionResult<StockTransferDto>> Receive(Guid id, ReceiveStockTransferDto request, CancellationToken ct)
+        => Ok(await _transfers.ReceiveAsync(id, request, Who, ct));
 
     [HttpPost("transfers/{id:guid}/cancel")]
     public async Task<ActionResult<StockTransferDto>> Cancel(Guid id, CancellationToken ct) => Ok(await _transfers.CancelAsync(id, Who, ct));
+
+    /// <summary>Whether selling or issuing an item needs the branch itself to hold enough of it (not just the company).</summary>
+    [HttpGet("branch-stock-setting")]
+    public async Task<ActionResult> GetBranchStockSetting(CancellationToken ct) => Ok(new { enforced = await _branchStock.IsEnforcedAsync(ct) });
+
+    [HttpPut("branch-stock-setting")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult> SetBranchStockSetting(BranchStockSettingRequest request, CancellationToken ct)
+    {
+        await _branchStock.SetEnforcedAsync(request.Enforced, ct);
+        return Ok(new { enforced = request.Enforced });
+    }
 
     [HttpGet("warehouse-stock")]
     public async Task<ActionResult<List<WarehouseStockRowDto>>> WarehouseStock([FromQuery] Guid? warehouseId, CancellationToken ct)

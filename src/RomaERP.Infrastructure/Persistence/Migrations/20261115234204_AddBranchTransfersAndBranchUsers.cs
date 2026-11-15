@@ -6,11 +6,24 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace RomaERP.Infrastructure.Persistence.Migrations
 {
     /// <inheritdoc />
-    public partial class AddStockTransfers : Migration
+    public partial class AddBranchTransfersAndBranchUsers : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.AddColumn<bool>(
+                name: "EnforceBranchStock",
+                table: "CompanySettings",
+                type: "bit",
+                nullable: false,
+                defaultValue: false);
+
+            migrationBuilder.AddColumn<Guid>(
+                name: "WarehouseId",
+                table: "AspNetUsers",
+                type: "uniqueidentifier",
+                nullable: true);
+
             migrationBuilder.CreateTable(
                 name: "StockTransfers",
                 columns: table => new
@@ -58,6 +71,7 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     StockTransferId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     ItemId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Quantity = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
+                    ReceivedQuantity = table.Column<decimal>(type: "decimal(18,2)", nullable: true),
                     UnitCost = table.Column<decimal>(type: "decimal(18,4)", precision: 18, scale: 4, nullable: false),
                     LotNumber = table.Column<string>(type: "nvarchar(60)", maxLength: 60, nullable: true),
                     ExpiryDate = table.Column<DateTime>(type: "datetime2", nullable: true)
@@ -119,6 +133,14 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
 
             migrationBuilder.DropTable(
                 name: "StockTransfers");
+
+            migrationBuilder.DropColumn(
+                name: "EnforceBranchStock",
+                table: "CompanySettings");
+
+            migrationBuilder.DropColumn(
+                name: "WarehouseId",
+                table: "AspNetUsers");
         }
     }
 }

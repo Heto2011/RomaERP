@@ -10,7 +10,8 @@ const TEXT = {
     newTransfer: "تحويل جديد", from: "الفرع المرسل (Out)", to: "الفرع المستلم (In)", date: "التاريخ", notes: "ملاحظات", choose: "اختار",
     item: "الصنف", qty: "الكمية", lot: "رقم الدُفعة", available: "المتاح في الفرع المرسل", addLine: "إضافة صنف", removeLine: "حذف",
     send: "إرسال (Out)", receive: "استلام (In)", cancel: "إلغاء التحويل", cancelConfirm: "تلغي التحويل؟ الكمية هترجع للفرع المرسل.",
-    receiveNote: "ملاحظة على الاستلام (اختياري):", inTransit: "في الطريق", received: "تم الاستلام", cancelled: "ملغي", all: "الكل",
+    receiveNote: "ملاحظة على الاستلام", confirmReceive: "تأكيد الاستلام", counted: "الكمية المستلمة فعلًا", sentQty: "المبعوت",
+    shortageWarn: "لو الكمية المستلمة أقل من المبعوت، الفرق بيتسجل هالك على الشركة (قيد محاسبي) تلقائي.", receivedQty: "المستلم", inTransit: "في الطريق", received: "تم الاستلام", cancelled: "ملغي", all: "الكل",
     number: "الرقم", fromTo: "من ← إلى", items: "الأصناف", status: "الحالة", value: "القيمة", sent: "أرسله", receivedBy: "استلمه",
     empty: "مفيش تحويلات.", sentOk: "اتبعت. الفرع التاني يضغط «استلام (In)» لما البضاعة توصل.", done: "تم.",
     details: "التفاصيل", hide: "إخفاء", sameBranch: "الفرعين لازم يكونوا مختلفين.",
@@ -20,7 +21,8 @@ const TEXT = {
     newTransfer: "New transfer", from: "Sending branch (Out)", to: "Receiving branch (In)", date: "Date", notes: "Notes", choose: "Choose",
     item: "Item", qty: "Quantity", lot: "Lot number", available: "Available at the sending branch", addLine: "Add item", removeLine: "Remove",
     send: "Send (Out)", receive: "Receive (In)", cancel: "Cancel transfer", cancelConfirm: "Cancel the transfer? The quantity goes back to the sending branch.",
-    receiveNote: "Note on receipt (optional):", inTransit: "In transit", received: "Received", cancelled: "Cancelled", all: "All",
+    receiveNote: "Note on receipt", confirmReceive: "Confirm receipt", counted: "Quantity actually received", sentQty: "Sent",
+    shortageWarn: "If you received less than was sent, the difference is written off as waste on the company (with a journal entry).", receivedQty: "Received", inTransit: "In transit", received: "Received", cancelled: "Cancelled", all: "All",
     number: "Number", fromTo: "From → To", items: "Items", status: "Status", value: "Value", sent: "Sent by", receivedBy: "Received by",
     empty: "No transfers.", sentOk: "Sent. The other branch presses “Receive (In)” when the goods arrive.", done: "Done.",
     details: "Details", hide: "Hide", sameBranch: "The two branches must be different.",
@@ -50,6 +52,10 @@ export default function StockTransfers() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [receiving, setReceiving] = useState<StockTransfer | null>(null);
+  const [counted, setCounted] = useState<Record<string, string>>({});
+  const [receiveNote, setReceiveNote] = useState("");
+  const lineKey = (l: { itemId: string; lotNumber: string | null }) => `${l.itemId}|${l.lotNumber ?? ""}`;
 
   const wName = (w: Warehouse) => (lang === "ar" ? w.nameAr : w.nameEn || w.nameAr);
   const itemName = (i: Item) => `${i.code} — ${lang === "ar" ? i.nameAr : i.nameEn || i.nameAr}`;
@@ -144,6 +150,39 @@ export default function StockTransfers() {
         {FILTERS.map((f) => <button key={f || "all"} className={filter === f ? "btn btn-sm" : "btn btn-secondary btn-sm"} onClick={() => setFilter(f)}>{f ? statusLabel(f) : x.all}</button>)}
       </div>
 
+      {receiving && (
+        <div className="card" style={{ marginBottom: 16, borderColor: "#c8862e" }}>
+          <h3 style={{ marginTop: 0 }}>{x.receive} — {receiving.number} ({receiving.fromWarehouseName} ← {receiving.toWarehouseName})</h3>
+          <p className="text-muted" style={{ marginTop: 0, fontSize: 13 }}>{x.shortageWarn}</p>
+          <table>
+            <thead><tr><th>{x.item}</th><th>{x.sentQty}</th><th>{x.counted}</th></tr></thead>
+            <tbody>
+              {receiving.lines.map((l) => {
+                const key = lineKey(l);
+                const short = Number(counted[key] ?? l.quantity) < l.quantity;
+                return (
+                  <tr key={key}>
+                    <td>{l.itemCode} — {l.itemName}{l.lotNumber ? ` (${l.lotNumber})` : ""}</td>
+                    <td>{qtyFmt(l.quantity)}</td>
+                    <td><input type="number" min="0" max={l.quantity} step="0.0001" style={{ width: 110, borderColor: short ? "#c0392b" : undefined }}
+                      value={counted[key] ?? ""} onChange={(e) => setCounted({ ...counted, [key]: e.target.value })} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          <div className="form-field" style={{ marginTop: 8 }}><label>{x.receiveNote}</label><input value={receiveNote} onChange={(e) => setReceiveNote(e.target.value)} maxLength={500} /></div>
+          <button className="btn" onClick={() => {
+            const t = receiving;
+            act(async () => {
+              await StockTransfersApi.receive(t.id, receiveNote || undefined, t.lines.map((l) => ({ itemId: l.itemId, lotNumber: l.lotNumber, receivedQuantity: Number(counted[lineKey(l)] ?? l.quantity) })));
+              setReceiving(null);
+            });
+          }}>{x.confirmReceive}</button>{" "}
+          <button className="btn btn-secondary" onClick={() => setReceiving(null)}>{x.hide}</button>
+        </div>
+      )}
+
       {rows.length === 0 ? <div className="card text-muted">{x.empty}</div> : (
         <div className="card" style={{ overflowX: "auto" }}>
           <table>
@@ -161,7 +200,7 @@ export default function StockTransfers() {
                     <td style={{ whiteSpace: "nowrap" }}>
                       <button className="btn btn-secondary btn-sm" onClick={() => setOpen(open === t.id ? null : t.id)}>{open === t.id ? x.hide : x.details}</button>{" "}
                       {t.status === "InTransit" && (<>
-                        <button className="btn btn-sm" onClick={() => { const n = window.prompt(x.receiveNote); if (n !== null) act(() => StockTransfersApi.receive(t.id, n)); }}>{x.receive}</button>{" "}
+                        <button className="btn btn-sm" onClick={() => { setReceiving(t); setReceiveNote(""); setCounted(Object.fromEntries(t.lines.map((l) => [lineKey(l), String(l.quantity)]))); }}>{x.receive}</button>{" "}
                         <button className="btn btn-secondary btn-sm" onClick={() => { if (window.confirm(x.cancelConfirm)) act(() => StockTransfersApi.cancel(t.id)); }}>{x.cancel}</button>
                       </>)}
                     </td>
@@ -170,7 +209,7 @@ export default function StockTransfers() {
                     <tr><td colSpan={7}>
                       <table>
                         <tbody>{t.lines.map((l) => (
-                          <tr key={l.itemId + (l.lotNumber ?? "")}><td>{l.itemCode} — {l.itemName}{l.lotNumber ? ` (${l.lotNumber})` : ""}</td><td>{qtyFmt(l.quantity)}</td><td className="text-muted">{money(l.unitCost)}</td></tr>
+                          <tr key={l.itemId + (l.lotNumber ?? "")}><td>{l.itemCode} — {l.itemName}{l.lotNumber ? ` (${l.lotNumber})` : ""}</td><td>{qtyFmt(l.quantity)}{l.receivedQuantity != null && l.receivedQuantity !== l.quantity ? <span style={{ color: "#c0392b" }}> → {x.receivedQty}: {qtyFmt(l.receivedQuantity)}</span> : null}</td><td className="text-muted">{money(l.unitCost)}</td></tr>
                         ))}</tbody>
                       </table>
                       <div className="text-muted" style={{ fontSize: 12, marginTop: 6 }}>

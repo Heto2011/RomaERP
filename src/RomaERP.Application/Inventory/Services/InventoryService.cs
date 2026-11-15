@@ -13,8 +13,13 @@ public class InventoryService : IInventoryService
     private readonly IApplicationDbContext _context;
     private readonly IItemLotService _lotService;
 
-    public InventoryService(IApplicationDbContext context, IItemLotService lotService)
+    private readonly IBranchStockService? _branchStock;
+    private readonly IBranchAccessService? _branchAccess;
+
+    public InventoryService(IApplicationDbContext context, IItemLotService lotService, IBranchStockService? branchStock = null, IBranchAccessService? branchAccess = null)
     {
+        _branchStock = branchStock;
+        _branchAccess = branchAccess;
         _context = context;
         _lotService = lotService;
     }
@@ -34,6 +39,7 @@ public class InventoryService : IInventoryService
 
     public async Task<StockMovementDto> ReceiveStockAsync(ReceiveStockDto dto, CancellationToken ct = default)
     {
+        if (_branchAccess is not null) await _branchAccess.EnsureMayUseAsync(dto.WarehouseId, ct);
         if (dto.Quantity <= 0)
             throw new ValidationAppException("الكمية يجب أن تكون أكبر من صفر.");
         if (dto.UnitCost < 0)
@@ -91,6 +97,7 @@ public class InventoryService : IInventoryService
 
     public async Task<StockMovementDto> IssueStockAsync(IssueStockDto dto, CancellationToken ct = default)
     {
+        if (_branchAccess is not null) await _branchAccess.EnsureMayUseAsync(dto.WarehouseId, ct);
         if (dto.Quantity <= 0)
             throw new ValidationAppException("الكمية يجب أن تكون أكبر من صفر.");
 
@@ -103,6 +110,7 @@ public class InventoryService : IInventoryService
 
         if (dto.Quantity > item.QuantityOnHand)
             throw new ValidationAppException($"الكمية المطلوب صرفها ({dto.Quantity}) أكبر من الرصيد المتاح ({item.QuantityOnHand}) للصنف {item.Code}.");
+        if (_branchStock is not null) await _branchStock.EnsureAvailableAsync(item, dto.WarehouseId, dto.Quantity, ct);
 
         var period = await _context.FiscalPeriods.FirstOrDefaultAsync(p => p.Id == dto.FiscalPeriodId, ct)
             ?? throw new NotFoundException(nameof(FiscalPeriod), dto.FiscalPeriodId);

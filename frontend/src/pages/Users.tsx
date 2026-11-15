@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { EmployeesApi, UsersApi } from "../api/services";
-import { AppRoles, ModulePermissions, ProductScope, type AppUser, type Employee } from "../api/types";
+import { EmployeesApi, UsersApi, WarehousesApi } from "../api/services";
+import { AppRoles, ModulePermissions, ProductScope, type AppUser, type Employee, type Warehouse } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 import { bilingualName } from "../i18n/bilingual";
@@ -30,6 +30,7 @@ export default function Users() {
         : ModulePermissions;
   const [users, setUsers] = useState<AppUser[]>([]);
   const [employees, setEmployees] = useState<Employee[]>([]);
+  const [branches, setBranches] = useState<Warehouse[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [nameEditingId, setNameEditingId] = useState<string | null>(null);
   const [nameValue, setNameValue] = useState("");
@@ -61,6 +62,7 @@ export default function Users() {
 
   useEffect(() => {
     load();
+    WarehousesApi.getAll().then((r) => setBranches(r.data.filter((w) => w.isActive))).catch(() => setBranches([]));
   }, []);
 
   function toggleRole(list: string[], role: string): string[] {
@@ -248,6 +250,7 @@ export default function Users() {
               <th>{t.users.roles}</th>
               {isAdmin && <th>{t.users.modules}</th>}
               <th>{t.users.linkedEmployee}</th>
+              {isAdmin && branches.length > 0 && <th>{lang === "ar" ? "الفرع" : "Branch"}</th>}
               {!hidePin && <th>{t.users.posPin}</th>}
               <th>{t.users.resetPassword}</th>
               <th>{t.common.status}</th>
@@ -337,6 +340,20 @@ export default function Users() {
                       ))}
                   </select>
                 </td>
+                {isAdmin && branches.length > 0 && (
+                  <td>
+                    <select
+                      value={u.warehouseId ?? ""}
+                      onChange={async (e) => {
+                        setError(null);
+                        try { await UsersApi.setBranch(u.id, e.target.value || null); await load(); } catch (err) { setError(getErrorMessage(err)); }
+                      }}
+                    >
+                      <option value="">{lang === "ar" ? "كل الفروع" : "All branches"}</option>
+                      {branches.map((b) => <option key={b.id} value={b.id}>{lang === "ar" ? b.nameAr : b.nameEn || b.nameAr}</option>)}
+                    </select>
+                  </td>
+                )}
                 {!hidePin && <td>
                   {pinEditingId === u.id ? (
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>

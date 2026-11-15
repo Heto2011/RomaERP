@@ -50,10 +50,12 @@ public class UsersController : ControllerBase
     private readonly IPasswordHasher<ApplicationUser> _passwordHasher;
     private readonly ITenantActivityLog? _activity;
     private readonly IPlanLimitGuard? _planLimits;
+    private readonly IApplicationDbContext? _context;
 
     public UsersController(UserManager<ApplicationUser> userManager, ICurrentUserService currentUser, IEmployeeService employeeService, IPasswordHasher<ApplicationUser> passwordHasher,
-        ITenantActivityLog? activity = null, IPlanLimitGuard? planLimits = null)
+        ITenantActivityLog? activity = null, IPlanLimitGuard? planLimits = null, IApplicationDbContext? context = null)
     {
+        _context = context;
         _planLimits = planLimits;
         _activity = activity;
         _userManager = userManager;
@@ -77,7 +79,7 @@ public class UsersController : ControllerBase
             if (!IsAdmin && roles.Any(r => !HrManageableRoles.Contains(r))) continue;
             var modules = await GetModulesAsync(user);
             var linkedEmployee = employeeByUserId.GetValueOrDefault(user.Id);
-            result.Add(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+            result.Add(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null, user.WarehouseId));
         }
 
         return Ok(result);
@@ -98,7 +100,7 @@ public class UsersController : ControllerBase
         var roles = await _userManager.GetRolesAsync(user);
         var modules = await GetModulesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null, user.WarehouseId));
     }
 
     [HttpPost]
@@ -208,7 +210,7 @@ public class UsersController : ControllerBase
 
         var modules = await GetModulesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, request.Roles, modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null, user.WarehouseId));
     }
 
     [HttpPut("{id:guid}/modules")]
@@ -235,7 +237,7 @@ public class UsersController : ControllerBase
 
         var roles = await _userManager.GetRolesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), newModules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), newModules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null, user.WarehouseId));
     }
 
     [HttpPost("{id:guid}/deactivate")]
@@ -255,7 +257,7 @@ public class UsersController : ControllerBase
         var roles = await _userManager.GetRolesAsync(user);
         var modules = await GetModulesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null, user.WarehouseId));
     }
 
     [HttpPost("{id:guid}/activate")]
@@ -273,7 +275,25 @@ public class UsersController : ControllerBase
         var roles = await _userManager.GetRolesAsync(user);
         var modules = await GetModulesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null, user.WarehouseId));
+    }
+
+    /// <summary>Ties a user to one branch (warehouse), or frees them (empty). A branch user sees and acts on that branch only; an Admin never is limited.</summary>
+    [HttpPut("{id:guid}/branch")]
+    public async Task<ActionResult<UserDto>> SetBranch(Guid id, SetUserBranchRequest request, CancellationToken ct)
+    {
+        if (!IsAdmin) return AdminOnlyResult();
+        var user = await _userManager.FindByIdAsync(id.ToString())
+            ?? throw new Application.Common.Exceptions.NotFoundException(nameof(ApplicationUser), id);
+        if (request.WarehouseId is { } wid && _context is not null && !await _context.Warehouses.AnyAsync(w => w.Id == wid && !w.IsDeleted, ct))
+            return BadRequest(new { error = "الفرع ده مش موجود." });
+        user.WarehouseId = request.WarehouseId;
+        await _userManager.UpdateAsync(user);
+        await LogAsync("Users", "User branch changed", $"{user.Email} → {(request.WarehouseId?.ToString() ?? "all branches")}");
+        var roles = await _userManager.GetRolesAsync(user);
+        var modules = (await _userManager.GetClaimsAsync(user)).Where(c => c.Type == ModulePermissions.ClaimType).Select(c => c.Value).ToList();
+        var linkedEmployee = await GetLinkedEmployeeAsync(user.Id, ct);
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null, user.WarehouseId));
     }
 
     [HttpPut("{id:guid}/pos-pin")]
@@ -311,7 +331,7 @@ public class UsersController : ControllerBase
         var roles = await _userManager.GetRolesAsync(user);
         var modules = await GetModulesAsync(user);
         var linkedEmployee = await GetLinkedEmployeeAsync(id, ct);
-        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null));
+        return Ok(new UserDto(user.Id, user.Email!, user.FullName, user.IsActive, roles.ToList(), modules, linkedEmployee?.Id, linkedEmployee?.FullNameAr, user.PosPinHash != null, user.WarehouseId));
     }
 
     [HttpDelete("{id:guid}")]
