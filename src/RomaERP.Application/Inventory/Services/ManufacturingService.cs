@@ -11,8 +11,13 @@ public class ManufacturingService : IManufacturingService
     private readonly IApplicationDbContext _context;
     private readonly IItemLotService _lotService;
 
-    public ManufacturingService(IApplicationDbContext context, IItemLotService lotService)
+    private readonly IBranchStockService? _branchStock;
+    private readonly IBranchAccessService? _branchAccess;
+
+    public ManufacturingService(IApplicationDbContext context, IItemLotService lotService, IBranchStockService? branchStock = null, IBranchAccessService? branchAccess = null)
     {
+        _branchStock = branchStock;
+        _branchAccess = branchAccess;
         _context = context;
         _lotService = lotService;
     }
@@ -132,6 +137,7 @@ public class ManufacturingService : IManufacturingService
             throw new NotFoundException(nameof(Warehouse), dto.WarehouseId);
 
         var scale = dto.ProducedQuantity / bom.OutputQuantity;
+        if (_branchAccess is not null) await _branchAccess.EnsureMayUseAsync(dto.WarehouseId, ct);
 
         foreach (var line in bom.Lines)
         {
@@ -141,6 +147,7 @@ public class ManufacturingService : IManufacturingService
                 throw new ValidationAppException(
                     $"الكمية المطلوبة ({consumedQty:0.####}) من {line.RawMaterialItem.NameAr} أكبر من الرصيد المتاح ({line.RawMaterialItem.QuantityOnHand:0.####}).");
             }
+            if (_branchStock is not null) await _branchStock.EnsureAvailableAsync(line.RawMaterialItem, dto.WarehouseId, consumedQty, ct);
         }
 
         var orderNumber = $"MFG-{(await _context.ManufacturingOrders.CountAsync(ct) + 1):D6}";
