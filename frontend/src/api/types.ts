@@ -486,6 +486,22 @@ export interface PhysicalStockCountEntry {
   unitCost: number;
   varianceValue: number;
   notes: string | null;
+  warehouseId?: string | null;
+  warehouseName?: string | null;
+  stockAdjustmentId?: string | null;
+}
+
+export interface CountVarianceRow {
+  warehouseId: string | null;
+  warehouseName: string;
+  itemId: string;
+  itemCode: string;
+  itemName: string;
+  counts: number;
+  shortQuantity: number;
+  overQuantity: number;
+  netQuantity: number;
+  netValue: number;
 }
 
 export interface CreatePhysicalStockCount {
@@ -493,6 +509,7 @@ export interface CreatePhysicalStockCount {
   countDate: string;
   countedQuantity: number;
   notes: string | null;
+  warehouseId?: string | null;
 }
 
 export enum WasteReason {

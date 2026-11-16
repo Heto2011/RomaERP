@@ -25,6 +25,15 @@ public class PhysicalStockCountsController : ControllerBase
     public async Task<ActionResult<PhysicalStockCountDto>> Create(CreatePhysicalStockCountDto dto, CancellationToken ct)
         => Ok(await _service.CreateAsync(dto, ct));
 
+    [HttpGet("variance-report")]
+    public async Task<ActionResult<List<CountVarianceRowDto>>> VarianceReport([FromQuery] DateTime? from, [FromQuery] DateTime? to, [FromQuery] Guid? warehouseId, CancellationToken ct)
+        => Ok(await _service.GetVarianceReportAsync(from, to, warehouseId, ct));
+
+    /// <summary>Turns the count's difference into a stock adjustment with its journal entry.</summary>
+    [HttpPost("{id:guid}/apply")]
+    public async Task<ActionResult<PhysicalStockCountDto>> Apply(Guid id, CancellationToken ct)
+        => Ok(await _service.ApplyAsync(id, User.Identity?.Name, ct));
+
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
     {

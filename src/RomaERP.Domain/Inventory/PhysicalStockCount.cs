@@ -16,4 +16,10 @@ public class PhysicalStockCount : AuditableEntity
     public decimal CountedQuantity { get; set; }
     public decimal UnitCost { get; set; }
     public string? Notes { get; set; }
+
+    /// <summary>The branch counted. Empty for an older company-wide count.</summary>
+    public Guid? WarehouseId { get; set; }
+    public Warehouse? Warehouse { get; set; }
+    /// <summary>Set once the variance was turned into a stock adjustment.</summary>
+    public Guid? StockAdjustmentId { get; set; }
 }

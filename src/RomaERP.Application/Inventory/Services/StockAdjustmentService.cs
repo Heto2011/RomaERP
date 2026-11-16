@@ -121,9 +121,11 @@ public class StockAdjustmentService : IStockAdjustmentService
         _context.StockAdjustments.Add(adjustment);
         await _context.SaveChangesAsync(ct);
 
-        adjustment.Warehouse = warehouse;
-        adjustment.Item = item;
-        return Map(adjustment);
+        var result = Map(adjustment);
+        result.WarehouseName = warehouse.NameAr;
+        result.ItemCode = item.Code;
+        result.ItemName = item.NameAr;
+        return result;
     }
 
     private async Task<Domain.Accounting.Account> AccountAsync(string code, string label, CancellationToken ct)

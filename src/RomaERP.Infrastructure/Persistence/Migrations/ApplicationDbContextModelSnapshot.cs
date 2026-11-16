@@ -3202,6 +3202,9 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<Guid?>("StockAdjustmentId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<decimal>("SystemQuantity")
                         .HasPrecision(18, 4)
                         .HasColumnType("decimal(18,4)");
@@ -3216,9 +3219,14 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<Guid?>("WarehouseId")
+                        .HasColumnType("uniqueidentifier");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ItemId");
+
+                    b.HasIndex("WarehouseId");
 
                     b.ToTable("PhysicalStockCounts");
                 });
@@ -6190,7 +6198,14 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("RomaERP.Domain.Inventory.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Item");
+
+                    b.Navigation("Warehouse");
                 });
 
             modelBuilder.Entity("RomaERP.Domain.Inventory.StockAdjustment", b =>

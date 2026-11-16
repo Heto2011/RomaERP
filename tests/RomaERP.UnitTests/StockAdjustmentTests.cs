@@ -121,3 +121,57 @@ public class StockAdjustmentTests
         await Assert.ThrowsAsync<ValidationAppException>(() => Svc(s, s.Alex.Id).CreateAsync(Dto(s, true, 1, 1, 5m), "ali"));
     }
 }
+
+public class PhysicalCountApplyTests
+{
+    private static async Task<(ApplicationDbContext Ctx, PhysicalStockCountService Svc, Warehouse Cairo, Item Tomato)> CreateAsync(decimal branchStock)
+    {
+        var ctx = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
+        var cat = new ItemCategory { Code = "C", NameAr = "خامات", NameEn = "Raw" };
+        var cairo = new Warehouse { Code = "CAI", NameAr = "القاهرة", NameEn = "Cairo" };
+        var item = new Item { Code = "TOM", NameAr = "طماطم", NameEn = "Tomato", UnitOfMeasure = "kg", ItemCategory = cat, QuantityOnHand = branchStock, AverageCost = 10m };
+        ctx.AddRange(cat, cairo, item);
+        ctx.Accounts.AddRange(
+            new Account { Code = "1160", NameAr = "المخزون", NameEn = "Inventory", AccountType = AccountType.Asset, Nature = AccountNature.Debit },
+            new Account { Code = "3200", NameAr = "RE", NameEn = "RE", AccountType = AccountType.Equity, Nature = AccountNature.Credit },
+            new Account { Code = "5500", NameAr = "تكلفة", NameEn = "COGS", AccountType = AccountType.Expense, Nature = AccountNature.Debit });
+        var year = new FiscalYear { Name = "Y", StartDate = DateTime.UtcNow.Date.AddMonths(-6), EndDate = DateTime.UtcNow.Date.AddMonths(6) };
+        ctx.FiscalYears.Add(year);
+        ctx.FiscalPeriods.Add(new FiscalPeriod { FiscalYear = year, FiscalYearId = year.Id, Name = "P", PeriodNumber = 1, StartDate = DateTime.UtcNow.Date.AddDays(-20), EndDate = DateTime.UtcNow.Date.AddDays(20) });
+        ctx.StockMovements.Add(new StockMovement { MovementNumber = "SM-000001", MovementDate = DateTime.UtcNow, MovementType = StockMovementType.Receipt, ItemId = item.Id, WarehouseId = cairo.Id, Quantity = branchStock, UnitCost = 10m, TotalCost = branchStock * 10m });
+        await ctx.SaveChangesAsync();
+        return (ctx, new PhysicalStockCountService(ctx, new BranchStockService(ctx), new StockAdjustmentService(ctx, new ItemLotService(ctx))), cairo, item);
+    }
+
+    [Fact]
+    public async Task ApplyingACountWithLess_WritesOffTheDifference_AndCannotBeAppliedTwice()
+    {
+        var (ctx, svc, cairo, item) = await CreateAsync(20);
+        var c = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 17 });
+        Assert.Equal(20m, c.SystemQuantity);
+        var applied = await svc.ApplyAsync(c.Id, "ali");
+        Assert.NotNull(applied.StockAdjustmentId);
+        Assert.Equal(17m, (await ctx.Items.SingleAsync()).QuantityOnHand);
+        Assert.Equal(StockMovementType.Issue, (await ctx.StockMovements.OrderByDescending(m => m.MovementNumber).FirstAsync()).MovementType);
+        await Assert.ThrowsAsync<ValidationAppException>(() => svc.ApplyAsync(c.Id, "ali"));
+    }
+
+    [Fact]
+    public async Task ApplyingACountWithMore_AddsTheDifference_AndTheReportTotalsTheLoss()
+    {
+        var (ctx, svc, cairo, item) = await CreateAsync(20);
+        var c = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 25 });
+        await svc.ApplyAsync(c.Id, "ali");
+        Assert.Equal(25m, (await ctx.Items.SingleAsync()).QuantityOnHand);
+        var rows = await svc.GetVarianceReportAsync(null, null, null);
+        Assert.Equal(50m, rows.Single().NetValue);
+    }
+
+    [Fact]
+    public async Task ACountWithNoDifference_CannotBeApplied()
+    {
+        var (_, svc, cairo, item) = await CreateAsync(20);
+        var c = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 20 });
+        await Assert.ThrowsAsync<ValidationAppException>(() => svc.ApplyAsync(c.Id, "ali"));
+    }
+}

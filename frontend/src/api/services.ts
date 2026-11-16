@@ -657,6 +657,8 @@ export const InventoryReportsApi = {
 export const PhysicalStockCountsApi = {
   getAll: () => apiClient.get<PhysicalStockCountEntry[]>("/physicalstockcounts"),
   create: (dto: CreatePhysicalStockCount) => apiClient.post<PhysicalStockCountEntry>("/physicalstockcounts", dto),
+  apply: (id: string) => apiClient.post<PhysicalStockCountEntry>(`/physicalstockcounts/${id}/apply`),
+  varianceReport: (params: { from?: string; to?: string; warehouseId?: string }) => apiClient.get<import("./types").CountVarianceRow[]>("/physicalstockcounts/variance-report", { params }),
   remove: (id: string) => apiClient.delete(`/physicalstockcounts/${id}`),
 };
 

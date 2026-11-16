@@ -95,6 +95,7 @@ public class PhysicalStockCountConfiguration : IEntityTypeConfiguration<Physical
         builder.Property(c => c.CountedQuantity).HasPrecision(18, 4);
         builder.Property(c => c.UnitCost).HasPrecision(18, 4);
         builder.Property(c => c.Notes).HasMaxLength(500);
+        builder.HasOne(c => c.Warehouse).WithMany().HasForeignKey(c => c.WarehouseId).OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(c => c.Item)
             .WithMany()
