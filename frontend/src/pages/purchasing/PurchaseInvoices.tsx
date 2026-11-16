@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { AccountsApi, ExchangeRatesApi, ItemsApi, LookupsApi, PurchasingApi, WarehousesApi } from "../../api/services";
-import { PaymentTerm, type InvoiceScanResult, type Account, type FiscalPeriod, type Item, type Warehouse, type PendingPurchaseInvoice, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
+import { PaymentTerm, ProductScope, type InvoiceScanResult, type Account, type FiscalPeriod, type Item, type Warehouse, type PendingPurchaseInvoice, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { useAuth } from "../../context/AuthContext";
 import { bilingualName } from "../../i18n/bilingual";
 import QuickAddItemsPicker from "../../components/QuickAddItemsPicker";
+import { Link } from "react-router-dom";
 
 const emptyLine = (defaultAccountId: string): PurchaseInvoiceLineInput => ({ description: "", accountId: defaultAccountId, itemId: null, quantity: 1, unitPrice: 0 });
 
@@ -30,6 +31,16 @@ export default function PurchaseInvoices() {
   const [currencyCode, setCurrencyCode] = useState("");
   const [notes, setNotes] = useState("");
   const { user } = useAuth();
+  // Two kinds of purchase: by unit (items that go into stock: the restaurant/inventory side) and by invoice total (an expense with no items:
+  // the accounting side). A POS company only does the first, the free accounting plan only the second, a full company chooses.
+  const isPosOnly = user?.productScope === ProductScope.PosOnly;
+  const isBooksOnly = user?.productScope === ProductScope.BooksOnly;
+  const canSwitchMode = !isPosOnly && !isBooksOnly;
+  const [mode, setMode] = useState<"unit" | "total">(isPosOnly ? "unit" : "total");
+  const unitMode = isPosOnly || (canSwitchMode && mode === "unit");
+  const MODE = lang === "ar"
+    ? { unit: "مشتريات بالوحدة (للمخزون)", total: "مشتريات بإجمالي الفاتورة (مصروف)", amount: "المبلغ قبل الضريبة", noVendor: "المورد مش موجود؟ ضيفه", pickItems: "اختار الأصناف من «إضافة سريعة».", needItems: "ضيف صنف واحد على الأقل من المخزون.", needWarehouse: "اختار الفرع (المخزن) اللي هتدخل عليه الأصناف." }
+    : { unit: "By unit (into stock)", total: "By invoice total (expense)", amount: "Amount before VAT", noVendor: "Vendor not there? Add it", pickItems: "Pick the items with Quick add.", needItems: "Add at least one stock item.", needWarehouse: "Choose the branch (warehouse) the items go into." };
   const canApprove = user?.roles.some((r) => r === "Admin" || r === "Accountant") ?? false;
   const [pending, setPending] = useState<PendingPurchaseInvoice[]>([]);
   const [info, setInfo] = useState<string | null>(null);
@@ -126,7 +137,8 @@ export default function PurchaseInvoices() {
   function handleAddItems(selected: Item[]) {
     const newLines: PurchaseInvoiceLineInput[] = selected.map((item) => ({
       description: bilingualName(item.nameAr, item.nameEn, lang),
-      accountId: expenseAccounts[0]?.id ?? "",
+      // Stock purchases are debited to the inventory account (1160); the quantities go into the branch through the receipt that follows.
+      accountId: accounts.find((x) => x.code === "1160")?.id ?? expenseAccounts[0]?.id ?? "",
       itemId: item.id,
       quantity: 1,
       unitPrice: item.averageCost || 0,
@@ -160,6 +172,8 @@ export default function PurchaseInvoices() {
     setInfo(null);
     try {
       const stockLines = lines.filter((l) => l.itemId && l.quantity > 0);
+      if (unitMode && stockLines.length === 0) { setError(MODE.needItems); return; }
+      if (unitMode && !warehouseId) { setError(MODE.needWarehouse); return; }
       const res = await PurchasingApi.createInvoice({
         vendorId,
         invoiceDate,
@@ -167,7 +181,7 @@ export default function PurchaseInvoices() {
         paymentTerm,
         notes: notes || null,
         currencyCode: currencyCode || null,
-        receiveToWarehouseId: receiveToStock && warehouseId ? warehouseId : null,
+        receiveToWarehouseId: (receiveToStock || unitMode) && warehouseId ? warehouseId : null,
         lines,
       });
       // A user who can record but not approve purchases gets 202: the invoice is waiting for an approver and nothing is posted yet.
@@ -175,7 +189,7 @@ export default function PurchaseInvoices() {
       if (waiting) setInfo(t.purchasing.sentForApproval);
       // Stock is a separate record from the accounting entry (it posts no journal), so adding the linked items to
       // the warehouse here cannot double-count the invoice.
-      if (!waiting && receiveToStock && warehouseId && stockLines.length > 0) {
+      if (!waiting && (receiveToStock || unitMode) && warehouseId && stockLines.length > 0) {
         try {
           await PurchasingApi.receiveInventoryPurchase({
             vendorId,
@@ -340,6 +354,17 @@ export default function PurchaseInvoices() {
             </div>
           )}
 
+          {canSwitchMode && (
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 12 }}>
+              {(["total", "unit"] as const).map((m) => (
+                <button key={m} type="button" className={mode === m ? "btn btn-sm" : "btn btn-secondary btn-sm"}
+                  onClick={() => { setMode(m); setLines(expenseAccounts.length > 0 ? [emptyLine(expenseAccounts[0].id)] : []); }}>
+                  {m === "unit" ? MODE.unit : MODE.total}
+                </button>
+              ))}
+            </div>
+          )}
+
           <form onSubmit={handleSubmit}>
             <div className="form-grid">
               <div className="form-field">
@@ -350,6 +375,7 @@ export default function PurchaseInvoices() {
                     <option key={v.id} value={v.id}>{v.code} - {bilingualName(v.nameAr, v.nameEn, lang)}</option>
                   ))}
                 </select>
+                <Link to="/purchasing/vendors/new" style={{ fontSize: 12 }}>{MODE.noVendor}</Link>
               </div>
               <div className="form-field">
                 <label>{t.common.date}</label>
@@ -390,9 +416,9 @@ export default function PurchaseInvoices() {
                 <thead>
                   <tr>
                     <th>{t.common.description}</th>
-                    <th>{t.common.account}</th>
-                    <th>{t.common.quantity}</th>
-                    <th>{t.common.unitPrice}</th>
+                    {!unitMode && <th>{t.common.account}</th>}
+                    {unitMode && <th>{t.common.quantity}</th>}
+                    <th>{unitMode ? t.common.unitPrice : MODE.amount}</th>
                     <th>{t.common.vat}</th>
                     <th></th>
                   </tr>
@@ -401,14 +427,16 @@ export default function PurchaseInvoices() {
                   {lines.map((line, idx) => (
                     <tr key={idx}>
                       <td><input value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} required /></td>
-                      <td>
-                        <select value={line.accountId} onChange={(e) => updateLine(idx, { accountId: e.target.value })} required>
-                          {expenseAccounts.map((a) => (
-                            <option key={a.id} value={a.id}>{a.code} - {bilingualName(a.nameAr, a.nameEn, lang)}</option>
-                          ))}
-                        </select>
-                      </td>
-                      <td><input type="number" min={0.0001} step="0.01" value={line.quantity} onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })} style={{ width: 90 }} required /></td>
+                      {!unitMode && (
+                        <td>
+                          <select value={line.accountId} onChange={(e) => updateLine(idx, { accountId: e.target.value })} required>
+                            {expenseAccounts.map((a) => (
+                              <option key={a.id} value={a.id}>{a.code} - {bilingualName(a.nameAr, a.nameEn, lang)}</option>
+                            ))}
+                          </select>
+                        </td>
+                      )}
+                      {unitMode && <td><input type="number" min={0.0001} step="0.01" value={line.quantity} onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })} style={{ width: 90 }} required /></td>}
                       <td><input type="number" min={0} step="0.01" value={line.unitPrice} onChange={(e) => updateLine(idx, { unitPrice: Number(e.target.value) })} style={{ width: 110 }} required /></td>
                       <td className="text-muted">{(vatRate * 100).toFixed(0)}%</td>
                       <td>
@@ -423,16 +451,23 @@ export default function PurchaseInvoices() {
                 </tbody>
               </table>
               <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => setLines((prev) => [...prev, emptyLine(expenseAccounts[0]?.id ?? "")])}
-                >
-                  {t.purchasing.addLine}
-                </button>
-                <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowItemPicker(true)}>
-                  {t.common.quickAdd}
-                </button>
+                {!unitMode && (
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setLines((prev) => [...prev, emptyLine(expenseAccounts[0]?.id ?? "")])}
+                  >
+                    {t.purchasing.addLine}
+                  </button>
+                )}
+                {unitMode && (
+                  <>
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setShowItemPicker(true)}>
+                      {t.common.quickAdd}
+                    </button>
+                    <span className="text-muted" style={{ alignSelf: "center", fontSize: 12 }}>{MODE.pickItems}</span>
+                  </>
+                )}
               </div>
 
               <QuickAddItemsPicker
@@ -463,13 +498,16 @@ export default function PurchaseInvoices() {
               </div>
             </div>
 
-            {warehouses.length > 0 && lines.some((l) => l.itemId) && (
+            {warehouses.length > 0 && (unitMode || lines.some((l) => l.itemId)) && (
               <div className="form-field" style={{ marginTop: 14 }}>
-                <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: "normal" }}>
-                  <input type="checkbox" checked={receiveToStock} onChange={(e) => setReceiveToStock(e.target.checked)} />
-                  {t.purchasing.receiveToStock}
-                </label>
-                {receiveToStock && (
+                {!unitMode && (
+                  <label style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: "normal" }}>
+                    <input type="checkbox" checked={receiveToStock} onChange={(e) => setReceiveToStock(e.target.checked)} />
+                    {t.purchasing.receiveToStock}
+                  </label>
+                )}
+                {unitMode && <label>{lang === "ar" ? "يدخل مخزن (فرع)" : "Goes into branch (warehouse)"}</label>}
+                {(receiveToStock || unitMode) && (
                   <select value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
                     {warehouses.map((w) => (
                       <option key={w.id} value={w.id}>{w.nameAr}</option>
