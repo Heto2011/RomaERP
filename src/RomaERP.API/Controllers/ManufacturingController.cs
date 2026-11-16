@@ -44,6 +44,17 @@ public class ManufacturingController : ControllerBase
     public async Task<ActionResult<List<ManufacturingOrderDto>>> GetOrders(CancellationToken ct)
         => Ok(await _manufacturingService.GetOrdersAsync(ct));
 
+    [HttpGet("sites")]
+    public async Task<ActionResult<List<ManufacturingSiteDto>>> GetSites(CancellationToken ct) => Ok(await _manufacturingService.GetSitesAsync(ct));
+
+    [HttpPut("sites/{warehouseId:guid}")]
+    public async Task<ActionResult<ManufacturingSiteDto>> SetSite(Guid warehouseId, SetManufacturingSiteDto dto, CancellationToken ct)
+        => Ok(await _manufacturingService.SetSiteAsync(warehouseId, dto, ct));
+
+    [HttpGet("overhead-report")]
+    public async Task<ActionResult<List<OverheadAbsorptionRowDto>>> OverheadReport([FromQuery] int year, [FromQuery] int month, CancellationToken ct)
+        => Ok(await _manufacturingService.GetOverheadReportAsync(year, month, ct));
+
     [HttpPost("orders")]
     public async Task<ActionResult<ManufacturingOrderDto>> CreateOrder(CreateManufacturingOrderDto dto, CancellationToken ct)
         => Ok(await _manufacturingService.CreateOrderAsync(dto, ct));

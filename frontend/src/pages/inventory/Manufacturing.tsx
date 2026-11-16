@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ManufacturingCostSettings from "../../components/ManufacturingCostSettings";
 import { ItemsApi, ManufacturingApi, WarehousesApi } from "../../api/services";
 import type { Item, ManufacturingBom, ManufacturingOrder, Warehouse } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -22,6 +23,7 @@ export default function Manufacturing() {
   const [editingOutputItemId, setEditingOutputItemId] = useState<string | null>(null);
   const [newOutputItemId, setNewOutputItemId] = useState("");
   const [outputQuantity, setOutputQuantity] = useState(1);
+  const [conversionCost, setConversionCost] = useState(0);
   const [bomLines, setBomLines] = useState<BomLineDraft[]>([]);
   const [newRawMaterialId, setNewRawMaterialId] = useState("");
   const [newQuantity, setNewQuantity] = useState(1);
@@ -77,6 +79,7 @@ export default function Manufacturing() {
     setEditingOutputItemId(bom.outputItemId);
     setNewOutputItemId(bom.outputItemId);
     setOutputQuantity(bom.outputQuantity);
+    setConversionCost(bom.conversionCostPerBatch ?? 0);
     setBomLines(bom.lines.map((l) => ({ rawMaterialItemId: l.rawMaterialItemId, quantityPerBatch: l.quantityPerBatch })));
     setNewRawMaterialId("");
     setNewQuantity(1);
@@ -111,7 +114,7 @@ export default function Manufacturing() {
     setError(null);
     setSavingBom(true);
     try {
-      await ManufacturingApi.setBom(outputItemId, { outputQuantity, lines: bomLines });
+      await ManufacturingApi.setBom(outputItemId, { outputQuantity, conversionCostPerBatch: conversionCost, lines: bomLines });
       closeBomForm();
       await load();
     } catch (err) {
@@ -234,6 +237,11 @@ export default function Manufacturing() {
                 <input type="number" min={0.0001} step="0.01" value={outputQuantity} onChange={(e) => setOutputQuantity(Number(e.target.value))} />
               </div>
 
+              <div className="form-field" style={{ marginTop: 10 }}>
+                <label>{lang === "ar" ? "أجور مباشرة ومصروفات تشغيل متغيرة للباتش (عمالة، طاقة، تغليف)" : "Direct labour and variable running cost per batch (labour, energy, packaging)"}</label>
+                <input type="number" min={0} step="0.01" value={conversionCost} onChange={(e) => setConversionCost(Number(e.target.value))} />
+              </div>
+
               <h4 style={{ marginTop: 16 }}>{t.inventory.manufacturingIngredients}</h4>
               <table>
                 <thead>
@@ -300,6 +308,9 @@ export default function Manufacturing() {
               <th>{t.inventory.manufacturingOutputItem}</th>
               <th>{t.common.quantity}</th>
               <th>{t.common.date}</th>
+              <th>{lang === "ar" ? "خامات" : "Materials"}</th>
+              <th>{lang === "ar" ? "تشغيل" : "Conversion"}</th>
+              <th>{lang === "ar" ? "ثابتة محمّلة" : "Fixed overhead"}</th>
               <th>{t.common.total}</th>
               <th>{t.common.notes}</th>
             </tr>
@@ -307,7 +318,7 @@ export default function Manufacturing() {
           <tbody>
             {orders.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
+                <td colSpan={9} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
                   {t.common.noData}
                 </td>
               </tr>
@@ -318,6 +329,9 @@ export default function Manufacturing() {
                 <td>{o.outputItemCode} - {o.outputItemName}</td>
                 <td>{o.producedQuantity.toLocaleString()}</td>
                 <td>{new Date(o.productionDate).toLocaleDateString()}</td>
+                <td>{(o.totalCost - (o.conversionCost ?? 0) - (o.fixedOverheadAllocated ?? 0)).toLocaleString()}</td>
+                <td>{(o.conversionCost ?? 0).toLocaleString()}</td>
+                <td>{(o.fixedOverheadAllocated ?? 0).toLocaleString()}</td>
                 <td>{o.totalCost.toLocaleString()}</td>
                 <td className="text-muted">{o.notes ?? "—"}</td>
               </tr>
@@ -382,6 +396,7 @@ export default function Manufacturing() {
           </div>
         )}
       </div>
+    <ManufacturingCostSettings />
     </div>
   );
 }

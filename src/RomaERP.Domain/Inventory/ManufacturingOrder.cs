@@ -22,8 +22,17 @@ public class ManufacturingOrder : AuditableEntity
     /// however many batches were made — need not be a whole multiple).</summary>
     public decimal ProducedQuantity { get; set; }
 
-    /// <summary>Total cost of the raw materials consumed this run, which becomes the produced quantity's cost.</summary>
+    /// <summary>Everything that becomes the produced quantity's cost: raw materials + conversion cost + absorbed fixed overhead (IAS 2).</summary>
     public decimal TotalCost { get; set; }
+    /// <summary>Raw materials part of <see cref="TotalCost"/>.</summary>
+    public decimal MaterialCost { get; set; }
+    /// <summary>Direct labour and variable overhead part of the cost (the BOM's per-batch rate x batches).</summary>
+    public decimal ConversionCost { get; set; }
+    /// <summary>Fixed production overhead absorbed at the site's rate on normal capacity, never more than the site's monthly fixed overhead.</summary>
+    public decimal FixedOverheadAllocated { get; set; }
+    /// <summary>Batches this run counts for (produced quantity / BOM batch size).</summary>
+    public decimal Batches { get; set; }
+    public Guid? ConversionJournalEntryId { get; set; }
 
     public string? Notes { get; set; }
 

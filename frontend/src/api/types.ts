@@ -1437,6 +1437,7 @@ export interface ManufacturingBom {
   outputItemCode: string;
   outputItemName: string;
   outputQuantity: number;
+  conversionCostPerBatch?: number;
   lines: ManufacturingBomLine[];
 }
 
@@ -1447,6 +1448,7 @@ export interface CreateManufacturingBomLineInput {
 
 export interface SetManufacturingBomInput {
   outputQuantity: number;
+  conversionCostPerBatch?: number;
   lines: CreateManufacturingBomLineInput[];
 }
 
@@ -1470,6 +1472,9 @@ export interface ManufacturingOrder {
   productionDate: string;
   producedQuantity: number;
   totalCost: number;
+  materialCost?: number;
+  conversionCost?: number;
+  fixedOverheadAllocated?: number;
   notes: string | null;
   lines: ManufacturingOrderLine[];
 }

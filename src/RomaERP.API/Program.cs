@@ -267,6 +267,7 @@ static async Task MigrateAllTenantsAsync(IServiceProvider services)
         await db.Database.MigrateAsync();
         await RomaERP.Infrastructure.Persistence.Seed.TenantBaselineSeeder.EnsureFxAccountsAsync(db);
         await RomaERP.Infrastructure.Persistence.Seed.TenantBaselineSeeder.EnsureUkPayrollAccountsAsync(db);
+        await RomaERP.Infrastructure.Persistence.Seed.TenantBaselineSeeder.EnsureManufacturingAccountsAsync(db);
     }
 }
 

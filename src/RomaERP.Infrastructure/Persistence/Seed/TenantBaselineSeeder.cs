@@ -71,6 +71,15 @@ public static class TenantBaselineSeeder
         await context.SaveChangesAsync();
     }
 
+    /// <summary>Adds the account that carries production conversion costs into inventory (IAS 2) to a company created before it existed.</summary>
+    public static async Task EnsureManufacturingAccountsAsync(ApplicationDbContext context)
+    {
+        if (await context.Accounts.AnyAsync(a => a.Code == "5510")) return;
+        var parent = await context.Accounts.FirstOrDefaultAsync(a => a.Code == "5000");
+        context.Accounts.Add(new Account { Code = "5510", NameAr = "تكاليف تصنيع محمّلة على المخزون", NameEn = "Production Costs Capitalised to Inventory", AccountType = AccountType.Expense, Nature = AccountNature.Credit, ParentAccountId = parent?.Id, IsControlAccount = false, Level = 2, IsActive = true });
+        await context.SaveChangesAsync();
+    }
+
     /// <summary>Adds the UK payroll accounts (tax/NI and pension payables, employer NI and pension expenses) to a company
     /// created before they existed. Safe to run on every startup.</summary>
     public static async Task EnsureUkPayrollAccountsAsync(ApplicationDbContext context)

@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Inventory.DTOs;
 using RomaERP.Application.Inventory.Services;
+using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Inventory;
 using RomaERP.Infrastructure.Persistence;
 using Xunit;
@@ -132,5 +133,82 @@ public class ManufacturingServiceTests
             ProductionDate = DateTime.UtcNow.Date,
             ProducedQuantity = 20,
         }));
+    }
+
+    private static async Task<(SeedResult Seed, ManufacturingService Svc)> WithOverheadAsync(decimal conversionPerBatch, decimal monthlyFixed, decimal normalBatches)
+    {
+        var seed = await SeedAsync();
+        seed.Ctx.Accounts.AddRange(
+            new Account { Code = "1160", NameAr = "المخزون", NameEn = "Inventory", AccountType = AccountType.Asset, Nature = AccountNature.Debit },
+            new Account { Code = "5510", NameAr = "تكاليف محمّلة", NameEn = "Capitalised", AccountType = AccountType.Expense, Nature = AccountNature.Credit });
+        var year = new FiscalYear { Name = "Y", StartDate = new DateTime(2026, 1, 1), EndDate = new DateTime(2026, 12, 31) };
+        seed.Ctx.FiscalYears.Add(year);
+        seed.Ctx.FiscalPeriods.Add(new FiscalPeriod { FiscalYear = year, FiscalYearId = year.Id, Name = "Nov", PeriodNumber = 11, StartDate = new DateTime(2026, 11, 1), EndDate = new DateTime(2026, 11, 30) });
+        await seed.Ctx.SaveChangesAsync();
+        var svc = new ManufacturingService(seed.Ctx, new ItemLotService(seed.Ctx));
+        await svc.SetBomAsync(seed.Sauce.Id, new SetManufacturingBomDto
+        {
+            OutputQuantity = 20, ConversionCostPerBatch = conversionPerBatch,
+            Lines = { new CreateManufacturingBomLineDto { RawMaterialItemId = seed.Tomatoes.Id, QuantityPerBatch = 18 }, new CreateManufacturingBomLineDto { RawMaterialItemId = seed.Spices.Id, QuantityPerBatch = 2 } }
+        });
+        await svc.SetSiteAsync(seed.Warehouse.Id, new SetManufacturingSiteDto { MonthlyFixedOverhead = monthlyFixed, NormalMonthlyBatches = normalBatches });
+        return (seed, svc);
+    }
+
+    private static CreateManufacturingOrderDto Order(SeedResult seed, decimal qty = 20) => new() { OutputItemId = seed.Sauce.Id, WarehouseId = seed.Warehouse.Id, ProductionDate = new DateTime(2026, 11, 10), ProducedQuantity = qty };
+
+    [Fact]
+    public async Task Conversion_AndFixedOverheadOnNormalCapacity_GoIntoTheCostOfWhatIsProduced()
+    {
+        var (seed, svc) = await WithOverheadAsync(conversionPerBatch: 40, monthlyFixed: 1000, normalBatches: 10);
+        var order = await svc.CreateOrderAsync(Order(seed));
+        Assert.Equal(260m, order.MaterialCost);
+        Assert.Equal(40m, order.ConversionCost);
+        Assert.Equal(100m, order.FixedOverheadAllocated);       // 1000 / 10 normal batches x 1 batch
+        Assert.Equal(400m, order.TotalCost);
+        Assert.Equal(20m, (await seed.Ctx.Items.SingleAsync(i => i.Id == seed.Sauce.Id)).AverageCost);
+        var lines = await seed.Ctx.JournalEntryLines.Include(l => l.Account).ToListAsync();
+        Assert.Contains(lines, l => l.Account!.Code == "1160" && l.Debit == 140m);
+        Assert.Contains(lines, l => l.Account!.Code == "5510" && l.Credit == 140m);
+    }
+
+    [Fact]
+    public async Task WhenTheSiteWorksBelowNormal_OnlyTheNormalRateIsAbsorbed_TheRestStaysAnExpense()
+    {
+        var (seed, svc) = await WithOverheadAsync(0, 1000, 10);
+        await svc.CreateOrderAsync(Order(seed, 40));            // 2 batches of a normal 10
+        var row = (await svc.GetOverheadReportAsync(2026, 11)).Single();
+        Assert.Equal(200m, row.Absorbed);
+        Assert.Equal(800m, row.Unabsorbed);                      // not put on the stock cost
+        Assert.Equal(20m, row.CapacityUsedPercent);
+    }
+
+    [Fact]
+    public async Task WhenTheSiteWorksAboveNormal_AbsorptionNeverExceedsTheRealMonthlyOverhead()
+    {
+        var (seed, svc) = await WithOverheadAsync(0, 1000, 2);
+        for (var i = 0; i < 3; i++) await svc.CreateOrderAsync(Order(seed));
+        var orders = await seed.Ctx.ManufacturingOrders.OrderBy(o => o.OrderNumber).ToListAsync();
+        Assert.Equal(new[] { 500m, 500m, 0m }, orders.Select(o => o.FixedOverheadAllocated).ToArray());
+        Assert.Equal(1000m, (await svc.GetOverheadReportAsync(2026, 11)).Single().Absorbed);
+    }
+
+    [Fact]
+    public async Task WithoutASite_OrNoConversionCost_NothingExtraIsPosted()
+    {
+        var seed = await SeedAsync();
+        var svc = new ManufacturingService(seed.Ctx, new ItemLotService(seed.Ctx));
+        await svc.SetBomAsync(seed.Sauce.Id, new SetManufacturingBomDto { OutputQuantity = 20, Lines = { new CreateManufacturingBomLineDto { RawMaterialItemId = seed.Tomatoes.Id, QuantityPerBatch = 18 } } });
+        var order = await svc.CreateOrderAsync(new CreateManufacturingOrderDto { OutputItemId = seed.Sauce.Id, WarehouseId = seed.Warehouse.Id, ProductionDate = DateTime.UtcNow.Date, ProducedQuantity = 20 });
+        Assert.Equal(180m, order.TotalCost);
+        Assert.Empty(seed.Ctx.JournalEntries);
+    }
+
+    [Fact]
+    public async Task FixedOverheadNeedsANormalCapacity()
+    {
+        var seed = await SeedAsync();
+        var svc = new ManufacturingService(seed.Ctx, new ItemLotService(seed.Ctx));
+        await Assert.ThrowsAsync<ValidationAppException>(() => svc.SetSiteAsync(seed.Warehouse.Id, new SetManufacturingSiteDto { MonthlyFixedOverhead = 500, NormalMonthlyBatches = 0 }));
     }
 }

@@ -14,6 +14,8 @@ public class ManufacturingBom : AuditableEntity
     public decimal OutputQuantity { get; set; }
 
     public bool IsActive { get; set; } = true;
+    /// <summary>Direct labour and variable overhead (energy, packaging...) for one full batch. Goes into the cost of what is produced (IAS 2 cost of conversion).</summary>
+    public decimal ConversionCostPerBatch { get; set; }
 
     public ICollection<ManufacturingBomLine> Lines { get; set; } = new List<ManufacturingBomLine>();
 }

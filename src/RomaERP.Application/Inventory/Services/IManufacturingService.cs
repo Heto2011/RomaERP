@@ -15,4 +15,8 @@ public interface IManufacturingService
 
     Task<List<ManufacturingOrderDto>> GetOrdersAsync(CancellationToken ct = default);
     Task<ManufacturingOrderDto> CreateOrderAsync(CreateManufacturingOrderDto dto, CancellationToken ct = default);
+
+    Task<List<ManufacturingSiteDto>> GetSitesAsync(CancellationToken ct = default);
+    Task<ManufacturingSiteDto> SetSiteAsync(Guid warehouseId, SetManufacturingSiteDto dto, CancellationToken ct = default);
+    Task<List<OverheadAbsorptionRowDto>> GetOverheadReportAsync(int year, int month, CancellationToken ct = default);
 }

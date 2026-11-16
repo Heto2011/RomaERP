@@ -134,6 +134,7 @@ public class ManufacturingBomConfiguration : IEntityTypeConfiguration<Manufactur
     public void Configure(EntityTypeBuilder<ManufacturingBom> builder)
     {
         builder.Property(b => b.OutputQuantity).HasPrecision(18, 4);
+        builder.Property(b => b.ConversionCostPerBatch).HasPrecision(18, 2);
         builder.HasIndex(b => b.OutputItemId).IsUnique();
 
         builder.HasOne(b => b.OutputItem)
@@ -167,6 +168,10 @@ public class ManufacturingOrderConfiguration : IEntityTypeConfiguration<Manufact
 {
     public void Configure(EntityTypeBuilder<ManufacturingOrder> builder)
     {
+        builder.Property(o => o.MaterialCost).HasPrecision(18, 2);
+        builder.Property(o => o.ConversionCost).HasPrecision(18, 2);
+        builder.Property(o => o.FixedOverheadAllocated).HasPrecision(18, 2);
+        builder.Property(o => o.Batches).HasPrecision(18, 4);
         builder.Property(o => o.OrderNumber).HasMaxLength(30).IsRequired();
         builder.Property(o => o.ProducedQuantity).HasPrecision(18, 4);
         builder.Property(o => o.TotalCost).HasPrecision(18, 2);
@@ -273,5 +278,16 @@ public class StockAdjustmentConfiguration : IEntityTypeConfiguration<StockAdjust
         builder.HasOne(a => a.Warehouse).WithMany().HasForeignKey(a => a.WarehouseId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(a => a.Item).WithMany().HasForeignKey(a => a.ItemId).OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(a => a.AdjustmentDate);
+    }
+}
+
+public class ManufacturingSiteConfiguration : IEntityTypeConfiguration<ManufacturingSite>
+{
+    public void Configure(EntityTypeBuilder<ManufacturingSite> builder)
+    {
+        builder.Property(s => s.MonthlyFixedOverhead).HasPrecision(18, 2);
+        builder.Property(s => s.NormalMonthlyBatches).HasPrecision(18, 4);
+        builder.HasOne(s => s.Warehouse).WithMany().HasForeignKey(s => s.WarehouseId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(s => s.WarehouseId).IsUnique();
     }
 }

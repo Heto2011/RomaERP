@@ -7,6 +7,8 @@ public static class AccountingConstants
     public const string InventoryAccountCode = "1160";
     public const string AccountsPayableAccountCode = "2120";
     public const string CostOfGoodsSoldAccountCode = "5500";
+    /// <summary>Production conversion cost (labour, variable and fixed overhead) moved into the cost of produced stock instead of being expensed (IAS 2). A credit-natured expense account.</summary>
+    public const string CapitalisedConversionCostAccountCode = "5510";
     public const string RetainedEarningsAccountCode = "3200";
     public const string OpeningBalanceReference = "OPENING-BALANCE";
     public const string CashOnHandAccountCode = "1111";

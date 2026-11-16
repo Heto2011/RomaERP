@@ -106,11 +106,12 @@ public static class ChartOfAccountsFactory
         var adminExpenses = New("5300", "مصروفات إدارية وعمومية", "General & Admin Expenses", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
         var depreciationExpense = New("5400", "مصروف الإهلاك", "Depreciation Expense", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
         var costOfGoodsSold = New("5500", "تكلفة البضاعة المباعة", "Cost of Goods Sold", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
+        var conversionCapitalised = New("5510", "تكاليف تصنيع محمّلة على المخزون", "Production Costs Capitalised to Inventory", AccountType.Expense, AccountNature.Credit, expenses, false, 2);
         var fxLoss = New("5450", "خسائر فروق العملة", "Foreign Exchange Loss", AccountType.Expense, AccountNature.Debit, expenses, false, 2);
 
         accounts.AddRange(new[]
         {
-            expenses, salariesExpense, gosiEmployerExpense, employerNiExpense, employerSocialInsuranceExpense, employerPensionExpense, rentExpense, adminExpenses, depreciationExpense, costOfGoodsSold, fxLoss
+            expenses, salariesExpense, gosiEmployerExpense, employerNiExpense, employerSocialInsuranceExpense, employerPensionExpense, rentExpense, adminExpenses, depreciationExpense, costOfGoodsSold, conversionCapitalised, fxLoss
         });
 
         return accounts;
