@@ -2,6 +2,8 @@ using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.Inventory.DTOs;
+using RomaERP.Application.HR.Services;
+using RomaERP.Domain.HR;
 using RomaERP.Domain.Inventory;
 
 namespace RomaERP.Application.Inventory.Services;
@@ -11,9 +13,11 @@ public class PhysicalStockCountService : IPhysicalStockCountService
     private readonly IApplicationDbContext _context;
     private readonly IBranchStockService? _branchStock;
     private readonly IStockAdjustmentService? _adjustments;
+    private readonly IEmployeeDebtService? _debts;
 
-    public PhysicalStockCountService(IApplicationDbContext context, IBranchStockService? branchStock = null, IStockAdjustmentService? adjustments = null)
+    public PhysicalStockCountService(IApplicationDbContext context, IBranchStockService? branchStock = null, IStockAdjustmentService? adjustments = null, IEmployeeDebtService? debts = null)
     {
+        _debts = debts;
         _context = context;
         _branchStock = branchStock;
         _adjustments = adjustments;
@@ -99,6 +103,12 @@ public class PhysicalStockCountService : IPhysicalStockCountService
             Responsibility = variance < 0 ? (int)responsibility : null, ResponsibleEmployeeId = decision.EmployeeId
         }, userName, ct);
 
+        // A shortage charged to a person is also a debt in their ledger, repaid from pay once the accountant approves each deduction.
+        if (variance < 0 && responsibility is StockLossResponsibility.Employee or StockLossResponsibility.Manager && decision.EmployeeId is { } empId && _debts is not null)
+        {
+            var je = await _context.StockAdjustments.AsNoTracking().Where(a => a.Id == adj.Id).Select(a => a.JournalEntryId).FirstOrDefaultAsync(ct);
+            await _debts.AddRecordedDebtAsync(empId, adj.TotalCost, count.CountDate, EmployeeDebtReason.StockShortage, $"نقص مخزون {count.Item!.Code} - {count.Item.NameAr}", adj.Number, je, userName, ct);
+        }
         count.StockAdjustmentId = adj.Id;
         count.Status = 2;
         count.Responsibility = variance < 0 ? responsibility : null;

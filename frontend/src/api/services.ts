@@ -1098,3 +1098,11 @@ export const StockTransfersApi = {
   createAdjustment: (data: { warehouseId: string; itemId: string; isIncrease: boolean; quantity: number; unitCost?: number; reason: number; adjustmentDate: string; notes?: string; lotNumber?: string; expiryDate?: string }) =>
     apiClient.post("/inventory/adjustments", data),
 };
+
+export const EmployeeDebtsApi = {
+  getAll: (employeeId?: string) => apiClient.get<unknown[]>("/employee-debts", { params: employeeId ? { employeeId } : {} }),
+  createAdvance: (data: { employeeId: string; amount: number; debtDate: string; description?: string; monthlyInstallment?: number; paidFrom?: string }) => apiClient.post("/employee-debts/advance", data),
+  update: (id: string, data: { monthlyInstallment?: number; cancel?: boolean }) => apiClient.put(`/employee-debts/${id}`, data),
+  proposals: (runId: string) => apiClient.get<unknown[]>(`/employee-debts/payroll/${runId}`),
+  approve: (runId: string, items: { debtId: string; amount: number }[]) => apiClient.post(`/employee-debts/payroll/${runId}/approve`, { items }),
+};

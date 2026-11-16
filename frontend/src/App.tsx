@@ -75,6 +75,7 @@ import MyRequests from "./pages/hr/MyRequests";
 import PeopleDashboard from "./pages/hr/PeopleDashboard";
 import PeopleCalendar from "./pages/hr/PeopleCalendar";
 import EmployeeRequestsAdmin from "./pages/hr/EmployeeRequestsAdmin";
+import EmployeeDebts from "./pages/hr/EmployeeDebts";
 import Payroll from "./pages/hr/Payroll";
 import PayrollSettingsPage from "./pages/hr/PayrollSettings";
 import EmployeeContracts from "./pages/hr/EmployeeContracts";
@@ -266,6 +267,8 @@ export default function App() {
       <Route path="/hr/positions" element={<ProtectedRoute><Positions /></ProtectedRoute>} />
       <Route path="/hr/employees" element={<ProtectedRoute><Employees /></ProtectedRoute>} />
       <Route path="/hr/payroll" element={<ProtectedRoute><Payroll /></ProtectedRoute>} />
+      <Route path="/hr/employee-debts" element={<ProtectedRoute><EmployeeDebts /></ProtectedRoute>} />
+      <Route path="/people/employee-debts" element={<PeopleRoute managerOnly><EmployeeDebts /></PeopleRoute>} />
       <Route path="/hr/payroll-settings" element={<ProtectedRoute><PayrollSettingsPage /></ProtectedRoute>} />
       <Route path="/hr/employee-contracts" element={<ProtectedRoute><EmployeeContracts /></ProtectedRoute>} />
       <Route path="/hr/salary-components" element={<ProtectedRoute><SalaryComponentsPage /></ProtectedRoute>} />

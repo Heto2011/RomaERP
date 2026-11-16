@@ -230,6 +230,7 @@ public class PayrollRunLineConfiguration : IEntityTypeConfiguration<PayrollRunLi
         builder.Property(l => l.TotalDeductions).HasPrecision(18, 2);
         builder.Property(l => l.NetSalary).HasPrecision(18, 2);
         builder.Property(l => l.UnpaidLeaveDeductionAmount).HasPrecision(18, 2);
+        builder.Property(l => l.DebtDeductionAmount).HasPrecision(18, 2);
         builder.Property(l => l.GosiEmployeeDeductionAmount).HasPrecision(18, 2);
         builder.Property(l => l.GosiEmployerContributionAmount).HasPrecision(18, 2);
         builder.Property(l => l.UkTaxablePay).HasPrecision(18, 2);
@@ -375,5 +376,31 @@ public class SurveyParticipationConfiguration : IEntityTypeConfiguration<SurveyP
     {
         builder.HasIndex(p => new { p.SurveyId, p.EmployeeId }).IsUnique();
         builder.HasQueryFilter(p => !p.IsDeleted);
+    }
+}
+
+public class EmployeeDebtConfiguration : IEntityTypeConfiguration<EmployeeDebt>
+{
+    public void Configure(EntityTypeBuilder<EmployeeDebt> builder)
+    {
+        builder.Property(d => d.Amount).HasPrecision(18, 2);
+        builder.Property(d => d.RemainingAmount).HasPrecision(18, 2);
+        builder.Property(d => d.MonthlyInstallment).HasPrecision(18, 2);
+        builder.Property(d => d.Description).HasMaxLength(300);
+        builder.Property(d => d.SourceReference).HasMaxLength(60);
+        builder.Property(d => d.CreatedByName).HasMaxLength(200);
+        builder.HasOne(d => d.Employee).WithMany().HasForeignKey(d => d.EmployeeId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(d => new { d.EmployeeId, d.Status });
+    }
+}
+
+public class EmployeeDebtDeductionConfiguration : IEntityTypeConfiguration<EmployeeDebtDeduction>
+{
+    public void Configure(EntityTypeBuilder<EmployeeDebtDeduction> builder)
+    {
+        builder.Property(d => d.Amount).HasPrecision(18, 2);
+        builder.Property(d => d.ApprovedBy).HasMaxLength(200);
+        builder.HasOne(d => d.EmployeeDebt).WithMany().HasForeignKey(d => d.EmployeeDebtId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(d => d.PayrollRunId);
     }
 }

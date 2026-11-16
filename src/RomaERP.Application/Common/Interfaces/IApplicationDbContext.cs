@@ -38,6 +38,8 @@ public interface IApplicationDbContext
     DbSet<EmployeeSalaryComponent> EmployeeSalaryComponents { get; }
     DbSet<PayrollRun> PayrollRuns { get; }
     DbSet<PayrollRunLine> PayrollRunLines { get; }
+    DbSet<EmployeeDebt> EmployeeDebts { get; }
+    DbSet<EmployeeDebtDeduction> EmployeeDebtDeductions { get; }
     DbSet<WorkLocation> WorkLocations { get; }
     DbSet<AttendanceRecord> AttendanceRecords { get; }
     DbSet<EmployeeRequest> EmployeeRequests { get; }

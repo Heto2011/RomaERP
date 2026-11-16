@@ -285,6 +285,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               { to: "/hr/salary-components", label: t.hr.salaryComponentsTitle, icon: <IconWallet /> },
               { to: "/hr/payroll", label: t.nav.payroll, icon: <IconDollar /> },
               { to: "/hr/payroll-settings", label: t.hr.payrollSettingsTitle, icon: <IconWallet /> },
+              { to: "/hr/employee-debts", label: t.nav.employeeDebts, icon: <IconWallet /> },
               { to: "/hr/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
               { to: "/hr/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
               { to: "/hr/shifts", label: t.hr.shiftsTitle, icon: <IconCalendar /> },

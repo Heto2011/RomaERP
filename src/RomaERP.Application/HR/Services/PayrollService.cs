@@ -266,7 +266,7 @@ public class PayrollService : IPayrollService
 
         line.TotalAllowances = dto.TotalAllowances;
         line.TotalDeductions = dto.TotalDeductions;
-        line.NetSalary = line.BasicSalary + dto.TotalAllowances - dto.TotalDeductions;
+        line.NetSalary = line.BasicSalary + dto.TotalAllowances - dto.TotalDeductions - line.DebtDeductionAmount;
 
         await _context.SaveChangesAsync(ct);
         return await GetByIdAsync(runId, ct);
@@ -291,6 +291,7 @@ public class PayrollService : IPayrollService
             ?? throw new ValidationAppException($"حساب المرتبات المستحقة ({AccountingConstants.AccruedSalariesPayableAccountCode}) غير موجود في دليل الحسابات.");
 
         var deductionTotals = new Dictionary<Guid, decimal>();
+        decimal totalDebtRepaid = 0;
         decimal totalGross = 0, totalNet = 0, totalGosiEmployeeWithheld = 0, totalGosiEmployerContribution = 0;
         decimal ukHmrcWithheld = 0, ukPensionEmployee = 0, ukEmployerNi = 0, ukEmployerPension = 0;
         decimal egInsuranceEmployee = 0, egInsuranceEmployer = 0, egTax = 0;
@@ -304,6 +305,7 @@ public class PayrollService : IPayrollService
             // to its own linked account below — that split is what keeps this entry balanced.
             totalGross += line.BasicSalary + line.TotalAllowances - line.UnpaidLeaveDeductionAmount;
             totalNet += line.NetSalary;
+            totalDebtRepaid += line.DebtDeductionAmount;
             totalGosiEmployeeWithheld += line.GosiEmployeeDeductionAmount;
             totalGosiEmployerContribution += line.GosiEmployerContributionAmount;
             ukHmrcWithheld += line.UkIncomeTax + line.UkEmployeeNi + line.UkStudentLoan + line.UkPostgraduateLoan;
@@ -418,6 +420,17 @@ public class PayrollService : IPayrollService
         await AddUkAsync(AccountingConstants.SocialInsurancePayableAccountCode, "تأمينات اجتماعية مستحقة", 0, egInsuranceEmployee + ggSocialEmployee + socialEmployer);
         await AddUkAsync(AccountingConstants.TaxesPayableAccountCode, "ضريبة كسب العمل مستحقة", salaryTax < 0 ? -salaryTax : 0, salaryTax > 0 ? salaryTax : 0);
 
+        if (totalDebtRepaid > 0)
+        {
+            var custody = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == AccountingConstants.EmployeeCustodyAccountCode && !a.IsDeleted, ct)
+                ?? throw new ValidationAppException($"حساب عهد وسلف الموظفين ({AccountingConstants.EmployeeCustodyAccountCode}) غير موجود في دليل الحسابات.");
+            lines.Add(new JournalEntryLine
+            {
+                LineNumber = lineNumber++, AccountId = custody.Id, Debit = 0, Credit = totalDebtRepaid,
+                Description = $"سداد مديونيات موظفين من الراتب - دورة {run.RunDate:yyyy-MM}"
+            });
+        }
+
         lines.Add(new JournalEntryLine
         {
             LineNumber = lineNumber,
@@ -439,6 +452,15 @@ public class PayrollService : IPayrollService
         };
 
         _context.JournalEntries.Add(journalEntry);
+        // Repayments approved for this run now reduce the debts they belong to.
+        var approved = await _context.EmployeeDebtDeductions.Include(d => d.EmployeeDebt).Where(d => d.PayrollRunId == run.Id && !d.IsPosted).ToListAsync(ct);
+        foreach (var d in approved)
+        {
+            d.IsPosted = true;
+            var debt = d.EmployeeDebt!;
+            debt.RemainingAmount = Math.Max(0, debt.RemainingAmount - d.Amount);
+            if (debt.RemainingAmount == 0) debt.Status = EmployeeDebtStatus.Settled;
+        }
         run.JournalEntryId = journalEntry.Id;
         run.Status = PayrollRunStatus.Posted;
 

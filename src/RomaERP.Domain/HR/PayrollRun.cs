@@ -30,6 +30,8 @@ public class PayrollRunLine : BaseEntity
     public decimal TotalAllowances { get; set; }
     public decimal TotalDeductions { get; set; }
     public decimal NetSalary { get; set; }
+    /// <summary>Approved repayment of employee debts taken from this pay (already taken off NetSalary; NOT inside TotalDeductions).</summary>
+    public decimal DebtDeductionAmount { get; set; }
 
     /// <summary>Informational only — already folded into <see cref="TotalDeductions"/>. Approved unpaid
     /// leave days (see EmployeeRequest) overlapping this run's fiscal period, and the amount deducted for

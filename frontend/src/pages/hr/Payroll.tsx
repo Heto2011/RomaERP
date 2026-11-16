@@ -3,6 +3,7 @@ import { LookupsApi, PayrollApi } from "../../api/services";
 import { PayrollRunStatus, type FiscalPeriod, type PayrollRun } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import DebtDeductionsPanel from "../../components/DebtDeductionsPanel";
 
 export default function Payroll() {
   const { t, lang } = useLanguage();
@@ -250,6 +251,7 @@ export default function Payroll() {
                 {expanded === run.id && (
                   <tr>
                     <td colSpan={6}>
+                      {run.status === PayrollRunStatus.Draft && <DebtDeductionsPanel runId={run.id} onChanged={load} />}
                       <table>
                         <thead>
                           <tr>
