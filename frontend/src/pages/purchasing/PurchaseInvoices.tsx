@@ -440,7 +440,7 @@ export default function PurchaseInvoices() {
                       )}
                       {unitMode && <td><input type="number" min={0.0001} step="0.01" value={line.quantity} onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })} style={{ width: 90 }} required /></td>}
                       <td><input type="number" min={0} step="0.01" value={line.unitPrice} onChange={(e) => updateLine(idx, { unitPrice: Number(e.target.value) })} style={{ width: 110 }} required /></td>
-                      <td><input type="number" min={0} max={100} step="0.01" value={Math.round((line.vatRate ?? vatRate) * 10000) / 100} onChange={(e) => updateLine(idx, { vatRate: e.target.value === "" ? null : Number(e.target.value) / 100 })} style={{ width: 80 }} title={lang === "ar" ? "نسبة الضريبة على البند. 0 = بدون ضريبة" : "Tax rate on this line. 0 = no tax"} /> %</td>
+                      {unitMode ? <td className="text-muted">{(vatRate * 100).toFixed(0)}%</td> : }
                       <td>
                         {lines.length > 1 && (
                           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setLines((prev) => prev.filter((_, i) => i !== idx))}>
