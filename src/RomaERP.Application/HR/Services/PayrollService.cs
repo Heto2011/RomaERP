@@ -3,6 +3,7 @@ using RomaERP.Application.Accounting;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.HR.DTOs;
+using RomaERP.Application.HR.Services.Countries;
 using RomaERP.Application.HR.Services.Uk;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.HR;
@@ -12,9 +13,6 @@ namespace RomaERP.Application.HR.Services;
 
 public class PayrollService : IPayrollService
 {
-    /// <summary>The most monthly salary GOSI contributions are charged on.</summary>
-    private const decimal GosiMaxContributoryWage = 45_000m;
-
     private readonly IApplicationDbContext _context;
     private readonly IHtmlToPdfRenderer? _pdfRenderer;
 
@@ -70,23 +68,9 @@ public class PayrollService : IPayrollService
                         && (r.DateTo ?? r.DateFrom) >= period.StartDate)
             .ToListAsync(ct);
 
-        // UK income tax is cumulative over the tax year (6 April to 5 April): what each employee has already earned and been
-        // taxed on in earlier runs of the same year feeds this run. Earlier runs are counted whether or not they were posted yet.
-        var isUk = settings?.Country == Country.UnitedKingdom;
-        var isEgypt = settings?.Country == Country.Egypt;
-        var isGuernsey = settings?.Country == Country.Guernsey;
-        var (taxYearStart, taxMonth) = UkPayrollCalculator.TaxPeriodOf(dto.RunDate);
-        var yearToDate = new Dictionary<Guid, UkYearToDate>();
-        if (isUk)
-        {
-            var earlier = await _context.PayrollRunLines
-                .AsNoTracking()
-                .Where(l => !l.PayrollRun!.IsDeleted && l.PayrollRun.RunDate >= taxYearStart && l.PayrollRun.RunDate < dto.RunDate)
-                .GroupBy(l => l.EmployeeId)
-                .Select(g => new { EmployeeId = g.Key, Taxable = g.Sum(l => l.UkTaxablePay), Tax = g.Sum(l => l.UkIncomeTax) })
-                .ToListAsync(ct);
-            foreach (var e in earlier) yearToDate[e.EmployeeId] = new UkYearToDate(e.Taxable, e.Tax);
-        }
+        // Each country's payroll rules live in their own class; only the ones that apply to this company take part.
+        var rules = PayrollCountryRules.For(settings);
+        foreach (var rule in rules) await rule.PrepareAsync(_context, dto.RunDate, ct);
 
         var run = new PayrollRun
         {
@@ -127,86 +111,19 @@ public class PayrollService : IPayrollService
             var unpaidLeaveDeduction = Math.Round(unpaidLeaveDays * dailyRate, 2);
             deductions += unpaidLeaveDeduction;
 
-            decimal gosiEmployeeAmount = 0, gosiEmployerAmount = 0;
-            if (settings?.GosiEnabled == true)
-            {
-                // GOSI contributions are calculated on salary up to a ceiling (SAR 45,000 a month).
-                var gosiBase = Math.Min(employee.BasicSalary, GosiMaxContributoryWage);
-                if (employee.IsSaudiNational)
-                {
-                    gosiEmployeeAmount = Math.Round(gosiBase * settings.GosiEmployeeRatePercent / 100m, 2);
-                    gosiEmployerAmount = Math.Round(gosiBase * (settings.GosiEmployerAnnuitiesRatePercent + settings.GosiEmployerHazardsRatePercent) / 100m, 2);
-                    deductions += gosiEmployeeAmount;
-                }
-                else
-                {
-                    // Non-Saudi/resident employees: no Annuities branch (employee pays nothing), only the
-                    // employer-paid Occupational Hazards branch, at its own (usually lower) rate.
-                    gosiEmployerAmount = Math.Round(gosiBase * settings.GosiNonSaudiEmployerHazardsRatePercent / 100m, 2);
-                }
-            }
-
-            UkPayrollResult? uk = null;
-            if (isUk)
-            {
-                try
-                {
-                    uk = UkPayrollCalculator.Calculate(new UkPayrollInput(
-                        employee.BasicSalary + allowances - unpaidLeaveDeduction,
-                        string.IsNullOrWhiteSpace(employee.UkTaxCode) ? "1257L" : employee.UkTaxCode,
-                        string.IsNullOrWhiteSpace(employee.UkNiCategory) ? "A" : employee.UkNiCategory,
-                        employee.UkStudentLoanPlan, employee.UkPostgraduateLoan,
-                        employee.UkPensionEnrolled, employee.UkPensionEmployeePercent, employee.UkPensionEmployerPercent,
-                        taxMonth, yearToDate.GetValueOrDefault(employee.Id, UkYearToDate.None)));
-                }
-                catch (ValidationAppException ex)
-                {
-                    throw new ValidationAppException($"{employee.FullNameEn}: {ex.Message}");
-                }
-                deductions += uk.IncomeTax + uk.EmployeeNi + uk.StudentLoan + uk.PostgraduateLoan + uk.PensionEmployee;
-            }
-
-            EgyptPayrollResult? eg = null;
-            if (isEgypt)
-            {
-                eg = EgyptPayrollCalculator.Calculate(employee.BasicSalary, employee.BasicSalary + allowances - unpaidLeaveDeduction, EgyptPayrollCalculator.IsInsured(employee.Nationality));
-                deductions += eg.EmployeeInsurance + eg.IncomeTax;
-            }
-
-            GuernseyPayrollResult? gg = null;
-            if (isGuernsey)
-            {
-                gg = GuernseyPayrollCalculator.Calculate(employee.BasicSalary + allowances - unpaidLeaveDeduction, settings!.GgIncomeTaxRatePercent,
-                    employee.GgPersonalAllowanceAnnual ?? settings.GgPersonalAllowanceAnnual, settings.GgEmployeeSocialRatePercent, settings.GgEmployerSocialRatePercent, settings.GgSocialMonthlyUpperLimit);
-                deductions += gg.IncomeTax + gg.EmployeeSocial;
-            }
-
-            run.Lines.Add(new PayrollRunLine
+            var line = new PayrollRunLine
             {
                 EmployeeId = employee.Id,
                 BasicSalary = employee.BasicSalary,
                 TotalAllowances = allowances,
-                TotalDeductions = deductions,
-                NetSalary = employee.BasicSalary + allowances - deductions,
                 UnpaidLeaveDays = unpaidLeaveDays,
-                UnpaidLeaveDeductionAmount = unpaidLeaveDeduction,
-                GosiEmployeeDeductionAmount = gosiEmployeeAmount,
-                GosiEmployerContributionAmount = gosiEmployerAmount,
-                UkTaxablePay = uk?.TaxablePay ?? 0,
-                UkIncomeTax = uk?.IncomeTax ?? 0,
-                UkEmployeeNi = uk?.EmployeeNi ?? 0,
-                UkEmployerNi = uk?.EmployerNi ?? 0,
-                UkStudentLoan = uk?.StudentLoan ?? 0,
-                UkPostgraduateLoan = uk?.PostgraduateLoan ?? 0,
-                UkPensionEmployee = uk?.PensionEmployee ?? 0,
-                UkPensionEmployer = uk?.PensionEmployer ?? 0,
-                EgEmployeeInsurance = eg?.EmployeeInsurance ?? 0,
-                EgEmployerInsurance = eg?.EmployerInsurance ?? 0,
-                EgIncomeTax = eg?.IncomeTax ?? 0,
-                GgIncomeTax = gg?.IncomeTax ?? 0,
-                GgEmployeeSocial = gg?.EmployeeSocial ?? 0,
-                GgEmployerSocial = gg?.EmployerSocial ?? 0
-            });
+                UnpaidLeaveDeductionAmount = unpaidLeaveDeduction
+            };
+            var grossForStatutory = employee.BasicSalary + allowances - unpaidLeaveDeduction;
+            foreach (var rule in rules) deductions += rule.Apply(line, employee, grossForStatutory);
+            line.TotalDeductions = deductions;
+            line.NetSalary = employee.BasicSalary + allowances - deductions;
+            run.Lines.Add(line);
         }
 
         _context.PayrollRuns.Add(run);
@@ -292,10 +209,7 @@ public class PayrollService : IPayrollService
 
         var deductionTotals = new Dictionary<Guid, decimal>();
         decimal totalDebtRepaid = 0;
-        decimal totalGross = 0, totalNet = 0, totalGosiEmployeeWithheld = 0, totalGosiEmployerContribution = 0;
-        decimal ukHmrcWithheld = 0, ukPensionEmployee = 0, ukEmployerNi = 0, ukEmployerPension = 0;
-        decimal egInsuranceEmployee = 0, egInsuranceEmployer = 0, egTax = 0;
-        decimal ggTax = 0, ggSocialEmployee = 0, ggSocialEmployer = 0;
+        decimal totalGross = 0, totalNet = 0;
         var unlinkedDeductionCodes = new HashSet<string>();
 
         foreach (var line in run.Lines)
@@ -306,18 +220,6 @@ public class PayrollService : IPayrollService
             totalGross += line.BasicSalary + line.TotalAllowances - line.UnpaidLeaveDeductionAmount;
             totalNet += line.NetSalary;
             totalDebtRepaid += line.DebtDeductionAmount;
-            totalGosiEmployeeWithheld += line.GosiEmployeeDeductionAmount;
-            totalGosiEmployerContribution += line.GosiEmployerContributionAmount;
-            ukHmrcWithheld += line.UkIncomeTax + line.UkEmployeeNi + line.UkStudentLoan + line.UkPostgraduateLoan;
-            ukPensionEmployee += line.UkPensionEmployee;
-            ukEmployerNi += line.UkEmployerNi;
-            ukEmployerPension += line.UkPensionEmployer;
-            egInsuranceEmployee += line.EgEmployeeInsurance;
-            egInsuranceEmployer += line.EgEmployerInsurance;
-            egTax += line.EgIncomeTax;
-            ggTax += line.GgIncomeTax;
-            ggSocialEmployee += line.GgEmployeeSocial;
-            ggSocialEmployer += line.GgEmployerSocial;
 
             foreach (var esc in line.Employee!.SalaryComponents.Where(x => x.SalaryComponent!.ComponentType == SalaryComponentType.Deduction))
             {
@@ -364,61 +266,11 @@ public class PayrollService : IPayrollService
             });
         }
 
-        var totalGosiPayable = totalGosiEmployeeWithheld + totalGosiEmployerContribution;
-        if (totalGosiPayable > 0)
-        {
-            if (totalGosiEmployerContribution > 0)
-            {
-                var gosiEmployerExpenseAccount = await _context.Accounts
-                    .FirstOrDefaultAsync(a => a.Code == AccountingConstants.GosiEmployerExpenseAccountCode && !a.IsDeleted, ct)
-                    ?? throw new ValidationAppException($"حساب مصروف التأمينات الاجتماعية (حصة الشركة) ({AccountingConstants.GosiEmployerExpenseAccountCode}) غير موجود في دليل الحسابات.");
-
-                lines.Add(new JournalEntryLine
-                {
-                    LineNumber = lineNumber++,
-                    AccountId = gosiEmployerExpenseAccount.Id,
-                    Debit = totalGosiEmployerContribution,
-                    Credit = 0,
-                    Description = $"مصروف تأمينات اجتماعية (حصة الشركة) - دورة {run.RunDate:yyyy-MM}"
-                });
-            }
-
-            var gosiPayableAccount = await _context.Accounts
-                .FirstOrDefaultAsync(a => a.Code == AccountingConstants.GosiPayableAccountCode && !a.IsDeleted, ct)
-                ?? throw new ValidationAppException($"حساب التأمينات الاجتماعية المستحقة ({AccountingConstants.GosiPayableAccountCode}) غير موجود في دليل الحسابات.");
-
-            lines.Add(new JournalEntryLine
-            {
-                LineNumber = lineNumber++,
-                AccountId = gosiPayableAccount.Id,
-                Debit = 0,
-                Credit = totalGosiPayable,
-                Description = $"تأمينات اجتماعية مستحقة (حصة الموظف والشركة) - دورة {run.RunDate:yyyy-MM}"
-            });
-        }
-
-        // UK payroll: what is owed to HMRC (tax, National Insurance, student loans — employee and employer) and to the pension
-        // scheme, plus the employer's own National Insurance and pension costs.
-        async Task AddUkAsync(string code, string description, decimal debit, decimal credit)
-        {
-            if (debit == 0 && credit == 0) return;
-            var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Code == code && !a.IsDeleted, ct)
-                ?? throw new ValidationAppException($"الحساب ({code}) غير موجود في دليل الحسابات.");
-            lines.Add(new JournalEntryLine { LineNumber = lineNumber++, AccountId = account.Id, Debit = debit, Credit = credit, Description = $"{description} - دورة {run.RunDate:yyyy-MM}" });
-        }
-        await AddUkAsync(AccountingConstants.EmployerNiExpenseAccountCode, "مصروف تأمين وطني (حصة الشركة)", ukEmployerNi, 0);
-        await AddUkAsync(AccountingConstants.EmployerPensionExpenseAccountCode, "مصروف معاش (حصة الشركة)", ukEmployerPension, 0);
-        var hmrcOwed = ukHmrcWithheld + ukEmployerNi;
-        await AddUkAsync(AccountingConstants.HmrcPayableAccountCode, "ضرائب وتأمين وطني مستحقة", hmrcOwed < 0 ? -hmrcOwed : 0, hmrcOwed > 0 ? hmrcOwed : 0);
-        await AddUkAsync(AccountingConstants.PensionPayableAccountCode, "اشتراكات معاش مستحقة", 0, ukPensionEmployee + ukEmployerPension);
-
-        // Egypt payroll: social insurance (employee withheld + employer cost) and salary tax withheld.
-        // Egypt and Guernsey share the social-insurance and salary-tax accounts.
-        var socialEmployer = egInsuranceEmployer + ggSocialEmployer;
-        var salaryTax = egTax + ggTax;
-        await AddUkAsync(AccountingConstants.EmployerSocialInsuranceExpenseAccountCode, "مصروف تأمينات اجتماعية (حصة الشركة)", socialEmployer, 0);
-        await AddUkAsync(AccountingConstants.SocialInsurancePayableAccountCode, "تأمينات اجتماعية مستحقة", 0, egInsuranceEmployee + ggSocialEmployee + socialEmployer);
-        await AddUkAsync(AccountingConstants.TaxesPayableAccountCode, "ضريبة كسب العمل مستحقة", salaryTax < 0 ? -salaryTax : 0, salaryTax > 0 ? salaryTax : 0);
+        // Each country adds what it owes to its authorities and the employer's own cost; the country-neutral flow knows none of it.
+        var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct);
+        var builder = new PayrollJournalBuilder(_context, $"{run.RunDate:yyyy-MM}", lines, lineNumber, ct);
+        foreach (var rule in PayrollCountryRules.For(settings)) await rule.AddJournalAsync(builder, run.Lines.ToList());
+        lineNumber = builder.NextLineNumber;
 
         if (totalDebtRepaid > 0)
         {
