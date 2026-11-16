@@ -141,6 +141,38 @@ public class FinancialReportService : IFinancialReportService
         return new CostCenterAnalysisDto { FromDate = fromDate, ToDate = toDate, CostCenters = costCenters };
     }
 
+    public async Task<BranchProfitDto> GetBranchProfitAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
+    {
+        var lines = await _context.JournalEntryLines
+            .AsNoTracking()
+            .Include(l => l.Account)
+            .Include(l => l.JournalEntry)
+            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+                        && !l.JournalEntry.IsDeleted
+                        && l.JournalEntry.EntryDate >= fromDate
+                        && l.JournalEntry.EntryDate <= toDate
+                        && (l.Account!.AccountType == AccountType.Revenue || l.Account.AccountType == AccountType.Expense))
+            .ToListAsync(ct);
+        var names = await _context.Warehouses.AsNoTracking().ToDictionaryAsync(w => w.Id, w => w.NameAr, ct);
+
+        var rows = lines.GroupBy(l => l.JournalEntry!.WarehouseId).Select(g =>
+        {
+            var revenue = g.Where(l => l.Account!.AccountType == AccountType.Revenue).Sum(l => l.Credit - l.Debit);
+            var expense = g.Where(l => l.Account!.AccountType == AccountType.Expense).Sum(l => l.Debit - l.Credit);
+            return new BranchProfitRowDto
+            {
+                WarehouseId = g.Key, BranchName = g.Key is { } id && names.TryGetValue(id, out var n) ? n : "",
+                Revenue = revenue, Expense = expense, NetProfit = revenue - expense
+            };
+        }).Where(r => r.Revenue != 0 || r.Expense != 0).OrderBy(r => r.WarehouseId.HasValue ? 0 : 1).ThenBy(r => r.BranchName).ToList();
+
+        return new BranchProfitDto
+        {
+            FromDate = fromDate, ToDate = toDate, Branches = rows,
+            TotalRevenue = rows.Sum(r => r.Revenue), TotalExpense = rows.Sum(r => r.Expense), NetProfit = rows.Sum(r => r.NetProfit)
+        };
+    }
+
     public async Task<VatSummaryDto> GetVatSummaryAsync(DateTime fromDate, DateTime toDate, CancellationToken ct = default)
     {
         var lines = await _context.JournalEntryLines

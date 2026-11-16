@@ -926,4 +926,34 @@ public class FinancialReportServiceTests
         Assert.Equal(400m, report.TotalPurchasesExVat);
         Assert.True(report.IsUk);
     }
+
+    [Fact]
+    public async Task GetBranchProfit_SplitsByBranch_AndHeadOfficeStaysUnallocated()
+    {
+        var ctx = CreateContext();
+        var revenue = new Account { Code = "4100", NameAr = "إيرادات", NameEn = "Sales", AccountType = AccountType.Revenue, Nature = AccountNature.Credit };
+        var expense = new Account { Code = "5300", NameAr = "مصروفات", NameEn = "Admin", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        var cash = new Account { Code = "1111", NameAr = "الصندوق", NameEn = "Cash", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+        var cairo = new Warehouse { Code = "CAI", NameAr = "القاهرة", NameEn = "Cairo" };
+        var alex = new Warehouse { Code = "ALX", NameAr = "الإسكندرية", NameEn = "Alex" };
+        var year = new FiscalYear { Name = "2026", StartDate = new DateTime(2026, 1, 1), EndDate = new DateTime(2026, 12, 31) };
+        var period = new FiscalPeriod { FiscalYear = year, FiscalYearId = year.Id, Name = "Aug", PeriodNumber = 8, StartDate = new DateTime(2026, 8, 1), EndDate = new DateTime(2026, 8, 31) };
+        ctx.AddRange(revenue, expense, cash, cairo, alex, year, period);
+        await ctx.SaveChangesAsync();
+
+        JournalEntry E(string n, Guid? w, Account a, decimal debit, decimal credit) => new()
+        {
+            EntryNumber = n, EntryDate = new DateTime(2026, 8, 10), FiscalPeriodId = period.Id, Status = JournalEntryStatus.Posted, WarehouseId = w,
+            Lines = { new JournalEntryLine { LineNumber = 1, AccountId = a.Id, Debit = debit, Credit = credit }, new JournalEntryLine { LineNumber = 2, AccountId = cash.Id, Debit = credit, Credit = debit } }
+        };
+        ctx.JournalEntries.AddRange(E("JV-1", cairo.Id, revenue, 0, 1000), E("JV-2", cairo.Id, expense, 300, 0), E("JV-3", alex.Id, revenue, 0, 500), E("JV-4", null, expense, 200, 0));
+        await ctx.SaveChangesAsync();
+
+        var report = await new FinancialReportService(ctx).GetBranchProfitAsync(new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
+        Assert.Equal(3, report.Branches.Count);
+        Assert.Equal(700m, report.Branches.Single(b => b.BranchName == "القاهرة").NetProfit);
+        Assert.Equal(500m, report.Branches.Single(b => b.BranchName == "الإسكندرية").NetProfit);
+        Assert.Equal(-200m, report.Branches.Single(b => b.WarehouseId == null).NetProfit);
+        Assert.Equal(1000m, report.NetProfit);
+    }
 }

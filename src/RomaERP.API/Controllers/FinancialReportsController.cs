@@ -44,6 +44,10 @@ public class FinancialReportsController : ControllerBase
     public async Task<ActionResult<BalanceSheetDto>> GetBalanceSheet([FromQuery] DateTime asOfDate, CancellationToken ct)
         => Ok(await _financialReportService.GetBalanceSheetAsync(asOfDate, ct));
 
+    [HttpGet("branch-profit")]
+    public async Task<ActionResult<BranchProfitDto>> GetBranchProfit([FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)
+        => Ok(await _financialReportService.GetBranchProfitAsync(fromDate, toDate, ct));
+
     [HttpGet("cost-center-analysis")]
     public async Task<ActionResult<CostCenterAnalysisDto>> GetCostCenterAnalysis(
         [FromQuery] DateTime fromDate, [FromQuery] DateTime toDate, CancellationToken ct)

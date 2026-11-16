@@ -182,7 +182,7 @@ public class StockTransferService : IStockTransferService
 
             item.QuantityOnHand -= shortage;
             var entry = await SimpleJournalEntryFactory.CreatePostedAsync(_context, date, periodId!.Value, $"نقص تحويل {transfer.Number} - {item.NameAr}",
-                cogs.Id, inventory.Id, cost, "TRANSFER-SHORTAGE", ct);
+                cogs.Id, inventory.Id, cost, "TRANSFER-SHORTAGE", ct, transfer.ToWarehouseId);
             var writeOff = new StockMovement
             {
                 MovementNumber = $"SM-{++movementCount:D6}", MovementDate = date, MovementType = StockMovementType.Issue,

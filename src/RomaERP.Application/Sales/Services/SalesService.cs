@@ -264,6 +264,7 @@ public class SalesService : ISalesService
             FiscalPeriodId = dto.FiscalPeriodId,
             Description = $"فاتورة مبيعات - {customer.NameAr}",
             Reference = AccountingConstants.SalesInvoiceReference,
+            WarehouseId = warehouse?.Id,
             Status = JournalEntryStatus.Posted,
             Lines = journalLines
         };
@@ -355,6 +356,7 @@ public class SalesService : ISalesService
                     FiscalPeriodId = dto.FiscalPeriodId,
                     Description = $"تكلفة البضاعة المباعة - فاتورة مبيعات {invoiceNumber}",
                     Reference = AccountingConstants.SalesInvoiceReference,
+                    WarehouseId = warehouse?.Id,
                     Status = JournalEntryStatus.Posted,
                     Lines =
                     {

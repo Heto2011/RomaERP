@@ -128,7 +128,7 @@ public class InventoryService : IInventoryService
 
         var journalEntry = await BuildJournalEntryAsync(dto.MovementDate, dto.FiscalPeriodId,
             $"صرف مخزون - {item.NameAr}",
-            debitAccountId: cogsAccount!.Id, creditAccountId: inventoryAccount.Id, amount: totalCost, ct, costCenterId: dto.CostCenterId);
+            debitAccountId: cogsAccount!.Id, creditAccountId: inventoryAccount.Id, amount: totalCost, ct, costCenterId: dto.CostCenterId, warehouseId: dto.WarehouseId);
 
         var movement = new StockMovement
         {
@@ -176,7 +176,7 @@ public class InventoryService : IInventoryService
     }
 
     private async Task<JournalEntry> BuildJournalEntryAsync(DateTime date, Guid fiscalPeriodId, string description,
-        Guid debitAccountId, Guid creditAccountId, decimal amount, CancellationToken ct, Guid? costCenterId = null)
+        Guid debitAccountId, Guid creditAccountId, decimal amount, CancellationToken ct, Guid? costCenterId = null, Guid? warehouseId = null)
     {
         var entryNumber = $"JV-{(await _context.JournalEntries.CountAsync(ct) + 1):D6}";
         var entry = new JournalEntry
@@ -185,6 +185,7 @@ public class InventoryService : IInventoryService
             EntryDate = date,
             FiscalPeriodId = fiscalPeriodId,
             Description = description,
+            WarehouseId = warehouseId,
             Status = JournalEntryStatus.Posted,
             Lines =
             {

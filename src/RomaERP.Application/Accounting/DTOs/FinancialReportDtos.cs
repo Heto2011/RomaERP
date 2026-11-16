@@ -256,3 +256,24 @@ public class LaborReportDto
     public decimal? LaborCostPercent { get; set; }
     public List<EmployeeSalesLineDto> SalesByEmployee { get; set; } = new();
 }
+
+/// <summary>Profit and loss split by branch. The "unallocated" row is head-office activity (payroll, rent, supplier expenses...) and
+/// the total row equals the company profit and loss for the same period.</summary>
+public class BranchProfitDto
+{
+    public DateTime FromDate { get; set; }
+    public DateTime ToDate { get; set; }
+    public List<BranchProfitRowDto> Branches { get; set; } = new();
+    public decimal TotalRevenue { get; set; }
+    public decimal TotalExpense { get; set; }
+    public decimal NetProfit { get; set; }
+}
+
+public class BranchProfitRowDto
+{
+    public Guid? WarehouseId { get; set; }
+    public string BranchName { get; set; } = string.Empty;
+    public decimal Revenue { get; set; }
+    public decimal Expense { get; set; }
+    public decimal NetProfit { get; set; }
+}

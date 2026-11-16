@@ -12,6 +12,8 @@ public class JournalEntry : AuditableEntity
 
     public string? Description { get; set; }
     public string? Reference { get; set; }
+    /// <summary>The branch this entry belongs to, when it came from a branch's own activity (a sale, stock written off). Empty = head office / not allocated.</summary>
+    public Guid? WarehouseId { get; set; }
     public JournalEntryStatus Status { get; set; } = JournalEntryStatus.Draft;
 
     public ICollection<JournalEntryLine> Lines { get; set; } = new List<JournalEntryLine>();

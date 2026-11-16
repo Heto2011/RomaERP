@@ -79,7 +79,7 @@ public class StockAdjustmentService : IStockAdjustmentService
             await _lots.ReceiveLotAsync(item.Id, warehouse.Id, dto.LotNumber, quantity, unitCost, dto.ExpiryDate, date, ct);
 
             entry = await SimpleJournalEntryFactory.CreatePostedAsync(_context, date, period.Id, $"تسوية مخزون بالزيادة {number} - {item.NameAr}",
-                inventory.Id, offset.Id, total, "STOCK-ADJUSTMENT", ct);
+                inventory.Id, offset.Id, total, "STOCK-ADJUSTMENT", ct, warehouse.Id);
         }
         else
         {
@@ -99,7 +99,7 @@ public class StockAdjustmentService : IStockAdjustmentService
             var cogs = await AccountAsync(AccountingConstants.CostOfGoodsSoldAccountCode, "تكلفة البضاعة المباعة", ct);
             item.QuantityOnHand -= quantity;
             entry = await SimpleJournalEntryFactory.CreatePostedAsync(_context, date, period.Id, $"تسوية مخزون بالنقص {number} - {item.NameAr}",
-                cogs.Id, inventory.Id, total, "STOCK-ADJUSTMENT", ct);
+                cogs.Id, inventory.Id, total, "STOCK-ADJUSTMENT", ct, warehouse.Id);
         }
 
         var totalCost = Math.Round(quantity * unitCost, 2);

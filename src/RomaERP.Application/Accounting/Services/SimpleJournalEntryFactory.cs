@@ -16,7 +16,8 @@ public static class SimpleJournalEntryFactory
         Guid creditAccountId,
         decimal amount,
         string? reference = null,
-        CancellationToken ct = default)
+        CancellationToken ct = default,
+        Guid? warehouseId = null)
     {
         var entryNumber = $"JV-{(await context.JournalEntries.CountAsync(ct) + 1):D6}";
 
@@ -27,6 +28,7 @@ public static class SimpleJournalEntryFactory
             FiscalPeriodId = fiscalPeriodId,
             Description = description,
             Reference = reference,
+            WarehouseId = warehouseId,
             Status = JournalEntryStatus.Posted,
             Lines =
             {

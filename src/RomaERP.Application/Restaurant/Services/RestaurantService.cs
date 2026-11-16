@@ -838,7 +838,7 @@ public class RestaurantService : IRestaurantService
                     _context, saleDate, dto.FiscalPeriodId,
                     $"تكلفة مكوّنات - طلب مطعم {order.OrderNumber}",
                     debitAccountId: cogsAccount.Id, creditAccountId: inventoryAccount.Id,
-                    amount: totalCogs, reference: RestaurantConstants.RestaurantOrderReference, ct: ct);
+                    amount: totalCogs, reference: RestaurantConstants.RestaurantOrderReference, ct: ct, warehouseId: order.WarehouseId);
 
                 foreach (var movement in stockMovements)
                     movement.JournalEntry = cogsEntry;
