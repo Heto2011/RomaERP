@@ -256,3 +256,21 @@ public class StockTransferLineConfiguration : IEntityTypeConfiguration<StockTran
         builder.HasOne(l => l.Item).WithMany().HasForeignKey(l => l.ItemId).OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public class StockAdjustmentConfiguration : IEntityTypeConfiguration<StockAdjustment>
+{
+    public void Configure(EntityTypeBuilder<StockAdjustment> builder)
+    {
+        builder.Property(a => a.Number).HasMaxLength(20).IsRequired();
+        builder.HasIndex(a => a.Number).IsUnique();
+        builder.Property(a => a.Quantity).HasPrecision(18, 4);
+        builder.Property(a => a.UnitCost).HasPrecision(18, 4);
+        builder.Property(a => a.TotalCost).HasPrecision(18, 2);
+        builder.Property(a => a.Notes).HasMaxLength(500);
+        builder.Property(a => a.LotNumber).HasMaxLength(60);
+        builder.Property(a => a.CreatedByName).HasMaxLength(200);
+        builder.HasOne(a => a.Warehouse).WithMany().HasForeignKey(a => a.WarehouseId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(a => a.Item).WithMany().HasForeignKey(a => a.ItemId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(a => a.AdjustmentDate);
+    }
+}

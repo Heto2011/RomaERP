@@ -1091,4 +1091,7 @@ export const StockTransfersApi = {
   getBranchStockSetting: () => apiClient.get<{ enforced: boolean }>("/inventory/branch-stock-setting"),
   setBranchStockSetting: (enforced: boolean) => apiClient.put<{ enforced: boolean }>("/inventory/branch-stock-setting", { enforced }),
   warehouseStock: (warehouseId?: string) => apiClient.get<import("./types").WarehouseStockRow[]>("/inventory/warehouse-stock", { params: warehouseId ? { warehouseId } : {} }),
+  adjustments: () => apiClient.get<unknown[]>("/inventory/adjustments"),
+  createAdjustment: (data: { warehouseId: string; itemId: string; isIncrease: boolean; quantity: number; unitCost?: number; reason: number; adjustmentDate: string; notes?: string; lotNumber?: string; expiryDate?: string }) =>
+    apiClient.post("/inventory/adjustments", data),
 };

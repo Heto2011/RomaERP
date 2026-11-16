@@ -18,10 +18,12 @@ public class StockTransfersController : ControllerBase
 {
     private readonly IStockTransferService _transfers;
     private readonly IBranchStockService _branchStock;
+    private readonly IStockAdjustmentService _adjustments;
     private readonly ICurrentUserService _user;
 
-    public StockTransfersController(IStockTransferService transfers, IBranchStockService branchStock, ICurrentUserService user)
+    public StockTransfersController(IStockTransferService transfers, IBranchStockService branchStock, IStockAdjustmentService adjustments, ICurrentUserService user)
     {
+        _adjustments = adjustments;
         _branchStock = branchStock;
         _transfers = transfers;
         _user = user;
@@ -58,6 +60,14 @@ public class StockTransfersController : ControllerBase
         await _branchStock.SetEnforcedAsync(request.Enforced, ct);
         return Ok(new { enforced = request.Enforced });
     }
+
+    [HttpGet("adjustments")]
+    public async Task<ActionResult<List<StockAdjustmentDto>>> GetAdjustments(CancellationToken ct) => Ok(await _adjustments.GetAllAsync(ct));
+
+    /// <summary>Corrects an item's stock in a branch (up or down) with a reason, posting its own journal entry.</summary>
+    [HttpPost("adjustments")]
+    public async Task<ActionResult<StockAdjustmentDto>> CreateAdjustment(CreateStockAdjustmentDto dto, CancellationToken ct)
+        => Ok(await _adjustments.CreateAsync(dto, Who, ct));
 
     [HttpGet("warehouse-stock")]
     public async Task<ActionResult<List<WarehouseStockRowDto>>> WarehouseStock([FromQuery] Guid? warehouseId, CancellationToken ct)
