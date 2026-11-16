@@ -31,7 +31,7 @@ public class EmployeeDebtTests
         return new S(ctx, new EmployeeDebtService(ctx), new PayrollService(ctx), emp, period);
     }
 
-    private static CreateAdvanceDto Advance(S s, decimal amount, decimal? installment = null) => new() { EmployeeId = s.Emp.Id, Amount = amount, DebtDate = new DateTime(2026, 9, 5), MonthlyInstallment = installment };
+    private static CreateAdvanceDto Advance(S s, decimal amount, decimal? installment = null) => new() { EmployeeId = s.Emp.Id, Kind = 1, Amount = amount, DebtDate = new DateTime(2026, 9, 5), MonthlyInstallment = installment };
 
     [Fact]
     public async Task Advance_PostsToEmployeeCustodyAgainstCash_AndOpensADebt()
@@ -92,6 +92,49 @@ public class EmployeeDebtTests
         await s.Debts.ApproveForRunAsync(run.Id, new ApproveDeductionsDto { Items = { new ApproveDeductionItemDto { DebtId = debt.Id, Amount = 200 } } }, "a");
         await s.Payroll.ApproveAsync(run.Id);
         await s.Payroll.PostAsync(run.Id);
+        Assert.Equal(EmployeeDebtStatus.Settled, (await s.Ctx.EmployeeDebts.SingleAsync()).Status);
+    }
+
+    [Fact]
+    public async Task EveryEntryMustSayWhatItIs()
+    {
+        var s = await CreateAsync();
+        await Assert.ThrowsAsync<ValidationAppException>(() => s.Debts.CreateAdvanceAsync(new CreateAdvanceDto { EmployeeId = s.Emp.Id, Amount = 100, DebtDate = new DateTime(2026, 9, 5) }, "o"));
+        await Assert.ThrowsAsync<ValidationAppException>(() => s.Debts.CreateAdvanceAsync(new CreateAdvanceDto { EmployeeId = s.Emp.Id, Kind = 9, Amount = 100, DebtDate = new DateTime(2026, 9, 5) }, "o"));
+    }
+
+    [Fact]
+    public async Task ExternalFine_IsMoneyThePaidOutForTheEmployee_SoItIsOwedBackLikeAnAdvance()
+    {
+        var s = await CreateAsync();
+        s.Ctx.Accounts.Add(new Account { Code = AccountingConstants.BankAccountCode, NameAr = "ب", NameEn = "Bank", AccountType = AccountType.Asset, Nature = AccountNature.Debit });
+        await s.Ctx.SaveChangesAsync();
+        await Assert.ThrowsAsync<ValidationAppException>(() => s.Debts.CreateAdvanceAsync(new CreateAdvanceDto { EmployeeId = s.Emp.Id, Kind = 4, Amount = 300, DebtDate = new DateTime(2026, 9, 5) }, "o")); // reason required
+        var d = await s.Debts.CreateAdvanceAsync(new CreateAdvanceDto { EmployeeId = s.Emp.Id, Kind = 4, Amount = 300, DebtDate = new DateTime(2026, 9, 5), Description = "مخالفة مرور", PaidFrom = "bank" }, "o");
+        Assert.Equal(4, d.Reason);
+        var lines = await s.Ctx.JournalEntryLines.Include(l => l.Account).ToListAsync();
+        Assert.Contains(lines, l => l.Account!.Code == "1170" && l.Debit == 300m);
+        Assert.Contains(lines, l => l.Account!.Code == "1112" && l.Credit == 300m);
+    }
+
+    [Fact]
+    public async Task InternalPenalty_PostsNothingWhenRecorded_AndLowersTheSalariesExpenseWhenTakenFromPay()
+    {
+        var s = await CreateAsync();
+        var d = await s.Debts.CreateAdvanceAsync(new CreateAdvanceDto { EmployeeId = s.Emp.Id, Kind = 5, Amount = 200, DebtDate = new DateTime(2026, 9, 5), Description = "تأخير متكرر" }, "o");
+        Assert.Empty(s.Ctx.JournalEntries);                       // no money moved
+        var run = await s.Payroll.CreateAndCalculateAsync(new CreatePayrollRunDto { FiscalPeriodId = s.Period.Id, RunDate = new DateTime(2026, 9, 30) });
+        var net = run.Lines.Single().NetSalary;
+        await s.Debts.ApproveForRunAsync(run.Id, new ApproveDeductionsDto { Items = { new ApproveDeductionItemDto { DebtId = d.Id, Amount = 200 } } }, "accountant");
+        await s.Payroll.ApproveAsync(run.Id);
+        await s.Payroll.PostAsync(run.Id);
+
+        var posted = await s.Ctx.PayrollRuns.SingleAsync();
+        var entry = await s.Ctx.JournalEntries.Include(e => e.Lines).ThenInclude(l => l.Account).SingleAsync(e => e.Id == posted.JournalEntryId);
+        Assert.True(entry.IsBalanced);
+        Assert.DoesNotContain(entry.Lines, l => l.Account!.Code == "1170");                       // nothing was owed back
+        Assert.Contains(entry.Lines, l => l.Account!.Code == "5100" && l.Debit == 3000m - 200m);   // salaries expense lowered by the penalty
+        Assert.Contains(entry.Lines, l => l.Account!.Code == "2110" && l.Credit == net - 200m);
         Assert.Equal(EmployeeDebtStatus.Settled, (await s.Ctx.EmployeeDebts.SingleAsync()).Status);
     }
 

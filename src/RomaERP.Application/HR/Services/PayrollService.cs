@@ -241,13 +241,19 @@ public class PayrollService : IPayrollService
         if (unlinkedDeductionCodes.Count > 0)
             throw new ValidationAppException($"عناصر الخصم التالية ليس لها حساب مرتبط: {string.Join(", ", unlinkedDeductionCodes)}");
 
+        // Internal penalties taken off pay were never paid out, so they simply lower the salaries expense; every other repayment clears what the
+        // employee owed (employee custody). Both come off net pay.
+        var runDeductions = await _context.EmployeeDebtDeductions.AsNoTracking().Include(d => d.EmployeeDebt).Where(d => d.PayrollRunId == run.Id && !d.IsPosted).ToListAsync(ct);
+        var penaltyTotal = runDeductions.Where(d => d.EmployeeDebt!.Reason == EmployeeDebtReason.InternalPenalty).Sum(d => d.Amount);
+        totalDebtRepaid -= penaltyTotal;
+
         var lines = new List<JournalEntryLine>
         {
             new()
             {
                 LineNumber = 1,
                 AccountId = salariesExpenseAccount.Id,
-                Debit = totalGross,
+                Debit = totalGross - penaltyTotal,
                 Credit = 0,
                 Description = $"مصروف مرتبات - دورة {run.RunDate:yyyy-MM}"
             }

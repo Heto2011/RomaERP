@@ -2,7 +2,10 @@ using RomaERP.Domain.Common;
 
 namespace RomaERP.Domain.HR;
 
-public enum EmployeeDebtReason { Advance = 1, StockShortage = 2, Other = 3 }
+/// <summary>Why an employee owes the company. Advance = money the company gave. StockShortage = stock found short, charged to them.
+/// ExternalFine = an outside fine (traffic, authority) the company PAID for them, so it is owed back. InternalPenalty = a disciplinary penalty
+/// the company imposes: nothing was paid out, so it is simply taken off pay and lowers the salaries expense.</summary>
+public enum EmployeeDebtReason { Advance = 1, StockShortage = 2, Other = 3, ExternalFine = 4, InternalPenalty = 5 }
 public enum EmployeeDebtStatus { Active = 1, Settled = 2, Cancelled = 3 }
 
 /// <summary>Money an employee owes the company, whatever its source (a salary advance, stock found short, ...). One ledger for all of them:

@@ -33,25 +33,41 @@ public class EmployeeDebtService : IEmployeeDebtService
 
     public async Task<EmployeeDebtDto> CreateAdvanceAsync(CreateAdvanceDto dto, string? userName, CancellationToken ct = default)
     {
-        if (dto.Amount <= 0) throw new ValidationAppException("مبلغ السلفة لازم يكون أكبر من صفر.");
+        // Every entry must say what it is. An outside fine the company paid is owed back (like an advance); an internal penalty was never paid out.
+        if (dto.Kind is null || dto.Kind is not (1 or 4 or 5))
+            throw new ValidationAppException("حدد نوع المديونية: سلفة، غرامة خارجية مدفوعة عنه، أو غرامة داخلية.");
+        var reason = (EmployeeDebtReason)dto.Kind.Value;
+        if (dto.Amount <= 0) throw new ValidationAppException("المبلغ لازم يكون أكبر من صفر.");
         if (dto.MonthlyInstallment is <= 0) throw new ValidationAppException("القسط الشهري لازم يكون أكبر من صفر.");
+        if (reason is EmployeeDebtReason.ExternalFine or EmployeeDebtReason.InternalPenalty && string.IsNullOrWhiteSpace(dto.Description))
+            throw new ValidationAppException("اكتب سبب الغرامة (المخالفة).");
         var employee = await _context.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.Id == dto.EmployeeId && !e.IsDeleted, ct)
             ?? throw new NotFoundException(nameof(Employee), dto.EmployeeId);
         var date = (dto.DebtDate == default ? DateTime.UtcNow : dto.DebtDate).Date;
-        var period = await _context.FiscalPeriods.AsNoTracking().FirstOrDefaultAsync(p => p.StartDate <= date && p.EndDate >= date, ct)
-            ?? throw new ValidationAppException($"مفيش فترة محاسبية بتغطي تاريخ {date:yyyy-MM-dd}.");
-        if (period.IsClosed) throw new ValidationAppException($"الفترة المحاسبية ({period.Name}) مقفولة.");
+        var amount = Math.Round(dto.Amount, 2);
 
-        var sourceCode = string.Equals(dto.PaidFrom, "bank", StringComparison.OrdinalIgnoreCase) ? AccountingConstants.BankAccountCode : AccountingConstants.CashOnHandAccountCode;
-        var custody = await AccountAsync(AccountingConstants.EmployeeCustodyAccountCode, ct);
-        var source = await AccountAsync(sourceCode, ct);
-        var entry = await SimpleJournalEntryFactory.CreatePostedAsync(_context, date, period.Id, $"سلفة موظف - {employee.FullNameAr}", custody.Id, source.Id, Math.Round(dto.Amount, 2), "EMPLOYEE-ADVANCE", ct);
+        Guid? entryId = null;
+        if (reason != EmployeeDebtReason.InternalPenalty)
+        {
+            // Money really left the company: owed back by the employee (employee custody), paid from cash or the bank.
+            var period = await _context.FiscalPeriods.AsNoTracking().FirstOrDefaultAsync(p => p.StartDate <= date && p.EndDate >= date, ct)
+                ?? throw new ValidationAppException($"مفيش فترة محاسبية بتغطي تاريخ {date:yyyy-MM-dd}.");
+            if (period.IsClosed) throw new ValidationAppException($"الفترة المحاسبية ({period.Name}) مقفولة.");
+            var sourceCode = string.Equals(dto.PaidFrom, "bank", StringComparison.OrdinalIgnoreCase) ? AccountingConstants.BankAccountCode : AccountingConstants.CashOnHandAccountCode;
+            var custody = await AccountAsync(AccountingConstants.EmployeeCustodyAccountCode, ct);
+            var source = await AccountAsync(sourceCode, ct);
+            var label = reason == EmployeeDebtReason.Advance ? "سلفة موظف" : "غرامة خارجية مدفوعة عن موظف";
+            var entry = await SimpleJournalEntryFactory.CreatePostedAsync(_context, date, period.Id, $"{label} - {employee.FullNameAr}", custody.Id, source.Id, amount,
+                reason == EmployeeDebtReason.Advance ? "EMPLOYEE-ADVANCE" : "EMPLOYEE-EXTERNAL-FINE", ct);
+            entryId = entry.Id;
+        }
+        // An internal penalty has no entry now: it reduces the salaries expense when the payroll run that takes it is posted.
 
         var debt = new EmployeeDebt
         {
-            EmployeeId = employee.Id, Reason = EmployeeDebtReason.Advance, Description = dto.Description?.Trim(), DebtDate = date,
-            Amount = Math.Round(dto.Amount, 2), RemainingAmount = Math.Round(dto.Amount, 2), MonthlyInstallment = dto.MonthlyInstallment,
-            JournalEntryId = entry.Id, CreatedByName = userName
+            EmployeeId = employee.Id, Reason = reason, Description = dto.Description?.Trim(), DebtDate = date,
+            Amount = amount, RemainingAmount = amount, MonthlyInstallment = dto.MonthlyInstallment,
+            JournalEntryId = entryId, CreatedByName = userName
         };
         _context.EmployeeDebts.Add(debt);
         await _context.SaveChangesAsync(ct);

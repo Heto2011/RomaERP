@@ -19,6 +19,8 @@ public class EmployeeDebtDto
 public class CreateAdvanceDto
 {
     public Guid EmployeeId { get; set; }
+    /// <summary>Required, no default: 1 advance, 4 external fine paid for the employee, 5 internal penalty.</summary>
+    public int? Kind { get; set; }
     public decimal Amount { get; set; }
     public DateTime DebtDate { get; set; }
     public string? Description { get; set; }
