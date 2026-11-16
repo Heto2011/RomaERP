@@ -1094,6 +1094,9 @@ export const StockTransfersApi = {
   getBranchStockSetting: () => apiClient.get<{ enforced: boolean }>("/inventory/branch-stock-setting"),
   setBranchStockSetting: (enforced: boolean) => apiClient.put<{ enforced: boolean }>("/inventory/branch-stock-setting", { enforced }),
   warehouseStock: (warehouseId?: string) => apiClient.get<import("./types").WarehouseStockRow[]>("/inventory/warehouse-stock", { params: warehouseId ? { warehouseId } : {} }),
+  branchMinimums: () => apiClient.get<unknown[]>("/inventory/branch-minimums"),
+  shortageAlerts: () => apiClient.get<unknown[]>("/inventory/branch-minimums/alerts"),
+  setBranchMinimum: (data: { warehouseId: string; itemId: string; minimumQuantity: number }) => apiClient.put("/inventory/branch-minimums", data),
   adjustments: () => apiClient.get<unknown[]>("/inventory/adjustments"),
   createAdjustment: (data: { warehouseId: string; itemId: string; isIncrease: boolean; quantity: number; unitCost?: number; reason: number; adjustmentDate: string; notes?: string; lotNumber?: string; expiryDate?: string }) =>
     apiClient.post("/inventory/adjustments", data),

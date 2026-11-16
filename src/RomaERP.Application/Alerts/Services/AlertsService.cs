@@ -24,6 +24,7 @@ public class AlertsService : IAlertsService
     private readonly IItemLotService _lotService;
     private readonly IEmployeeContractService _employeeContractService;
     private readonly IPhysicalStockCountService? _physicalCounts;
+    private readonly IBranchMinimumService? _branchMinimums;
 
     public AlertsService(
         IInventoryReportService inventoryReportService,
@@ -32,8 +33,10 @@ public class AlertsService : IAlertsService
         IPurchasingService purchasingService,
         IItemLotService lotService,
         IEmployeeContractService employeeContractService,
-        IPhysicalStockCountService? physicalCounts = null)
+        IPhysicalStockCountService? physicalCounts = null,
+        IBranchMinimumService? branchMinimums = null)
     {
+        _branchMinimums = branchMinimums;
         _physicalCounts = physicalCounts;
         _inventoryReportService = inventoryReportService;
         _financialReportService = financialReportService;
@@ -58,6 +61,19 @@ public class AlertsService : IAlertsService
                 Severity = AlertSeverity.Warning,
                 Title = $"{pendingCounts} جرد فيه فروقات منتظر اعتماد",
                 Detail = "راجع الفروقات في صفحة الجرد الفعلي وقرّر مين يتحمّلها قبل ما تتعمل تسوية."
+            });
+        }
+
+        var branchShortages = _branchMinimums is null ? new List<BranchShortageAlertDto>() : await _branchMinimums.GetAlertsAsync(ct);
+        if (branchShortages.Count > 0)
+        {
+            alerts.Add(new AlertDto
+            {
+                Category = "Inventory",
+                Severity = AlertSeverity.Warning,
+                Title = $"{branchShortages.Count} صنف تحت الحد الأدنى في فروع",
+                Detail = string.Join(", ", branchShortages.Take(5).Select(s => $"{s.ItemName} في {s.WarehouseName}: {s.Quantity:0.##} من {s.MinimumQuantity:0.##}"
+                    + (s.Suggestions.Count > 0 ? $" (حوّل من {s.Suggestions[0].FromWarehouseName})" : s.ToBuy > 0 ? " (محتاج شراء)" : "")))
             });
         }
 

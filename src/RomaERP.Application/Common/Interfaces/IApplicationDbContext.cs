@@ -65,6 +65,7 @@ public interface IApplicationDbContext
     DbSet<RomaERP.Domain.Inventory.StockTransfer> StockTransfers { get; }
     DbSet<RomaERP.Domain.Inventory.StockAdjustment> StockAdjustments { get; }
     DbSet<RomaERP.Domain.Inventory.ManufacturingSite> ManufacturingSites { get; }
+    DbSet<RomaERP.Domain.Inventory.BranchItemMinimum> BranchItemMinimums { get; }
     DbSet<RomaERP.Domain.Inventory.StockTransferLine> StockTransferLines { get; }
     DbSet<PhysicalStockCount> PhysicalStockCounts { get; }
     DbSet<WasteEntry> WasteEntries { get; }

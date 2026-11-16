@@ -2950,6 +2950,46 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.ToTable("IntegrationInboxItems");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Inventory.BranchItemMinimum", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("MinimumQuantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("WarehouseId", "ItemId");
+
+                    b.ToTable("BranchItemMinimums");
+                });
+
             modelBuilder.Entity("RomaERP.Domain.Inventory.Item", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6326,6 +6366,25 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Survey");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Inventory.BranchItemMinimum", b =>
+                {
+                    b.HasOne("RomaERP.Domain.Inventory.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("RomaERP.Domain.Inventory.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("Warehouse");
                 });
 
             modelBuilder.Entity("RomaERP.Domain.Inventory.Item", b =>

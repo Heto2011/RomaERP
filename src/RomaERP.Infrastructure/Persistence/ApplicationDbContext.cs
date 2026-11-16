@@ -78,6 +78,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<StockTransfer> StockTransfers => Set<StockTransfer>();
     public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
     public DbSet<ManufacturingSite> ManufacturingSites => Set<ManufacturingSite>();
+    public DbSet<BranchItemMinimum> BranchItemMinimums => Set<BranchItemMinimum>();
     public DbSet<StockTransferLine> StockTransferLines => Set<StockTransferLine>();
     public DbSet<PhysicalStockCount> PhysicalStockCounts => Set<PhysicalStockCount>();
     public DbSet<WasteEntry> WasteEntries => Set<WasteEntry>();

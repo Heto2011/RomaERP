@@ -19,10 +19,12 @@ public class StockTransfersController : ControllerBase
     private readonly IStockTransferService _transfers;
     private readonly IBranchStockService _branchStock;
     private readonly IStockAdjustmentService _adjustments;
+    private readonly IBranchMinimumService _minimums;
     private readonly ICurrentUserService _user;
 
-    public StockTransfersController(IStockTransferService transfers, IBranchStockService branchStock, IStockAdjustmentService adjustments, ICurrentUserService user)
+    public StockTransfersController(IStockTransferService transfers, IBranchStockService branchStock, IStockAdjustmentService adjustments, IBranchMinimumService minimums, ICurrentUserService user)
     {
+        _minimums = minimums;
         _adjustments = adjustments;
         _branchStock = branchStock;
         _transfers = transfers;
@@ -60,6 +62,20 @@ public class StockTransfersController : ControllerBase
         await _branchStock.SetEnforcedAsync(request.Enforced, ct);
         return Ok(new { enforced = request.Enforced });
     }
+
+    [HttpGet("branch-minimums")]
+    public async Task<ActionResult<List<BranchMinimumDto>>> GetMinimums(CancellationToken ct) => Ok(await _minimums.GetAllAsync(ct));
+
+    [HttpPut("branch-minimums")]
+    public async Task<IActionResult> SetMinimum(SetBranchMinimumDto dto, CancellationToken ct)
+    {
+        await _minimums.SetAsync(dto, ct);
+        return NoContent();
+    }
+
+    /// <summary>Branches below the minimum of an item, with where the shortage could be covered from.</summary>
+    [HttpGet("branch-minimums/alerts")]
+    public async Task<ActionResult<List<BranchShortageAlertDto>>> GetShortageAlerts(CancellationToken ct) => Ok(await _minimums.GetAlertsAsync(ct));
 
     [HttpGet("adjustments")]
     public async Task<ActionResult<List<StockAdjustmentDto>>> GetAdjustments(CancellationToken ct) => Ok(await _adjustments.GetAllAsync(ct));

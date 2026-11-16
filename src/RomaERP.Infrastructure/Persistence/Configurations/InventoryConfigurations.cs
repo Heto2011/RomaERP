@@ -291,3 +291,14 @@ public class ManufacturingSiteConfiguration : IEntityTypeConfiguration<Manufactu
         builder.HasIndex(s => s.WarehouseId).IsUnique();
     }
 }
+
+public class BranchItemMinimumConfiguration : IEntityTypeConfiguration<BranchItemMinimum>
+{
+    public void Configure(EntityTypeBuilder<BranchItemMinimum> builder)
+    {
+        builder.Property(m => m.MinimumQuantity).HasPrecision(18, 4);
+        builder.HasOne(m => m.Warehouse).WithMany().HasForeignKey(m => m.WarehouseId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(m => m.Item).WithMany().HasForeignKey(m => m.ItemId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasIndex(m => new { m.WarehouseId, m.ItemId });
+    }
+}
