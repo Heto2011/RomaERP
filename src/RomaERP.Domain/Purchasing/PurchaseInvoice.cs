@@ -60,6 +60,9 @@ public class PurchaseInvoiceLine : BaseEntity
     public decimal Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+    /// <summary>The tax rate used on this line (0.15 = 15%). 0 = no tax on the line. Empty on invoices made before lines carried their own rate.</summary>
+    public decimal? VatRate { get; set; }
+    public decimal? VatAmount { get; set; }
 }
 
 /// <summary>A cash/card payment recorded against a Credit invoice, reducing its outstanding AP balance.</summary>

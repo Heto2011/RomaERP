@@ -61,7 +61,9 @@ export default function PurchaseInvoices() {
   const expenseAccounts = accounts.filter((a) => !a.isControlAccount && (a.accountType === 5 || a.accountType === 1));
 
   const netTotal = lines.reduce((sum, l) => sum + l.quantity * l.unitPrice, 0);
-  const vatTotal = netTotal * vatRate;
+  // Tax is worked on each rate's net total: lines at the company rate by default, any line can be changed (0 = no tax).
+  const vatTotal = Array.from(lines.reduce((m, l) => { const r = l.vatRate ?? vatRate; return m.set(r, (m.get(r) ?? 0) + l.quantity * l.unitPrice); }, new Map<number, number>()))
+    .reduce((s, [r, net]) => s + Math.round(net * r * 100) / 100, 0);
   const grandTotal = netTotal + vatTotal;
 
   async function load() {
@@ -438,7 +440,7 @@ export default function PurchaseInvoices() {
                       )}
                       {unitMode && <td><input type="number" min={0.0001} step="0.01" value={line.quantity} onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })} style={{ width: 90 }} required /></td>}
                       <td><input type="number" min={0} step="0.01" value={line.unitPrice} onChange={(e) => updateLine(idx, { unitPrice: Number(e.target.value) })} style={{ width: 110 }} required /></td>
-                      <td className="text-muted">{(vatRate * 100).toFixed(0)}%</td>
+                      <td><input type="number" min={0} max={100} step="0.01" value={Math.round((line.vatRate ?? vatRate) * 10000) / 100} onChange={(e) => updateLine(idx, { vatRate: e.target.value === "" ? null : Number(e.target.value) / 100 })} style={{ width: 80 }} title={lang === "ar" ? "نسبة الضريبة على البند. 0 = بدون ضريبة" : "Tax rate on this line. 0 = no tax"} /> %</td>
                       <td>
                         {lines.length > 1 && (
                           <button type="button" className="btn btn-secondary btn-sm" onClick={() => setLines((prev) => prev.filter((_, i) => i !== idx))}>

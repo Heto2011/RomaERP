@@ -1565,6 +1565,8 @@ export interface SalesInvoiceLineInput {
   quantity: number;
   unitPrice: number;
   itemId?: string | null;
+  /** Fraction (0.15 = 15%). Empty = the company rate; 0 = no tax on this line. */
+  vatRate?: number | null;
 }
 
 export interface SalesInvoiceLine {
@@ -1752,6 +1754,8 @@ export interface PurchaseInvoiceLineInput {
   itemId?: string | null;
   quantity: number;
   unitPrice: number;
+  /** Fraction (0.15 = 15%). Empty = the company rate; 0 = no tax on this line. */
+  vatRate?: number | null;
 }
 
 export interface PurchaseInvoiceLine {

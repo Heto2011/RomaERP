@@ -134,7 +134,7 @@ public static class SalesInvoiceHtmlTemplate
                     <div class="totals">
                         <table>
                             <tr><td>الصافي</td><td class="num">{{Money(invoice.SubTotal)}} {{currency}}</td></tr>
-                            <tr><td>الضريبة ({{(invoice.VatRate * 100).ToString("0.##", culture)}}%)</td><td class="num">{{Money(invoice.VatAmount)}} {{currency}}</td></tr>
+                            <tr><td>الضريبة{{(invoice.Lines.Any(l => l.VatRate.HasValue && l.VatRate != invoice.VatRate) ? "" : " (" + (invoice.VatRate * 100).ToString("0.##", culture) + "%)")}}</td><td class="num">{{Money(invoice.VatAmount)}} {{currency}}</td></tr>
                             <tr class="grand-total"><td>الإجمالي</td><td class="num">{{Money(invoice.TotalAmount)}} {{currency}}</td></tr>
                             {{creditRows}}
                         </table>

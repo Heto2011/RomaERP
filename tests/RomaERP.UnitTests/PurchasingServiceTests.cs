@@ -348,4 +348,39 @@ public class PurchasingServiceTests
         Assert.False(updated.IsActive);
         Assert.Null(updated.ContactPerson); // fields left empty on edit are cleared
     }
+
+    [Fact]
+    public async Task PurchaseInvoice_TaxesOnlyTheLinesThatCarryTax()
+    {
+        var (ctx, _, _, ap, expense, inputVat, vendor, period) = await SeedAsync(vatRate: 0.14m);
+        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
+        var dto = Dto(vendor, period, expense);
+        dto.PaymentTerm = PaymentTerm.Credit;
+        dto.Lines = new List<PurchaseInvoiceLineInputDto>
+        {
+            new() { Description = "بند بضريبة", AccountId = expense.Id, Quantity = 1, UnitPrice = 1000 },                 // company rate
+            new() { Description = "بند معفي", AccountId = expense.Id, Quantity = 1, UnitPrice = 500, VatRate = 0m },       // no tax
+            new() { Description = "بند بنسبة خاصة", AccountId = expense.Id, Quantity = 1, UnitPrice = 200, VatRate = 0.05m }
+        };
+        var invoice = await service.CreateInvoiceAsync(dto);
+
+        Assert.Equal(1700m, invoice.SubTotal);
+        Assert.Equal(140m + 0m + 10m, invoice.VatAmount);
+        Assert.Equal(1850m, invoice.TotalAmount);
+        Assert.Equal(new decimal?[] { 0.14m, 0m, 0.05m }, invoice.Lines.Select(l => l.VatRate).ToArray());
+        var lines = await ctx.JournalEntryLines.Include(l => l.Account).ToListAsync();
+        Assert.Contains(lines, l => l.Account!.Code == "1180" && l.Debit == 150m);       // input VAT only on what carried tax
+        Assert.Contains(lines, l => l.Account!.Code == "2120" && l.Credit == 1850m);
+        Assert.Equal(lines.Sum(l => l.Debit), lines.Sum(l => l.Credit));
+    }
+
+    [Fact]
+    public async Task PurchaseInvoice_LineTaxOutsideZeroToOneHundredPercent_IsRefused()
+    {
+        var (ctx, _, _, _, expense, _, vendor, period) = await SeedAsync();
+        var service = new PurchasingService(ctx, new FakeHtmlToPdfRenderer(), new ItemLotService(ctx), new ExchangeRateService(ctx, new FakeExchangeRateProvider()));
+        var dto = Dto(vendor, period, expense);
+        dto.Lines[0].VatRate = 1.5m;
+        await Assert.ThrowsAsync<RomaERP.Application.Common.Exceptions.ValidationAppException>(() => service.CreateInvoiceAsync(dto));
+    }
 }

@@ -4068,6 +4068,12 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<decimal?>("VatAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("VatRate")
+                        .HasColumnType("decimal(18,2)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("AccountId");
@@ -5243,6 +5249,12 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
 
                     b.Property<decimal>("UnitPrice")
                         .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("VatAmount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("VatRate")
                         .HasColumnType("decimal(18,2)");
 
                     b.HasKey("Id");

@@ -68,6 +68,9 @@ public class SalesInvoiceLine : BaseEntity
     public decimal Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+    /// <summary>The tax rate used on this line (0.15 = 15%). 0 = no tax on the line. Empty on invoices made before lines carried their own rate.</summary>
+    public decimal? VatRate { get; set; }
+    public decimal? VatAmount { get; set; }
 
     /// <summary>Set when this line is fulfilled from inventory — triggers a stock issue and COGS posting.
     /// Left null for free-text/service lines that don't touch inventory.</summary>

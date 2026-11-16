@@ -74,6 +74,8 @@ public class PurchaseInvoiceLineInputDto
     public Guid? ItemId { get; set; }
     public decimal Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }
+    /// <summary>Tax rate for this line as a fraction (0.15 = 15%, 0 = no tax). Empty = the company rate.</summary>
+    public decimal? VatRate { get; set; }
 }
 
 public class CreatePurchaseInvoiceDto
@@ -152,6 +154,8 @@ public class PurchaseInvoiceLineDto
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+    public decimal? VatRate { get; set; }
+    public decimal? VatAmount { get; set; }
 }
 
 public class PurchasePaymentDto

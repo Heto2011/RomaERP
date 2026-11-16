@@ -65,6 +65,8 @@ public class SalesInvoiceLineInputDto
     public string Description { get; set; } = string.Empty;
     public decimal Quantity { get; set; } = 1;
     public decimal UnitPrice { get; set; }
+    /// <summary>Tax rate for this line as a fraction (0.15 = 15%, 0 = no tax). Empty = the company rate.</summary>
+    public decimal? VatRate { get; set; }
 
     /// <summary>Optional — set to fulfill this line from inventory (issues stock and posts COGS).</summary>
     public Guid? ItemId { get; set; }
@@ -101,6 +103,8 @@ public class SalesInvoiceLineDto
     public decimal Quantity { get; set; }
     public decimal UnitPrice { get; set; }
     public decimal LineTotal { get; set; }
+    public decimal? VatRate { get; set; }
+    public decimal? VatAmount { get; set; }
     public Guid? ItemId { get; set; }
     public string? ItemCode { get; set; }
     public string? ItemName { get; set; }

@@ -211,11 +211,19 @@ public class SalesService : ISalesService
             Quantity = l.Quantity,
             UnitPrice = l.UnitPrice,
             LineTotal = Math.Round(l.Quantity * l.UnitPrice, 2),
-            ItemId = l.ItemId
+            ItemId = l.ItemId,
+            VatRate = l.VatRate ?? vatRate
         }).ToList();
+        if (lines.Any(l => l.VatRate < 0 || l.VatRate > 1)) throw new ValidationAppException("نسبة الضريبة على البند لازم تكون بين 0 و100%.");
+        // The electronic invoice (ETA / ZATCA) is built on the company rate for every line, so a line with a different rate cannot go through it yet.
+        if (settings is not null && settings.EInvoicingProvider != EInvoicingProvider.None && lines.Any(l => l.VatRate != vatRate))
+            throw new ValidationAppException("الفاتورة الإلكترونية (ETA / ZATCA) لسه مش بتدعم بند بنسبة ضريبة مختلفة أو معفي. سجّل كل البنود بنسبة الشركة، أو أوقف الربط.");
+        // Tax is worked line by line: a line the company marks as untaxed (0) carries none.
+        foreach (var l in lines) l.VatAmount = Math.Round(l.LineTotal * l.VatRate!.Value, 2);
 
         var subTotal = lines.Sum(l => l.LineTotal);
-        var vatAmount = Math.Round(subTotal * vatRate, 2);
+        // The invoice's tax is worked on each rate's net total (so an invoice at one rate gives exactly what it always did, with no per-line rounding drift).
+        var vatAmount = lines.GroupBy(l => l.VatRate!.Value).Sum(g => Math.Round(g.Sum(l => l.LineTotal) * g.Key, 2));
         var totalAmount = subTotal + vatAmount;
 
         // GL posting and AR always happen in the tenant's functional currency — only the invoice document
@@ -781,7 +789,9 @@ public class SalesService : ISalesService
             ItemId = l.ItemId,
             ItemCode = l.Item?.Code,
             ItemName = l.Item?.NameAr,
-            LineTotal = l.LineTotal
+            LineTotal = l.LineTotal,
+            VatRate = l.VatRate,
+            VatAmount = l.VatAmount
         }).ToList(),
         Payments = i.Payments.OrderBy(p => p.PaymentDate).Select(p => new SalesPaymentDto
         {

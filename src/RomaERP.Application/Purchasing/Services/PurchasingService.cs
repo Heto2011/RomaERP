@@ -177,11 +177,15 @@ public class PurchasingService : IPurchasingService
             ItemId = l.ItemId,
             Quantity = l.Quantity,
             UnitPrice = l.UnitPrice,
-            LineTotal = Math.Round(l.Quantity * l.UnitPrice, 2)
+            LineTotal = Math.Round(l.Quantity * l.UnitPrice, 2),
+            VatRate = LineVatRate(l.VatRate, vatRate)
         }).ToList();
+        // Tax is worked line by line: a line the company marks as untaxed (0) carries none.
+        foreach (var l in lines) l.VatAmount = Math.Round(l.LineTotal * l.VatRate!.Value, 2);
 
         var subTotal = lines.Sum(l => l.LineTotal);
-        var vatAmount = Math.Round(subTotal * vatRate, 2);
+        // The invoice's tax is worked on each rate's net total (so an invoice at one rate gives exactly what it always did, with no per-line rounding drift).
+        var vatAmount = lines.GroupBy(l => l.VatRate!.Value).Sum(g => Math.Round(g.Sum(l => l.LineTotal) * g.Key, 2));
         var totalAmount = subTotal + vatAmount;
 
         // GL posting and AP always happen in the tenant's functional currency — only the invoice document
@@ -467,6 +471,13 @@ public class PurchasingService : IPurchasingService
         return buckets.Values.OrderByDescending(b => b.TotalOutstanding).ToList();
     }
 
+    private static decimal LineVatRate(decimal? requested, decimal companyRate)
+    {
+        var rate = requested ?? companyRate;
+        if (rate < 0 || rate > 1) throw new ValidationAppException("نسبة الضريبة على البند لازم تكون بين 0 و100%.");
+        return rate;
+    }
+
     private async Task<decimal> GetVatRateAsync(CancellationToken ct)
     {
         var settings = await _context.CompanySettings.AsNoTracking().FirstOrDefaultAsync(ct);
@@ -558,7 +569,9 @@ public class PurchasingService : IPurchasingService
             ItemName = l.Item?.NameAr,
             Quantity = l.Quantity,
             UnitPrice = l.UnitPrice,
-            LineTotal = l.LineTotal
+            LineTotal = l.LineTotal,
+            VatRate = l.VatRate,
+            VatAmount = l.VatAmount
         }).ToList(),
         Payments = i.Payments.OrderBy(p => p.PaymentDate).Select(p => new PurchasePaymentDto
         {
