@@ -928,7 +928,7 @@ public class FinancialReportServiceTests
     }
 
     [Fact]
-    public async Task GetBranchProfit_SplitsByBranch_AndHeadOfficeStaysUnallocated()
+    public async Task GetBranchProfit_ShowsContributionThenSharesHeadOfficeSpendingBySales()
     {
         var ctx = CreateContext();
         var revenue = new Account { Code = "4100", NameAr = "إيرادات", NameEn = "Sales", AccountType = AccountType.Revenue, Nature = AccountNature.Credit };
@@ -950,10 +950,16 @@ public class FinancialReportServiceTests
         await ctx.SaveChangesAsync();
 
         var report = await new FinancialReportService(ctx).GetBranchProfitAsync(new DateTime(2026, 8, 1), new DateTime(2026, 8, 31));
-        Assert.Equal(3, report.Branches.Count);
-        Assert.Equal(700m, report.Branches.Single(b => b.BranchName == "القاهرة").NetProfit);
-        Assert.Equal(500m, report.Branches.Single(b => b.BranchName == "الإسكندرية").NetProfit);
-        Assert.Equal(-200m, report.Branches.Single(b => b.WarehouseId == null).NetProfit);
-        Assert.Equal(1000m, report.NetProfit);
+        var c = report.Branches.Single(b => b.BranchName == "القاهرة");
+        var a2 = report.Branches.Single(b => b.BranchName == "الإسكندرية");
+        Assert.Equal(700m, c.Contribution);                 // before sharing: 1000 sales - 300 branch spending
+        Assert.Equal(500m, a2.Contribution);
+        Assert.Equal(66.67m, c.SalesSharePercent);
+        Assert.Equal(133.33m, c.SharedAllocated);           // the 200 head-office spending, by share of sales
+        Assert.Equal(66.67m, a2.SharedAllocated);
+        Assert.Equal(200m, report.SharedCostsToAllocate);
+        Assert.Equal(0m, report.UnallocatedShared);
+        Assert.Equal(2, report.Branches.Count);             // nothing left at head office
+        Assert.Equal(1000m, report.NetProfit);              // equals the company profit and loss
     }
 }

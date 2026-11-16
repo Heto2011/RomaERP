@@ -134,7 +134,8 @@ public class PhysicalCountApplyTests
         ctx.Accounts.AddRange(
             new Account { Code = "1160", NameAr = "المخزون", NameEn = "Inventory", AccountType = AccountType.Asset, Nature = AccountNature.Debit },
             new Account { Code = "3200", NameAr = "RE", NameEn = "RE", AccountType = AccountType.Equity, Nature = AccountNature.Credit },
-            new Account { Code = "5500", NameAr = "تكلفة", NameEn = "COGS", AccountType = AccountType.Expense, Nature = AccountNature.Debit });
+            new Account { Code = "5500", NameAr = "تكلفة", NameEn = "COGS", AccountType = AccountType.Expense, Nature = AccountNature.Debit },
+            new Account { Code = "1170", NameAr = "عهد", NameEn = "Custody", AccountType = AccountType.Asset, Nature = AccountNature.Debit });
         var year = new FiscalYear { Name = "Y", StartDate = DateTime.UtcNow.Date.AddMonths(-6), EndDate = DateTime.UtcNow.Date.AddMonths(6) };
         ctx.FiscalYears.Add(year);
         ctx.FiscalPeriods.Add(new FiscalPeriod { FiscalYear = year, FiscalYearId = year.Id, Name = "P", PeriodNumber = 1, StartDate = DateTime.UtcNow.Date.AddDays(-20), EndDate = DateTime.UtcNow.Date.AddDays(20) });
@@ -149,11 +150,11 @@ public class PhysicalCountApplyTests
         var (ctx, svc, cairo, item) = await CreateAsync(20);
         var c = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 17 });
         Assert.Equal(20m, c.SystemQuantity);
-        var applied = await svc.ApplyAsync(c.Id, "ali");
+        var applied = await svc.ApplyAsync(c.Id, new ApproveCountDto(), "ali");
         Assert.NotNull(applied.StockAdjustmentId);
         Assert.Equal(17m, (await ctx.Items.SingleAsync()).QuantityOnHand);
         Assert.Equal(StockMovementType.Issue, (await ctx.StockMovements.OrderByDescending(m => m.MovementNumber).FirstAsync()).MovementType);
-        await Assert.ThrowsAsync<ValidationAppException>(() => svc.ApplyAsync(c.Id, "ali"));
+        await Assert.ThrowsAsync<ValidationAppException>(() => svc.ApplyAsync(c.Id, new ApproveCountDto(), "ali"));
     }
 
     [Fact]
@@ -161,7 +162,7 @@ public class PhysicalCountApplyTests
     {
         var (ctx, svc, cairo, item) = await CreateAsync(20);
         var c = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 25 });
-        await svc.ApplyAsync(c.Id, "ali");
+        await svc.ApplyAsync(c.Id, new ApproveCountDto(), "ali");
         Assert.Equal(25m, (await ctx.Items.SingleAsync()).QuantityOnHand);
         var rows = await svc.GetVarianceReportAsync(null, null, null);
         Assert.Equal(50m, rows.Single().NetValue);
@@ -172,6 +173,72 @@ public class PhysicalCountApplyTests
     {
         var (_, svc, cairo, item) = await CreateAsync(20);
         var c = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 20 });
-        await Assert.ThrowsAsync<ValidationAppException>(() => svc.ApplyAsync(c.Id, "ali"));
+        await Assert.ThrowsAsync<ValidationAppException>(() => svc.ApplyAsync(c.Id, new ApproveCountDto(), "ali"));
+    }
+
+    [Fact]
+    public async Task ADifference_WaitsForApproval_AndNothingChangesUntilTheOwnerDecides()
+    {
+        var (ctx, svc, cairo, item) = await CreateAsync(20);
+        var c = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 18 });
+        Assert.Equal(1, c.Status);
+        Assert.Equal(1, await svc.CountPendingAsync());
+        Assert.Equal(20m, (await ctx.Items.SingleAsync()).QuantityOnHand);   // untouched
+        Assert.Empty(ctx.JournalEntries);
+    }
+
+    [Fact]
+    public async Task ACountWithNoDifference_NeedsNoApproval()
+    {
+        var (_, svc, cairo, item) = await CreateAsync(20);
+        var c = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 20 });
+        Assert.Equal(2, c.Status);
+        Assert.Equal(0, await svc.CountPendingAsync());
+    }
+
+    [Fact]
+    public async Task ShortageChargedToAnEmployee_IsAReceivableFromThem_NotABranchExpense()
+    {
+        var (ctx, svc, cairo, item) = await CreateAsync(20);
+        var emp = new RomaERP.Domain.HR.Employee { EmployeeCode = "E1", FullNameAr = "محمد", FullNameEn = "Mohamed" };
+        ctx.Employees.Add(emp); await ctx.SaveChangesAsync();
+        var c = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 18 });
+        var done = await svc.ApplyAsync(c.Id, new ApproveCountDto { Responsibility = 3, EmployeeId = emp.Id, Note = "عهدته" }, "owner");
+        Assert.Equal("محمد", done.ResponsibleEmployeeName);
+        var lines = await ctx.JournalEntryLines.Include(l => l.Account).ToListAsync();
+        Assert.Contains(lines, l => l.Account!.Code == "1170" && l.Debit == 20m);
+        Assert.DoesNotContain(lines, l => l.Account!.Code == "5500");
+        Assert.Null((await ctx.JournalEntries.SingleAsync()).WarehouseId);
+    }
+
+    [Fact]
+    public async Task ShortageChargedToTheBranch_IsTaggedWithTheBranch_AndToTheCompany_IsNot()
+    {
+        var (ctx, svc, cairo, item) = await CreateAsync(20);
+        var c1 = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 18 });
+        await svc.ApplyAsync(c1.Id, new ApproveCountDto { Responsibility = 1 }, "owner");
+        Assert.Equal(cairo.Id, (await ctx.JournalEntries.SingleAsync()).WarehouseId);
+        var c2 = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 15 });
+        await svc.ApplyAsync(c2.Id, new ApproveCountDto { Responsibility = 2 }, "owner");
+        Assert.Single(ctx.JournalEntries.Where(e => e.WarehouseId == null));
+    }
+
+    [Fact]
+    public async Task ShortageChargedToAPerson_NeedsThePerson()
+    {
+        var (_, svc, cairo, item) = await CreateAsync(20);
+        var c = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 18 });
+        await Assert.ThrowsAsync<ValidationAppException>(() => svc.ApplyAsync(c.Id, new ApproveCountDto { Responsibility = 3 }, "owner"));
+    }
+
+    [Fact]
+    public async Task ARejectedCount_ChangesNothing_AndCannotBeApplied()
+    {
+        var (ctx, svc, cairo, item) = await CreateAsync(20);
+        var c = await svc.CreateAsync(new CreatePhysicalStockCountDto { ItemId = item.Id, WarehouseId = cairo.Id, CountDate = DateTime.UtcNow.Date, CountedQuantity = 18 });
+        var r = await svc.RejectAsync(c.Id, "العد غلط", "owner");
+        Assert.Equal(3, r.Status);
+        Assert.Equal(20m, (await ctx.Items.SingleAsync()).QuantityOnHand);
+        await Assert.ThrowsAsync<ValidationAppException>(() => svc.ApplyAsync(c.Id, new ApproveCountDto(), "owner"));
     }
 }

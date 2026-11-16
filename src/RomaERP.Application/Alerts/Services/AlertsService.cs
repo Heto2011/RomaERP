@@ -23,6 +23,7 @@ public class AlertsService : IAlertsService
     private readonly IPurchasingService _purchasingService;
     private readonly IItemLotService _lotService;
     private readonly IEmployeeContractService _employeeContractService;
+    private readonly IPhysicalStockCountService? _physicalCounts;
 
     public AlertsService(
         IInventoryReportService inventoryReportService,
@@ -30,8 +31,10 @@ public class AlertsService : IAlertsService
         ISalesService salesService,
         IPurchasingService purchasingService,
         IItemLotService lotService,
-        IEmployeeContractService employeeContractService)
+        IEmployeeContractService employeeContractService,
+        IPhysicalStockCountService? physicalCounts = null)
     {
+        _physicalCounts = physicalCounts;
         _inventoryReportService = inventoryReportService;
         _financialReportService = financialReportService;
         _salesService = salesService;
@@ -45,6 +48,18 @@ public class AlertsService : IAlertsService
         var now = DateTime.UtcNow;
         var windowStart = now.AddDays(-MovementWindowDays);
         var alerts = new List<AlertDto>();
+
+        var pendingCounts = _physicalCounts is null ? 0 : await _physicalCounts.CountPendingAsync(ct);
+        if (pendingCounts > 0)
+        {
+            alerts.Add(new AlertDto
+            {
+                Category = "Inventory",
+                Severity = AlertSeverity.Warning,
+                Title = $"{pendingCounts} جرد فيه فروقات منتظر اعتماد",
+                Detail = "راجع الفروقات في صفحة الجرد الفعلي وقرّر مين يتحمّلها قبل ما تتعمل تسوية."
+            });
+        }
 
         var movement = await _inventoryReportService.GetInventoryMovementAsync(windowStart, now, ct);
         var reorder = await _inventoryReportService.GetReorderSuggestionsAsync(MovementWindowDays, now, ct);

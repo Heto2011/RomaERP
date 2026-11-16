@@ -22,4 +22,12 @@ public class PhysicalStockCount : AuditableEntity
     public Warehouse? Warehouse { get; set; }
     /// <summary>Set once the variance was turned into a stock adjustment.</summary>
     public Guid? StockAdjustmentId { get; set; }
+
+    /// <summary>0 = recorded before approvals existed; 1 = waiting for the owner/accountant; 2 = approved (or no difference); 3 = rejected.</summary>
+    public int Status { get; set; }
+    public StockLossResponsibility? Responsibility { get; set; }
+    public Guid? ResponsibleEmployeeId { get; set; }
+    public string? DecisionNote { get; set; }
+    public string? DecidedBy { get; set; }
+    public DateTime? DecidedAt { get; set; }
 }

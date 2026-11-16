@@ -13,6 +13,10 @@ public enum StockAdjustmentReason
     Other = 4
 }
 
+/// <summary>Who bears a stock loss found in a count. The branch and the company take it as cost of goods; an employee or the branch
+/// manager is charged for it (a receivable from the person, recovered from pay outside the system).</summary>
+public enum StockLossResponsibility { Branch = 1, Company = 2, Employee = 3, Manager = 4 }
+
 /// <summary>A correction of one item's stock in one branch, with a reason: up when the stock is there but not in the books (no supplier
 /// involved), down when it is missing. It posts its own journal entry.</summary>
 public class StockAdjustment : AuditableEntity
@@ -33,6 +37,8 @@ public class StockAdjustment : AuditableEntity
     public string? Notes { get; set; }
     public string? LotNumber { get; set; }
     public string? CreatedByName { get; set; }
+    public StockLossResponsibility? Responsibility { get; set; }
+    public Guid? ResponsibleEmployeeId { get; set; }
 
     public Guid StockMovementId { get; set; }
     public Guid? JournalEntryId { get; set; }

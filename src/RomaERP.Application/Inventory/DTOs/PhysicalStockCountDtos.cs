@@ -16,6 +16,26 @@ public class PhysicalStockCountDto
     public Guid? WarehouseId { get; set; }
     public string? WarehouseName { get; set; }
     public Guid? StockAdjustmentId { get; set; }
+    /// <summary>0 recorded before approvals, 1 waiting for approval, 2 approved / no difference, 3 rejected.</summary>
+    public int Status { get; set; }
+    public int? Responsibility { get; set; }
+    public string? ResponsibleEmployeeName { get; set; }
+    public string? DecisionNote { get; set; }
+    public string? DecidedBy { get; set; }
+    public DateTime? DecidedAt { get; set; }
+}
+
+public class ApproveCountDto
+{
+    /// <summary>For a shortage: 1 branch, 2 company, 3 employee, 4 branch manager.</summary>
+    public int Responsibility { get; set; } = 1;
+    public Guid? EmployeeId { get; set; }
+    public string? Note { get; set; }
+}
+
+public class RejectCountDto
+{
+    public string? Note { get; set; }
 }
 
 public class CreatePhysicalStockCountDto

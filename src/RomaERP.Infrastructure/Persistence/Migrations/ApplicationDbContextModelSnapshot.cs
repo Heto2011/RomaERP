@@ -3195,6 +3195,15 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<DateTime?>("DecidedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DecidedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DecisionNote")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -3204,6 +3213,15 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Property<string>("Notes")
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
+
+                    b.Property<int?>("Responsibility")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ResponsibleEmployeeId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
 
                     b.Property<Guid?>("StockAdjustmentId")
                         .HasColumnType("uniqueidentifier");
@@ -3284,6 +3302,12 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("Reason")
                         .HasColumnType("int");
+
+                    b.Property<int?>("Responsibility")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("ResponsibleEmployeeId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<Guid>("StockMovementId")
                         .HasColumnType("uniqueidentifier");

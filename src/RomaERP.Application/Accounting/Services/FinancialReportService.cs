@@ -155,21 +155,63 @@ public class FinancialReportService : IFinancialReportService
             .ToListAsync(ct);
         var names = await _context.Warehouses.AsNoTracking().ToDictionaryAsync(w => w.Id, w => w.NameAr, ct);
 
-        var rows = lines.GroupBy(l => l.JournalEntry!.WarehouseId).Select(g =>
+        decimal Revenue(IEnumerable<JournalEntryLine> ls) => ls.Where(l => l.Account!.AccountType == AccountType.Revenue).Sum(l => l.Credit - l.Debit);
+        decimal Cogs(IEnumerable<JournalEntryLine> ls) => ls.Where(l => l.Account!.AccountType == AccountType.Expense && l.Account.Code == AccountingConstants.CostOfGoodsSoldAccountCode).Sum(l => l.Debit - l.Credit);
+        decimal Expenses(IEnumerable<JournalEntryLine> ls) => ls.Where(l => l.Account!.AccountType == AccountType.Expense).Sum(l => l.Debit - l.Credit);
+
+        var branchGroups = lines.Where(l => l.JournalEntry!.WarehouseId != null).GroupBy(l => l.JournalEntry!.WarehouseId!.Value).ToList();
+        var headLines = lines.Where(l => l.JournalEntry!.WarehouseId == null).ToList();
+        var headRevenue = Revenue(headLines);
+        var shared = Expenses(headLines);
+
+        var rows = branchGroups.Select(g =>
         {
-            var revenue = g.Where(l => l.Account!.AccountType == AccountType.Revenue).Sum(l => l.Credit - l.Debit);
-            var expense = g.Where(l => l.Account!.AccountType == AccountType.Expense).Sum(l => l.Debit - l.Credit);
+            var revenue = Revenue(g);
+            var cogs = Cogs(g);
+            var otherDirect = Expenses(g) - cogs;
             return new BranchProfitRowDto
             {
-                WarehouseId = g.Key, BranchName = g.Key is { } id && names.TryGetValue(id, out var n) ? n : "",
-                Revenue = revenue, Expense = expense, NetProfit = revenue - expense
+                WarehouseId = g.Key, BranchName = names.TryGetValue(g.Key, out var n) ? n : "",
+                Revenue = revenue, CostOfGoods = cogs, OtherDirectExpenses = otherDirect,
+                CostOfGoodsPercent = revenue == 0 ? 0 : Math.Round(cogs / revenue * 100, 1),
+                GrossProfit = revenue - cogs, Contribution = revenue - cogs - otherDirect,
+                ContributionPercent = revenue == 0 ? 0 : Math.Round((revenue - cogs - otherDirect) / revenue * 100, 1)
             };
-        }).Where(r => r.Revenue != 0 || r.Expense != 0).OrderBy(r => r.WarehouseId.HasValue ? 0 : 1).ThenBy(r => r.BranchName).ToList();
+        }).OrderBy(r => r.BranchName).ToList();
+
+        // Shared spending goes to the branches by their share of sales; with no sales to go by it stays with head office.
+        var salesTotal = rows.Where(r => r.Revenue > 0).Sum(r => r.Revenue);
+        var allocated = 0m;
+        if (shared != 0 && salesTotal > 0)
+        {
+            var positive = rows.Where(r => r.Revenue > 0).ToList();
+            foreach (var r in positive)
+            {
+                r.SalesSharePercent = Math.Round(r.Revenue / salesTotal * 100, 2);
+                r.SharedAllocated = Math.Round(shared * r.Revenue / salesTotal, 2);
+            }
+            // put the rounding difference on the biggest branch so the total is exact
+            var diff = shared - positive.Sum(r => r.SharedAllocated);
+            if (diff != 0) positive.OrderByDescending(r => r.Revenue).First().SharedAllocated += diff;
+            allocated = shared;
+        }
+        else
+        {
+            foreach (var r in rows.Where(r => r.Revenue > 0)) r.SalesSharePercent = salesTotal == 0 ? 0 : Math.Round(r.Revenue / salesTotal * 100, 2);
+        }
+        foreach (var r in rows) r.NetProfit = r.Contribution - r.SharedAllocated;
+
+        var unallocated = shared - allocated;
+        if (headRevenue != 0 || unallocated != 0)
+            rows.Add(new BranchProfitRowDto { WarehouseId = null, Revenue = headRevenue, Contribution = headRevenue, GrossProfit = headRevenue, NetProfit = headRevenue - unallocated, SharedAllocated = unallocated });
 
         return new BranchProfitDto
         {
             FromDate = fromDate, ToDate = toDate, Branches = rows,
-            TotalRevenue = rows.Sum(r => r.Revenue), TotalExpense = rows.Sum(r => r.Expense), NetProfit = rows.Sum(r => r.NetProfit)
+            SharedCostsToAllocate = shared, UnallocatedShared = unallocated,
+            TotalRevenue = rows.Sum(r => r.Revenue), TotalCostOfGoods = rows.Sum(r => r.CostOfGoods),
+            TotalDirectExpenses = rows.Sum(r => r.OtherDirectExpenses), TotalShared = rows.Sum(r => r.SharedAllocated),
+            NetProfit = rows.Sum(r => r.NetProfit)
         };
     }
 

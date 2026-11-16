@@ -57,6 +57,20 @@ public class StockAdjustmentService : IStockAdjustmentService
             ?? throw new ValidationAppException($"مفيش فترة محاسبية بتغطي تاريخ {date:yyyy-MM-dd}.");
         if (period.IsClosed) throw new ValidationAppException($"الفترة المحاسبية ({period.Name}) مقفولة.");
 
+        StockLossResponsibility? responsibility = null;
+        Domain.HR.Employee? employee = null;
+        if (!dto.IsIncrease && dto.Responsibility is { } rv)
+        {
+            if (!Enum.IsDefined(typeof(StockLossResponsibility), rv)) throw new ValidationAppException("اختيار المسؤول عن النقص غير صحيح.");
+            responsibility = (StockLossResponsibility)rv;
+            if (responsibility is StockLossResponsibility.Employee or StockLossResponsibility.Manager)
+            {
+                if (dto.ResponsibleEmployeeId is null) throw new ValidationAppException("اختار الموظف اللي هيتحمّل النقص.");
+                employee = await _context.Employees.AsNoTracking().FirstOrDefaultAsync(e => e.Id == dto.ResponsibleEmployeeId && !e.IsDeleted, ct)
+                    ?? throw new NotFoundException("Employee", dto.ResponsibleEmployeeId.Value);
+            }
+        }
+
         var inventory = await AccountAsync(AccountingConstants.InventoryAccountCode, "المخزون", ct);
         var number = $"ADJ-{(await _context.StockAdjustments.CountAsync(ct) + 1):D6}";
         var movementNumber = $"SM-{(await _context.StockMovements.CountAsync(ct) + 1):D6}";
@@ -96,10 +110,15 @@ public class StockAdjustmentService : IStockAdjustmentService
             }
             unitCost = item.AverageCost;
             var total = Math.Round(quantity * unitCost, 2);
-            var cogs = await AccountAsync(AccountingConstants.CostOfGoodsSoldAccountCode, "تكلفة البضاعة المباعة", ct);
+            // The loss is an expense (cost of goods) borne by the branch or the company; charged to a person it is instead a receivable from them.
+            var debit = employee is not null
+                ? await AccountAsync(AccountingConstants.EmployeeCustodyAccountCode, "عهد وسلف الموظفين", ct)
+                : await AccountAsync(AccountingConstants.CostOfGoodsSoldAccountCode, "تكلفة البضاعة المباعة", ct);
             item.QuantityOnHand -= quantity;
-            entry = await SimpleJournalEntryFactory.CreatePostedAsync(_context, date, period.Id, $"تسوية مخزون بالنقص {number} - {item.NameAr}",
-                cogs.Id, inventory.Id, total, "STOCK-ADJUSTMENT", ct, warehouse.Id);
+            var who = employee is null ? "" : $" - على {employee.FullNameAr}";
+            entry = await SimpleJournalEntryFactory.CreatePostedAsync(_context, date, period.Id, $"تسوية مخزون بالنقص {number} - {item.NameAr}{who}",
+                debit.Id, inventory.Id, total, "STOCK-ADJUSTMENT", ct,
+                responsibility is StockLossResponsibility.Company or StockLossResponsibility.Employee or StockLossResponsibility.Manager ? null : warehouse.Id);
         }
 
         var totalCost = Math.Round(quantity * unitCost, 2);
@@ -116,7 +135,7 @@ public class StockAdjustmentService : IStockAdjustmentService
         {
             Number = number, AdjustmentDate = date, WarehouseId = warehouse.Id, ItemId = item.Id, IsIncrease = dto.IsIncrease,
             Quantity = quantity, UnitCost = unitCost, TotalCost = totalCost, Reason = reason, Notes = dto.Notes?.Trim(),
-            LotNumber = string.IsNullOrWhiteSpace(dto.LotNumber) ? null : dto.LotNumber.Trim(), CreatedByName = userName, StockMovementId = movement.Id, JournalEntryId = entry.Id
+            LotNumber = string.IsNullOrWhiteSpace(dto.LotNumber) ? null : dto.LotNumber.Trim(), CreatedByName = userName, Responsibility = responsibility, ResponsibleEmployeeId = employee?.Id, StockMovementId = movement.Id, JournalEntryId = entry.Id
         };
         _context.StockAdjustments.Add(adjustment);
         await _context.SaveChangesAsync(ct);

@@ -21,12 +21,20 @@ public class PhysicalStockCountService : IPhysicalStockCountService
 
     public async Task<List<PhysicalStockCountDto>> GetAllAsync(CancellationToken ct = default)
     {
-        return await _context.PhysicalStockCounts
+        var counts = await _context.PhysicalStockCounts
             .AsNoTracking()
             .Include(c => c.Item).Include(c => c.Warehouse)
             .OrderByDescending(c => c.CountDate)
-            .Select(c => Map(c))
             .ToListAsync(ct);
+        var employeeIds = counts.Where(c => c.ResponsibleEmployeeId != null).Select(c => c.ResponsibleEmployeeId!.Value).Distinct().ToList();
+        var names = employeeIds.Count == 0 ? new Dictionary<Guid, string>()
+            : await _context.Employees.AsNoTracking().Where(e => employeeIds.Contains(e.Id)).ToDictionaryAsync(e => e.Id, e => e.FullNameAr, ct);
+        return counts.Select(c =>
+        {
+            var dto = Map(c);
+            if (c.ResponsibleEmployeeId is { } eid && names.TryGetValue(eid, out var n)) dto.ResponsibleEmployeeName = n;
+            return dto;
+        }).ToList();
     }
 
     public async Task<PhysicalStockCountDto> CreateAsync(CreatePhysicalStockCountDto dto, CancellationToken ct = default)
@@ -56,6 +64,8 @@ public class PhysicalStockCountService : IPhysicalStockCountService
             UnitCost = item.AverageCost,
             Notes = dto.Notes?.Trim()
         };
+        // A difference waits for the owner or accountant; no difference needs nothing.
+        count.Status = dto.WarehouseId is null ? 0 : count.CountedQuantity == count.SystemQuantity ? 2 : 1;
 
         _context.PhysicalStockCounts.Add(count);
         await _context.SaveChangesAsync(ct);
@@ -66,27 +76,62 @@ public class PhysicalStockCountService : IPhysicalStockCountService
         return result;
     }
 
-    /// <summary>Turns the count's difference into a stock adjustment (up when more was found, down when less), so the books and the
-    /// branch balance match what was counted.</summary>
-    public async Task<PhysicalStockCountDto> ApplyAsync(Guid id, string? userName, CancellationToken ct = default)
+    /// <summary>The owner or accountant reviews a pending count's difference and decides who bears a shortage; only then is the
+    /// stock adjustment (and its journal entry) made.</summary>
+    public async Task<PhysicalStockCountDto> ApplyAsync(Guid id, ApproveCountDto decision, string? userName, CancellationToken ct = default)
     {
         if (_adjustments is null) throw new ValidationAppException("التسوية مش متاحة.");
         var count = await _context.PhysicalStockCounts.Include(c => c.Item).Include(c => c.Warehouse).FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted, ct)
             ?? throw new NotFoundException(nameof(PhysicalStockCount), id);
-        if (count.StockAdjustmentId is not null) throw new ValidationAppException("الجرد ده اتحوّل لتسوية قبل كده.");
+        if (count.Status != 1) throw new ValidationAppException("الجرد ده مش منتظر اعتماد.");
         if (count.WarehouseId is null) throw new ValidationAppException("الجرد القديم مش مربوط بفرع. اعمل جرد جديد لفرع معيّن.");
         var variance = count.CountedQuantity - count.SystemQuantity;
         if (variance == 0) throw new ValidationAppException("مفيش فرق في الجرد.");
+        var responsibility = variance < 0 ? (StockLossResponsibility)decision.Responsibility : StockLossResponsibility.Branch;
+        if (!Enum.IsDefined(typeof(StockLossResponsibility), responsibility)) throw new ValidationAppException("اختيار المسؤول غير صحيح.");
 
+        var note = string.Join(" - ", new[] { "من جرد فعلي", count.Notes, decision.Note }.Where(x => !string.IsNullOrWhiteSpace(x)));
         var adj = await _adjustments.CreateAsync(new CreateStockAdjustmentDto
         {
             WarehouseId = count.WarehouseId.Value, ItemId = count.ItemId, IsIncrease = variance > 0, Quantity = Math.Abs(variance),
             UnitCost = variance > 0 ? count.UnitCost : null, Reason = variance > 0 ? (int)StockAdjustmentReason.CountGain : (int)StockAdjustmentReason.CountLoss,
-            AdjustmentDate = count.CountDate, Notes = string.IsNullOrWhiteSpace(count.Notes) ? "من جرد فعلي" : $"من جرد فعلي - {count.Notes}"
+            AdjustmentDate = count.CountDate, Notes = note,
+            Responsibility = variance < 0 ? (int)responsibility : null, ResponsibleEmployeeId = decision.EmployeeId
         }, userName, ct);
+
         count.StockAdjustmentId = adj.Id;
+        count.Status = 2;
+        count.Responsibility = variance < 0 ? responsibility : null;
+        count.ResponsibleEmployeeId = variance < 0 && responsibility is StockLossResponsibility.Employee or StockLossResponsibility.Manager ? decision.EmployeeId : null;
+        count.DecisionNote = decision.Note?.Trim();
+        count.DecidedBy = userName;
+        count.DecidedAt = DateTime.UtcNow;
+        await _context.SaveChangesAsync(ct);
+        return await MapWithEmployeeAsync(count, ct);
+    }
+
+    public async Task<PhysicalStockCountDto> RejectAsync(Guid id, string? note, string? userName, CancellationToken ct = default)
+    {
+        var count = await _context.PhysicalStockCounts.Include(c => c.Item).Include(c => c.Warehouse).FirstOrDefaultAsync(c => c.Id == id && !c.IsDeleted, ct)
+            ?? throw new NotFoundException(nameof(PhysicalStockCount), id);
+        if (count.Status != 1) throw new ValidationAppException("الجرد ده مش منتظر اعتماد.");
+        count.Status = 3;
+        count.DecisionNote = note?.Trim();
+        count.DecidedBy = userName;
+        count.DecidedAt = DateTime.UtcNow;
         await _context.SaveChangesAsync(ct);
         return Map(count);
+    }
+
+    public Task<int> CountPendingAsync(CancellationToken ct = default)
+        => _context.PhysicalStockCounts.CountAsync(c => !c.IsDeleted && c.Status == 1, ct);
+
+    private async Task<PhysicalStockCountDto> MapWithEmployeeAsync(PhysicalStockCount c, CancellationToken ct)
+    {
+        var dto = Map(c);
+        if (c.ResponsibleEmployeeId is { } eid)
+            dto.ResponsibleEmployeeName = await _context.Employees.AsNoTracking().Where(e => e.Id == eid).Select(e => e.FullNameAr).FirstOrDefaultAsync(ct);
+        return dto;
     }
 
     public async Task DeleteAsync(Guid id, CancellationToken ct = default)
@@ -137,7 +182,12 @@ public class PhysicalStockCountService : IPhysicalStockCountService
             Notes = c.Notes,
             WarehouseId = c.WarehouseId,
             WarehouseName = c.Warehouse?.NameAr,
-            StockAdjustmentId = c.StockAdjustmentId
+            StockAdjustmentId = c.StockAdjustmentId,
+            Status = c.Status,
+            Responsibility = c.Responsibility is { } r ? (int)r : null,
+            DecisionNote = c.DecisionNote,
+            DecidedBy = c.DecidedBy,
+            DecidedAt = c.DecidedAt
         };
     }
 }

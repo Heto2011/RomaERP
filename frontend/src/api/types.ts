@@ -489,6 +489,11 @@ export interface PhysicalStockCountEntry {
   warehouseId?: string | null;
   warehouseName?: string | null;
   stockAdjustmentId?: string | null;
+  status?: number;
+  responsibility?: number | null;
+  responsibleEmployeeName?: string | null;
+  decisionNote?: string | null;
+  decidedBy?: string | null;
 }
 
 export interface CountVarianceRow {

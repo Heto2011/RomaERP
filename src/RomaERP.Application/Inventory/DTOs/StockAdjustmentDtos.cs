@@ -16,6 +16,9 @@ public class CreateStockAdjustmentDto
     /// <summary>Only for lot-tracked items.</summary>
     public string? LotNumber { get; set; }
     public DateTime? ExpiryDate { get; set; }
+    /// <summary>For a decrease: 1 branch, 2 company, 3 employee, 4 branch manager. Empty = the branch.</summary>
+    public int? Responsibility { get; set; }
+    public Guid? ResponsibleEmployeeId { get; set; }
 }
 
 public class StockAdjustmentDto

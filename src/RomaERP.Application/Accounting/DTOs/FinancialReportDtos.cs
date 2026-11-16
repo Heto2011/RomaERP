@@ -257,16 +257,22 @@ public class LaborReportDto
     public List<EmployeeSalesLineDto> SalesByEmployee { get; set; } = new();
 }
 
-/// <summary>Profit and loss split by branch. The "unallocated" row is head-office activity (payroll, rent, supplier expenses...) and
-/// the total row equals the company profit and loss for the same period.</summary>
+/// <summary>Profit and loss by branch in two stages. Stage 1: revenue less what the branch itself spent (cost of goods and its own
+/// expenses) = the branch's contribution. Stage 2: spending that belongs to no branch (payroll, head-office rent, supplier expenses) is shared
+/// out by each branch's share of sales. The total always equals the company profit and loss.</summary>
 public class BranchProfitDto
 {
     public DateTime FromDate { get; set; }
     public DateTime ToDate { get; set; }
     public List<BranchProfitRowDto> Branches { get; set; } = new();
+    /// <summary>Shared spending that could not be allocated because no branch has sales in the period (stays with head office).</summary>
+    public decimal UnallocatedShared { get; set; }
     public decimal TotalRevenue { get; set; }
-    public decimal TotalExpense { get; set; }
+    public decimal TotalCostOfGoods { get; set; }
+    public decimal TotalDirectExpenses { get; set; }
+    public decimal TotalShared { get; set; }
     public decimal NetProfit { get; set; }
+    public decimal SharedCostsToAllocate { get; set; }
 }
 
 public class BranchProfitRowDto
@@ -274,6 +280,13 @@ public class BranchProfitRowDto
     public Guid? WarehouseId { get; set; }
     public string BranchName { get; set; } = string.Empty;
     public decimal Revenue { get; set; }
-    public decimal Expense { get; set; }
+    public decimal SalesSharePercent { get; set; }
+    public decimal CostOfGoods { get; set; }
+    public decimal CostOfGoodsPercent { get; set; }
+    public decimal GrossProfit { get; set; }
+    public decimal OtherDirectExpenses { get; set; }
+    public decimal Contribution { get; set; }
+    public decimal ContributionPercent { get; set; }
+    public decimal SharedAllocated { get; set; }
     public decimal NetProfit { get; set; }
 }

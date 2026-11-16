@@ -31,8 +31,14 @@ public class PhysicalStockCountsController : ControllerBase
 
     /// <summary>Turns the count's difference into a stock adjustment with its journal entry.</summary>
     [HttpPost("{id:guid}/apply")]
-    public async Task<ActionResult<PhysicalStockCountDto>> Apply(Guid id, CancellationToken ct)
-        => Ok(await _service.ApplyAsync(id, User.Identity?.Name, ct));
+    [Authorize(Roles = "Admin,Accountant")]
+    public async Task<ActionResult<PhysicalStockCountDto>> Apply(Guid id, ApproveCountDto decision, CancellationToken ct)
+        => Ok(await _service.ApplyAsync(id, decision, User.Identity?.Name, ct));
+
+    [HttpPost("{id:guid}/reject")]
+    [Authorize(Roles = "Admin,Accountant")]
+    public async Task<ActionResult<PhysicalStockCountDto>> Reject(Guid id, RejectCountDto dto, CancellationToken ct)
+        => Ok(await _service.RejectAsync(id, dto.Note, User.Identity?.Name, ct));
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Delete(Guid id, CancellationToken ct)
