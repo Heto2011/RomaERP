@@ -96,6 +96,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     { to: "/accounting/vat-summary", label: t.nav.vatSummary },
     { to: "/accounting/cost-center-analysis", label: t.nav.costCenterAnalysis },
     { to: "/accounting/branch-profit", label: t.nav.branchProfit },
+    { to: "/accounting/cost-allocation", label: t.nav.costAllocation },
   ];
 
   const planningForecastItems: NavSubGroupItem["subItems"] = [

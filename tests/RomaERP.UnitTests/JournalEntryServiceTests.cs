@@ -155,4 +155,21 @@ public class JournalEntryServiceTests
         Assert.Equal(300, trialBalance.Single(l => l.AccountCode == "1111").Balance);
         Assert.Equal(300, trialBalance.Single(l => l.AccountCode == "3100").Balance);
     }
+
+    [Fact]
+    public async Task ReversingAnEntry_LeavesTheBooksAndTheTrialBalanceAtZeroForIt()
+    {
+        var (ctx, cash, capital, period) = await SeedAsync();
+        var service = new JournalEntryService(ctx);
+        var created = await service.CreateAsync(new CreateJournalEntryDto
+        {
+            EntryDate = new DateTime(2026, 1, 5), FiscalPeriodId = period.Id,
+            Lines = { new CreateJournalEntryLineDto { AccountId = cash.Id, Debit = 1000 }, new CreateJournalEntryLineDto { AccountId = capital.Id, Credit = 1000 } }
+        });
+        await service.PostAsync(created.Id);
+        await service.ReverseAsync(created.Id);
+
+        var trial = await service.GetTrialBalanceAsync(null);
+        Assert.All(trial, line => Assert.Equal(0m, line.Balance));   // the entry and its reversal cancel out
+    }
 }

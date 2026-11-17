@@ -775,11 +775,17 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
+                    b.Property<bool>("IsCostAllocation")
+                        .HasColumnType("bit");
+
                     b.Property<Guid>("JournalEntryId")
                         .HasColumnType("uniqueidentifier");
 
                     b.Property<int>("LineNumber")
                         .HasColumnType("int");
+
+                    b.Property<Guid?>("WarehouseId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.HasKey("Id");
 

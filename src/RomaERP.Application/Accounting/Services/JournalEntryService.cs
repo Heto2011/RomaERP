@@ -151,12 +151,15 @@ public class JournalEntryService : IJournalEntryService
             FiscalPeriodId = entry.FiscalPeriodId,
             Description = $"عكس قيد رقم {entry.EntryNumber}",
             Reference = entry.EntryNumber,
+            WarehouseId = entry.WarehouseId,
             Status = JournalEntryStatus.Posted,
             Lines = entry.Lines.Select((l, idx) => new JournalEntryLine
             {
                 LineNumber = idx + 1,
                 AccountId = l.AccountId,
                 CostCenterId = l.CostCenterId,
+                WarehouseId = l.WarehouseId,
+                IsCostAllocation = l.IsCostAllocation,
                 Debit = l.Credit,
                 Credit = l.Debit,
                 Description = l.Description
@@ -176,7 +179,7 @@ public class JournalEntryService : IJournalEntryService
             .AsNoTracking()
             .Include(l => l.Account)
             .Include(l => l.JournalEntry)
-            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted && !l.JournalEntry.IsDeleted);
+            .Where(l => (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed) && !l.JournalEntry.IsDeleted);
 
         if (asOfDate is { } date)
             query = query.Where(l => l.JournalEntry!.EntryDate <= date);

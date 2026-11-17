@@ -38,6 +38,7 @@ import IncomeStatementPage from "./pages/accounting/IncomeStatement";
 import BalanceSheetPage from "./pages/accounting/BalanceSheet";
 import CostCenterAnalysisPage from "./pages/accounting/CostCenterAnalysis";
 import BranchProfitPage from "./pages/accounting/BranchProfit";
+import CostAllocationPage from "./pages/accounting/CostAllocation";
 import CashFlowPage from "./pages/accounting/CashFlow";
 import CashFlowIntelligencePage from "./pages/accounting/CashFlowIntelligence";
 import VatSummaryPage from "./pages/accounting/VatSummary";
@@ -230,6 +231,7 @@ export default function App() {
       <Route path="/accounting/trial-balance" element={<ProtectedRoute><TrialBalance /></ProtectedRoute>} />
       <Route path="/accounting/income-statement" element={<ProtectedRoute><IncomeStatementPage /></ProtectedRoute>} />
       <Route path="/accounting/balance-sheet" element={<ProtectedRoute><BalanceSheetPage /></ProtectedRoute>} />
+      <Route path="/accounting/cost-allocation" element={<ProtectedRoute><CostAllocationPage /></ProtectedRoute>} />
       <Route path="/accounting/branch-profit" element={<ProtectedRoute><BranchProfitPage /></ProtectedRoute>} />
       <Route path="/accounting/cost-center-analysis" element={<ProtectedRoute><CostCenterAnalysisPage /></ProtectedRoute>} />
       <Route path="/accounting/cash-flow" element={<ProtectedRoute><CashFlowPage /></ProtectedRoute>} />

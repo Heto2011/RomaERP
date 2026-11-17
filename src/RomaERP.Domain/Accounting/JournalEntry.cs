@@ -36,6 +36,12 @@ public class JournalEntryLine : BaseEntity
     public Guid? CostCenterId { get; set; }
     public CostCenter? CostCenter { get; set; }
 
+    /// <summary>The branch this line belongs to. Empty = the entry's own branch (or head office when the entry has none). Used by the
+    /// month-end allocation of shared costs, whose single entry moves expense between head office and several branches.</summary>
+    public Guid? WarehouseId { get; set; }
+    /// <summary>True on the lines of a shared-cost allocation: the branches' share is shown as "shared costs", not as the branch's own spending.</summary>
+    public bool IsCostAllocation { get; set; }
+
     public decimal Debit { get; set; }
     public decimal Credit { get; set; }
     public string? Description { get; set; }

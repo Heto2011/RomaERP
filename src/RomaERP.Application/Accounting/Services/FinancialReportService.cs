@@ -24,7 +24,7 @@ public class FinancialReportService : IFinancialReportService
             .AsNoTracking()
             .Include(l => l.Account)
             .Include(l => l.JournalEntry)
-            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+            .Where(l => (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed)
                         && !l.JournalEntry.IsDeleted
                         && l.JournalEntry.EntryDate >= fromDate
                         && l.JournalEntry.EntryDate <= toDate
@@ -55,7 +55,7 @@ public class FinancialReportService : IFinancialReportService
             .AsNoTracking()
             .Include(l => l.Account)
             .Include(l => l.JournalEntry)
-            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+            .Where(l => (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed)
                         && !l.JournalEntry.IsDeleted
                         && l.JournalEntry.EntryDate <= asOfDate
                         && (l.Account!.AccountType == AccountType.Asset
@@ -103,7 +103,7 @@ public class FinancialReportService : IFinancialReportService
             .Include(l => l.Account)
             .Include(l => l.CostCenter)
             .Include(l => l.JournalEntry)
-            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+            .Where(l => (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed)
                         && !l.JournalEntry.IsDeleted
                         && l.JournalEntry.EntryDate >= fromDate
                         && l.JournalEntry.EntryDate <= toDate
@@ -147,7 +147,7 @@ public class FinancialReportService : IFinancialReportService
             .AsNoTracking()
             .Include(l => l.Account)
             .Include(l => l.JournalEntry)
-            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+            .Where(l => (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed)
                         && !l.JournalEntry.IsDeleted
                         && l.JournalEntry.EntryDate >= fromDate
                         && l.JournalEntry.EntryDate <= toDate
@@ -159,39 +159,44 @@ public class FinancialReportService : IFinancialReportService
         decimal Cogs(IEnumerable<JournalEntryLine> ls) => ls.Where(l => l.Account!.AccountType == AccountType.Expense && l.Account.Code == AccountingConstants.CostOfGoodsSoldAccountCode).Sum(l => l.Debit - l.Credit);
         decimal Expenses(IEnumerable<JournalEntryLine> ls) => ls.Where(l => l.Account!.AccountType == AccountType.Expense).Sum(l => l.Debit - l.Credit);
 
-        var branchGroups = lines.Where(l => l.JournalEntry!.WarehouseId != null).GroupBy(l => l.JournalEntry!.WarehouseId!.Value).ToList();
-        var headLines = lines.Where(l => l.JournalEntry!.WarehouseId == null).ToList();
+        // A line belongs to its own branch tag, else its entry's; on an allocation line the tag is the only truth (head office carries none).
+        Guid? Branch(JournalEntryLine l) => l.IsCostAllocation ? l.WarehouseId : l.WarehouseId ?? l.JournalEntry!.WarehouseId;
+        var branchGroups = lines.Where(l => Branch(l) != null).GroupBy(l => Branch(l)!.Value).ToList();
+        var headLines = lines.Where(l => Branch(l) == null).ToList();
         var headRevenue = Revenue(headLines);
-        var shared = Expenses(headLines);
+        var shared = Expenses(headLines);   // already net of what a month-end allocation moved to the branches
 
         var rows = branchGroups.Select(g =>
         {
-            var revenue = Revenue(g);
-            var cogs = Cogs(g);
-            var otherDirect = Expenses(g) - cogs;
+            var own = g.Where(l => !l.IsCostAllocation).ToList();
+            var revenue = Revenue(own);
+            var cogs = Cogs(own);
+            var otherDirect = Expenses(own) - cogs;
+            var preAllocated = Expenses(g.Where(l => l.IsCostAllocation));
             return new BranchProfitRowDto
             {
                 WarehouseId = g.Key, BranchName = names.TryGetValue(g.Key, out var n) ? n : "",
-                Revenue = revenue, CostOfGoods = cogs, OtherDirectExpenses = otherDirect,
+                Revenue = revenue, CostOfGoods = cogs, OtherDirectExpenses = otherDirect, SharedAllocated = preAllocated,
                 CostOfGoodsPercent = revenue == 0 ? 0 : Math.Round(cogs / revenue * 100, 1),
                 GrossProfit = revenue - cogs, Contribution = revenue - cogs - otherDirect,
                 ContributionPercent = revenue == 0 ? 0 : Math.Round((revenue - cogs - otherDirect) / revenue * 100, 1)
             };
         }).OrderBy(r => r.BranchName).ToList();
+        var preAllocatedTotal = rows.Sum(r => r.SharedAllocated);
 
         // Shared spending goes to the branches by their share of sales; with no sales to go by it stays with head office.
         var salesTotal = rows.Where(r => r.Revenue > 0).Sum(r => r.Revenue);
         var allocated = 0m;
-        if (shared != 0 && salesTotal > 0)
+        if (shared > 0 && salesTotal > 0)
         {
             var positive = rows.Where(r => r.Revenue > 0).ToList();
             foreach (var r in positive)
             {
                 r.SalesSharePercent = Math.Round(r.Revenue / salesTotal * 100, 2);
-                r.SharedAllocated = Math.Round(shared * r.Revenue / salesTotal, 2);
+                r.SharedAllocated += Math.Round(shared * r.Revenue / salesTotal, 2);
             }
             // put the rounding difference on the biggest branch so the total is exact
-            var diff = shared - positive.Sum(r => r.SharedAllocated);
+            var diff = shared - (positive.Sum(r => r.SharedAllocated) - preAllocatedTotal);
             if (diff != 0) positive.OrderByDescending(r => r.Revenue).First().SharedAllocated += diff;
             allocated = shared;
         }
@@ -221,7 +226,7 @@ public class FinancialReportService : IFinancialReportService
             .AsNoTracking()
             .Include(l => l.Account)
             .Include(l => l.JournalEntry)
-            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+            .Where(l => (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed)
                         && !l.JournalEntry.IsDeleted
                         && l.JournalEntry.EntryDate >= fromDate
                         && l.JournalEntry.EntryDate <= toDate
@@ -267,7 +272,7 @@ public class FinancialReportService : IFinancialReportService
             .AsNoTracking()
             .Include(l => l.Account)
             .Include(l => l.JournalEntry)
-            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+            .Where(l => (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed)
                         && !l.JournalEntry.IsDeleted
                         && l.JournalEntry.EntryDate < fromDate
                         && cashCodes.Contains(l.Account!.Code))
@@ -278,7 +283,7 @@ public class FinancialReportService : IFinancialReportService
             .AsNoTracking()
             .Include(l => l.Account)
             .Include(l => l.JournalEntry)
-            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+            .Where(l => (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed)
                         && !l.JournalEntry.IsDeleted
                         && l.JournalEntry.EntryDate >= fromDate
                         && l.JournalEntry.EntryDate <= toDate
@@ -471,7 +476,7 @@ public class FinancialReportService : IFinancialReportService
     {
         var earliestEntryDate = await _context.JournalEntries
             .AsNoTracking()
-            .Where(e => e.Status == JournalEntryStatus.Posted && !e.IsDeleted)
+            .Where(e => (e.Status == JournalEntryStatus.Posted || e.Status == JournalEntryStatus.Reversed) && !e.IsDeleted)
             .OrderBy(e => e.EntryDate)
             .Select(e => (DateTime?)e.EntryDate)
             .FirstOrDefaultAsync(ct);
@@ -585,7 +590,7 @@ public class FinancialReportService : IFinancialReportService
             .AsNoTracking()
             .Include(l => l.Account)
             .Include(l => l.JournalEntry)
-            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+            .Where(l => (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed)
                         && !l.JournalEntry.IsDeleted
                         && l.JournalEntry.EntryDate <= asOfDate
                         && cashCodes.Contains(l.Account!.Code))

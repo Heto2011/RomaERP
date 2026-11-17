@@ -30,7 +30,7 @@ public class LedgerReportService : ILedgerReportService
         // Only posted entries count, exactly as on the trial balance, so the two always agree.
         var movements = await _context.JournalEntryLines
             .AsNoTracking()
-            .Where(l => l.AccountId == accountId && l.JournalEntry!.Status == JournalEntryStatus.Posted && !l.JournalEntry.IsDeleted
+            .Where(l => l.AccountId == accountId && (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed) && !l.JournalEntry.IsDeleted
                         && l.JournalEntry.EntryDate <= to)
             .Select(l => new
             {

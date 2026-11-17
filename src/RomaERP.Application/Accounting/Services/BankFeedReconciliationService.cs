@@ -106,7 +106,7 @@ public class BankFeedReconciliationService : IBankFeedReconciliationService
             .AsNoTracking()
             .Include(l => l.JournalEntry)
             .Where(l => l.AccountId == accountId
-                        && l.JournalEntry!.Status == JournalEntryStatus.Posted
+                        && (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed)
                         && !l.JournalEntry.IsDeleted
                         && l.JournalEntry.EntryDate >= fromDate
                         && l.JournalEntry.EntryDate <= toDate)
@@ -163,7 +163,7 @@ public class BankFeedReconciliationService : IBankFeedReconciliationService
         var glLines = await _context.JournalEntryLines
             .Include(l => l.JournalEntry)
             .Where(l => l.AccountId == accountId
-                        && l.JournalEntry!.Status == JournalEntryStatus.Posted
+                        && (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed)
                         && !l.JournalEntry.IsDeleted)
             .ToListAsync(ct);
 

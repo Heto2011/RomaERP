@@ -81,7 +81,7 @@ public class FiscalPeriodService : IFiscalPeriodService
             .AsNoTracking()
             .Include(l => l.Account)
             .Include(l => l.JournalEntry)
-            .Where(l => l.JournalEntry!.Status == JournalEntryStatus.Posted
+            .Where(l => (l.JournalEntry!.Status == JournalEntryStatus.Posted || l.JournalEntry.Status == JournalEntryStatus.Reversed)
                         && !l.JournalEntry.IsDeleted
                         && l.JournalEntry.EntryDate >= fiscalYear.StartDate
                         && l.JournalEntry.EntryDate <= fiscalYear.EndDate
