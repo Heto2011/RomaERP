@@ -335,6 +335,21 @@ export default function App() {
       <Route path="/restaurant-portal/purchase-receiving" element={<RestaurantPortalRoute><PurchaseReceivingPage /></RestaurantPortalRoute>} />
       <Route path="/restaurant-portal/delivery-reconciliation" element={<RestaurantPortalRoute><DeliveryReconciliationPage /></RestaurantPortalRoute>} />
       <Route path="/restaurant-portal/delivery-platforms" element={<RestaurantPortalRoute><DeliveryPlatforms /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/items" element={<RestaurantPortalRoute><Items /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/warehouses" element={<RestaurantPortalRoute><Warehouses /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/transfers" element={<RestaurantPortalRoute><StockTransfers /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/adjustments" element={<RestaurantPortalRoute><StockAdjustments /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/warehouse-stock" element={<RestaurantPortalRoute><WarehouseStock /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/branch-minimums" element={<RestaurantPortalRoute><BranchMinimums /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/movements" element={<RestaurantPortalRoute><StockMovements /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/physical-stock-counts" element={<RestaurantPortalRoute><PhysicalStockCountsPage /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/waste-entries" element={<RestaurantPortalRoute><WasteEntriesPage /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/manufacturing" element={<RestaurantPortalRoute><Manufacturing /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/expiring-stock" element={<RestaurantPortalRoute><ExpiringStock /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/reports/stock-valuation" element={<RestaurantPortalRoute><StockValuationPage /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/reports/reorder-suggestions" element={<RestaurantPortalRoute><ReorderSuggestionsPage /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/reports/movement-analysis" element={<RestaurantPortalRoute><InventoryMovementPage /></RestaurantPortalRoute>} />
+      <Route path="/restaurant-portal/inventory/reports/waste-analysis" element={<RestaurantPortalRoute><WasteAnalysisPage /></RestaurantPortalRoute>} />
       <Route path="/inventory/items" element={<ProtectedRoute><Items /></ProtectedRoute>} />
       <Route path="/inventory/warehouses" element={<ProtectedRoute><Warehouses /></ProtectedRoute>} />
       <Route path="/inventory/manufacturing" element={<ProtectedRoute><Manufacturing /></ProtectedRoute>} />

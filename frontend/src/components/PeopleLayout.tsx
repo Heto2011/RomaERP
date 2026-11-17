@@ -42,6 +42,7 @@ export default function PeopleLayout({ children }: { children: ReactNode }) {
     { to: "/people/salary-components", label: t.hr.salaryComponentsTitle, icon: <IconWallet /> },
     { to: "/people/payroll", label: t.nav.payroll, icon: <IconDollar /> },
     ...(isHrManager ? [{ to: "/people/payroll-settings", label: t.hr.payrollSettingsTitle, icon: <IconWallet /> }] : []),
+    { to: "/people/employee-debts", label: t.nav.employeeDebts, icon: <IconWallet /> },
     { to: "/people/labor-report", label: t.hr.laborReportTitle, icon: <IconBarChart /> },
     { to: "/people/work-locations", label: t.hr.workLocationsTitle, icon: <IconGrid /> },
     { to: "/people/shifts", label: t.hr.shiftsTitle, icon: <IconCalendar /> },

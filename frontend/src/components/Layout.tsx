@@ -473,11 +473,15 @@ export default function Layout({ children }: { children: ReactNode }) {
               {iconLinks.map((group) => (
                 <button
                   key={group.section}
-                  className={"sidebar-toggle" + (activeSection === group.section || openDropdown === group.section ? " active" : "")}
+                  className={"sidebar-toggle" + (activeSection === group.section ? " active" : "")}
                   title={group.section}
                   aria-label={group.section}
-                  onClick={() => setOpenDropdown((cur) => (cur === group.section ? null : group.section))}
-                  style={activeSection === group.section || openDropdown === group.section ? { outline: "2px solid currentColor", outlineOffset: -2 } : undefined}
+                  onClick={() => {
+                    // each product opens its own page, which holds all of its screens
+                    setOpenDropdown(null);
+                    navigate(group.section === t.nav.hr ? "/people" : isCashierOnly ? "/restaurant/pos" : "/restaurant-portal");
+                  }}
+                  style={activeSection === group.section ? { outline: "2px solid currentColor", outlineOffset: -2 } : undefined}
                 >
                   {group.section === t.nav.hr ? <IconUsers /> : <IconCart />}
                 </button>
