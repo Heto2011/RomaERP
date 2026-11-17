@@ -40,7 +40,14 @@ public record TenantSubscriptionDto(
     int? IncludedUsers = null,
     decimal ExtraBranchPrice = 0,
     decimal ExtraUserPrice = 0,
-    RomaERP.Domain.Tenancy.ProductScope ProductScope = RomaERP.Domain.Tenancy.ProductScope.Full);
+    RomaERP.Domain.Tenancy.ProductScope ProductScope = RomaERP.Domain.Tenancy.ProductScope.Full,
+    // How far the company got: its last login, how many real records it made, and one word for it. Only filled in the system console list.
+    DateTime? LastLoginAtUtc = null,
+    int SalesInvoiceCount = 0,
+    int PurchaseInvoiceCount = 0,
+    int RestaurantOrderCount = 0,
+    int EmployeeCount = 0,
+    string? ActivationStatus = null);
 
 public record SubscriptionInvoiceDto(
     Guid Id,

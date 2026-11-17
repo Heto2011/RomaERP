@@ -2487,6 +2487,13 @@ export interface TenantSubscription {
   extraUserPrice: number;
   /** 1 = full ERP + HR, 2 = Roma HR only. */
   productScope: ProductScope;
+  lastLoginAtUtc?: string | null;
+  salesInvoiceCount?: number;
+  purchaseInvoiceCount?: number;
+  restaurantOrderCount?: number;
+  employeeCount?: number;
+  /** NeverStarted, LoggedInOnly, Active or Idle. */
+  activationStatus?: string | null;
 }
 
 export interface TenantActivity {

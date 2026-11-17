@@ -266,7 +266,7 @@ export default function SubscriptionsPage() {
             <table>
               <thead>
                 <tr>
-                  <th>Company</th><th>Plan</th><th>Status</th><th>Usage</th><th>Period Ends</th><th>Outstanding</th><th>Actions</th>
+                  <th>Company</th><th>Plan</th><th>Status</th><th>Usage</th><th>Activity</th><th>Period Ends</th><th>Outstanding</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -281,6 +281,27 @@ export default function SubscriptionsPage() {
                     </td>
                     <td className={statusClass[s.status]}>{statusLabel[s.status]}</td>
                     <td>{s.currentBranches} branches / {s.currentUsers} users</td>
+                    <td>
+                      {(() => {
+                        const label: Record<string, string> = { NeverStarted: "Never started", LoggedInOnly: "Logged in, made nothing", Active: "Active", Idle: "Idle (no login for a week)" };
+                        const color: Record<string, string> = { NeverStarted: "#b42318", LoggedInOnly: "#c8862e", Active: "#1a7f4b", Idle: "#c8862e" };
+                        const st = s.activationStatus ?? "";
+                        // Closeness to the free plan's limits is what signals an upgrade: the company has used all it was given, or nearly.
+                        const ratio = (used: number, included: number | null) => (included ? used / included : 0);
+                        const hit = Math.max(ratio(s.currentUsers, s.includedUsers), ratio(s.currentBranches, s.includedBranches));
+                        return (
+                          <>
+                            {st && <div style={{ color: color[st] ?? undefined, fontWeight: 700 }}>{label[st] ?? st}</div>}
+                            <div className="text-muted" style={{ fontSize: 12 }}>
+                              {(s.salesInvoiceCount ?? 0)} sales / {(s.purchaseInvoiceCount ?? 0)} purchase invoices
+                              {(s.restaurantOrderCount ?? 0) > 0 ? ` / ${s.restaurantOrderCount} POS orders` : ""} / {(s.employeeCount ?? 0)} employees
+                            </div>
+                            {s.lastLoginAtUtc && <div className="text-muted" style={{ fontSize: 12 }}>Last login {new Date(s.lastLoginAtUtc).toLocaleDateString()}</div>}
+                            {s.status === SubscriptionStatus.Trialing || hit >= 0.8 ? (hit >= 1 ? <div style={{ color: "#b42318", fontWeight: 700, fontSize: 12 }}>At the plan limit: ready to upgrade</div> : hit >= 0.8 ? <div style={{ color: "#c8862e", fontWeight: 700, fontSize: 12 }}>Near the plan limit</div> : null) : null}
+                          </>
+                        );
+                      })()}
+                    </td>
                     <td>{new Date(s.currentPeriodEnd).toLocaleDateString()}</td>
                     <td className={s.outstandingAmount > 0 ? "text-danger" : undefined}>
                       {s.outstandingAmount.toLocaleString()} {s.currency}

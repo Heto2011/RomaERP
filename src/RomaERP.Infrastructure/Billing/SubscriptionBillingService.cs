@@ -89,7 +89,14 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             var outstanding = await _central.SubscriptionInvoices.AsNoTracking()
                 .Where(i => i.TenantId == tenant.Id && i.Status != SubscriptionInvoiceStatus.Paid && i.Status != SubscriptionInvoiceStatus.Cancelled)
                 .SumAsync(i => (decimal?)i.TotalAmount, ct) ?? 0;
-            items.Add(MapTenantSubscription(tenant, subscription, plan, branches, users, outstanding, await GetOverdueDaysAsync(tenant.Id, ct)));
+            var dto = MapTenantSubscription(tenant, subscription, plan, branches, users, outstanding, await GetOverdueDaysAsync(tenant.Id, ct));
+            var act = await GetTenantActivationAsync(tenant, ct);
+            items.Add(dto with
+            {
+                LastLoginAtUtc = act.LastLoginUtc, SalesInvoiceCount = act.SalesInvoices, PurchaseInvoiceCount = act.PurchaseInvoices,
+                RestaurantOrderCount = act.RestaurantOrders, EmployeeCount = act.Employees,
+                ActivationStatus = ClassifyActivation(act.LastLoginUtc, act.SalesInvoices + act.PurchaseInvoices + act.RestaurantOrders + act.Employees, DateTime.UtcNow)
+            });
         }
 
         return (items, total);
@@ -596,6 +603,37 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             : await userManager.Users.CountAsync(u => u.IsActive, ct);
         return (branches, users);
     }
+
+    /// <summary>Never started (no login), logged in but made nothing, active (logged in within a week) or idle.</summary>
+    public static string ClassifyActivation(DateTime? lastLoginUtc, int records, DateTime nowUtc)
+        => lastLoginUtc is null && records == 0 ? "NeverStarted"
+         : records == 0 ? "LoggedInOnly"
+         : lastLoginUtc is { } l && (nowUtc - l).TotalDays <= 7 ? "Active"
+         : "Idle";
+
+    /// <summary>The company's last successful login and how many invoices, restaurant orders and employees it made, read from its own database.
+    /// A company whose database cannot be read simply shows nothing, rather than breaking the list.</summary>
+    protected virtual async Task<TenantActivation> GetTenantActivationAsync(Tenant tenant, CancellationToken ct)
+    {
+        try
+        {
+            using var scope = _scopeFactory.CreateScope();
+            var tenantContext = scope.ServiceProvider.GetRequiredService<TenantContext>();
+            tenantContext.Resolve(tenant, _registry.BuildConnectionString(tenant.DatabaseName));
+            var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
+
+            var lastLogin = await db.LoginHistories.Where(h => h.Success).MaxAsync(h => (DateTime?)h.OccurredAtUtc, ct);
+            return new TenantActivation(lastLogin, await db.SalesInvoices.CountAsync(ct), await db.PurchaseInvoices.CountAsync(ct),
+                await db.RestaurantOrders.CountAsync(ct), await db.Employees.CountAsync(e => !e.IsDeleted, ct));
+        }
+        catch
+        {
+            return new TenantActivation(null, 0, 0, 0, 0);
+        }
+    }
+
+    /// <summary>What a company has really done: when it last logged in and how much it made. These numbers are what shows who is heading for the paid plans.</summary>
+    protected record TenantActivation(DateTime? LastLoginUtc, int SalesInvoices, int PurchaseInvoices, int RestaurantOrders, int Employees);
 
     private static SubscriptionPlanDto MapPlan(SubscriptionPlan p) =>
         new(p.Id, p.Code, p.NameAr, p.NameEn, p.MonthlyBasePrice, p.IncludedBranches, p.IncludedUsers, p.IsCustomPricing, p.IsActive);

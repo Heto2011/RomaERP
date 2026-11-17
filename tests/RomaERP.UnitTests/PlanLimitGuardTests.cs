@@ -137,3 +137,16 @@ public class PlanLimitGuardTests
         await gulf.EnsureCanAddBranchAsync();
     }
 }
+
+public class ActivationStatusTests
+{
+    private static readonly DateTime Now = new(2026, 11, 17, 12, 0, 0, DateTimeKind.Utc);
+
+    [Theory]
+    [InlineData(null, 0, "NeverStarted")]
+    [InlineData(0, 0, "LoggedInOnly")]      // logged in a day ago, made nothing
+    [InlineData(1, 5, "Active")]            // logged in yesterday and has invoices
+    [InlineData(30, 5, "Idle")]             // has records but no login for a month
+    public void AnAccountIsClassifiedByWhatItDid(int? daysSinceLogin, int records, string expected)
+        => Assert.Equal(expected, RomaERP.Infrastructure.Billing.SubscriptionBillingService.ClassifyActivation(daysSinceLogin is null ? null : Now.AddDays(-daysSinceLogin.Value), records, Now));
+}
