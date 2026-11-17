@@ -214,6 +214,13 @@ export default function Layout({ children }: { children: ReactNode }) {
       // Review: what an accountant checks and adjusts after the day-to-day work (as in the system customers are used to).
       section: t.nav.review,
       items: [
+        { subGroup: lang === "ar" ? "الفحص والإقفال" : "Checks and closing", icon: <IconCheck />, subItems: [
+          { to: "/review/close-checklist", label: lang === "ar" ? "قائمة إقفال الشهر" : "Month-end close checklist" },
+          { to: "/review/reconciliation", label: lang === "ar" ? "تسوية الحسابات مع التفاصيل" : "Ledger against detail" },
+          { to: "/review/approvals", label: lang === "ar" ? "سجل الاعتمادات" : "Approvals log" },
+          { to: "/review/unusual-entries", label: lang === "ar" ? "القيود غير المعتادة" : "Unusual entries" },
+          { to: "/review/number-gaps", label: lang === "ar" ? "ثغرات الترقيم" : "Numbering gaps" },
+        ] },
         { subGroup: lang === "ar" ? "الرقابة" : "Control", icon: <IconCheck />, subItems: [
           { to: "/accounting/journal-entries", label: t.nav.journalEntries },
           { to: "/accounting/general-ledger", label: t.nav.generalLedger },

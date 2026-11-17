@@ -49,6 +49,7 @@ public static class DependencyInjection
         services.AddScoped<RomaERP.Application.Inventory.Services.IBranchStockService, RomaERP.Application.Inventory.Services.BranchStockService>();
         services.AddScoped<RomaERP.Application.HR.Services.IEmployeeDebtService, RomaERP.Application.HR.Services.EmployeeDebtService>();
         services.AddScoped<RomaERP.Application.Inventory.Services.IBranchMinimumService, RomaERP.Application.Inventory.Services.BranchMinimumService>();
+        services.AddScoped<RomaERP.Application.Accounting.Services.IReviewService, RomaERP.Application.Accounting.Services.ReviewService>();
         services.AddScoped<RomaERP.Application.Accounting.Services.ISharedCostAllocationService, RomaERP.Application.Accounting.Services.SharedCostAllocationService>();
         services.AddScoped<RomaERP.Application.Inventory.Services.IStockAdjustmentService, RomaERP.Application.Inventory.Services.StockAdjustmentService>();
         services.AddScoped<RomaERP.Application.Common.Interfaces.IBranchAccessService, RomaERP.Infrastructure.Identity.BranchAccessService>();
