@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { NavLink, useLocation } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { ProductScope } from "../api/types";
 import { hiddenSectionsFor, SHOW_ALL_KEY, type NavSectionKey } from "../businessType";
@@ -57,7 +57,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { t, lang, setLang } = useLanguage();
   const { theme, toggleTheme } = useTheme();
   const location = useLocation();
+  const navigate = useNavigate();
   const navRef = useRef<HTMLDivElement>(null);
+  const iconsRef = useRef<HTMLDivElement>(null);
   // Someone given only the Purchasing module records invoices; vendors, aging and statements stay with approvers.
   const canApprovePurchases = user?.roles.some((r) => r === "Admin" || r === "Accountant") ?? false;
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
@@ -75,7 +77,8 @@ export default function Layout({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!openDropdown) return;
     function onDocumentClick(e: MouseEvent) {
-      if (navRef.current && !navRef.current.contains(e.target as Node)) setOpenDropdown(null);
+      const target = e.target as Node;
+      if (navRef.current && !navRef.current.contains(target) && !(iconsRef.current && iconsRef.current.contains(target))) setOpenDropdown(null);
     }
     document.addEventListener("mousedown", onDocumentClick);
     return () => document.removeEventListener("mousedown", onDocumentClick);
@@ -205,10 +208,30 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/accounting/exchange-rates", label: t.nav.exchangeRates, icon: <IconSwap /> },
         { to: "/accounting/budgets", label: t.nav.budgets, icon: <IconBarChart /> },
         { to: "/accounting/bank-feed-reconciliation", label: t.nav.bankFeedReconciliation, icon: <IconRefresh /> },
-        { to: "/accounting/fixed-assets", label: t.nav.fixedAssets, icon: <IconBox /> },
-        { to: "/accounting/depreciation-runs", label: t.nav.depreciationRuns, icon: <IconTrendDown /> },
-        { to: "/accounting/deferrals", label: t.nav.deferrals, icon: <IconTrendDown /> },
-        { to: "/accounting/loans", label: t.nav.loans, icon: <IconTrendDown /> },
+      ],
+    },
+    {
+      // Review: what an accountant checks and adjusts after the day-to-day work (as in the system customers are used to).
+      section: t.nav.review,
+      items: [
+        { subGroup: lang === "ar" ? "الرقابة" : "Control", icon: <IconCheck />, subItems: [
+          { to: "/accounting/journal-entries", label: t.nav.journalEntries },
+          { to: "/accounting/general-ledger", label: t.nav.generalLedger },
+          { to: "/accounting/trial-balance", label: t.nav.trialBalance },
+          { to: "/accounting/bank-feed-reconciliation", label: t.nav.bankFeedReconciliation },
+        ] },
+        { subGroup: lang === "ar" ? "الأصول والقروض" : "Assets and loans", icon: <IconBox />, subItems: [
+          { to: "/accounting/fixed-assets", label: t.nav.fixedAssets },
+          { to: "/accounting/depreciation-runs", label: t.nav.depreciationRuns },
+          { to: "/accounting/loans", label: t.nav.loans },
+        ] },
+        { subGroup: lang === "ar" ? "قيود التسوية" : "Regularization entries", icon: <IconTrendDown />, subItems: [
+          { to: "/accounting/deferrals", label: t.nav.deferrals },
+        ] },
+        ...(user?.roles.includes("Admin") ? [{ subGroup: lang === "ar" ? "السجلات" : "Logs", icon: <IconList />, subItems: [
+          { to: "/audit-log", label: t.nav.auditLog },
+          { to: "/login-history", label: t.nav.loginHistory },
+        ] }] : []),
       ],
     },
     {
@@ -307,8 +330,6 @@ export default function Layout({ children }: { children: ReactNode }) {
               { to: "/users", label: t.nav.users, icon: <IconShield /> },
               { to: "/integrations", label: t.nav.integrations, icon: <IconRefresh /> },
               { to: "/einvoicing", label: t.nav.eInvoicing, icon: <IconFile /> },
-              { to: "/audit-log", label: t.nav.auditLog, icon: <IconList /> },
-              { to: "/login-history", label: t.nav.loginHistory, icon: <IconList /> },
             ],
           },
         ]
@@ -324,7 +345,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const isPosOnly = user?.productScope === ProductScope.PosOnly;
   const posOnlyAllowedSections = new Set([t.nav.general, t.nav.restaurant, t.nav.inventory, t.nav.purchasing, t.nav.reports, t.nav.administration]);
   const isBooksOnly = user?.productScope === ProductScope.BooksOnly;
-  const booksOnlyAllowedSections = new Set([t.nav.general, t.nav.accounting, t.nav.reports, t.nav.sales, t.nav.purchasing, t.nav.administration]);
+  const booksOnlyAllowedSections = new Set([t.nav.general, t.nav.accounting, t.nav.review, t.nav.reports, t.nav.sales, t.nav.purchasing, t.nav.administration]);
 
   // Each of these sections requires either the base role that's always had it, or the matching
   // per-user "module" grant (see ModulePermissions on the backend) — Admin always sees everything.
@@ -332,6 +353,7 @@ export default function Layout({ children }: { children: ReactNode }) {
   const sectionAccess: Record<string, { module: string; fallbackRoles: string[] }> = {
     [t.nav.accounting]: { module: "Accounting", fallbackRoles: ["Accountant"] },
     [t.nav.reports]: { module: "Reports", fallbackRoles: ["Accountant"] },
+    [t.nav.review]: { module: "Accounting", fallbackRoles: ["Accountant"] },
     [t.nav.sales]: { module: "Sales", fallbackRoles: ["Accountant"] },
     [t.nav.purchasing]: { module: "Purchasing", fallbackRoles: ["Accountant"] },
     [t.nav.inventory]: { module: "Inventory", fallbackRoles: ["Accountant"] },
@@ -361,7 +383,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     return isAdmin || access.fallbackRoles.some((r) => user?.roles.includes(r)) || (user?.modules.includes(access.module) ?? false);
   }
 
-  const extraSections = new Set([t.nav.accounting, t.nav.reports, t.nav.sales, t.nav.purchasing, t.nav.inventory]);
+  const extraSections = new Set([t.nav.accounting, t.nav.review, t.nav.reports, t.nav.sales, t.nav.purchasing, t.nav.inventory]);
   const links = (isCashierOnly
     ? cashierLinks
     : isEmployeeWithExtras
@@ -382,8 +404,32 @@ export default function Layout({ children }: { children: ReactNode }) {
     };
   });
 
+  // Inventory lives inside the restaurant/POS product (one circle): its screens become groups of the Restaurant section.
+  // Someone who may use inventory but not the restaurant keeps Inventory as a section of its own.
+  const restaurantGroup = links.find((g) => g.section === t.nav.restaurant);
+  const inventoryGroup = links.find((g) => g.section === t.nav.inventory);
+  const mergedLinks = restaurantGroup && inventoryGroup
+    ? links.filter((g) => g !== inventoryGroup).map((g) => g !== restaurantGroup ? g : {
+        ...g,
+        items: [
+          ...g.items,
+          { subGroup: t.nav.inventory, icon: <IconBox />, subItems: inventoryGroup.items.filter((i): i is NavLeafItem => !("subGroup" in i)).map((i) => ({ to: i.to, label: i.label })) },
+          ...inventoryGroup.items.filter((i): i is NavSubGroupItem => "subGroup" in i),
+        ],
+      })
+    : links;
+
+  // Main tabs in the order the owner asked for; the HR and Restaurant products are icons next to the language button.
+  const iconSections = [t.nav.hr, t.nav.restaurant];
+  const mainOrder = [t.nav.general, t.nav.assistant, t.nav.accounting, t.nav.purchasing, t.nav.sales, t.nav.review, t.nav.reports, t.nav.administration];
+  const mainLinks = [
+    ...mainOrder.map((s) => mergedLinks.find((g) => g.section === s)).filter((g): g is (typeof mergedLinks)[number] => !!g),
+    ...mergedLinks.filter((g) => !mainOrder.includes(g.section) && !iconSections.includes(g.section)),
+  ];
+  const iconLinks = iconSections.map((s) => mergedLinks.find((g) => g.section === s)).filter((g): g is (typeof mergedLinks)[number] => !!g);
+
   const activeSection = useMemo(() => {
-    for (const group of links) {
+    for (const group of mergedLinks) {
       for (const item of group.items) {
         if ("subGroup" in item) {
           if (item.subItems.some((sub) => matchesPath(sub.to))) return group.section;
@@ -394,7 +440,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     }
     return null;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [links, location.pathname]);
+  }, [mergedLinks, location.pathname]);
 
   return (
     <div className="topnav-shell">
@@ -415,6 +461,21 @@ export default function Layout({ children }: { children: ReactNode }) {
             )}
             <UsageIndicator />
             <span className="topnav-user">{user?.fullName}</span>
+            {/* The HR and Restaurant products sit here as icons; each opens its own screens. */}
+            <span ref={iconsRef} style={{ display: "inline-flex", gap: 6 }}>
+              {iconLinks.map((group) => (
+                <button
+                  key={group.section}
+                  className={"sidebar-toggle" + (activeSection === group.section || openDropdown === group.section ? " active" : "")}
+                  title={group.section}
+                  aria-label={group.section}
+                  onClick={() => setOpenDropdown((cur) => (cur === group.section ? null : group.section))}
+                  style={activeSection === group.section || openDropdown === group.section ? { outline: "2px solid currentColor", outlineOffset: -2 } : undefined}
+                >
+                  {group.section === t.nav.hr ? <IconUsers /> : <IconCart />}
+                </button>
+              ))}
+            </span>
             <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>
@@ -428,18 +489,22 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
         <div ref={navRef} className="topnav-menu" onPointerLeave={(e) => { if (e.pointerType === "mouse") setOpenDropdown(null); }}>
           <nav className="topnav-links">
-            {links.map((group) => (
+            {mainLinks.map((group) => (
               <button
                 key={group.section}
                 className={"topnav-link" + (activeSection === group.section ? " active" : "")}
                 onPointerEnter={(e) => { if (e.pointerType === "mouse") setOpenDropdown(group.section); }}
-                onClick={() => setOpenDropdown((cur) => (cur === group.section ? null : group.section))}
+                onClick={() => {
+                  // the first tab is the dashboard itself: clicking it goes there; the others open their screens
+                  if (group.section === t.nav.general) { navigate("/"); setOpenDropdown(null); return; }
+                  setOpenDropdown((cur) => (cur === group.section ? null : group.section));
+                }}
               >
                 <span>{group.section}</span>
               </button>
             ))}
           </nav>
-          {links
+          {mergedLinks
             .filter((group) => group.section === openDropdown)
             .map((group) => {
               const flatItems = group.items.filter((item): item is NavLeafItem => !("subGroup" in item));
