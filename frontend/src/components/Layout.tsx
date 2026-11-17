@@ -449,6 +449,55 @@ export default function Layout({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mergedLinks, location.pathname]);
 
+  // A section's screens as a vertical list that drops straight down from its own tab.
+  function renderDropdown(group: (typeof mergedLinks)[number]) {
+    const flatItems = group.items.filter((item): item is NavLeafItem => !("subGroup" in item));
+              const subGroups = group.items.filter((item): item is NavSubGroupItem => "subGroup" in item);
+    return (
+      <div className="topnav-dropdown">
+                  {flatItems.length > 0 && (
+                    <div className="dash-app-grid">
+                      {flatItems.map((item) =>
+                        item.comingSoon ? (
+                          <span key={item.label} className="dash-app-tile topnav-tile-soon">
+                            <span className="dash-app-tile-icon">{item.icon}</span>
+                            <span>{item.label}</span>
+                            <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
+                          </span>
+                        ) : (
+                          <NavLink key={item.to} to={item.to} end={item.to === "/"} className="dash-app-tile">
+                            <span className="dash-app-tile-icon">{item.icon}</span>
+                            <span>{item.label}</span>
+                          </NavLink>
+                        )
+                      )}
+                    </div>
+                  )}
+                  {subGroups.map((group) => (
+                    <div key={group.subGroup} className="topnav-tile-group">
+                      <div className="topnav-tile-group-title">{group.subGroup}</div>
+                      <div className="dash-app-grid">
+                        {group.subItems.map((sub) =>
+                          sub.comingSoon ? (
+                            <span key={sub.label} className="dash-app-tile topnav-tile-soon">
+                              <span className="dash-app-tile-icon">{group.icon}</span>
+                              <span>{sub.label}</span>
+                              <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
+                            </span>
+                          ) : (
+                            <NavLink key={sub.label} to={sub.to} className="dash-app-tile">
+                              <span className="dash-app-tile-icon">{group.icon}</span>
+                              <span>{sub.label}</span>
+                            </NavLink>
+                          )
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+    );
+  }
+
   return (
     <div className="topnav-shell">
       <header className="topnav-header">
@@ -501,8 +550,8 @@ export default function Layout({ children }: { children: ReactNode }) {
         <div ref={navRef} className="topnav-menu" onPointerLeave={(e) => { if (e.pointerType === "mouse") setOpenDropdown(null); }}>
           <nav className="topnav-links">
             {mainLinks.map((group) => (
+              <div key={group.section} className="topnav-item">
               <button
-                key={group.section}
                 className={"topnav-link" + (activeSection === group.section ? " active" : "")}
                 onPointerEnter={(e) => { if (e.pointerType === "mouse") setOpenDropdown(group.section); }}
                 onClick={() => {
@@ -513,57 +562,10 @@ export default function Layout({ children }: { children: ReactNode }) {
               >
                 <span>{group.section}</span>
               </button>
+              {openDropdown === group.section && renderDropdown(group)}
+              </div>
             ))}
           </nav>
-          {mergedLinks
-            .filter((group) => group.section === openDropdown)
-            .map((group) => {
-              const flatItems = group.items.filter((item): item is NavLeafItem => !("subGroup" in item));
-              const subGroups = group.items.filter((item): item is NavSubGroupItem => "subGroup" in item);
-              return (
-                <div key={group.section} className="topnav-panel">
-                  {flatItems.length > 0 && (
-                    <div className="dash-app-grid">
-                      {flatItems.map((item) =>
-                        item.comingSoon ? (
-                          <span key={item.label} className="dash-app-tile topnav-tile-soon">
-                            <span className="dash-app-tile-icon">{item.icon}</span>
-                            <span>{item.label}</span>
-                            <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
-                          </span>
-                        ) : (
-                          <NavLink key={item.to} to={item.to} end={item.to === "/"} className="dash-app-tile">
-                            <span className="dash-app-tile-icon">{item.icon}</span>
-                            <span>{item.label}</span>
-                          </NavLink>
-                        )
-                      )}
-                    </div>
-                  )}
-                  {subGroups.map((group) => (
-                    <div key={group.subGroup} className="topnav-tile-group">
-                      <div className="topnav-tile-group-title">{group.subGroup}</div>
-                      <div className="dash-app-grid">
-                        {group.subItems.map((sub) =>
-                          sub.comingSoon ? (
-                            <span key={sub.label} className="dash-app-tile topnav-tile-soon">
-                              <span className="dash-app-tile-icon">{group.icon}</span>
-                              <span>{sub.label}</span>
-                              <span className="sidebar-soon-badge">{t.accounting.comingSoon}</span>
-                            </span>
-                          ) : (
-                            <NavLink key={sub.label} to={sub.to} className="dash-app-tile">
-                              <span className="dash-app-tile-icon">{group.icon}</span>
-                              <span>{sub.label}</span>
-                            </NavLink>
-                          )
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
-            })}
         </div>
       </header>
       <main className="topnav-content">{children}</main>

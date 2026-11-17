@@ -2341,3 +2341,43 @@ td,
     padding: 14px;
   }
 }
+
+/* Section menus drop straight down from their own tab as a vertical list. */
+.topnav-item { position: relative; }
+.topnav-dropdown {
+  position: absolute;
+  inset-inline-start: 0;
+  top: 100%;
+  z-index: 60;
+  min-width: 250px;
+  max-width: min(330px, 92vw);
+  max-height: 72vh;
+  overflow-y: auto;
+  background: var(--color-surface);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.22);
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: d2-rise 0.16s ease both;
+}
+.topnav-item:nth-last-child(-n+2) .topnav-dropdown { inset-inline-start: auto; inset-inline-end: 0; }
+.topnav-dropdown .dash-app-grid { display: flex; flex-direction: column; gap: 2px; }
+.topnav-dropdown .dash-app-tile {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: 10px;
+  border: none;
+  background: transparent;
+  padding: 7px 10px;
+  text-align: start;
+  font-weight: 500;
+  border-radius: 8px;
+}
+.topnav-dropdown .dash-app-tile:hover { background: rgba(26, 95, 122, 0.12); box-shadow: none; }
+.topnav-dropdown .dash-app-tile-icon { width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0; }
+.topnav-dropdown .topnav-tile-group-title { padding: 8px 10px 2px; margin: 0; font-size: 12px; }
+.topnav-dropdown .topnav-tile-group + .topnav-tile-group { border-top: 1px solid var(--color-border); padding-top: 4px; }
