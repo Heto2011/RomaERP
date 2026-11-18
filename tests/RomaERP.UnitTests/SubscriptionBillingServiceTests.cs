@@ -94,22 +94,29 @@ public class SubscriptionBillingServiceTests
     }
 
     [Fact]
-    public async Task ActivatePaid_EgyptMiniGetsTheWelcomeDiscount_ForItsFirstThreeInvoices()
+    public async Task StartWithFreeMonths_ActivatesAtOnce_InvoicesNothing_AndBillsWhenTheFreeMonthsEnd()
     {
         var central = NewCentral();
         var plan = Plan("mini", 1, 5);
         central.SubscriptionPlans.Add(plan);
-        var (tenant, _) = AddTenant(central, plan, Country.Egypt, SubscriptionStatus.Trialing, DateTime.UtcNow.AddDays(-1), isDemo: true);
+        var (tenant, _) = AddTenant(central, plan, Country.Egypt, SubscriptionStatus.Trialing, DateTime.UtcNow.AddDays(5), isDemo: true);
         var service = new TestableBillingService(central, Config());
 
-        await service.ActivatePaidAsync(tenant.Id, plan.Id, null);
+        var dto = await service.StartWithFreeMonthsAsync(tenant.Id, plan.Id, 3);
 
-        var invoice = await central.SubscriptionInvoices.SingleAsync();
-        Assert.Equal(499m, invoice.BaseAmount);
-        Assert.Equal(150m, invoice.PromoDiscountAmount);            // 30% of 499 = 149.7, rounded to whole pounds
-        Assert.Equal(349m, invoice.TotalAmount);
+        Assert.Equal(SubscriptionStatus.Active, dto.Status);
+        Assert.Empty(await central.SubscriptionInvoices.ToListAsync());          // nothing to pay yet
         var sub = await central.Subscriptions.SingleAsync();
-        Assert.Equal(2, sub.DiscountMonthsLeft);                    // this invoice used the first of three months
+        Assert.True(sub.CurrentPeriodEnd > DateTime.UtcNow.AddMonths(3).AddDays(-1));
+        Assert.False((await central.Tenants.SingleAsync()).IsDemo);               // a customer now, so the trial sweep leaves it alone
+
+        // Three months later the normal billing run invoices it.
+        sub.CurrentPeriodEnd = DateTime.UtcNow.AddMinutes(-1);
+        await central.SaveChangesAsync();
+        await service.RunBillingCycleAsync();
+        var invoice = await central.SubscriptionInvoices.SingleAsync();
+        Assert.Equal(499m, invoice.TotalAmount);
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.StartWithFreeMonthsAsync(tenant.Id, plan.Id, 0));
     }
 
     [Fact]

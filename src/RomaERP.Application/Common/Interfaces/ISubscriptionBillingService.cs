@@ -100,6 +100,9 @@ public interface ISubscriptionBillingService
     Task<TenantSubscriptionDto> ActivatePaidAsync(Guid tenantId, Guid planId, string? paymentReference, BillingPeriod billingPeriod = BillingPeriod.Monthly, CancellationToken ct = default);
     /// <summary>Switches how the NEXT renewal is billed (monthly or one annual invoice). The period already paid is untouched.</summary>
     /// <summary>Gives one company a temporary discount: percent off each monthly invoice for a number of months (0 clears it).</summary>
+    /// <summary>Starts a customer on a plan with some months free: it is active at once, nothing is invoiced until those months end,
+    /// and the normal billing run invoices it the moment they do.</summary>
+    Task<TenantSubscriptionDto> StartWithFreeMonthsAsync(Guid tenantId, Guid planId, int months, CancellationToken ct = default);
     Task<TenantSubscriptionDto> SetDiscountAsync(Guid tenantId, decimal percent, int months, CancellationToken ct = default);
     Task<TenantSubscriptionDto> SetBillingPeriodAsync(Guid tenantId, BillingPeriod billingPeriod, CancellationToken ct = default);
     Task<TenantSubscriptionDto> SuspendAsync(Guid tenantId, CancellationToken ct = default);

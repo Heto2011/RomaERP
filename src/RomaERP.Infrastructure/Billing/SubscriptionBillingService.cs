@@ -138,6 +138,31 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         return await BuildDtoAsync(tenant, subscription, plan, ct);
     }
 
+    public async Task<TenantSubscriptionDto> StartWithFreeMonthsAsync(Guid tenantId, Guid planId, int months, CancellationToken ct = default)
+    {
+        if (months < 1 || months > 36) throw new ValidationAppException("عدد الشهور المجانية لازم يكون بين 1 و36.");
+        var tenant = await GetTenantOrThrowAsync(tenantId, ct);
+        var plan = await _central.SubscriptionPlans.FirstOrDefaultAsync(p => p.Id == planId, ct)
+            ?? throw new NotFoundException(nameof(SubscriptionPlan), planId);
+        var subscription = await GetOrCreateSubscriptionAsync(tenant, ct);
+        var now = DateTime.UtcNow;
+
+        // Same as a confirmed first payment (a real customer, not a trial that expires), except nothing is charged yet.
+        tenant.IsDemo = false;
+        tenant.ExpiresAtUtc = null;
+        tenant.IsActive = true;
+        subscription.PlanId = plan.Id;
+        await UpgradeFromBooksIfNeededAsync(tenant.Id, plan.Code, ct);
+        subscription.Status = SubscriptionStatus.Active;
+        subscription.SuspendedAtUtc = null;
+        subscription.BillingPeriod = BillingPeriod.Monthly;
+        subscription.CurrentPeriodStart = now;
+        subscription.CurrentPeriodEnd = now.AddMonths(months);
+        Log(tenant, "Billing", "Started with free months", $"{plan.NameEn} · {months} months free, first invoice on {subscription.CurrentPeriodEnd:yyyy-MM-dd}");
+        await _central.SaveChangesAsync(ct);
+        return await BuildDtoAsync(tenant, subscription, plan, ct);
+    }
+
     public async Task<TenantSubscriptionDto> SetDiscountAsync(Guid tenantId, decimal percent, int months, CancellationToken ct = default)
     {
         if (percent < 0 || percent > 100) throw new ValidationAppException("نسبة الخصم لازم تكون بين 0 و100.");
@@ -193,16 +218,6 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var priceSet = await ResolvePriceSetAsync(subscription, tenant, plan, ct);
         var isAdditionalCompany = subscription.BillingAccountId.HasValue && await _central.Subscriptions.AnyAsync(
             s => s.BillingAccountId == subscription.BillingAccountId && s.Id != subscription.Id && s.Status == SubscriptionStatus.Active, ct);
-
-        // Welcome offer: the entry plan's very first paid invoice starts a short discount (editable or removable in the console).
-        if (plan.Code == SubscriptionPricingConstants.WelcomePlanCode && billingPeriod == BillingPeriod.Monthly
-            && subscription.DiscountPercent == 0 && subscription.DiscountMonthsLeft == 0
-            && !await _central.SubscriptionInvoices.AnyAsync(i => i.SubscriptionId == subscription.Id && i.Status == SubscriptionInvoiceStatus.Paid, ct))
-        {
-            subscription.DiscountPercent = SubscriptionPricingConstants.WelcomeDiscountPercent;
-            subscription.DiscountMonthsLeft = SubscriptionPricingConstants.WelcomeDiscountMonths;
-            Log(tenant, "Billing", "Welcome discount started", $"{subscription.DiscountPercent}% for {subscription.DiscountMonthsLeft} months");
-        }
 
         var invoice = BuildInvoice(subscription, plan, priceSet, branches, users, isAdditionalCompany);
         invoice.Status = SubscriptionInvoiceStatus.Paid;

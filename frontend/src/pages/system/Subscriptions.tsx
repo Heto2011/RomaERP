@@ -136,6 +136,21 @@ export default function SubscriptionsPage() {
     }
   }
 
+  async function handleFreeMonths(s: TenantSubscription) {
+    if (!systemKey) return;
+    const m = prompt(`Start "${s.companyNameEn}" on the ${s.planCode} plan with free months.\n\nHow many months are free? Nothing is invoiced until they end, then billing starts by itself:`, "3");
+    if (m === null) return;
+    const months = Math.floor(Number(m));
+    if (!Number.isFinite(months) || months < 1 || months > 36) { setError("The months must be between 1 and 36."); return; }
+    setError(null);
+    try {
+      await SubscriptionsApi.startWithFreeMonths(systemKey, s.tenantId, s.planId, months);
+      await loadAll();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function handleChangeCode(s: TenantSubscription) {
     if (!systemKey) return;
     const code = prompt(`New login code for "${s.companyNameEn}" (current: ${s.companyCode}).\nLowercase English letters, numbers and dashes, 3–50 characters.\nEveryone signed in will have to log in again with the new code:`);
@@ -394,6 +409,7 @@ export default function SubscriptionsPage() {
                         <button className="btn btn-secondary btn-sm" onClick={() => handleReactivate(s.tenantId)}>Reactivate</button>
                       )}
                       <button className="btn btn-secondary btn-sm" onClick={() => handleToggleScope(s)}>{s.productScope !== ProductScope.Full ? "Open full ERP" : "HR only"}</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleFreeMonths(s)}>Free months</button>
                       <button className="btn btn-secondary btn-sm" onClick={() => handleDiscount(s)}>Discount</button>
                       <button className="btn btn-secondary btn-sm" onClick={() => handleChangeCode(s)}>Change code</button>
                       <button className="btn btn-sm" style={{ background: "#b42318", color: "#fff" }} onClick={() => handleDeleteForever(s)}>Delete forever</button>
