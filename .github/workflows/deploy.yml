@@ -50,6 +50,21 @@ jobs:
             git reset --hard origin/claude/project-continuation-gjlk3b
             git log -1 --oneline
 
+            # This small server (about 2 GB) runs SQL Server and the live site, and compiling the API on top of that ran it out of
+            # memory (the compiler was killed with exit code 137 after a quarter of an hour of swapping). Give it swap once, so the
+            # build can finish instead of being killed; the live site keeps running through it.
+            if [ "$(swapon --show --noheadings 2>/dev/null | wc -l)" = "0" ]; then
+              if fallocate -l 4G /swapfile && chmod 600 /swapfile && mkswap /swapfile >/dev/null && swapon /swapfile; then
+                grep -q '^/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' >> /etc/fstab
+                echo "swap added: 4G"
+              else
+                echo "WARNING: could not add swap (the build may run out of memory)"
+              fi
+            fi
+            sysctl -w vm.swappiness=30 >/dev/null 2>&1 || true
+            swapon --show || true
+            free -h | sed -n '1,3p'
+
             # Read-only snapshot of the CURRENTLY-RUNNING process, before anything below touches it —
             # answers "is the system actually healthy right now" independently of whether this deploy
             # itself succeeds. Never fails the job (all commands tolerate missing data).
@@ -250,7 +265,8 @@ jobs:
                 raise SystemExit('DEPLOY_STOPPED: add the JWT_SIGNING_KEY secret (a long random value) in GitHub, then deploy again.')
             "
 
-            dotnet publish src/RomaERP.API/RomaERP.API.csproj -c Release -o /var/www/romaerp-api
+            # One compiler process, no long-lived compiler server: the least memory the build can use on this small server.
+            dotnet publish src/RomaERP.API/RomaERP.API.csproj -c Release -o /var/www/romaerp-api -maxcpucount:1 -p:UseSharedCompilation=false
             systemctl restart romaerp-api
             sleep 5
             API_STATUS=$(systemctl is-active romaerp-api || true)
