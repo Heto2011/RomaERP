@@ -37,6 +37,7 @@ export default function SubscriptionsPage() {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [viewFilter, setViewFilter] = useState<"all" | "dormant">("all");
   const [activityFor, setActivityFor] = useState<TenantSubscription | null>(null);
   const [activity, setActivity] = useState<TenantActivity[] | null>(null);
   const PAGE_SIZE = 25;
@@ -123,6 +124,30 @@ export default function SubscriptionsPage() {
     } catch (err) {
       setError(getErrorMessage(err));
     }
+  }
+
+  // A company that never made anything (no login, or a login and nothing else). Only these are ever offered for a follow-up or a clean-up.
+  const isDormant = (s: TenantSubscription) => s.activationStatus === "NeverStarted" || s.activationStatus === "LoggedInOnly";
+  const hasNoContact = (s: TenantSubscription) => !s.contactEmail?.trim() && !s.contactPhone?.trim();
+  // Safe to erase: dormant, nobody to reach, and not a paying company.
+  const isRemovable = (s: TenantSubscription) =>
+    isDormant(s) && hasNoContact(s) && (s.status === SubscriptionStatus.Trialing || ["books", "hrfree", "pos"].includes(s.planCode.toLowerCase())) && s.outstandingAmount === 0;
+
+  const followUpText = `Hello,\n\nYou created a Roma account recently and we noticed you haven't started using it yet. Are you still interested? If something was unclear or didn't fit, tell us and we'll help you set it up, or tell us it's not for you and we'll close the account.\n\nشكراً لتسجيلك في روما. لاحظنا إنك لسه ما بدأتش تستخدم الحساب. هل ما زال عندك اهتمام؟ لو في أي صعوبة قولنا ونساعدك، ولو مش محتاج الحساب قولنا ونقفله.\n\nRoma team`;
+
+  async function handleDeleteInactive() {
+    if (!systemKey || !subscriptions) return;
+    const targets = subscriptions.filter(isRemovable);
+    if (targets.length === 0) { setError("Nothing to remove on this page: no dormant company without an email and a phone."); return; }
+    const typed = prompt(`DELETE FOREVER ${targets.length} companies that never started AND have no email and no phone:\n\n${targets.map((t) => `${t.companyNameEn} (${t.companyCode})`).join("\n")}\n\nThis cannot be undone. Type DELETE to confirm:`);
+    if (typed !== "DELETE") return;
+    setError(null);
+    let failed = 0;
+    for (const t of targets) {
+      try { await SubscriptionsApi.deleteForever(systemKey, t.tenantId, t.companyCode); } catch { failed++; }
+    }
+    if (failed > 0) setError(`${failed} of ${targets.length} could not be removed.`);
+    await loadAll();
   }
 
   async function handleDeleteForever(s: TenantSubscription) {
@@ -268,6 +293,19 @@ export default function SubscriptionsPage() {
               const blob = new Blob(["\ufeff" + rows.map((r) => r.map(q).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
               const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "customers-contacts.csv"; a.click(); URL.revokeObjectURL(a.href);
             }}>Download contacts (CSV)</button>
+            <select value={viewFilter} onChange={(e) => setViewFilter(e.target.value as "all" | "dormant")} style={{ maxWidth: 220 }}>
+              <option value="all">Show: all companies</option>
+              <option value="dormant">Show: never started</option>
+            </select>
+            <button className="btn btn-secondary btn-sm" title="Copies the emails of the never-started companies on this page" onClick={() => {
+              const emails = subscriptions.filter((x) => isDormant(x) && x.contactEmail?.trim()).map((x) => x.contactEmail!.trim());
+              void navigator.clipboard?.writeText(Array.from(new Set(emails)).join(", "));
+              alert(`${new Set(emails).size} emails copied. Paste them in BCC and use the follow-up text (next button).`);
+            }}>Copy emails (never started)</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => { void navigator.clipboard?.writeText(followUpText); alert("Follow-up message copied."); }}>Copy follow-up message</button>
+            <button className="btn btn-sm" style={{ background: "#b42318", color: "#fff" }} onClick={handleDeleteInactive}>
+              Delete never-started with no contact ({subscriptions.filter(isRemovable).length})
+            </button>
           </div>
           {subscriptions.length === 0 && <div className="text-muted">No tenants found.</div>}
           {subscriptions.length > 0 && (
@@ -278,7 +316,7 @@ export default function SubscriptionsPage() {
                 </tr>
               </thead>
               <tbody>
-                {subscriptions.map((s) => (
+                {subscriptions.filter((x) => viewFilter === "all" || isDormant(x)).map((s) => (
                   <tr key={s.tenantId}>
                     <td>{s.companyNameEn} <span className="text-muted">({s.companyCode})</span>
                       <div className="text-muted">{s.productScope === ProductScope.PeopleOnly ? "Roma HR only" : s.productScope === ProductScope.BooksOnly ? "Roma Books (free)" : s.productScope === ProductScope.PosOnly ? "Roma POS" : "Full ERP + HR"}</div></td>
