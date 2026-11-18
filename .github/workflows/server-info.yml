@@ -28,6 +28,10 @@ jobs:
             echo; echo "== Cloud metadata (if the provider exposes it) =="
             cat /sys/class/dmi/id/sys_vendor /sys/class/dmi/id/product_name 2>/dev/null || true
             curl -s --max-time 3 http://169.254.169.254/metadata/v1/id >/dev/null 2>&1 && echo "metadata service present"
+            echo; echo "== Where the domain romagroup.app lives (registrar, name servers, mail) =="
+            curl -s --max-time 15 "https://rdap.org/domain/romagroup.app" | grep -oE '"(ldhName|handle)":"[^"]*"|"nameserver"|"ldhName":"[^"]*"|"vcardArray":\[[^]]*\]' | head -12 || true
+            curl -s --max-time 15 "https://dns.google/resolve?name=romagroup.app&type=NS" | grep -oE '"data":"[^"]*"' || true
+            curl -s --max-time 15 "https://dns.google/resolve?name=romagroup.app&type=MX" | grep -oE '"data":"[^"]*"' || echo "no MX records (no mailbox set up on the domain)"
             echo; echo "== Size =="
             echo "cpus: $(nproc)"; free -h | sed -n '1,3p'
             df -h / | tail -1
