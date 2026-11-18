@@ -239,8 +239,8 @@ export default function SubscriptionsPage() {
                   <td>{p.code}</td>
                   <td>{p.nameEn}</td>
                   <td>{p.isCustomPricing ? "Custom" : `${p.monthlyBasePrice.toLocaleString()} SAR (EGP / GBP lists differ)`}</td>
-                  <td>{p.isCustomPricing ? "—" : p.includedBranches}</td>
-                  <td>{p.isCustomPricing ? "—" : p.includedUsers}</td>
+                  <td>{p.isCustomPricing ? "—" : p.includedBranches >= 1000000 ? "Unlimited" : p.includedBranches}</td>
+                  <td>{p.isCustomPricing ? "—" : p.includedUsers >= 1000000 ? "Unlimited" : p.includedUsers}</td>
                 </tr>
               ))}
             </tbody>
