@@ -85,9 +85,9 @@ export default function RestaurantPortalLayout({ children }: { children: ReactNo
         </div>
         <div className="sidebar-footer">
           <div style={{ fontSize: 13, marginBottom: 8 }}>{user?.fullName}</div>
-          <Link to="/" className="btn btn-secondary btn-sm" style={{ display: "block", textAlign: "center", marginBottom: 8, textDecoration: "none" }}>
-            {t.backToRomaErp}
-          </Link>
+          <Link to="/" className="btn btn-secondary btn-sm" title={t.backToRomaErp} aria-label={t.backToRomaErp} style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
+              <img src="/roma-logo.png" alt="" width={20} height={20} style={{ borderRadius: 5 }} />
+            </Link>
           <button className="btn btn-secondary btn-sm" onClick={logout}>
             {t.logout}
           </button>
