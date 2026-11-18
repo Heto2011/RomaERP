@@ -11,7 +11,9 @@ public record TrialSignupRequest(
     string AdminPassword,
     ProductScope ProductScope = ProductScope.Full,
     BusinessType BusinessTypes = BusinessType.None,
-    string? MarketerCode = null);
+    string? MarketerCode = null,
+    /// <summary>Optional mobile/WhatsApp number, so we can help during the trial.</summary>
+    string? Phone = null);
 
 /// <summary>Carries a ready-to-use login token so the new tenant lands straight in the app —
 /// no separate login step right after signing up.</summary>

@@ -47,7 +47,11 @@ public record TenantSubscriptionDto(
     int PurchaseInvoiceCount = 0,
     int RestaurantOrderCount = 0,
     int EmployeeCount = 0,
-    string? ActivationStatus = null);
+    string? ActivationStatus = null,
+    // Who to contact: from the signup, or (older companies) the Admin user of its own database.
+    string? ContactName = null,
+    string? ContactEmail = null,
+    string? ContactPhone = null);
 
 public record SubscriptionInvoiceDto(
     Guid Id,

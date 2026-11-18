@@ -95,6 +95,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             {
                 LastLoginAtUtc = act.LastLoginUtc, SalesInvoiceCount = act.SalesInvoices, PurchaseInvoiceCount = act.PurchaseInvoices,
                 RestaurantOrderCount = act.RestaurantOrders, EmployeeCount = act.Employees,
+                ContactName = tenant.ContactName ?? act.AdminName, ContactEmail = tenant.ContactEmail ?? act.AdminEmail, ContactPhone = tenant.ContactPhone ?? act.AdminPhone,
                 ActivationStatus = ClassifyActivation(act.LastLoginUtc, act.SalesInvoices + act.PurchaseInvoices + act.RestaurantOrders + act.Employees, DateTime.UtcNow)
             });
         }
@@ -623,17 +624,25 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             var db = scope.ServiceProvider.GetRequiredService<IApplicationDbContext>();
 
             var lastLogin = await db.LoginHistories.Where(h => h.Success).MaxAsync(h => (DateTime?)h.OccurredAtUtc, ct);
+            // Companies made before contact details were kept at signup: the contact is their Admin user.
+            string? name = null, email = null, phone = null;
+            if (tenant.ContactEmail is null)
+            {
+                var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+                var admin = (await userManager.GetUsersInRoleAsync("Admin")).OrderBy(u => u.Email).FirstOrDefault();
+                (name, email, phone) = (admin?.FullName, admin?.Email, admin?.PhoneNumber);
+            }
             return new TenantActivation(lastLogin, await db.SalesInvoices.CountAsync(ct), await db.PurchaseInvoices.CountAsync(ct),
-                await db.RestaurantOrders.CountAsync(ct), await db.Employees.CountAsync(e => !e.IsDeleted, ct));
+                await db.RestaurantOrders.CountAsync(ct), await db.Employees.CountAsync(e => !e.IsDeleted, ct), name, email, phone);
         }
         catch
         {
-            return new TenantActivation(null, 0, 0, 0, 0);
+            return new TenantActivation(null, 0, 0, 0, 0, null, null, null);
         }
     }
 
     /// <summary>What a company has really done: when it last logged in and how much it made. These numbers are what shows who is heading for the paid plans.</summary>
-    protected record TenantActivation(DateTime? LastLoginUtc, int SalesInvoices, int PurchaseInvoices, int RestaurantOrders, int Employees);
+    protected record TenantActivation(DateTime? LastLoginUtc, int SalesInvoices, int PurchaseInvoices, int RestaurantOrders, int Employees, string? AdminName, string? AdminEmail, string? AdminPhone);
 
     private static SubscriptionPlanDto MapPlan(SubscriptionPlan p) =>
         new(p.Id, p.Code, p.NameAr, p.NameEn, p.MonthlyBasePrice, p.IncludedBranches, p.IncludedUsers, p.IsCustomPricing, p.IsActive);

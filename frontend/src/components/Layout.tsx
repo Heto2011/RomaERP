@@ -5,6 +5,7 @@ import { ProductScope } from "../api/types";
 import { hiddenSectionsFor, SHOW_ALL_KEY, type NavSectionKey } from "../businessType";
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
+import FeedbackButton from "./FeedbackButton";
 import GlobalSearch from "./GlobalSearch";
 import UsageIndicator from "./UsageIndicator";
 import { isEmployeeWithExtraModules, isPureCashier } from "../utils/userHome";
@@ -536,6 +537,7 @@ export default function Layout({ children }: { children: ReactNode }) {
                 </button>
               ))}
             </span>
+            <FeedbackButton />
             <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>

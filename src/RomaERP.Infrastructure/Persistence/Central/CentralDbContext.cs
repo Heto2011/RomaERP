@@ -23,6 +23,7 @@ public class CentralDbContext : DbContext
     public DbSet<TenantActivity> TenantActivities => Set<TenantActivity>();
     public DbSet<TenantCreditEntry> TenantCreditEntries => Set<TenantCreditEntry>();
     public DbSet<Marketer> Marketers => Set<Marketer>();
+    public DbSet<CustomerReview> CustomerReviews => Set<CustomerReview>();
     public DbSet<MarketerReferral> MarketerReferrals => Set<MarketerReferral>();
     public DbSet<MarketerCommission> MarketerCommissions => Set<MarketerCommission>();
 
@@ -37,6 +38,20 @@ public class CentralDbContext : DbContext
             b.HasIndex(m => m.Code).IsUnique();
             b.Property(m => m.Email).HasMaxLength(200);
             b.Property(m => m.Notes).HasMaxLength(500);
+        });
+        builder.Entity<CustomerReview>(b =>
+        {
+            b.Property(r => r.CompanyCode).HasMaxLength(60).IsRequired();
+            b.Property(r => r.CompanyName).HasMaxLength(200);
+            b.Property(r => r.UserId).HasMaxLength(100);
+            b.Property(r => r.UserName).HasMaxLength(200).IsRequired();
+            b.Property(r => r.DisplayName).HasMaxLength(80).IsRequired();
+            b.Property(r => r.Comment).HasMaxLength(1000);
+            b.Property(r => r.Product).HasMaxLength(10).IsRequired();
+            b.Property(r => r.PeriodKey).HasMaxLength(7).IsRequired();
+            b.Property(r => r.AdminNote).HasMaxLength(300);
+            b.HasIndex(r => new { r.TenantId, r.UserId, r.PeriodKey }).IsUnique();
+            b.HasIndex(r => r.Status);
         });
         builder.Entity<MarketerReferral>(b =>
         {
@@ -78,6 +93,9 @@ public class CentralDbContext : DbContext
             b.Property(t => t.CompanyNameAr).HasMaxLength(200).IsRequired();
             b.Property(t => t.CompanyNameEn).HasMaxLength(200).IsRequired();
             b.Property(t => t.DatabaseName).HasMaxLength(100).IsRequired();
+            b.Property(t => t.ContactName).HasMaxLength(200);
+            b.Property(t => t.ContactEmail).HasMaxLength(200);
+            b.Property(t => t.ContactPhone).HasMaxLength(30);
             b.HasQueryFilter(t => !t.IsDeleted);
         });
 

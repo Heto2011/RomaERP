@@ -48,6 +48,11 @@ public class Tenant : AuditableEntity
     public Country Country { get; set; }
     public string DatabaseName { get; set; } = string.Empty;
     public bool IsActive { get; set; } = true;
+    /// <summary>Who to contact about this company, from its signup: the owner's name, e-mail and (optional) mobile/WhatsApp. Shown to the platform
+    /// owner in the system console. Older companies have none and fall back to their Admin user.</summary>
+    public string? ContactName { get; set; }
+    public string? ContactEmail { get; set; }
+    public string? ContactPhone { get; set; }
     public ProductScope ProductScope { get; set; } = ProductScope.Full;
     public BusinessType BusinessTypes { get; set; } = BusinessType.None;
 

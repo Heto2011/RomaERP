@@ -260,13 +260,21 @@ export default function SubscriptionsPage() {
               placeholder="Search by company name or code"
             />
             <button className="btn btn-secondary btn-sm" onClick={() => { setPage(1); void loadAll(search, 1); }}>Search</button>
+            <button className="btn btn-secondary btn-sm" onClick={() => {
+              // the companies on this page, with how to reach them
+              const q = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+              const rows = [["Company", "Code", "Plan", "Status", "Name", "Email", "Phone", "Last login"],
+                ...subscriptions.map((s) => [s.companyNameEn, s.companyCode, s.planCode, statusLabel[s.status], s.contactName, s.contactEmail, s.contactPhone, s.lastLoginAtUtc ?? ""])];
+              const blob = new Blob(["\ufeff" + rows.map((r) => r.map(q).join(",")).join("\n")], { type: "text/csv;charset=utf-8" });
+              const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "customers-contacts.csv"; a.click(); URL.revokeObjectURL(a.href);
+            }}>Download contacts (CSV)</button>
           </div>
           {subscriptions.length === 0 && <div className="text-muted">No tenants found.</div>}
           {subscriptions.length > 0 && (
             <table>
               <thead>
                 <tr>
-                  <th>Company</th><th>Plan</th><th>Status</th><th>Usage</th><th>Activity</th><th>Period Ends</th><th>Outstanding</th><th>Actions</th>
+                  <th>Company</th><th>Contact</th><th>Plan</th><th>Status</th><th>Usage</th><th>Activity</th><th>Period Ends</th><th>Outstanding</th><th>Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -274,6 +282,13 @@ export default function SubscriptionsPage() {
                   <tr key={s.tenantId}>
                     <td>{s.companyNameEn} <span className="text-muted">({s.companyCode})</span>
                       <div className="text-muted">{s.productScope === ProductScope.PeopleOnly ? "Roma HR only" : s.productScope === ProductScope.BooksOnly ? "Roma Books (free)" : s.productScope === ProductScope.PosOnly ? "Roma POS" : "Full ERP + HR"}</div></td>
+                    <td style={{ fontSize: 13 }}>
+                      {s.contactName && <div>{s.contactName}</div>}
+                      {s.contactEmail && <div><a href={`mailto:${s.contactEmail}`}>{s.contactEmail}</a></div>}
+                      {s.contactPhone
+                        ? <div><a href={`https://wa.me/${s.contactPhone.replace(/[^\d]/g, "")}`} target="_blank" rel="noreferrer">{s.contactPhone}</a></div>
+                        : <div className="text-muted">no phone</div>}
+                    </td>
                     <td>
                       <select value={s.planId} onChange={(e) => handleSetPlan(s.tenantId, e.target.value)}>
                         {(plans ?? []).map((p) => <option key={p.id} value={p.id}>{p.nameEn}</option>)}

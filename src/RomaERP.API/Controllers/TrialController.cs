@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using RomaERP.API.Contracts;
 using RomaERP.Application.Common.Exceptions;
@@ -26,14 +27,17 @@ public class TrialController : ControllerBase
     private readonly IServiceScopeFactory _scopeFactory;
     private readonly ITokenService _tokenService;
     private readonly RomaERP.Infrastructure.Billing.MarketerCommissionService _marketers;
+    private readonly RomaERP.Infrastructure.Persistence.Central.CentralDbContext _central;
 
     public TrialController(
         ITenantProvisioningService provisioning,
         ITenantRegistry registry,
         IServiceScopeFactory scopeFactory,
         ITokenService tokenService,
-        RomaERP.Infrastructure.Billing.MarketerCommissionService marketers)
+        RomaERP.Infrastructure.Billing.MarketerCommissionService marketers,
+        RomaERP.Infrastructure.Persistence.Central.CentralDbContext central)
     {
+        _central = central;
         _marketers = marketers;
         _provisioning = provisioning;
         _registry = registry;
@@ -78,6 +82,21 @@ public class TrialController : ControllerBase
 
         if (tenant is null)
             return BadRequest(new { error = "حصل خطأ أثناء إنشاء الحساب، جرّب اسم شركة مختلف." });
+
+        // Keep the owner's contact details with the company so the platform owner can reach them.
+        try
+        {
+            var row = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == tenant.Id, ct);
+            if (row is not null)
+            {
+                row.ContactName = request.AdminFullName?.Trim();
+                row.ContactEmail = request.AdminEmail?.Trim();
+                var phone = request.Phone?.Trim();
+                row.ContactPhone = string.IsNullOrWhiteSpace(phone) ? null : (phone.Length > 30 ? phone[..30] : phone);
+                await _central.SaveChangesAsync(ct);
+            }
+        }
+        catch { /* a contact-details problem must never block a new account */ }
 
         try { await _marketers.RecordReferralAsync(tenant.Id, request.MarketerCode, ct); }
         catch { /* a referral problem must never block a new account */ }

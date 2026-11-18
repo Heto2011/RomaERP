@@ -2494,6 +2494,9 @@ export interface TenantSubscription {
   employeeCount?: number;
   /** NeverStarted, LoggedInOnly, Active or Idle. */
   activationStatus?: string | null;
+  contactName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
 }
 
 export interface TenantActivity {
@@ -2568,6 +2571,7 @@ export interface TrialSignupRequest {
   productScope: ProductScope;
   businessTypes: BusinessType;
   marketerCode?: string;
+  phone?: string;
 }
 
 export interface TrialSignupResponse {

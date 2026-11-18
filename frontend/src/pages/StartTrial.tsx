@@ -60,6 +60,7 @@ export default function StartTrial() {
   const [country, setCountry] = useState<Country | "">("");
   const [adminFullName, setAdminFullName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -97,6 +98,7 @@ export default function StartTrial() {
         productScope,
         businessTypes,
         marketerCode: marketerCode.trim() || undefined,
+        phone: phone.trim() || undefined,
       });
       const { data } = res;
       loginWithToken(data.companyCode, data.token, data.email, data.fullName, data.roles, [], data.productScope, data.businessTypes);
@@ -213,6 +215,11 @@ export default function StartTrial() {
           <div className="form-field">
             <label>{t.trial.email}</label>
             <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
+          </div>
+          <div className="form-field">
+            <label>{lang === "ar" ? "رقم الموبايل / واتساب (اختياري)" : "Mobile / WhatsApp number (optional)"}</label>
+            <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} maxLength={30} autoComplete="tel" placeholder="+20…" />
+            <span className="text-muted" style={{ fontSize: 12 }}>{lang === "ar" ? "علشان نساعدك لو احتجت مساعدة في التجربة. مش هنشاركه مع حد." : "So we can help you during the trial. We never share it."}</span>
           </div>
           <div className="form-field">
             <label>{t.trial.password}</label>

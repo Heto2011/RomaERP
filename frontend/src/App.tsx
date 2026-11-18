@@ -17,6 +17,7 @@ import MarketingViewsPage from "./pages/system/MarketingViews";
 import MySubscriptionPage from "./pages/MySubscription";
 import SubscriptionsPage from "./pages/system/Subscriptions";
 import MarketersPage from "./pages/system/Marketers";
+import ReviewsPage from "./pages/system/Reviews";
 import Integrations from "./pages/Integrations";
 import SupportTicketsPage from "./pages/system/SupportTickets";
 import AiUsagePage from "./pages/system/AiUsage";
@@ -204,6 +205,7 @@ export default function App() {
       <Route path="/inventory-login" element={<InventoryLogin />} />
       <Route path="/start-trial" element={<StartTrial />} />
       <Route path="/pos-login" element={<PosLogin />} />
+      <Route path="/system/reviews" element={<ReviewsPage />} />
       <Route path="/system/demo-tenants" element={<DemoTenantsPage />} />
       <Route path="/system/data-deletion" element={<DataDeletionPage />} />
       <Route path="/system/marketing-views" element={<MarketingViewsPage />} />
