@@ -1,0 +1,39 @@
+name: Server info (read-only)
+
+# Prints which company hosts the server, how big it is and how full it is. It only READS: nothing is installed,
+# changed, restarted or deployed. Used to decide when the server needs more memory and what that would cost.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  info:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Read server details
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          command_timeout: 3m
+          script: |
+            echo "== Hosting company (from the server's public address) =="
+            IP=$(curl -s --max-time 10 https://ifconfig.me || true)
+            echo "public ip: $IP"
+            curl -s --max-time 15 "https://ipinfo.io/$IP/json" | grep -E '"(org|city|region|country)"' || true
+            echo; echo "== Cloud metadata (if the provider exposes it) =="
+            cat /sys/class/dmi/id/sys_vendor /sys/class/dmi/id/product_name 2>/dev/null || true
+            curl -s --max-time 3 http://169.254.169.254/metadata/v1/id >/dev/null 2>&1 && echo "metadata service present"
+            echo; echo "== Size =="
+            echo "cpus: $(nproc)"; free -h | sed -n '1,3p'
+            df -h / | tail -1
+            echo; echo "== How full the server is now =="
+            uptime
+            ps -eo comm,rss --sort=-rss | head -6
+            echo; echo "== Databases on the server =="
+            docker ps --format '{{.Names}} {{.Status}}' 2>/dev/null || true
+            du -sh /var/opt/mssql 2>/dev/null || docker exec sqlserver du -sh /var/opt/mssql 2>/dev/null || true
