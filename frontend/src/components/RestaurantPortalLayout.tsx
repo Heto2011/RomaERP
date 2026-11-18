@@ -57,6 +57,9 @@ export default function RestaurantPortalLayout({ children }: { children: ReactNo
             <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>
+            <Link to="/" className="sidebar-toggle" title={t.backToRomaErp} aria-label={t.backToRomaErp} style={{ display: "inline-flex", alignItems: "center", justifyContent: "center" }}>
+                <img src="/roma-logo.png" alt="" width={22} height={22} style={{ borderRadius: 6 }} />
+              </Link>
           </div>
         </div>
         <div style={{ padding: "0 20px 12px" }}>
@@ -85,9 +88,6 @@ export default function RestaurantPortalLayout({ children }: { children: ReactNo
         </div>
         <div className="sidebar-footer">
           <div style={{ fontSize: 13, marginBottom: 8 }}>{user?.fullName}</div>
-          <Link to="/" className="btn btn-secondary btn-sm" title={t.backToRomaErp} aria-label={t.backToRomaErp} style={{ display: "flex", justifyContent: "center", marginBottom: 8 }}>
-              <img src="/roma-logo.png" alt="" width={20} height={20} style={{ borderRadius: 5 }} />
-            </Link>
           <button className="btn btn-secondary btn-sm" onClick={logout}>
             {t.logout}
           </button>
