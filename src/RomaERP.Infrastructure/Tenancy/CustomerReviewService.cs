@@ -80,9 +80,12 @@ public class CustomerReviewService
     }
 
     /// <summary>What the website may show: approved reviews whose author agreed to publish them. The average and count are real, over all of those.</summary>
-    public async Task<PublicReviews> GetPublicAsync(CancellationToken ct = default)
+    /// <param name="products">Only reviews of these products (ERP, HR, POS, Books): a review appears on the page of the product it is about. Empty = all.</param>
+    public async Task<PublicReviews> GetPublicAsync(string[]? products = null, CancellationToken ct = default)
     {
-        var rows = await _central.CustomerReviews.AsNoTracking().Where(r => r.Status == ReviewStatus.Approved && r.AllowPublish).OrderByDescending(r => r.CreatedAtUtc).ToListAsync(ct);
+        var wanted = (products ?? Array.Empty<string>()).Select(p => p.Trim()).Where(p => p.Length > 0).ToArray();
+        var rows = await _central.CustomerReviews.AsNoTracking().Where(r => r.Status == ReviewStatus.Approved && r.AllowPublish && (wanted.Length == 0 || wanted.Contains(r.Product)))
+            .OrderByDescending(r => r.CreatedAtUtc).ToListAsync(ct);
         return new PublicReviews(rows.Count, rows.Count == 0 ? 0 : Math.Round(rows.Average(r => r.Rating), 1),
             rows.Take(30).Select(r => new PublicReview(r.Rating, r.Comment, r.DisplayName, r.ShowCompany ? r.CompanyName : null, r.Product, r.PeriodKey)).ToList());
     }

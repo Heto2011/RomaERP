@@ -79,4 +79,19 @@ public class CustomerReviewTests
     [InlineData(5, null, true)]    // asking to publish needs a comment
     public async Task BadReviews_AreRefused(int rating, string? comment, bool publish)
         => await Assert.ThrowsAsync<ValidationAppException>(() => new CustomerReviewService(NewCentral()).SubmitAsync(Review(Guid.NewGuid(), rating: rating, comment: comment, publish: publish), new DateTime(2026, 11, 28)));
+
+    [Fact]
+    public async Task AReview_AppearsOnlyOnThePageOfItsOwnProduct()
+    {
+        var central = NewCentral();
+        var svc = new CustomerReviewService(central);
+        var day = new DateTime(2026, 11, 28);
+        await svc.SubmitAsync(Review(Guid.NewGuid(), "erp") with { Product = "ERP", Comment = "عن الـ ERP" }, day);
+        await svc.SubmitAsync(Review(Guid.NewGuid(), "hr") with { Product = "HR", Comment = "عن الـ HR" }, day);
+        foreach (var r in await central.CustomerReviews.ToListAsync()) await svc.DecideAsync(r.Id, ReviewStatus.Approved, null);
+
+        Assert.Equal("عن الـ HR", Assert.Single((await svc.GetPublicAsync(new[] { "HR" })).Items).Comment);
+        Assert.Equal("عن الـ ERP", Assert.Single((await svc.GetPublicAsync(new[] { "ERP", "POS", "Books" })).Items).Comment);
+        Assert.Equal(2, (await svc.GetPublicAsync()).Count);
+    }
 }

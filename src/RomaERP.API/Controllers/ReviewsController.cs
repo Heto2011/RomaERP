@@ -55,8 +55,9 @@ public class PublicReviewsController : ControllerBase
 
     [HttpGet]
     [EnableRateLimiting("marketing-pageview")]
-    [ResponseCache(Duration = 300)]
-    public async Task<ActionResult<PublicReviews>> Get(CancellationToken ct) => Ok(await _service.GetPublicAsync(ct));
+    [ResponseCache(Duration = 300, VaryByQueryKeys = new[] { "product" })]
+    public async Task<ActionResult<PublicReviews>> Get([FromQuery] string? product, CancellationToken ct)
+        => Ok(await _service.GetPublicAsync(string.IsNullOrWhiteSpace(product) ? null : product.Split(','), ct));
 }
 
 /// <summary>The platform owner's console: read what customers wrote and decide what may appear on the website.</summary>

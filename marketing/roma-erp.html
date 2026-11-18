@@ -642,16 +642,17 @@
   </div>
 </section>
 
-<section id="reviews" hidden>
+<section id="reviews" hidden data-products="ERP,POS,Books">
   <div class="wrap">
     <div class="section-head">
-      <span class="eyebrow" id="reviewsEyebrow"></span>
-      <h2 id="reviewsHeading"></h2>
+      <span class="eyebrow reviews-eyebrow"></span>
+      <h2 class="reviews-heading"></h2>
     </div>
-    <p class="reviews-summary" id="reviewsSummary"></p>
-    <div class="reviews-grid" id="reviewsGrid"></div>
+    <p class="reviews-summary"></p>
+    <div class="reviews-grid"></div>
   </div>
 </section>
+<script src="/reviews.js"></script>
 
 <section id="trial">
   <div class="wrap">
@@ -759,27 +760,6 @@
   const langParam = new URLSearchParams(location.search).get("lang");
   if (langParam === "ar" || langParam === "en") localStorage.setItem("lang", langParam);
   let currentLang = localStorage.getItem("lang") === "ar" ? "ar" : "en";
-
-  // Real customer reviews from the system (approved, and only those the customer agreed to publish). Nothing is shown when there are none.
-  let reviewsData = null;
-  fetch("/api/marketing/reviews").then((r) => (r.ok ? r.json() : null)).then((d) => { reviewsData = d; renderReviews(T[currentLang]); }).catch(() => {});
-  function renderReviews(t) {
-    const section = document.getElementById("reviews");
-    if (!section) return;
-    if (!reviewsData || !reviewsData.count) { section.hidden = true; return; }
-    section.hidden = false;
-    // The average and count are shown only from five reviews up, so a single opinion is not passed off as a trend.
-    document.getElementById("reviewsSummary").textContent = reviewsData.count >= 5 ? t.reviewsSummary.replace("{avg}", reviewsData.average).replace("{n}", reviewsData.count) : "";
-    const grid = document.getElementById("reviewsGrid");
-    grid.textContent = "";
-    reviewsData.items.forEach((r) => {
-      const card = document.createElement("div"); card.className = "review-card";
-      const stars = document.createElement("div"); stars.className = "stars"; stars.textContent = "★".repeat(r.rating) + "☆".repeat(5 - r.rating);
-      const text = document.createElement("p"); text.textContent = r.comment || "";
-      const who = document.createElement("div"); who.className = "who"; who.textContent = r.companyName ? r.displayName + " — " + r.companyName : r.displayName;
-      card.append(stars, text, who); grid.append(card);
-    });
-  }
 
   // Illustrative dashboard-mockup data only — not a live data feed.
   const REVENUE_TREND = [30, 34, 32, 38, 42, 40, 46, 50, 48, 55, 60, 64];
@@ -922,7 +902,6 @@
       integrationLiveLabel: "تكامل مباشر", integrationManualLabel: "مطابقة كشف تسوية",
       integrationsNote: "التكامل المباشر (Webhook) شغال فعليًا مع جاهز وهنجرستيشن ومرسول — الطلبات بتوصل أوتوماتيك من غير أي تدخل. أي منصة توصيل تانية (زي طلبات أو كريم أو غيرهم) بترفع كشف التسوية اللي بتصدّره المنصة (Excel أو CSV) والنظام يطابقه تلقائيًا مع مبيعاتك — مش مربوط باسم منصة معينة، فبيشتغل مع أي منصة تصدّر كشف حساب.",
       faqEyebrow: "أسئلة شائعة", faqHeading: "قبل ما تسأل، جاوبنا هنا",
-      reviewsEyebrow: "آراء العملاء", reviewsHeading: "اللي قالوه عننا", reviewsSummary: "متوسط {avg} من 5، من {n} رأي حقيقي لعملاء وافقوا على النشر",
       faq: [
         ["الأسعار دي نهائية؟", "لأ، دي أرقام بداية لمراجعتنا الداخلية قبل الإطلاق الرسمي. ممكن تتغير، وأي عميل حالي هياخد إشعار مسبق لو حصل تغيير يخصه."],
         ["ينفع أجرب من غير بطاقة بنكية؟", "أيوه، 21 يوم تجربة كاملة من غير أي بيانات دفع، وكل الإمكانيات متاحة زي أي حساب مدفوع بالظبط."],
@@ -1073,7 +1052,6 @@
       integrationLiveLabel: "Direct integration", integrationManualLabel: "Settlement-statement matching",
       integrationsNote: "Direct (webhook) integration is live with Jahez, HungerStation, and Mrsool — orders arrive automatically with no manual work. Any other delivery platform (Talabat, Careem, or others) works by uploading the settlement statement it exports (Excel or CSV), which the system automatically matches against your sales — it isn't tied to a specific platform's name, so it works with any platform that exports a statement.",
       faqEyebrow: "FAQ", faqHeading: "Answers before you have to ask",
-      reviewsEyebrow: "Customer reviews", reviewsHeading: "What customers say", reviewsSummary: "Average {avg} out of 5, from {n} real reviews by customers who agreed to publish them",
       faq: [
         ["Are these prices final?", "No, these are a starting point for our internal review before official launch. They may change, and any existing customer will get advance notice of any change that affects them."],
         ["Can I try it without a credit card?", "Yes, a full 21-day trial with no payment details, and every feature available exactly as in a paid account."],
@@ -1276,9 +1254,6 @@
     `).join("");
     document.getElementById("integrationsNote").textContent = t.integrationsNote;
 
-    document.getElementById("reviewsEyebrow").textContent = t.reviewsEyebrow;
-    document.getElementById("reviewsHeading").textContent = t.reviewsHeading;
-    renderReviews(t);
     document.getElementById("faqEyebrow").textContent = t.faqEyebrow;
     document.getElementById("faqHeading").textContent = t.faqHeading;
     document.getElementById("faqList").innerHTML = t.faq.map(([q, a]) =>
