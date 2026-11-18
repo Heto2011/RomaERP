@@ -39,4 +39,6 @@ public class SubscriptionInvoice : AuditableEntity
     public DateTime? PaidAtUtc { get; set; }
     public string? PaymentReference { get; set; }
     public string? Notes { get; set; }
+    /// <summary>The last reminder email sent for this unpaid invoice: 0 none, 1 on the due date, 2 after a week, 3 after two weeks (final notice).</summary>
+    public int ReminderStage { get; set; }
 }

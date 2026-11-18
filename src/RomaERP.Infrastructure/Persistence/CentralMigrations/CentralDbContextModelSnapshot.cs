@@ -642,6 +642,9 @@ namespace RomaERP.Infrastructure.Persistence.CentralMigrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int>("ReminderStage")
+                        .HasColumnType("int");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 

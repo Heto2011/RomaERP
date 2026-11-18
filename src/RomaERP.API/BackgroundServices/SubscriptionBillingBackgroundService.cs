@@ -49,6 +49,12 @@ public class SubscriptionBillingBackgroundService : BackgroundService
                     result.InvoicesGenerated, result.AutoCharged, result.Suspended);
             foreach (var note in result.Notes)
                 _logger.LogWarning("Billing: {Note}", note);
+
+            // Payment reminders to the customer by email (due date, a week late, two weeks late).
+            var reminders = await scope.ServiceProvider.GetRequiredService<RomaERP.Infrastructure.Billing.InvoiceReminderService>()
+                .SendDueRemindersAsync(DateTime.UtcNow, ct);
+            if (reminders > 0)
+                _logger.LogInformation("Billing: {Count} payment reminder email(s) sent.", reminders);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
         {

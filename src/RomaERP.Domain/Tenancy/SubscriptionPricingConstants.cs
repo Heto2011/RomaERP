@@ -12,5 +12,5 @@ public static class SubscriptionPricingConstants
     public const decimal AdditionalCompanyDiscountMultiplier = 0.85m;
 
     /// <summary>Days past the due date an unpaid invoice is tolerated before the tenant is auto-suspended.</summary>
-    public const int GracePeriodDays = 7;
+    public const int GracePeriodDays = 14;
 }
