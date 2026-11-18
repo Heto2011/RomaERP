@@ -113,6 +113,29 @@ export default function SubscriptionsPage() {
     }
   }
 
+  async function handleDiscount(s: TenantSubscription) {
+    if (!systemKey) return;
+    const current = (s.discountMonthsLeft ?? 0) > 0 ? ` (now ${s.discountPercent}% for ${s.discountMonthsLeft} more months)` : "";
+    const pct = prompt(`Discount for "${s.companyNameEn}"${current}\n\nPercent off the plan price each month (0 removes the discount):`, String(s.discountPercent || 0));
+    if (pct === null) return;
+    const percent = Number(pct);
+    if (!Number.isFinite(percent) || percent < 0 || percent > 100) { setError("The percent must be between 0 and 100."); return; }
+    let months = 0;
+    if (percent > 0) {
+      const m = prompt("For how many months?", "3");
+      if (m === null) return;
+      months = Math.floor(Number(m));
+      if (!Number.isFinite(months) || months < 1 || months > 36) { setError("The months must be between 1 and 36."); return; }
+    }
+    setError(null);
+    try {
+      await SubscriptionsApi.setDiscount(systemKey, s.tenantId, percent, months);
+      await loadAll();
+    } catch (err) {
+      setError(getErrorMessage(err));
+    }
+  }
+
   async function handleChangeCode(s: TenantSubscription) {
     if (!systemKey) return;
     const code = prompt(`New login code for "${s.companyNameEn}" (current: ${s.companyCode}).\nLowercase English letters, numbers and dashes, 3–50 characters.\nEveryone signed in will have to log in again with the new code:`);
@@ -332,7 +355,7 @@ export default function SubscriptionsPage() {
                         {(plans ?? []).map((p) => <option key={p.id} value={p.id}>{p.nameEn}</option>)}
                       </select>
                     </td>
-                    <td className={statusClass[s.status]}>{statusLabel[s.status]}</td>
+                    <td className={statusClass[s.status]}>{statusLabel[s.status]}{(s.discountMonthsLeft ?? 0) > 0 && <div style={{ fontSize: 12 }}>{s.discountPercent}% off · {s.discountMonthsLeft} mo left</div>}</td>
                     <td>{s.currentBranches} branches / {s.currentUsers} users</td>
                     <td>
                       {(() => {
@@ -371,6 +394,7 @@ export default function SubscriptionsPage() {
                         <button className="btn btn-secondary btn-sm" onClick={() => handleReactivate(s.tenantId)}>Reactivate</button>
                       )}
                       <button className="btn btn-secondary btn-sm" onClick={() => handleToggleScope(s)}>{s.productScope !== ProductScope.Full ? "Open full ERP" : "HR only"}</button>
+                      <button className="btn btn-secondary btn-sm" onClick={() => handleDiscount(s)}>Discount</button>
                       <button className="btn btn-secondary btn-sm" onClick={() => handleChangeCode(s)}>Change code</button>
                       <button className="btn btn-sm" style={{ background: "#b42318", color: "#fff" }} onClick={() => handleDeleteForever(s)}>Delete forever</button>
                     </td>

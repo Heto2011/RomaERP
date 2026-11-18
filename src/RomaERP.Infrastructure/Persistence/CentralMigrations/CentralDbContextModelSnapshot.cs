@@ -502,6 +502,13 @@ namespace RomaERP.Infrastructure.Persistence.CentralMigrations
                     b.Property<DateTime>("CurrentPeriodStart")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("DiscountMonthsLeft")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("DiscountPercent")
+                        .HasPrecision(5, 2)
+                        .HasColumnType("decimal(5,2)");
+
                     b.Property<string>("ExtraBranchesLemonSubscriptionId")
                         .HasMaxLength(200)
                         .HasColumnType("nvarchar(200)");
@@ -630,6 +637,10 @@ namespace RomaERP.Infrastructure.Persistence.CentralMigrations
                         .IsRequired()
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
+
+                    b.Property<decimal>("PromoDiscountAmount")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
 
                     b.Property<int>("Status")
                         .HasColumnType("int");

@@ -111,6 +111,7 @@ public class CentralDbContext : DbContext
 
         builder.Entity<Subscription>(b =>
         {
+            b.Property(x => x.DiscountPercent).HasPrecision(5, 2);
             b.HasIndex(s => s.TenantId).IsUnique();
             b.Property(s => s.PaymentProvider).HasMaxLength(50).IsRequired();
             b.Property(s => s.PaymentProviderCustomerRef).HasMaxLength(200);
@@ -132,6 +133,7 @@ public class CentralDbContext : DbContext
             b.Property(i => i.ExtraBranchesAmount).HasPrecision(18, 2);
             b.Property(i => i.ExtraUsersAmount).HasPrecision(18, 2);
             b.Property(i => i.MultiCompanyDiscountAmount).HasPrecision(18, 2);
+            b.Property(i => i.PromoDiscountAmount).HasPrecision(18, 2);
             b.Property(i => i.TotalAmount).HasPrecision(18, 2);
             b.HasOne<Tenant>().WithMany().HasForeignKey(i => i.TenantId).OnDelete(DeleteBehavior.Restrict);
             b.HasOne<Subscription>().WithMany().HasForeignKey(i => i.SubscriptionId).OnDelete(DeleteBehavior.Restrict);

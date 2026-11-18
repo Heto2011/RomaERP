@@ -36,6 +36,9 @@ public static class SubscriptionInvoiceHtmlTemplate
         if (invoice.MultiCompanyDiscountAmount != 0)
             Row(L("خصم تعدد الشركات", "Multi-company discount"), string.Empty, -Math.Abs(invoice.MultiCompanyDiscountAmount));
 
+        if (invoice.PromoDiscountAmount != 0)
+            Row(L("خصم ترحيبي / خصم خاص", "Promotional discount"), string.Empty, -Math.Abs(invoice.PromoDiscountAmount));
+
         var paid = invoice.Status == SubscriptionInvoiceStatus.Paid;
         var statusLabel = invoice.Status switch
         {

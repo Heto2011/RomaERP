@@ -51,7 +51,10 @@ public record TenantSubscriptionDto(
     // Who to contact: from the signup, or (older companies) the Admin user of its own database.
     string? ContactName = null,
     string? ContactEmail = null,
-    string? ContactPhone = null);
+    string? ContactPhone = null,
+    // A temporary plan discount: percent off while months are left.
+    decimal DiscountPercent = 0,
+    int DiscountMonthsLeft = 0);
 
 public record SubscriptionInvoiceDto(
     Guid Id,
@@ -72,7 +75,8 @@ public record SubscriptionInvoiceDto(
     SubscriptionInvoiceStatus Status,
     DateTime DueDateUtc,
     DateTime? PaidAtUtc,
-    string? PaymentReference);
+    string? PaymentReference,
+    decimal PromoDiscountAmount = 0);
 
 public record TenantActivityDto(Guid Id, DateTime OccurredAtUtc, string Category, string Action, string? Details, string? Actor);
 
@@ -95,6 +99,8 @@ public interface ISubscriptionBillingService
     /// (clears the trial expiry), sets the plan, opens a one-month period and records that month's invoice as paid.</summary>
     Task<TenantSubscriptionDto> ActivatePaidAsync(Guid tenantId, Guid planId, string? paymentReference, BillingPeriod billingPeriod = BillingPeriod.Monthly, CancellationToken ct = default);
     /// <summary>Switches how the NEXT renewal is billed (monthly or one annual invoice). The period already paid is untouched.</summary>
+    /// <summary>Gives one company a temporary discount: percent off each monthly invoice for a number of months (0 clears it).</summary>
+    Task<TenantSubscriptionDto> SetDiscountAsync(Guid tenantId, decimal percent, int months, CancellationToken ct = default);
     Task<TenantSubscriptionDto> SetBillingPeriodAsync(Guid tenantId, BillingPeriod billingPeriod, CancellationToken ct = default);
     Task<TenantSubscriptionDto> SuspendAsync(Guid tenantId, CancellationToken ct = default);
     Task<TenantSubscriptionDto> ReactivateAsync(Guid tenantId, CancellationToken ct = default);

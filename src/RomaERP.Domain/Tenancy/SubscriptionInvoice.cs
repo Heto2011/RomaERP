@@ -29,6 +29,8 @@ public class SubscriptionInvoice : AuditableEntity
     public int ExtraUsers { get; set; }
     public decimal ExtraUsersAmount { get; set; }
     public decimal MultiCompanyDiscountAmount { get; set; }
+    /// <summary>The temporary plan discount (welcome offer or one the owner gave this company) taken off this invoice.</summary>
+    public decimal PromoDiscountAmount { get; set; }
     public decimal TotalAmount { get; set; }
     public string Currency { get; set; } = "SAR";
 

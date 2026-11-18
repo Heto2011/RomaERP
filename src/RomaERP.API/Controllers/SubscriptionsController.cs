@@ -12,6 +12,7 @@ public record MarkInvoicePaidRequest(string? PaymentReference);
 public record ActivatePaidRequest(Guid PlanId, string? PaymentReference, bool Annual = false);
 
 public record SetBillingPeriodRequest(bool Annual);
+public record SetDiscountRequest(decimal Percent, int Months);
 public record GrantAiCreditsRequest(int Credits, string? Reason);
 
 /// <summary>Platform-level billing console — spans every tenant, so (like SystemController) it's excluded
@@ -120,6 +121,15 @@ public class SubscriptionsController : ControllerBase
 
         return Ok(await _billing.ActivatePaidAsync(tenantId, request.PlanId, request.PaymentReference,
             request.Annual ? RomaERP.Domain.Tenancy.BillingPeriod.Annual : RomaERP.Domain.Tenancy.BillingPeriod.Monthly, ct));
+    }
+
+    [HttpPut("tenants/{tenantId:guid}/discount")]
+    public async Task<ActionResult<TenantSubscriptionDto>> SetDiscount(Guid tenantId, SetDiscountRequest request, CancellationToken ct)
+    {
+        var keyCheck = CheckSystemKey();
+        if (keyCheck is not null) return keyCheck;
+
+        return Ok(await _billing.SetDiscountAsync(tenantId, request.Percent, request.Months, ct));
     }
 
     [HttpPut("tenants/{tenantId:guid}/billing-period")]

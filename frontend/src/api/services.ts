@@ -1031,6 +1031,8 @@ export const SubscriptionsApi = {
     systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/suspend`, null, { headers: { "X-System-Key": systemKey } }),
   activatePaid: (systemKey: string, tenantId: string, planId: string, paymentReference: string | null, annual = false) =>
     systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/activate-paid`, { planId, paymentReference, annual }, { headers: { "X-System-Key": systemKey } }),
+  setDiscount: (systemKey: string, tenantId: string, percent: number, months: number) =>
+    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/discount`, { percent, months }, { headers: { "X-System-Key": systemKey } }),
   setBillingPeriod: (systemKey: string, tenantId: string, annual: boolean) =>
     systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/billing-period`, { annual }, { headers: { "X-System-Key": systemKey } }),
   reactivate: (systemKey: string, tenantId: string) =>

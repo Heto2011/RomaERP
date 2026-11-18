@@ -46,5 +46,10 @@ public class Subscription : AuditableEntity
     public string? ExtraBranchesLemonSubscriptionId { get; set; }
     public string? ExtraUsersLemonSubscriptionId { get; set; }
 
+    /// <summary>A temporary discount on the plan price: this percent off each monthly invoice while <see cref="DiscountMonthsLeft"/>
+    /// is above zero (it counts down by one per invoice). Set by the platform owner for one company, or by the welcome offer.</summary>
+    public decimal DiscountPercent { get; set; }
+    public int DiscountMonthsLeft { get; set; }
+
     public DateTime? SuspendedAtUtc { get; set; }
 }

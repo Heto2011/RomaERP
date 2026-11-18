@@ -138,6 +138,21 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         return await BuildDtoAsync(tenant, subscription, plan, ct);
     }
 
+    public async Task<TenantSubscriptionDto> SetDiscountAsync(Guid tenantId, decimal percent, int months, CancellationToken ct = default)
+    {
+        if (percent < 0 || percent > 100) throw new ValidationAppException("نسبة الخصم لازم تكون بين 0 و100.");
+        if (months < 0 || months > 36) throw new ValidationAppException("عدد الشهور لازم يكون بين 0 و36.");
+        var tenant = await GetTenantOrThrowAsync(tenantId, ct);
+        var subscription = await GetOrCreateSubscriptionAsync(tenant, ct);
+        var plan = await _central.SubscriptionPlans.AsNoTracking().FirstAsync(p => p.Id == subscription.PlanId, ct);
+        var clear = percent == 0 || months == 0;
+        subscription.DiscountPercent = clear ? 0 : percent;
+        subscription.DiscountMonthsLeft = clear ? 0 : months;
+        Log(tenant, "Subscription", clear ? "Discount removed" : "Discount set", clear ? null : $"{percent}% for {months} months");
+        await _central.SaveChangesAsync(ct);
+        return await BuildDtoAsync(tenant, subscription, plan, ct);
+    }
+
     public async Task<TenantSubscriptionDto> SetBillingPeriodAsync(Guid tenantId, BillingPeriod billingPeriod, CancellationToken ct = default)
     {
         var tenant = await GetTenantOrThrowAsync(tenantId, ct);
@@ -178,6 +193,16 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var priceSet = await ResolvePriceSetAsync(subscription, tenant, plan, ct);
         var isAdditionalCompany = subscription.BillingAccountId.HasValue && await _central.Subscriptions.AnyAsync(
             s => s.BillingAccountId == subscription.BillingAccountId && s.Id != subscription.Id && s.Status == SubscriptionStatus.Active, ct);
+
+        // Welcome offer: the entry plan's very first paid invoice starts a short discount (editable or removable in the console).
+        if (plan.Code == SubscriptionPricingConstants.WelcomePlanCode && billingPeriod == BillingPeriod.Monthly
+            && subscription.DiscountPercent == 0 && subscription.DiscountMonthsLeft == 0
+            && !await _central.SubscriptionInvoices.AnyAsync(i => i.SubscriptionId == subscription.Id && i.Status == SubscriptionInvoiceStatus.Paid, ct))
+        {
+            subscription.DiscountPercent = SubscriptionPricingConstants.WelcomeDiscountPercent;
+            subscription.DiscountMonthsLeft = SubscriptionPricingConstants.WelcomeDiscountMonths;
+            Log(tenant, "Billing", "Welcome discount started", $"{subscription.DiscountPercent}% for {subscription.DiscountMonthsLeft} months");
+        }
 
         var invoice = BuildInvoice(subscription, plan, priceSet, branches, users, isAdditionalCompany);
         invoice.Status = SubscriptionInvoiceStatus.Paid;
@@ -473,6 +498,13 @@ public class SubscriptionBillingService : ISubscriptionBillingService
         var extraBranchesAmount = Round(pricing.ExtraBranchesAmount * factor);
         var extraUsersAmount = Round(pricing.ExtraUsersAmount * factor);
         var discount = Round(pricing.MultiCompanyDiscountAmount * factor);
+        // A temporary plan discount applies to monthly invoices only (an annual invoice is already two months cheaper) and counts down.
+        var promo = 0m;
+        if (subscription.DiscountMonthsLeft > 0 && subscription.DiscountPercent > 0 && PeriodFor(subscription, plan) == BillingPeriod.Monthly)
+        {
+            promo = Round(baseAmount * subscription.DiscountPercent / 100m);
+            subscription.DiscountMonthsLeft--;
+        }
 
         return new SubscriptionInvoice
         {
@@ -488,7 +520,8 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             ExtraUsers = pricing.ExtraUsers,
             ExtraUsersAmount = extraUsersAmount,
             MultiCompanyDiscountAmount = discount,
-            TotalAmount = baseAmount + extraBranchesAmount + extraUsersAmount - discount,
+            PromoDiscountAmount = promo,
+            TotalAmount = baseAmount + extraBranchesAmount + extraUsersAmount - discount - promo,
             Currency = prices.Currency,
             Status = SubscriptionInvoiceStatus.Pending,
             DueDateUtc = subscription.CurrentPeriodEnd,
@@ -661,11 +694,12 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             plan.IncludedUsers == int.MaxValue ? null : plan.IncludedUsers,
             showOverage ? Math.Round(prices!.ExtraBranch, decimals, MidpointRounding.AwayFromZero) : 0,
             showOverage ? Math.Round(prices!.ExtraUser, decimals, MidpointRounding.AwayFromZero) : 0,
-            tenant.ProductScope);
+            tenant.ProductScope,
+            DiscountPercent: s.DiscountPercent, DiscountMonthsLeft: s.DiscountMonthsLeft);
     }
 
     private static SubscriptionInvoiceDto MapInvoice(SubscriptionInvoice i, string companyNameAr) =>
         new(i.Id, i.TenantId, companyNameAr, i.PlanCode, i.PlanNameAr, i.PeriodStart, i.PeriodEnd,
             i.BaseAmount, i.ExtraBranches, i.ExtraBranchesAmount, i.ExtraUsers, i.ExtraUsersAmount,
-            i.MultiCompanyDiscountAmount, i.TotalAmount, i.Currency, i.Status, i.DueDateUtc, i.PaidAtUtc, i.PaymentReference);
+            i.MultiCompanyDiscountAmount, i.TotalAmount, i.Currency, i.Status, i.DueDateUtc, i.PaidAtUtc, i.PaymentReference, i.PromoDiscountAmount);
 }

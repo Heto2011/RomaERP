@@ -94,6 +94,43 @@ public class SubscriptionBillingServiceTests
     }
 
     [Fact]
+    public async Task ActivatePaid_EgyptMiniGetsTheWelcomeDiscount_ForItsFirstThreeInvoices()
+    {
+        var central = NewCentral();
+        var plan = Plan("mini", 1, 5);
+        central.SubscriptionPlans.Add(plan);
+        var (tenant, _) = AddTenant(central, plan, Country.Egypt, SubscriptionStatus.Trialing, DateTime.UtcNow.AddDays(-1), isDemo: true);
+        var service = new TestableBillingService(central, Config());
+
+        await service.ActivatePaidAsync(tenant.Id, plan.Id, null);
+
+        var invoice = await central.SubscriptionInvoices.SingleAsync();
+        Assert.Equal(499m, invoice.BaseAmount);
+        Assert.Equal(150m, invoice.PromoDiscountAmount);            // 30% of 499 = 149.7, rounded to whole pounds
+        Assert.Equal(349m, invoice.TotalAmount);
+        var sub = await central.Subscriptions.SingleAsync();
+        Assert.Equal(2, sub.DiscountMonthsLeft);                    // this invoice used the first of three months
+    }
+
+    [Fact]
+    public async Task SetDiscount_GivesOneCompanyAPercentForSomeMonths_AndZeroClearsIt()
+    {
+        var central = NewCentral();
+        var plan = Plan("essential", 3, 10);
+        central.SubscriptionPlans.Add(plan);
+        var (tenant, _) = AddTenant(central, plan, Country.Egypt, SubscriptionStatus.Active, DateTime.UtcNow.AddDays(5));
+        var service = new TestableBillingService(central, Config());
+
+        var dto = await service.SetDiscountAsync(tenant.Id, 20m, 3);
+        Assert.Equal(20m, dto.DiscountPercent);
+        Assert.Equal(3, dto.DiscountMonthsLeft);
+
+        var cleared = await service.SetDiscountAsync(tenant.Id, 0m, 0);
+        Assert.Equal(0m, cleared.DiscountPercent);
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.SetDiscountAsync(tenant.Id, 120m, 3));
+    }
+
+    [Fact]
     public async Task ActivatePaid_EgyptianCustomerIsInvoicedInEgp_AtTheListPrice()
     {
         var central = NewCentral();
