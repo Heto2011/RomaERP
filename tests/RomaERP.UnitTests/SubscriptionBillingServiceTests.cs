@@ -27,6 +27,13 @@ public class SubscriptionBillingServiceTests
 
         public int Branches { get; set; } = 1;
         public int Users { get; set; } = 1;
+        public DateTime? LastLogin { get; set; }
+        public int Records { get; set; }
+        public bool ReadFails { get; set; }
+
+        protected override Task<TenantActivation> ReadTenantActivationAsync(Tenant tenant, CancellationToken ct)
+            => ReadFails ? throw new InvalidOperationException("db down")
+                         : Task.FromResult(new TenantActivation(LastLogin, Records, 0, 0, 0, null, null, null));
 
         protected override Task<(int Branches, int Users)> CountTenantUsageAsync(Tenant tenant, CancellationToken ct)
             => Task.FromResult((Branches, Users));
@@ -117,6 +124,37 @@ public class SubscriptionBillingServiceTests
         var invoice = await central.SubscriptionInvoices.SingleAsync();
         Assert.Equal(499m, invoice.TotalAmount);
         await Assert.ThrowsAsync<ValidationAppException>(() => service.StartWithFreeMonthsAsync(tenant.Id, plan.Id, 0));
+    }
+
+    [Fact]
+    public async Task IsDormantAndDeletable_OnlyForANeverStartedUnbilledCompanyOlderThanFifteenDays()
+    {
+        var central = NewCentral();
+        var plan = Plan("essential", 3, 10);
+        central.SubscriptionPlans.Add(plan);
+        var (tenant, _) = AddTenant(central, plan, Country.Egypt, SubscriptionStatus.Trialing, DateTime.UtcNow.AddDays(5), isDemo: true);
+        var service = new TestableBillingService(central, Config());
+
+        Assert.False(await service.IsDormantAndDeletableAsync(tenant.Id));              // created just now
+
+        var row = await central.Tenants.SingleAsync();
+        row.CreatedAtUtc = DateTime.UtcNow.AddDays(-20);
+        await central.SaveChangesAsync();
+        row.CreatedAtUtc = DateTime.UtcNow.AddDays(-20);                                // in case saving stamped it
+        central.Entry(row).Property(t => t.CreatedAtUtc).IsModified = true;
+        await central.SaveChangesAsync();
+        Assert.True(await service.IsDormantAndDeletableAsync(tenant.Id));               // old, never logged in, nothing made
+
+        service.LastLogin = DateTime.UtcNow.AddDays(-3);
+        Assert.False(await service.IsDormantAndDeletableAsync(tenant.Id));              // it logged in once
+        service.LastLogin = null;
+
+        service.Records = 1;
+        Assert.False(await service.IsDormantAndDeletableAsync(tenant.Id));              // it made something
+        service.Records = 0;
+
+        service.ReadFails = true;
+        Assert.False(await service.IsDormantAndDeletableAsync(tenant.Id));              // cannot read it: not safe
     }
 
     [Fact]

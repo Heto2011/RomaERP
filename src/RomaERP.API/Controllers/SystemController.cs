@@ -28,6 +28,7 @@ public class SystemController : ControllerBase
     private readonly IConfiguration _configuration;
     private readonly CentralDbContext _central;
     private readonly IWebHostEnvironment _environment;
+    private readonly RomaERP.Application.Common.Interfaces.ISubscriptionBillingService _billing;
     private readonly RomaERP.Application.Assistant.Services.IAiUsageOverviewService _aiUsage;
 
     public SystemController(
@@ -37,8 +38,10 @@ public class SystemController : ControllerBase
         IConfiguration configuration,
         CentralDbContext central,
         IWebHostEnvironment environment,
-        RomaERP.Application.Assistant.Services.IAiUsageOverviewService aiUsage)
+        RomaERP.Application.Assistant.Services.IAiUsageOverviewService aiUsage,
+        RomaERP.Application.Common.Interfaces.ISubscriptionBillingService billing)
     {
+        _billing = billing;
         _aiUsage = aiUsage;
         _environment = environment;
         _provisioning = provisioning;
@@ -137,7 +140,9 @@ public class SystemController : ControllerBase
         var keyCheck = CheckSystemKey();
         if (keyCheck is not null) return keyCheck;
 
-        var record = await _provisioning.DeleteTenantPermanentlyAsync(tenantId, request.ConfirmCompanyCode, "system console", ct);
+        // A company made after the protection date is a real customer, unless it never even logged in and is old enough.
+        var dormant = await _billing.IsDormantAndDeletableAsync(tenantId, ct);
+        var record = await _provisioning.DeleteTenantPermanentlyAsync(tenantId, request.ConfirmCompanyCode, "system console", ct, allowDormantNewCompany: dormant);
 
         var folder = new string(record.CompanyCode.ToLowerInvariant().Where(ch => char.IsAsciiLetterOrDigit(ch) || ch == '-').ToArray());
         if (folder.Length > 0)

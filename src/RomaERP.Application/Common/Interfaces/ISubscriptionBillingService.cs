@@ -103,6 +103,9 @@ public interface ISubscriptionBillingService
     /// <summary>Starts a customer on a plan with some months free: it is active at once, nothing is invoiced until those months end,
     /// and the normal billing run invoices it the moment they do.</summary>
     Task<TenantSubscriptionDto> StartWithFreeMonthsAsync(Guid tenantId, Guid planId, int months, CancellationToken ct = default);
+    /// <summary>True only for a company that never logged in or made anything, is at least 15 days old and was never billed: the one kind of
+    /// newer company the console may erase. A database that cannot be read counts as "not safe".</summary>
+    Task<bool> IsDormantAndDeletableAsync(Guid tenantId, CancellationToken ct = default);
     Task<TenantSubscriptionDto> SetDiscountAsync(Guid tenantId, decimal percent, int months, CancellationToken ct = default);
     Task<TenantSubscriptionDto> SetBillingPeriodAsync(Guid tenantId, BillingPeriod billingPeriod, CancellationToken ct = default);
     Task<TenantSubscriptionDto> SuspendAsync(Guid tenantId, CancellationToken ct = default);

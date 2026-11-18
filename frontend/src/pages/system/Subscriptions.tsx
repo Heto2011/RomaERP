@@ -169,7 +169,7 @@ export default function SubscriptionsPage() {
   const hasNoContact = (s: TenantSubscription) => !s.contactEmail?.trim() && !s.contactPhone?.trim();
   // Safe to erase: dormant, nobody to reach, and not a paying company.
   const isRemovable = (s: TenantSubscription) =>
-    isDormant(s) && hasNoContact(s) && (s.status === SubscriptionStatus.Trialing || ["books", "hrfree", "pos"].includes(s.planCode.toLowerCase())) && s.outstandingAmount === 0;
+    s.activationStatus === "NeverStarted" && hasNoContact(s) && (s.status === SubscriptionStatus.Trialing || ["books", "hrfree", "pos"].includes(s.planCode.toLowerCase())) && s.outstandingAmount === 0;
 
   const followUpText = `Hello,\n\nYou created a Roma account recently and we noticed you haven't started using it yet. Are you still interested? If something was unclear or didn't fit, tell us and we'll help you set it up, or tell us it's not for you and we'll close the account.\n\nشكراً لتسجيلك في روما. لاحظنا إنك لسه ما بدأتش تستخدم الحساب. هل ما زال عندك اهتمام؟ لو في أي صعوبة قولنا ونساعدك، ولو مش محتاج الحساب قولنا ونقفله.\n\nRoma team`;
 

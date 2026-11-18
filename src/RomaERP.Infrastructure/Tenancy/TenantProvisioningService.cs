@@ -259,10 +259,10 @@ public class TenantProvisioningService : ITenantProvisioningService
     public static void EnsureLegacyTestCompany(Tenant tenant)
     {
         if (tenant.CreatedAtUtc >= LegacyTestCleanupCutoffUtc)
-            throw new ValidationAppException("دي شركة عميل فعلية — مينفعش تتمسح من هنا. المسح بيتم بس بعد طلب رسمي من أدمن الشركة على support@romagroup.app، ومن صفحة Data deletion (بيتسجّل فيها إيميل صاحب الطلب ورقم تأكيد).");
+            throw new ValidationAppException("دي شركة عميل فعلية — مينفعش تتمسح من هنا (الشركة اللي ما دخلتش خالص بعد 15 يوم بس هي اللي بتتمسح من هنا). المسح بيتم بس بعد طلب رسمي من أدمن الشركة على support@romagroup.app، ومن صفحة Data deletion (بيتسجّل فيها إيميل صاحب الطلب ورقم تأكيد).");
     }
 
-    public async Task<DataDeletionRecordDto> DeleteTenantPermanentlyAsync(Guid tenantId, string confirmCompanyCode, string processedBy, CancellationToken ct = default)
+    public async Task<DataDeletionRecordDto> DeleteTenantPermanentlyAsync(Guid tenantId, string confirmCompanyCode, string processedBy, CancellationToken ct = default, bool allowDormantNewCompany = false)
     {
         var tenant = await _central.Tenants.FirstOrDefaultAsync(t => t.Id == tenantId, ct)
             ?? throw new NotFoundException(nameof(Tenant), tenantId);
@@ -270,7 +270,8 @@ public class TenantProvisioningService : ITenantProvisioningService
         if (!string.Equals(confirmCompanyCode?.Trim(), tenant.CompanyCode, StringComparison.OrdinalIgnoreCase))
             throw new ValidationAppException("كود الشركة المكتوب مش مطابق — اتلغى الحذف.");
 
-        EnsureLegacyTestCompany(tenant);
+        // A newer company is protected, except one the caller has already verified never started (see IsDormantAndDeletableAsync).
+        if (!allowDormantNewCompany) EnsureLegacyTestCompany(tenant);
 
         if (!DatabaseNamePattern.IsMatch(tenant.DatabaseName))
             throw new ValidationAppException("اسم قاعدة البيانات غير متوقع — راجع الدعم الفني قبل الحذف.");

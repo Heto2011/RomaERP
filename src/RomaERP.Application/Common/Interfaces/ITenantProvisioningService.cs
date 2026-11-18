@@ -73,7 +73,7 @@ public interface ITenantProvisioningService
     /// subscription, invoices and activity trail from the central database so its code is free again. Refuses
     /// if the company has paid invoices (accounting records). Leaves one <see cref="DataDeletionRecordDto"/>
     /// behind as proof. Irreversible.</summary>
-    Task<DataDeletionRecordDto> DeleteTenantPermanentlyAsync(Guid tenantId, string confirmCompanyCode, string processedBy, CancellationToken ct = default);
+    Task<DataDeletionRecordDto> DeleteTenantPermanentlyAsync(Guid tenantId, string confirmCompanyCode, string processedBy, CancellationToken ct = default, bool allowDormantNewCompany = false);
 
     Task<List<DataDeletionRecordDto>> GetDataDeletionRecordsAsync(CancellationToken ct = default);
 }

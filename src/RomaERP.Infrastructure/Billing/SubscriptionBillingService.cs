@@ -664,7 +664,13 @@ public class SubscriptionBillingService : ISubscriptionBillingService
     /// A company whose database cannot be read simply shows nothing, rather than breaking the list.</summary>
     protected virtual async Task<TenantActivation> GetTenantActivationAsync(Tenant tenant, CancellationToken ct)
     {
-        try
+        try { return await ReadTenantActivationAsync(tenant, ct); }
+        catch { return new TenantActivation(null, 0, 0, 0, 0, null, null, null); }
+    }
+
+    /// <summary>The same reading, but a failure is thrown, never hidden: a deletion must never rest on "could not read it, so assume empty".</summary>
+    protected virtual async Task<TenantActivation> ReadTenantActivationAsync(Tenant tenant, CancellationToken ct)
+    {
         {
             using var scope = _scopeFactory.CreateScope();
             var tenantContext = scope.ServiceProvider.GetRequiredService<TenantContext>();
@@ -683,9 +689,31 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             return new TenantActivation(lastLogin, await db.SalesInvoices.CountAsync(ct), await db.PurchaseInvoices.CountAsync(ct),
                 await db.RestaurantOrders.CountAsync(ct), await db.Employees.CountAsync(e => !e.IsDeleted, ct), name, email, phone);
         }
+    }
+
+    /// <summary>Days a company that never even logged in is kept before the owner may erase it from the console.</summary>
+    public const int DormantDeletionMinDays = 15;
+
+    public async Task<bool> IsDormantAndDeletableAsync(Guid tenantId, CancellationToken ct = default)
+    {
+        var tenant = await _central.Tenants.AsNoTracking().FirstOrDefaultAsync(t => t.Id == tenantId, ct);
+        if (tenant is null) return false;
+        if ((DateTime.UtcNow - tenant.CreatedAtUtc).TotalDays < DormantDeletionMinDays) return false;
+
+        // Never a company that has paid, or has an open bill.
+        var billed = await _central.SubscriptionInvoices.AsNoTracking()
+            .AnyAsync(i => i.TenantId == tenantId && i.TotalAmount > 0 && i.Status != SubscriptionInvoiceStatus.Cancelled, ct);
+        if (billed) return false;
+
+        try
+        {
+            var act = await ReadTenantActivationAsync(tenant, ct);
+            var records = act.SalesInvoices + act.PurchaseInvoices + act.RestaurantOrders + act.Employees;
+            return ClassifyActivation(act.LastLoginUtc, records, DateTime.UtcNow) == "NeverStarted";
+        }
         catch
         {
-            return new TenantActivation(null, 0, 0, 0, 0, null, null, null);
+            return false;   // could not read its database: not safe to say it is empty
         }
     }
 
