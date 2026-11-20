@@ -40,6 +40,8 @@ public class MySubscriptionController : ControllerBase
         _configuration = configuration;
     }
 
+    private bool CardPaymentsEnabled => _configuration.GetValue("Billing:CardPaymentsEnabled", false);
+
     [HttpGet]
     public async Task<ActionResult<TenantSubscriptionDto>> GetMySubscription(CancellationToken ct)
     {
@@ -53,7 +55,9 @@ public class MySubscriptionController : ControllerBase
     [HttpGet("card-payments")]
     public async Task<ActionResult<CardPaymentOptionsDto>> GetCardPaymentOptions(CancellationToken ct)
     {
-        if (_tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt || !_lemon.IsConfigured || await HasLiveCardSubscriptionAsync(ct))
+        // Card payments are switched off until a new payment provider replaces Lemon Squeezy: customers pay by InstaPay (Egypt)
+        // or bank transfer (everyone else). Set Billing:CardPaymentsEnabled=true to bring the button back.
+        if (!CardPaymentsEnabled || _tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt || !_lemon.IsConfigured || await HasLiveCardSubscriptionAsync(ct))
             return Ok(new CardPaymentOptionsDto(false, new List<CardPlanOptionDto>()));
 
         var plans = new List<CardPlanOptionDto>();
@@ -71,6 +75,8 @@ public class MySubscriptionController : ControllerBase
     {
         if (_tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt)
             throw new ValidationAppException("الدفع في مصر بيتم عن طريق إنستاباي.");
+        if (!CardPaymentsEnabled)
+            throw new ValidationAppException("الدفع بالبطاقة غير متاح حاليًا. من فضلك ادفع بالتحويل البنكي، وبيانات الحساب في صفحة اشتراكك.");
         if (await HasLiveCardSubscriptionAsync(ct))
             throw new ValidationAppException("اشتراكك بالبطاقة شغّال بالفعل. لو عايز تغيّر الباقة استخدم زرار الترقية تحت.");
         var planCode = (request.PlanCode ?? string.Empty).Trim().ToLowerInvariant();
@@ -185,9 +191,6 @@ public class MySubscriptionController : ControllerBase
     public async Task<ActionResult<List<SubscriptionInvoiceDto>>> GetMyInvoices(CancellationToken ct)
         => Ok(await _billing.GetInvoicesAsync(_tenantContext.TenantId, ct));
 
-    /// <summary>Egyptian customers pay through InstaPay only. Customers elsewhere pay by card through the payment
-    /// gateway (Lemon Squeezy, not built yet), so no bank details are shown to them unless the owner switches on
-    /// <c>Billing:ShowBankTransferAbroad</c> as a temporary fallback.</summary>
     /// <summary>The invoice as a branded PDF (Roma Group's own invoice to this customer).</summary>
     [HttpGet("invoices/{invoiceId:guid}/pdf")]
     public async Task<IActionResult> GetInvoicePdf(Guid invoiceId, [FromQuery] string? lang, CancellationToken ct)
@@ -206,13 +209,15 @@ public class MySubscriptionController : ControllerBase
         return File(pdf, "application/pdf", $"{SubscriptionInvoiceHtmlTemplate.NumberFor(invoice)}.pdf");
     }
 
+    /// <summary>Egyptian customers pay through InstaPay. Customers elsewhere pay by bank transfer (card payments are off), shown once the
+    /// owner has put the bank details in the deploy secrets.</summary>
     [HttpGet("bank-transfer")]
     public ActionResult<BankTransferInfoDto> GetBankTransferInfo()
     {
         var isEgypt = _tenantContext.Country == RomaERP.Domain.Tenancy.Country.Egypt;
         var iban = _configuration["BankTransfer:Iban"];
         var instaPayMobile = _configuration["InstaPay:Mobile"];
-        var hasBankTransfer = !isEgypt && _configuration.GetValue<bool>("Billing:ShowBankTransferAbroad") && !string.IsNullOrWhiteSpace(iban);
+        var hasBankTransfer = !isEgypt && _configuration.GetValue("Billing:ShowBankTransferAbroad", true) && !string.IsNullOrWhiteSpace(iban);
         var hasInstaPay = isEgypt && !string.IsNullOrWhiteSpace(instaPayMobile);
 
         if (!hasBankTransfer && !hasInstaPay)
