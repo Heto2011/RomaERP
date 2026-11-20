@@ -803,6 +803,12 @@ jobs:
               echo
             fi
             unset KEY
+            echo; echo "== Is Java on this server? (a security notice about OpenJDK) =="
+            command -v java >/dev/null 2>&1 && { echo "java binary found:"; java -version 2>&1 | head -2; } || echo "no java binary on the host"
+            echo "java processes on the host: $(ps -eo comm | grep -ci '^java$')"
+            docker ps --format '{{.Names}} {{.Image}}' 2>/dev/null | sed 's/^/container: /' || true
+            docker ps -q 2>/dev/null | while read c; do docker exec "$c" sh -c 'command -v java >/dev/null 2>&1 && echo "java inside container $(hostname)"' 2>/dev/null; done
+            echo "CPU flags relevant to the notice:"; grep -m1 '^flags' /proc/cpuinfo | tr ' ' '\n' | grep -E '^(avx512f|avx512bw|avx512vbmi|bmi2)$' || echo "none of the AVX-512 flags"
             echo; echo "== Size =="
             echo "cpus: $(nproc)"; free -h | sed -n '1,3p'
             df -h / | tail -1
