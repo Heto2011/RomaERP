@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { MySubscriptionApi, type ExtrasInfo } from "../api/services";
 import type { FreePlanUsage } from "../api/types";
+import { IconCopy, IconCheck } from "../components/icons";
 import { ProductScope, type TenantSubscription, type SubscriptionInvoice, type BankTransferInfo } from "../api/types";
 import { useAuth } from "../context/AuthContext";
 import { getErrorMessage } from "../api/client";
@@ -147,6 +148,13 @@ export default function MySubscriptionPage() {
       </>
     );
   }
+
+  const copyButton = (field: string, value: string) => (
+    <button className="btn btn-secondary btn-sm" type="button" title={t.mySubscription.copy} aria-label={t.mySubscription.copy}
+      style={{ display: "inline-flex", alignItems: "center", gap: 4 }} onClick={() => copy(field, value)}>
+      {copiedField === field ? <><IconCheck /><span>{t.mySubscription.copied}</span></> : <IconCopy />}
+    </button>
+  );
 
   function copy(field: string, value: string) {
     navigator.clipboard?.writeText(value).then(() => {
@@ -401,7 +409,7 @@ export default function MySubscriptionPage() {
       )}
 
       <div className="card">
-        <h3 style={{ marginTop: 0 }}>{outsideEgypt ? t.mySubscription.cardPaymentTitle : t.mySubscription.bankTransferTitle}</h3>
+        <h3 style={{ marginTop: 0 }}>{outsideEgypt && cardOptions?.enabled ? t.mySubscription.cardPaymentTitle : t.mySubscription.bankTransferTitle}</h3>
         {justPaid && <div className="alert-success" style={{ marginBottom: 12 }}>{t.mySubscription.cardPaid}</div>}
         {outsideEgypt && cardOptions?.enabled && (() => {
           const selected = cardOptions.plans.find((p) => p.planCode === cardPlan) ?? cardOptions.plans[0];
@@ -425,6 +433,13 @@ export default function MySubscriptionPage() {
         })()}
         {outsideEgypt && !cardOptions?.enabled && extras?.enabled && <div className="text-muted">{t.mySubscription.cardActive}</div>}
         {!bankInfo?.configured && !(outsideEgypt && cardOptions?.enabled) && !(outsideEgypt && extras?.enabled) && <div className="text-muted">{outsideEgypt ? t.mySubscription.cardPaymentSoon : t.mySubscription.bankNotConfigured}</div>}
+        {bankInfo?.configured && subscription && subscription.outstandingAmount > 0 && (
+          <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12 }}>
+            <span>{t.mySubscription.outstanding}:</span>
+            <strong className="mono">{subscription.outstandingAmount} {subscription.currency}</strong>
+            {copyButton("amountDue", String(subscription.outstandingAmount))}
+          </div>
+        )}
         {bankInfo?.configured && (bankInfo.iban || bankInfo.accountName) && (
           <table>
             <tbody>
@@ -438,11 +453,7 @@ export default function MySubscriptionPage() {
                   <tr key={field}>
                     <td>{t.mySubscription[field]}</td>
                     <td className="mono">{value}</td>
-                    <td>
-                      <button className="btn btn-secondary btn-sm" type="button" onClick={() => copy(field, value)}>
-                        {copiedField === field ? t.mySubscription.copied : t.mySubscription.copy}
-                      </button>
-                    </td>
+                    <td>{copyButton(field, value)}</td>
                   </tr>
                 ) : null
               )}
@@ -457,11 +468,7 @@ export default function MySubscriptionPage() {
                 <tr>
                   <td>{t.mySubscription.instaPayMobile}</td>
                   <td className="mono">{bankInfo.instaPayMobile}</td>
-                  <td>
-                    <button className="btn btn-secondary btn-sm" type="button" onClick={() => copy("instaPayMobile", bankInfo.instaPayMobile!)}>
-                      {copiedField === "instaPayMobile" ? t.mySubscription.copied : t.mySubscription.copy}
-                    </button>
-                  </td>
+                  <td>{copyButton("instaPayMobile", bankInfo.instaPayMobile!)}</td>
                 </tr>
               </tbody>
             </table>

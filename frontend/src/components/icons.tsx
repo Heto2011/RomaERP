@@ -65,6 +65,15 @@ export function IconChat() {
   );
 }
 
+export function IconCopy() {
+  return (
+    <svg {...common}>
+      <rect x="7" y="7" width="9" height="9" rx="1.5" />
+      <path d="M4 12.5V5a1.5 1.5 0 0 1 1.5-1.5H13" />
+    </svg>
+  );
+}
+
 export function IconCheck() {
   return (
     <svg {...common}>
