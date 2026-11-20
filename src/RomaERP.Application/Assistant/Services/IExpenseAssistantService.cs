@@ -12,6 +12,7 @@ public interface IExpenseAssistantService
     Task<ChatTurnResponseDto> StartFromReceiptImageAsync(byte[] imageBytes, string mediaType, string userId, CancellationToken ct = default);
     Task<List<ExpenseCaptureDto>> GetPendingReconciliationAsync(CancellationToken ct = default);
     Task<List<ExpenseCaptureDto>> GetPendingApprovalAsync(CancellationToken ct = default);
+    Task<ExpenseCaptureDto> SetPendingPaymentMethodAsync(Guid captureId, RomaERP.Domain.Assistant.PaymentMethod method, CancellationToken ct = default);
     Task<ExpenseCaptureDto> ApproveAsync(Guid captureId, CancellationToken ct = default);
 
     /// <summary>Lets the approver type or correct the amount of an expense that is waiting for approval (a monthly fixed item may have none yet).</summary>

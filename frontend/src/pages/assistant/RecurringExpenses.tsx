@@ -13,7 +13,7 @@ export default function RecurringExpenses() {
   const [accounts, setAccounts] = useState<Account[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<RecurringExpense | "new" | null>(null);
-  const [form, setForm] = useState({ description: "", accountId: "", amount: "", dayOfMonth: 1, paymentMethod: ExpensePaymentMethod.Cash });
+  const [form, setForm] = useState({ description: "", accountId: "", amount: "", dayOfMonth: 1, paymentMethod: ExpensePaymentMethod.Unknown });
 
   async function load() {
     setItems((await RecurringExpensesApi.getAll()).data);
@@ -28,7 +28,7 @@ export default function RecurringExpenses() {
     setError(null);
     setEditing(item);
     setForm(item === "new"
-      ? { description: "", accountId: "", amount: "", dayOfMonth: 1, paymentMethod: ExpensePaymentMethod.Cash }
+      ? { description: "", accountId: "", amount: "", dayOfMonth: 1, paymentMethod: ExpensePaymentMethod.Unknown }
       : { description: item.description, accountId: item.accountId, amount: item.amount != null ? String(item.amount) : "", dayOfMonth: item.dayOfMonth, paymentMethod: item.paymentMethod });
   }
 
@@ -138,11 +138,12 @@ export default function RecurringExpenses() {
                 </div>
                 <div className="form-field">
                   <label>{t.assistant.dayOfMonth}</label>
-                  <input type="number" min={1} max={28} value={form.dayOfMonth} onChange={(e) => setForm({ ...form, dayOfMonth: Number(e.target.value) })} required />
+                  <input type="number" min={1} max={31} value={form.dayOfMonth} onChange={(e) => setForm({ ...form, dayOfMonth: Number(e.target.value) })} required />
                 </div>
                 <div className="form-field">
                   <label>{t.assistant.paymentMethod}</label>
                   <select value={form.paymentMethod} onChange={(e) => setForm({ ...form, paymentMethod: Number(e.target.value) as ExpensePaymentMethod })}>
+                    <option value={ExpensePaymentMethod.Unknown}>{t.assistant.decideAtPayment}</option>
                     <option value={ExpensePaymentMethod.Cash}>{t.assistant.paymentMethods.cash}</option>
                     <option value={ExpensePaymentMethod.Card}>{t.assistant.paymentMethods.card}</option>
                   </select>

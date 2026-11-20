@@ -62,6 +62,13 @@ public class AiAssistantController : ControllerBase
     public async Task<ActionResult<ExpenseCaptureDto>> SetAmount(Guid id, SetAmountRequest request, CancellationToken ct)
         => Ok(await _assistantService.SetPendingAmountAsync(id, request.Amount, ct));
 
+    public record SetPaymentMethodRequest(RomaERP.Domain.Assistant.PaymentMethod PaymentMethod);
+
+    [HttpPut("captures/{id:guid}/payment-method")]
+    [Authorize(Roles = "Admin")]
+    public async Task<ActionResult<ExpenseCaptureDto>> SetPaymentMethod(Guid id, SetPaymentMethodRequest request, CancellationToken ct)
+        => Ok(await _assistantService.SetPendingPaymentMethodAsync(id, request.PaymentMethod, ct));
+
     [HttpPost("captures/{id:guid}/approve")]
     [Authorize(Roles = "Admin")]
     public async Task<ActionResult<ExpenseCaptureDto>> Approve(Guid id, CancellationToken ct)

@@ -510,6 +510,7 @@ export const RecurringExpensesApi = {
 };
 
 export const AiAssistantApi = {
+  setPaymentMethod: (captureId: string, paymentMethod: number) => apiClient.put<ExpenseCapture>(`/aiassistant/captures/${captureId}/payment-method`, { paymentMethod }),
   setAmount: (captureId: string, amount: number) => apiClient.put<ExpenseCapture>(`/aiassistant/captures/${captureId}/amount`, { amount }),
   sendMessage: (captureId: string | null, message: string) =>
     apiClient.post<ChatTurnResponse>("/aiassistant/messages", { captureId, message }),

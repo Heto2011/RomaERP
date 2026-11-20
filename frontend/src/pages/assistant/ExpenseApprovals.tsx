@@ -21,6 +21,7 @@ export default function ExpenseApprovals() {
   const [notice, setNotice] = useState<string | null>(null);
   // Amounts the approver typed or corrected, keyed by capture id (a fixed monthly item may arrive without one).
   const [amounts, setAmounts] = useState<Record<string, string>>({});
+  const [methods, setMethods] = useState<Record<string, ExpensePaymentMethod>>({});
   const [markFor, setMarkFor] = useState<ExpenseCapture | null>(null);
   const [markFixed, setMarkFixed] = useState(true);
   const [markDay, setMarkDay] = useState(1);
@@ -48,6 +49,13 @@ export default function ExpenseApprovals() {
         return;
       }
       if (typed !== c.amount) await AiAssistantApi.setAmount(c.id, typed);
+      // A monthly item may have been left "decided when paying": the approver picks cash or card now.
+      if (c.fundingSource !== ExpenseFundingSource.EmployeeCustody && c.paymentMethod === ExpensePaymentMethod.Unknown) {
+        const chosen = methods[c.id];
+        if (!chosen) { setError(t.assistant.choosePaymentMethod); return; }
+        await AiAssistantApi.setPaymentMethod(c.id, chosen);
+        if (chosen === ExpensePaymentMethod.Card) { setNotice(t.assistant.paymentMethods.card); await load(); return; }
+      }
       await AiAssistantApi.approve(c.id);
       await load();
     } catch (err) {
@@ -144,7 +152,15 @@ export default function ExpenseApprovals() {
                     <div className="text-muted" style={{ fontSize: 12 }}>{c.custodyEmployeeName}</div>
                   )}
                 </td>
-                <td>{c.fundingSource === ExpenseFundingSource.EmployeeCustody ? "-" : paymentLabel[c.paymentMethod]}</td>
+                <td>
+                  {c.fundingSource === ExpenseFundingSource.EmployeeCustody ? "-" : c.paymentMethod === ExpensePaymentMethod.Unknown ? (
+                    <select value={methods[c.id] ?? ""} onChange={(e) => setMethods({ ...methods, [c.id]: Number(e.target.value) as ExpensePaymentMethod })}>
+                      <option value="">{t.assistant.choosePaymentMethod}</option>
+                      <option value={ExpensePaymentMethod.Cash}>{t.assistant.paymentMethods.cash}</option>
+                      <option value={ExpensePaymentMethod.Card}>{t.assistant.paymentMethods.card}</option>
+                    </select>
+                  ) : paymentLabel[c.paymentMethod]}
+                </td>
                 <td>{c.suggestedAccountCode} - {c.suggestedAccountName}</td>
                 <td>{c.proofFileName ?? "-"}</td>
                 <td style={{ display: "flex", gap: 6 }}>

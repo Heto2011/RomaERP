@@ -64,10 +64,11 @@ public class RecurringExpenseService : IRecurringExpenseService
     public async Task<RecurringExpenseDto> SaveAsync(Guid? id, RecurringExpenseDto dto, CancellationToken ct = default)
     {
         var description = TextLimit.Check(dto.Description, 200, "اسم البند") ?? throw new ValidationAppException("اكتب اسم البند (مثلًا: إيجار المحل).");
-        if (dto.DayOfMonth is < 1 or > 28) throw new ValidationAppException("يوم الشهر لازم يكون من 1 لـ 28.");
+        if (dto.DayOfMonth is < 1 or > 31) throw new ValidationAppException("يوم الشهر لازم يكون من 1 لـ 31 (والشهر الأقصر بيتحسب آخر يوم فيه).");
         if (dto.Amount is <= 0) throw new ValidationAppException("المبلغ لازم يكون أكبر من صفر.");
-        if (dto.PaymentMethod != PaymentMethod.Cash && dto.PaymentMethod != PaymentMethod.Card)
-            throw new ValidationAppException("اختار طريقة الدفع: نقدًا أو شبكة.");
+        // Unknown is allowed: the payment method is then chosen by the approver when the month's expense comes due.
+        if (dto.PaymentMethod != PaymentMethod.Unknown && dto.PaymentMethod != PaymentMethod.Cash && dto.PaymentMethod != PaymentMethod.Card)
+            throw new ValidationAppException("اختار طريقة الدفع: نقدًا أو شبكة، أو سيبها تتحدد وقت الصرف.");
         var account = await _context.Accounts.AsNoTracking().FirstOrDefaultAsync(a => a.Id == dto.AccountId && !a.IsDeleted, ct)
             ?? throw new ValidationAppException("اختار حساب المصروف.");
         if (account.AccountType != AccountType.Expense)
@@ -81,7 +82,7 @@ public class RecurringExpenseService : IRecurringExpenseService
             item = new RecurringExpense();
             // An item added after its day has already passed this month starts next month, instead of surprising the approver with a back-dated expense.
             var now = _time.GetUtcNow().UtcDateTime;
-            if (dto.DayOfMonth < now.Day)
+            if (Math.Min(dto.DayOfMonth, DateTime.DaysInMonth(now.Year, now.Month)) < now.Day)
                 item.LastPreparedMonth = new DateTime(now.Year, now.Month, 1);
             _context.RecurringExpenses.Add(item);
         }
@@ -106,7 +107,7 @@ public class RecurringExpenseService : IRecurringExpenseService
             throw new ValidationAppException("حدد الأول إن المصروف نقدًا أو شبكة.");
         if (dto.AmountIsFixed && capture.Amount is not > 0)
             throw new ValidationAppException("المصروف ده مفيهوش مبلغ — اختار إن المبلغ بيتغير كل شهر.");
-        var day = Math.Clamp(dto.DayOfMonth ?? capture.EntryDate.Day, 1, 28);
+        var day = Math.Clamp(dto.DayOfMonth ?? capture.EntryDate.Day, 1, 31);
 
         // Marking the same expense twice must not create two items.
         var already = await _context.RecurringExpenses.AnyAsync(r => r.IsActive && r.AccountId == capture.SuggestedAccountId
@@ -148,12 +149,15 @@ public class RecurringExpenseService : IRecurringExpenseService
     public async Task<int> PrepareDueAsync(DateTime today, string userId, CancellationToken ct = default)
     {
         var monthStart = new DateTime(today.Year, today.Month, 1);
-        var due = await _context.RecurringExpenses
-            .Where(r => r.IsActive && r.DayOfMonth <= today.Day && (r.LastPreparedMonth == null || r.LastPreparedMonth < monthStart))
+        var daysInMonth = DateTime.DaysInMonth(today.Year, today.Month);
+        var notYet = await _context.RecurringExpenses
+            .Where(r => r.IsActive && (r.LastPreparedMonth == null || r.LastPreparedMonth < monthStart))
             .ToListAsync(ct);
+        // Day 29-31 means "that day, or the last day of a shorter month".
+        var due = notYet.Where(r => Math.Min(r.DayOfMonth, daysInMonth) <= today.Day).ToList();
         foreach (var item in due)
         {
-            var dueDate = new DateTime(today.Year, today.Month, item.DayOfMonth);
+            var dueDate = new DateTime(today.Year, today.Month, Math.Min(item.DayOfMonth, daysInMonth));
             _context.ExpenseCaptures.Add(new ExpenseCapture
             {
                 RawText = $"بند ثابت: {item.Description}",

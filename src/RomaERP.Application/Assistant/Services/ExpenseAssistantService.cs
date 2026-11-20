@@ -308,6 +308,22 @@ public class ExpenseAssistantService : IExpenseAssistantService
         return Map(capture);
     }
 
+    public async Task<ExpenseCaptureDto> SetPendingPaymentMethodAsync(Guid captureId, PaymentMethod method, CancellationToken ct = default)
+    {
+        if (method != PaymentMethod.Cash && method != PaymentMethod.Card)
+            throw new ValidationAppException("اختار طريقة الدفع: نقدًا أو شبكة.");
+        var capture = await _context.ExpenseCaptures.Include(c => c.SuggestedAccount).Include(c => c.CustodyEmployee)
+            .FirstOrDefaultAsync(c => c.Id == captureId, ct)
+            ?? throw new NotFoundException(nameof(ExpenseCapture), captureId);
+        if (capture.Status != ExpenseCaptureStatus.PendingApproval || capture.PaymentMethod != PaymentMethod.Unknown)
+            throw new ValidationAppException("طريقة الدفع بتتحدد بس للمصروف اللي في انتظار الاعتماد وطريقة دفعه لسه ما اتحددتش.");
+        capture.PaymentMethod = method;
+        // Cash is ready for approval; a card payment waits to be matched with the bank statement like any other.
+        if (method == PaymentMethod.Card) capture.Status = ExpenseCaptureStatus.AwaitingReconciliation;
+        await _context.SaveChangesAsync(ct);
+        return Map(capture);
+    }
+
     public async Task<ExpenseCaptureDto> ApproveAsync(Guid captureId, CancellationToken ct = default)
     {
         var capture = await _context.ExpenseCaptures
@@ -321,6 +337,8 @@ public class ExpenseAssistantService : IExpenseAssistantService
             throw new ValidationAppException("هذا المصروف ليس في انتظار الاعتماد.");
         if (capture.Amount is not > 0)
             throw new ValidationAppException("اكتب مبلغ المصروف الأول (مفيش مبلغ مسجّل).");
+        if (capture.FundingSource != FundingSource.EmployeeCustody && capture.PaymentMethod == PaymentMethod.Unknown)
+            throw new ValidationAppException("اختار طريقة الدفع (نقدًا أو شبكة) الأول.");
 
         var blocking = ExpensePolicyRules.Evaluate(capture, await LoadPoliciesAsync(ct)).Where(i => i.Blocks).ToList();
         if (blocking.Count > 0)

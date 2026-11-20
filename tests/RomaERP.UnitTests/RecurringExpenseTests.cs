@@ -61,6 +61,31 @@ public class RecurringExpenseTests
     }
 
     [Fact]
+    public async Task PaymentMethodChosenAtPayment_AndDay31MeansTheLastDayOfAShortMonth()
+    {
+        var (ctx, cash, expense, _, _) = await ExpenseAssistantServiceTests.SeedAsync();
+        var service = Svc(ctx);
+        await service.SaveAsync(null, new RecurringExpenseDto { Description = "مرتبات", AccountId = expense.Id, Amount = null, DayOfMonth = 31, PaymentMethod = PaymentMethod.Unknown });
+
+        Assert.Equal(0, await service.PrepareDueAsync(new DateTime(2026, 11, 29), "u"));     // November has 30 days: due on the 30th
+        Assert.Equal(1, await service.PrepareDueAsync(new DateTime(2026, 11, 30), "u"));
+
+        var capture = await ctx.ExpenseCaptures.SingleAsync();
+        Assert.Equal(PaymentMethod.Unknown, capture.PaymentMethod);
+        Assert.Equal(ExpenseCaptureStatus.PendingApproval, capture.Status);
+        Assert.Equal(new DateTime(2026, 11, 30), capture.EntryDate);
+
+        var assistant = new ExpenseAssistantService(ctx, new FakeClaudeExpenseParser());
+        await assistant.SetPendingAmountAsync(capture.Id, 50000);
+        await Assert.ThrowsAsync<ValidationAppException>(() => assistant.ApproveAsync(capture.Id));    // no payment method yet
+
+        var chosen = await assistant.SetPendingPaymentMethodAsync(capture.Id, PaymentMethod.Cash);
+        Assert.Equal(ExpenseCaptureStatus.PendingApproval, chosen.Status);
+        await assistant.ApproveAsync(capture.Id);
+        Assert.Equal(1, await ctx.JournalEntries.CountAsync());
+    }
+
+    [Fact]
     public async Task MarkingACapturedExpense_CreatesTheItem_WithoutDoublingThisMonth()
     {
         var (ctx, _, expense, _, _) = await ExpenseAssistantServiceTests.SeedAsync();
@@ -105,7 +130,7 @@ public class RecurringExpenseTests
         var (ctx, cash, expense, _, _) = await ExpenseAssistantServiceTests.SeedAsync();
         var service = Svc(ctx);
 
-        await Assert.ThrowsAsync<ValidationAppException>(() => service.SaveAsync(null, Rent(expense.Id, day: 29)));
+        await Assert.ThrowsAsync<ValidationAppException>(() => service.SaveAsync(null, Rent(expense.Id, day: 32)));
         await Assert.ThrowsAsync<ValidationAppException>(() => service.SaveAsync(null, Rent(cash.Id)));
         await Assert.ThrowsAsync<ValidationAppException>(() => service.SaveAsync(null, Rent(expense.Id, amount: 0)));
         await Assert.ThrowsAsync<ValidationAppException>(() => service.SaveAsync(null, new RecurringExpenseDto { Description = " ", AccountId = expense.Id, Amount = 5 }));
