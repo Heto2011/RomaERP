@@ -1,16 +1,9 @@
 /** The in-app help: short step-by-step guides, written once, in Arabic and English. No cost to run and nothing is sent anywhere.
  *  `routes` are path prefixes: the "?" button opens the guide whose route best matches the page the person is on. */
-export type HelpTopic = {
-  id: string;
-  routes: string[];
-  section: { ar: string; en: string };
-  title: { ar: string; en: string };
-  keywords: string;           // extra words people might search for, both languages
-  steps: { ar: string[]; en: string[] };
-  tips?: { ar: string[]; en: string[] };
-};
+import type { HelpTopic } from "./helpTypes";
+export type { HelpTopic } from "./helpTypes";
 
-export const HELP_TOPICS: HelpTopic[] = [
+const BASE_TOPICS: HelpTopic[] = [
   {
     id: "start", routes: ["/"], section: { ar: "البداية", en: "Getting started" },
     title: { ar: "إزاي أتنقل في النظام", en: "Finding your way around" },
@@ -282,6 +275,9 @@ export const HELP_TOPICS: HelpTopic[] = [
     },
   },
 ];
+
+// More guides are added here, one file per area of the system.
+export const HELP_TOPICS: HelpTopic[] = [...BASE_TOPICS];
 
 const norm = (s: string) => s.toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي");
 
