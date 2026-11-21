@@ -118,4 +118,8 @@ public interface IApplicationDbContext
     DbSet<LoginHistory> LoginHistories { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Ids of accounts that anything else points to (journal lines, item/bank/category settings...). <c>Complete</c> is false when that
+    /// could not be established, in which case the caller must treat every account as in use.</summary>
+    Task<(HashSet<Guid> Ids, bool Complete)> GetAccountIdsInUseAsync(CancellationToken cancellationToken = default);
 }

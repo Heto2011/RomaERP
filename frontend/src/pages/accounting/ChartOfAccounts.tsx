@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { AccountsApi } from "../../api/services";
 import { AccountNature, AccountType, type Account } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -100,6 +101,7 @@ export default function ChartOfAccounts() {
     <div>
       <div className="page-header">
         <h1>{t.nav.chartOfAccounts}</h1>
+        <Link className="btn btn-secondary" to="/accounting/chart-import">{lang === "ar" ? "رفع شجرة من ملف" : "Upload from a file"}</Link>
         <button className="btn" onClick={() => { if (!showForm) { setCodeEdited(false); setCode(suggestAccountCode(null, flat)); } setShowForm((v) => !v); }}>
           {showForm ? t.common.cancel : t.accounting.newAccount}
         </button>

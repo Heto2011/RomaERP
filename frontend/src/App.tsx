@@ -32,6 +32,7 @@ import AuditLogPage from "./pages/AuditLog";
 import LoginHistoryPage from "./pages/LoginHistory";
 import EInvoicing from "./pages/EInvoicing";
 import ChartOfAccounts from "./pages/accounting/ChartOfAccounts";
+import ChartImport from "./pages/accounting/ChartImport";
 import OpeningBalances from "./pages/accounting/OpeningBalances";
 import JournalEntries from "./pages/accounting/JournalEntries";
 import TrialBalance from "./pages/accounting/TrialBalance";
@@ -229,6 +230,7 @@ export default function App() {
       <Route path="/assistant/policies" element={<ProtectedRoute><ExpensePolicies /></ProtectedRoute>} />
       <Route path="/assistant/bank-reconciliation" element={<ProtectedRoute><BankReconciliation /></ProtectedRoute>} />
       <Route path="/accounting/chart-of-accounts" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />
+      <Route path="/accounting/chart-import" element={<ProtectedRoute><ChartImport /></ProtectedRoute>} />
       <Route path="/accounting/opening-balances" element={<ProtectedRoute><OpeningBalances /></ProtectedRoute>} />
       <Route path="/accounting/journal-entries" element={<ProtectedRoute><JournalEntries /></ProtectedRoute>} />
       <Route path="/accounting/trial-balance" element={<ProtectedRoute><TrialBalance /></ProtectedRoute>} />

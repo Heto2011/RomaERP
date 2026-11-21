@@ -12,11 +12,39 @@ namespace RomaERP.API.Controllers;
 public class AccountsController : ControllerBase
 {
     private readonly IAccountService _accountService;
+    private readonly IChartImportService _chartImport;
 
-    public AccountsController(IAccountService accountService)
+    public AccountsController(IAccountService accountService, IChartImportService chartImport)
     {
         _accountService = accountService;
+        _chartImport = chartImport;
     }
+
+    // ----- Replace the chart of accounts from an Excel/CSV file: read -> edit in the preview -> approve. -----
+
+    [HttpPost("import/preview")]
+    [Authorize(Roles = "Admin,Accountant")]
+    [RequestSizeLimit(10_000_000)]
+    public async Task<ActionResult<ChartImportPreviewDto>> ImportPreview(IFormFile file, CancellationToken ct)
+    {
+        if (file is null || file.Length == 0) return BadRequest(new { error = "اختار ملف الأول." });
+        await using var stream = file.OpenReadStream();
+        return Ok(await _chartImport.PreviewFileAsync(stream, file.FileName, ct));
+    }
+
+    [HttpPost("import/validate")]
+    [Authorize(Roles = "Admin,Accountant")]
+    public async Task<ActionResult<ChartImportPreviewDto>> ImportValidate(ChartImportApplyRequest request, CancellationToken ct)
+        => Ok(await _chartImport.PreviewRowsAsync(request.Rows, ct));
+
+    [HttpPost("import/apply")]
+    [Authorize(Roles = "Admin,Accountant")]
+    public async Task<ActionResult<ChartImportResultDto>> ImportApply(ChartImportApplyRequest request, CancellationToken ct)
+        => Ok(await _chartImport.ApplyAsync(request.Rows, ct));
+
+    [HttpGet("import/template")]
+    public IActionResult ImportTemplate()
+        => File(_chartImport.BuildTemplate(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "chart-of-accounts-template.xlsx");
 
     [HttpGet("tree")]
     public async Task<ActionResult<List<AccountDto>>> GetTree(CancellationToken ct)

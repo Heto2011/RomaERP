@@ -31,6 +31,35 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     }
 
     public DbSet<Account> Accounts => Set<Account>();
+
+    public async Task<(HashSet<Guid> Ids, bool Complete)> GetAccountIdsInUseAsync(CancellationToken cancellationToken = default)
+    {
+        var used = new HashSet<Guid>(await JournalEntryLines.Select(l => l.AccountId).Distinct().ToListAsync(cancellationToken));
+        if (!Database.IsRelational()) return (used, true);
+        try
+        {
+            var accountType = Model.FindEntityType(typeof(Account))!;
+            foreach (var entityType in Model.GetEntityTypes())
+            {
+                var table = entityType.GetTableName();
+                if (table is null || entityType == accountType) continue;
+                foreach (var fk in entityType.GetForeignKeys().Where(f => f.PrincipalEntityType == accountType))
+                {
+                    if (fk.Properties.Count != 1) return (used, false);
+                    var column = fk.Properties[0].GetColumnName(Microsoft.EntityFrameworkCore.Metadata.StoreObjectIdentifier.Table(table, entityType.GetSchema()));
+                    if (column is null) return (used, false);
+                    // Names come from the EF model, never from a user, so building the statement from them is safe.
+                    var sql = $"SELECT DISTINCT [{column}] AS [Value] FROM [{entityType.GetSchema() ?? "dbo"}].[{table}] WHERE [{column}] IS NOT NULL";
+                    used.UnionWith(await Database.SqlQueryRaw<Guid>(sql).ToListAsync(cancellationToken));
+                }
+            }
+            return (used, true);
+        }
+        catch
+        {
+            return (used, false);
+        }
+    }
     public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
     public DbSet<Budget> Budgets => Set<Budget>();
     public DbSet<BankFeedTransaction> BankFeedTransactions => Set<BankFeedTransaction>();
