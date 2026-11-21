@@ -104,6 +104,7 @@ export default function ChartImport() {
           <strong>{x.done}</strong>
           <div>{done.newAccounts} {x.newA} · {done.updatedAccounts} {x.updated} · {done.removedAccounts} {x.removed} · {done.deactivatedAccounts} {x.deact}</div>
           <Link className="btn" style={{ marginTop: 10, display: "inline-block" }} to="/accounting/chart-of-accounts">{x.goTree}</Link>
+          <Link className="btn btn-secondary" style={{ marginTop: 10, marginInlineStart: 8, display: "inline-block" }} to="/accounting/transfer-balance">{lang === "ar" ? "نقل أرصدة الحسابات القديمة" : "Move old account balances"}</Link>
         </div>
       )}
 

@@ -13,9 +13,11 @@ public class AccountsController : ControllerBase
 {
     private readonly IAccountService _accountService;
     private readonly IChartImportService _chartImport;
+    private readonly IAccountBalanceTransferService _transfer;
 
-    public AccountsController(IAccountService accountService, IChartImportService chartImport)
+    public AccountsController(IAccountService accountService, IChartImportService chartImport, IAccountBalanceTransferService transfer)
     {
+        _transfer = transfer;
         _accountService = accountService;
         _chartImport = chartImport;
     }
@@ -45,6 +47,18 @@ public class AccountsController : ControllerBase
     [HttpGet("import/template")]
     public IActionResult ImportTemplate()
         => File(_chartImport.BuildTemplate(), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", "chart-of-accounts-template.xlsx");
+
+    // ----- Move an old account's balance to a new one (after the chart was replaced): preview, then approve. -----
+
+    [HttpPost("transfer-balance/preview")]
+    [Authorize(Roles = "Admin,Accountant")]
+    public async Task<ActionResult<BalanceTransferPreviewDto>> TransferPreview(BalanceTransferRequestDto request, CancellationToken ct)
+        => Ok(await _transfer.PreviewAsync(request, ct));
+
+    [HttpPost("transfer-balance/apply")]
+    [Authorize(Roles = "Admin,Accountant")]
+    public async Task<ActionResult<BalanceTransferResultDto>> TransferApply(BalanceTransferRequestDto request, CancellationToken ct)
+        => Ok(await _transfer.ApplyAsync(request, ct));
 
     [HttpGet("tree")]
     public async Task<ActionResult<List<AccountDto>>> GetTree(CancellationToken ct)

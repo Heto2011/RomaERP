@@ -102,6 +102,7 @@ export default function ChartOfAccounts() {
       <div className="page-header">
         <h1>{t.nav.chartOfAccounts}</h1>
         <Link className="btn btn-secondary" to="/accounting/chart-import">{lang === "ar" ? "رفع شجرة من ملف" : "Upload from a file"}</Link>
+        <Link className="btn btn-secondary" to="/accounting/transfer-balance">{lang === "ar" ? "نقل رصيد لحساب جديد" : "Move a balance"}</Link>
         <button className="btn" onClick={() => { if (!showForm) { setCodeEdited(false); setCode(suggestAccountCode(null, flat)); } setShowForm((v) => !v); }}>
           {showForm ? t.common.cancel : t.accounting.newAccount}
         </button>

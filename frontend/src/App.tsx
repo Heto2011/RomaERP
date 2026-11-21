@@ -33,6 +33,7 @@ import LoginHistoryPage from "./pages/LoginHistory";
 import EInvoicing from "./pages/EInvoicing";
 import ChartOfAccounts from "./pages/accounting/ChartOfAccounts";
 import ChartImport from "./pages/accounting/ChartImport";
+import AccountBalanceTransfer from "./pages/accounting/AccountBalanceTransfer";
 import OpeningBalances from "./pages/accounting/OpeningBalances";
 import JournalEntries from "./pages/accounting/JournalEntries";
 import TrialBalance from "./pages/accounting/TrialBalance";
@@ -231,6 +232,7 @@ export default function App() {
       <Route path="/assistant/bank-reconciliation" element={<ProtectedRoute><BankReconciliation /></ProtectedRoute>} />
       <Route path="/accounting/chart-of-accounts" element={<ProtectedRoute><ChartOfAccounts /></ProtectedRoute>} />
       <Route path="/accounting/chart-import" element={<ProtectedRoute><ChartImport /></ProtectedRoute>} />
+      <Route path="/accounting/transfer-balance" element={<ProtectedRoute><AccountBalanceTransfer /></ProtectedRoute>} />
       <Route path="/accounting/opening-balances" element={<ProtectedRoute><OpeningBalances /></ProtectedRoute>} />
       <Route path="/accounting/journal-entries" element={<ProtectedRoute><JournalEntries /></ProtectedRoute>} />
       <Route path="/accounting/trial-balance" element={<ProtectedRoute><TrialBalance /></ProtectedRoute>} />
