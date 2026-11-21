@@ -1,0 +1,270 @@
+import type { HelpTopic } from "../helpTypes";
+
+export const TOPICS: HelpTopic[] = [
+  {
+    id: "rest-setup",
+    routes: ["/restaurant/setup"],
+    section: { ar: "المطعم", en: "Restaurant" },
+    title: { ar: "تجهيز المطعم (ابدأ من هنا)", en: "Restaurant setup (start here)" },
+    keywords: "تجهيز إعداد بداية منيو طاولات كاشير PIN setup start menu tables cashier",
+    steps: {
+      ar: [
+        "في خطوة \"المنيو\": دوس \"ضيف المنيو\" والصق المنيو أو ارفع ملف إكسل أو صورة أو PDF، وراجع المعاينة قبل الحفظ.",
+        "لو مبيعاتك جاية من سيستم تاني، دوس \"ضيف صنف مبيعات اليوم (مبلغ مفتوح)\" عشان الكاشير يكتب المبلغ بنفسه.",
+        "في خطوة \"الطاولات\": اكتب \"عدد الطاولات\" ودوس \"ضيف الطاولات\" والسيستم يرقّمها لك.",
+        "في خطوة \"الكاشير\": اكتب \"اسم الكاشير\" و\"الرقم السري (PIN)\" من 4 لـ6 أرقام ودوس \"ضيف الكاشير\".",
+        "كل خطوة بتظهر عليها علامة ✓ لما تخلص. بعد ما المنيو والكاشير يكتملوا، دوس \"افتح صفحة دخول الـPOS\".",
+        "الكاشير يكتب كود الشركة اللي ظاهر في الصفحة والـPIN بتاعه ويبدأ البيع.",
+      ],
+      en: [
+        "In the \"Menu\" step: press \"Add menu\", paste your menu or upload an Excel file, photo or PDF, and check the preview before saving.",
+        "If your sales come from another system, press \"Add a Daily sales item (open amount)\" so the cashier types the amount.",
+        "In the \"Tables\" step: enter the number of tables and press \"Add tables\" - the system numbers them for you.",
+        "In the \"Cashier\" step: enter the cashier name and a PIN of 4 to 6 digits, then press \"Add cashier\".",
+        "Each step shows a tick when it is done. Once the menu and cashier are ready, press the button to open the POS login page.",
+        "The cashier enters the company code shown on the page plus his PIN and starts selling.",
+      ],
+    },
+    tips: {
+      ar: ["الكاشير بيدخل نقطة البيع بس، ومش بيشوف المحاسبة ولا باقي السيستم."],
+      en: ["A cashier can only use the POS; he does not see accounting or the rest of the system."],
+    },
+  },
+  {
+    id: "rest-menu",
+    routes: ["/restaurant/menu", "/restaurant-portal/menu"],
+    section: { ar: "المطعم", en: "Restaurant" },
+    title: { ar: "المنيو والوصفات", en: "Menu and recipes" },
+    keywords: "منيو وصفات سعر صنف استيراد مكونات menu recipe price item import ingredients",
+    steps: {
+      ar: [
+        "الجدول بيعرض كل الأصناف: الكود والاسم والقسم وهل هو \"على المنيو\" وسعره والوصفة.",
+        "دوس \"تعديل\" جنب الصنف اللي عايزه.",
+        "علّم على \"على المنيو\" عشان الصنف يظهر للكاشير، واكتب \"سعر المنيو\".",
+        "لو الصنف له وصفة: اختار \"المكوّن\" واكتب \"الكمية لكل وحدة\" ودوس \"إضافة سطر\" لكل مكوّن. لو مفيش وصفة، بيتخصم من مخزون الصنف نفسه عند البيع.",
+        "دوس \"حفظ\".",
+        "لإضافة أصناف كتير مرة واحدة: دوس \"استيراد منيو\" (متاح لو عندك الصلاحية) وارفع ملف أو الصق الأصناف واحد في كل سطر بالشكل: اسم الصنف ، السعر.",
+      ],
+      en: [
+        "The table lists every item: code, name, category, whether it is \"On menu\", its price and recipe.",
+        "Press \"Edit\" next to the item you want.",
+        "Tick \"On menu\" so the cashier can sell it, and enter the \"Menu price\".",
+        "If the item has a recipe: choose the ingredient, enter the quantity per unit and press \"Add line\" for each ingredient. Without a recipe, the item's own stock is reduced when sold.",
+        "Press \"Save\".",
+        "To add many items at once, press \"Import menu\" (shown if you have permission), upload a file or paste one item per line as: item name , price.",
+      ],
+    },
+    tips: {
+      ar: ["الأصناف المستوردة بتتباع من غير مخزون، وتقدر تربط لها وصفة بعدين من نفس الشاشة."],
+      en: ["Imported items sell without stock; you can link a recipe to them later from this screen."],
+    },
+  },
+  {
+    id: "rest-tables",
+    routes: ["/restaurant/tables", "/restaurant-portal/tables", "/restaurant-portal"],
+    section: { ar: "المطعم", en: "Restaurant" },
+    title: { ar: "الطاولات", en: "Tables" },
+    keywords: "طاولات ترابيز طاولة حجز مشغولة متاحة tables section capacity reserved occupied",
+    steps: {
+      ar: [
+        "كل طاولة ظاهرة في بطاقة فيها الرقم والقسم والسعة وحالتها: \"متاحة\" أو \"مشغولة\" أو \"محجوزة\".",
+        "لإضافة طاولة دوس \"+ طاولة جديدة\" واكتب \"رقم الطاولة\" و\"القسم\" (اختياري) و\"السعة\" ثم \"حفظ\".",
+        "لتعليم طاولة كمحجوزة دوس \"حجز\" على بطاقتها، ولتحريرها دوس \"إلغاء الحجز\".",
+        "الطاولة المشغولة بيحددها السيستم لما يتفتح عليها طلب، ومفيهاش زرار تعديل.",
+      ],
+      en: [
+        "Each table is a card showing its number, section, capacity and status: Available, Occupied or Reserved.",
+        "To add a table press \"+ New Table\", enter the table number, section (optional) and capacity, then \"Save\".",
+        "To mark a table as reserved press \"Reserve\" on its card; press \"Cancel reservation\" to free it.",
+        "An occupied table is set by the system when an order is open on it, so it has no edit button.",
+      ],
+    },
+  },
+  {
+    id: "rest-reservations",
+    routes: ["/restaurant/reservations", "/restaurant-portal/reservations"],
+    section: { ar: "المطعم", en: "Restaurant" },
+    title: { ar: "الحجوزات", en: "Reservations" },
+    keywords: "حجز حجوزات وصل العميل لم يحضر reservation booking guest arrived no show",
+    steps: {
+      ar: [
+        "اختار \"اليوم\" من الأعلى عشان تشوف حجوزاته مرتبة بالميعاد.",
+        "دوس \"حجز جديد\" واكتب \"اسم العميل\" و\"رقم الموبايل\" و\"اليوم\" و\"الميعاد\" و\"عدد الأشخاص\"، واختار الطاولة أو سيبها \"أي طاولة\"، ثم \"حفظ\".",
+        "لما العميل يوصل دوس \"وصل العميل\"، واختار \"محلي\" أو \"سفري\" (والطاولة والمخزن لو محلي) ثم \"فتح الطلب\".",
+        "بعدها تلاقي الطلب مفتوح في الكاشير باسم العميل.",
+        "تقدر تدوس \"تعديل\" لتغيير الحجز، أو \"لم يحضر\" أو \"إلغاء الحجز\" (بيطلب تأكيد).",
+      ],
+      en: [
+        "Pick the day at the top to see its reservations in time order.",
+        "Press \"New reservation\", enter customer name, mobile, day, time and party size, choose a table or leave \"Any table\", then \"Save\".",
+        "When the guest arrives press \"Guest arrived\", choose Dine-in or Takeaway (plus table and warehouse for dine-in) and press \"Open order\".",
+        "The order then appears open in the POS under the guest's name.",
+        "Use \"Edit\" to change a booking, or \"No-show\" / \"Cancel reservation\" (you will be asked to confirm).",
+      ],
+    },
+  },
+  {
+    id: "rest-pos",
+    routes: ["/restaurant/pos"],
+    section: { ar: "المطعم", en: "Restaurant" },
+    title: { ar: "نقطة البيع (الكاشير)", en: "Point of Sale (cashier)" },
+    keywords: "كاشير نقطة البيع طلب فاتورة تحصيل شيفت عهدة POS cashier order bill shift split merge discount delivery takeaway",
+    steps: {
+      ar: [
+        "أول مرة في اليوم: اكتب \"العهدة الافتتاحية\" (الفلوس اللي في الدرج) ودوس \"فتح الشيفت وابدأ البيع\".",
+        "دوس \"+ طلب جديد\" واختار \"نوع الطلب\" (صالة أو تيك أواي أو دليفري) والمخزن. للصالة اختار الطاولة، وللدليفري اكتب اسم العميل وتليفونه وعنوان التوصيل.",
+        "اختار القسم من الأعلى ودوس على الصنف عشان يتضاف للطلب. تقدر تمسح صنف بعلامة ✕ أو تدوس % لخصم على الصنف، أو \"تعديل\" جنب الخصم لخصم على الطلب كله.",
+        "الطلبات المفتوحة ظاهرة على الجنب، دوس على أي واحد للرجوع له. من أزرار الطلب تقدر: تقسيم الفاتورة أو نقل لطاولة أخرى أو دمج مع طلب آخر أو إلغاء الطلب.",
+        "لو برنامج الولاء مفعّل، دوس \"ربط عميل / نقاط\" واكتب موبايل العميل عشان يكسب نقاط أو يستبدلها.",
+        "لما العميل يدفع دوس \"تحصيل الفاتورة\"، اختار طريقة الدفع (كاش أو شبكة، أو آجل منصة توصيل للدليفري) والفترة المحاسبية، ثم \"تأكيد التحصيل\".",
+        "في آخر اليوم دوس \"قفل الشيفت\"، عدّ الكاش في الدرج واكتبه في \"الكاش المعدود\"، والسيستم هيحسب \"الفرق\".",
+      ],
+      en: [
+        "First thing in the day: enter the \"Opening float\" (cash in the drawer) and press \"Open Shift & Start Selling\".",
+        "Press \"+ New Order\" and choose the order type (dine-in, takeaway or delivery) and warehouse. For dine-in pick the table; for delivery enter customer name, phone and address.",
+        "Pick a category at the top and tap an item to add it. Remove an item with the X, press % for an item discount, or \"Edit\" next to Discount for a discount on the whole order.",
+        "Open orders are listed on the side; tap one to go back to it. From the order buttons you can split the bill, move to another table, merge with another order or cancel the order.",
+        "If the loyalty program is on, press \"Attach customer / points\" and enter the customer's mobile so he earns or redeems points.",
+        "When the customer pays press \"Bill Order\", choose the payment method (cash or card, or delivery-platform credit for delivery) and the fiscal period, then \"Confirm\".",
+        "At the end of the day press \"Close Shift\", count the cash in the drawer, enter it in \"Counted cash\" and the system shows the variance.",
+      ],
+    },
+    tips: {
+      ar: [
+        "بعد التحصيل لو في غلط، دوس على الطلب وبعدين \"إلغاء/استبدال\": بيلغي الفاتورة كلها وبيفتح طلب جديد بنفس الأصناف تعدّله.",
+        "لو النت قطع، الشاشة بتشتغل في وضع \"بدون إنترنت\" وبتحفظ التذاكر وترحّلها لوحدها لما النت يرجع. وقتها الكاش والشبكة بس.",
+      ],
+      en: [
+        "If you made a mistake after billing, select the order and press \"Void/Exchange\": it cancels the whole invoice and opens a new order with the same items for you to fix.",
+        "If the internet drops, the screen works offline, saves tickets and syncs them when the connection returns. Only cash and card are available offline.",
+      ],
+    },
+  },
+  {
+    id: "rest-kitchen",
+    routes: ["/restaurant/kitchen", "/restaurant-portal/kitchen"],
+    section: { ar: "المطعم", en: "Restaurant" },
+    title: { ar: "شاشة المطبخ", en: "Kitchen display" },
+    keywords: "مطبخ تحضير طلبات جاهز kitchen display KDS preparing ready served",
+    steps: {
+      ar: [
+        "الشاشة بتعرض كل الطلبات المفتوحة اللي لسه فيها أصناف محتاجة تحضير، وبتتحدث تلقائيًا كل كام ثانية.",
+        "كل بطاقة فيها الطاولة أو نوع الطلب ورقم الطلب، وتحتها الأصناف بكمياتها وملاحظاتها.",
+        "كل صنف له حالة: \"لسه ماتبدأش\" ثم \"بيتحضّر\" ثم \"جاهز\" ثم \"اتقدّم\".",
+        "دوس الزرار جنب الصنف (\"تحويل لـ ...\") لنقله للحالة اللي بعدها.",
+        "الصنف اللي يبقى \"اتقدّم\" بيختفي من الشاشة.",
+      ],
+      en: [
+        "The screen shows every open order that still has items to prepare, and refreshes itself every few seconds.",
+        "Each card shows the table or order type and the order number, with the items, quantities and notes.",
+        "Each item has a status: Not started, Preparing, Ready, then Served.",
+        "Press the button next to an item (\"Move to ...\") to push it to the next status.",
+        "An item that becomes Served disappears from the screen.",
+      ],
+    },
+  },
+  {
+    id: "rest-loyalty",
+    routes: ["/restaurant/loyalty", "/restaurant-portal/loyalty"],
+    section: { ar: "المطعم", en: "Restaurant" },
+    title: { ar: "نقاط الولاء والعملاء", en: "Loyalty points and customers" },
+    keywords: "ولاء نقاط عملاء استبدال خصم loyalty points customers redeem members",
+    steps: {
+      ar: [
+        "في أول الصفحة علّم \"تفعيل برنامج الولاء\" واكتب \"كل كام جنيه صرف = نقطة\" و\"قيمة النقطة الواحدة كخصم\" و\"أقل عدد نقاط للاستبدال\"، ودوس \"حفظ\".",
+        "لتسجيل عميل جديد دوس \"+ عميل جديد\" واكتب الاسم والموبايل ثم \"حفظ\". والعميل بيتسجل كمان تلقائيًا من الكاشير.",
+        "ابحث بالاسم أو الموبايل ودوس \"عرض التقرير\" لتشوف النقاط والزيارات وإجمالي الصرف ومتوسط الطلب وآخر زيارة.",
+        "دوس على عميل لتشوف تاريخ طلباته وأكلاته المفضلة وحركة نقاطه.",
+        "لتصحيح الرصيد اكتب رقم في \"النقاط\" (موجب للإضافة وسالب للخصم) وملاحظة ثم \"حفظ\".",
+      ],
+      en: [
+        "At the top tick \"Enable loyalty program\", set how much spend earns a point, the discount value of one point and the minimum points to redeem, then press \"Save\".",
+        "To register a customer press \"+ New customer\", enter name and mobile, then \"Save\". Customers are also registered automatically from the POS.",
+        "Search by name or mobile and press \"View report\" to see points, visits, total spent, average order and last visit.",
+        "Click a customer to see his order history, favourite dishes and points movement.",
+        "To correct a balance enter a number in \"Points\" (positive to add, negative to deduct) with a note, then \"Save\".",
+      ],
+    },
+    tips: {
+      ar: ["لازم تفعّل البرنامج هنا عشان زرار الولاء يظهر في الكاشير."],
+      en: ["The program must be enabled here for the loyalty button to appear in the POS."],
+    },
+  },
+  {
+    id: "rest-purchase-receiving",
+    routes: ["/restaurant/purchase-receiving", "/restaurant-portal/purchase-receiving"],
+    section: { ar: "المطعم", en: "Restaurant" },
+    title: { ar: "استلام مشتريات", en: "Purchase receiving" },
+    keywords: "استلام مشتريات مورد بضاعة وصلت تشغيلة صلاحية receiving goods vendor lot expiry",
+    steps: {
+      ar: [
+        "اختار \"المورد\" (أو دوس الزرار جنبه لإضافة مورد جديد)، و\"التاريخ\" و\"المخزن\"، واكتب ملاحظات لو حابب.",
+        "في الجدول اختار الصنف واكتب الكمية و\"تكلفة الوحدة (بدون ضريبة)\"، ولو عندك \"رقم التشغيلة\" و\"تاريخ الصلاحية\" اكتبهم.",
+        "دوس \"+ إضافة\" لأي صنف زيادة. الإجمالي بيظهر تحت.",
+        "دوس \"حفظ الاستلام\". هتظهر رسالة \"تم حفظ الاستلام\" بملخص الأصناف.",
+      ],
+      en: [
+        "Choose the vendor (or press the button next to it to add a new vendor), the date and warehouse, and add notes if you like.",
+        "In the table choose the item and enter the quantity and unit cost (excluding VAT); add the lot number and expiry date if you have them.",
+        "Press \"+ Add\" for more items. The total shows below.",
+        "Press \"Save Receipt\". A \"Receipt saved\" message appears with a summary.",
+      ],
+    },
+    tips: {
+      ar: ["ده بيحدّث كمية المخزون ومتوسط التكلفة بس، ومش بديل عن فاتورة المورد. لازم تسجل الفاتورة في شاشة فواتير المشتريات."],
+      en: ["This only updates stock quantity and average cost; it does not replace the vendor invoice. Record the invoice separately in Purchase invoices."],
+    },
+  },
+  {
+    id: "rest-delivery-reconciliation",
+    routes: ["/restaurant/delivery-reconciliation", "/restaurant-portal/delivery-reconciliation"],
+    section: { ar: "المطعم", en: "Restaurant" },
+    title: { ar: "مطابقة منصات التوصيل", en: "Delivery platform reconciliation" },
+    keywords: "مطابقة منصات توصيل كشف تسوية طلبات هنقرستيشن delivery reconciliation settlement statement csv",
+    steps: {
+      ar: [
+        "اكتب \"اسم المنصة\" (مثلاً طلبات أو كريم).",
+        "دوس \"رفع كشف تسوية\" واختار ملف CSV اللي صدّرته من المنصة.",
+        "اختار الفترة \"من\" و\"إلى\" ودوس \"عرض التقرير\".",
+        "هتشوف \"المتوقع (حسب مبيعات النظام)\" و\"المحصّل (حسب كشف المنصة)\" و\"الفرق\".",
+        "الكشوفات اللي رفعتها قبل كده ظاهرة في جدول \"الكشوفات المرفوعة\".",
+      ],
+      en: [
+        "Enter the platform name (for example Talabat or Careem).",
+        "Press \"Upload Settlement\" and choose the CSV file you exported from the platform.",
+        "Pick the \"From\" and \"To\" dates and press \"View Report\".",
+        "You see Expected (per system sales), Received (per platform statement) and the Variance.",
+        "Statements you uploaded before are listed in the \"Past imports\" table.",
+      ],
+    },
+    tips: {
+      ar: ["مفيش ربط مباشر مع المنصة؛ النظام بيقارن الكشف اللي ترفعه بمبيعات الدليفري المسجلة عندك."],
+      en: ["There is no direct link to the platform; the system compares the statement you upload with your recorded delivery sales."],
+    },
+  },
+  {
+    id: "rest-delivery-platforms",
+    routes: ["/restaurant/delivery-platforms", "/restaurant-portal/delivery-platforms"],
+    section: { ar: "المطعم", en: "Restaurant" },
+    title: { ar: "منصات التوصيل", en: "Delivery platforms" },
+    keywords: "منصات توصيل ويب هوك ربط أصناف طلبات سر توقيع delivery platforms webhook mapping secret",
+    steps: {
+      ar: [
+        "في \"حالة الاتصال\" شوف المنصات: \"متصل\" أو \"غير متصل\".",
+        "في \"سر التوقيع\": اختار \"المنصة\"، وانسخ \"رابط الويب هوك\" وسلّمه للمنصة، واكتب \"سر التوقيع\" اللي أخدته منها ودوس \"حفظ السر\".",
+        "في \"ربط أصناف المنصة\": اختار المنصة، واكتب \"كود الصنف في المنصة\" (واسمه اختياري)، واختار \"الصنف عندنا\"، ودوس \"+ ربط صنف\".",
+        "في \"سجل الطلبات الواردة\" تابع كل طلب: \"وصل\" أو \"اتسجل\" أو \"فشل\". لو فشل (غالبًا لصنف مش مربوط) اربط الصنف ودوس \"إعادة المحاولة\".",
+      ],
+      en: [
+        "Under \"Connection status\" see which platforms are Connected or Not connected.",
+        "Under the signing secret: choose the platform, copy the webhook URL and give it to the platform, enter the signing secret you got from it and press \"Save secret\".",
+        "Under \"Map platform items\": choose the platform, enter the platform item code (name optional), choose your own item and press \"+ Map Item\".",
+        "In the incoming orders log follow each order: Received, Processed or Failed. If one failed (often an unmapped item), map the item and press \"Retry\".",
+      ],
+    },
+    tips: {
+      ar: ["أي طلب فيه صنف مش مربوط مش هيتسجل، فاربط كل أصناف المنصة."],
+      en: ["An order containing an unmapped item will not be recorded, so map all the platform's items."],
+    },
+  },
+];

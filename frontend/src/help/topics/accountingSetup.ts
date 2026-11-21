@@ -1,0 +1,358 @@
+import type { HelpTopic } from "../helpTypes";
+
+export const TOPICS: HelpTopic[] = [
+  {
+    id: "acc-s-opening-balances",
+    routes: ["/accounting/opening-balances"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "الأرصدة الافتتاحية", en: "Opening balances" },
+    keywords: "رصيد افتتاحي أرصدة بداية المدة نظام قديم ترحيل opening balance migration legacy",
+    steps: {
+      ar: [
+        "الصفحة دي لإدخال أرصدة الحسابات أول ما تبدأ تستخدم النظام بعد ما كنت على نظام قديم.",
+        "اختار \"السنة المالية\" وراجع \"تاريخ الرصيد الافتتاحي\" (بيتحدد تلقائيًا بأول يوم في السنة).",
+        "الحسابات متقسمة حسب النوع (أصول، خصوم، حقوق ملكية، إيرادات، مصروفات). اكتب الرصيد في خانة \"مدين\" أو \"دائن\" للحساب، ومش هتقدر تكتب في الاتنين مع بعض.",
+        "تابع الإجمالي تحت: لازم إجمالي المدين يساوي إجمالي الدائن (زي ميزان المراجعة القديم). الزرار مش بيشتغل غير لما يتساووا.",
+        "دوس \"حفظ وترحيل الأرصدة الافتتاحية\". بعد الحفظ هتشوف القيد بالأرقام اللي اتسجلت.",
+      ],
+      en: [
+        "Use this page to enter account balances when you start using the system after moving from an old system.",
+        "Pick the \"Fiscal Year\" and check the \"Opening Balance Date\" (it defaults to the first day of the year).",
+        "Accounts are grouped by type (assets, liabilities, equity, revenue, expenses). Type the balance in the \"Debit\" or \"Credit\" box of each account; you cannot fill both for the same account.",
+        "Watch the totals at the bottom: total debit must equal total credit (like your old trial balance). The save button stays disabled until they match.",
+        "Click \"Save and Post Opening Balances\". After saving you will see the posted entry with the amounts.",
+      ],
+    },
+    tips: {
+      ar: [
+        "بتتدخل مرة واحدة بس لكل سنة مالية. لو غلطت، اعكس القيد من شاشة القيود اليومية وبعدين أدخل الأرصدة الصح.",
+      ],
+      en: [
+        "Opening balances are entered only once per fiscal year. If you made a mistake, reverse the entry from the Journal Entries page and enter the correct balances again.",
+      ],
+    },
+  },
+  {
+    id: "acc-s-trial-balance",
+    routes: ["/accounting/trial-balance"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "ميزان المراجعة", en: "Trial balance" },
+    keywords: "ميزان مراجعة أرصدة الحسابات مدين دائن trial balance debit credit export",
+    steps: {
+      ar: [
+        "الصفحة بتعرض كل حساب بإجمالي المدين والدائن والرصيد.",
+        "لو عايز تشوف الأرقام لحد يوم معين، اختار التاريخ في \"حتى تاريخ\" ودوس \"تحديث\".",
+        "راجع الأعمدة: الكود، الحساب، النوع، مدين، دائن، الرصيد.",
+        "في آخر الجدول \"الإجمالي\": لو إجمالي المدين يساوي إجمالي الدائن يبقى الفرق أخضر، ولو فيه فرق يظهر بالأحمر.",
+        "تقدر تصدّر التقرير من أزرار التصدير (Excel أو PDF) اللي فوق الجدول.",
+      ],
+      en: [
+        "This page lists every account with its total debit, total credit and balance.",
+        "To see figures up to a specific day, pick the date in \"As of Date\" and click \"Refresh\".",
+        "Check the columns: Code, Account, Type, Debit, Credit, Balance.",
+        "The \"Total\" row at the bottom shows the difference in green when debit equals credit, and in red if there is a difference.",
+        "You can export the report with the export buttons (Excel or PDF) above the table.",
+      ],
+    },
+    tips: {
+      ar: ["لو ظهر فرق بالأحمر راجع القيود اليومية، لأن الميزان المظبوط لازم يتساوى."],
+      en: ["If a red difference appears, review your journal entries; a correct trial balance should match."],
+    },
+  },
+  {
+    id: "acc-s-income-statement",
+    routes: ["/accounting/income-statement"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "قائمة الدخل", en: "Income statement" },
+    keywords: "قائمة دخل أرباح وخسائر إيرادات مصروفات صافي الربح income statement profit loss P&L",
+    steps: {
+      ar: [
+        "اختار فترة التقرير من \"من\" و\"إلى\" (الافتراضي من أول السنة لحد النهاردة).",
+        "دوس \"عرض التقرير\".",
+        "هتلاقي \"الإيرادات\" وبعدها \"المصروفات\" حساب بحساب مع إجمالي كل قسم.",
+        "آخر سطر \"صافي الربح / الخسارة\": أخضر لو ربح وأحمر لو خسارة.",
+        "للتصدير استخدم أزرار Excel أو PDF فوق التقرير.",
+      ],
+      en: [
+        "Choose the report period with \"From\" and \"To\" (default: start of the year until today).",
+        "Click \"View Report\".",
+        "You will see \"Revenues\" then \"Expenses\", account by account, with a total for each section.",
+        "The last line \"Net Income / Loss\" is green for profit and red for a loss.",
+        "Use the Excel or PDF buttons above the report to export it.",
+      ],
+    },
+  },
+  {
+    id: "acc-s-balance-sheet",
+    routes: ["/accounting/balance-sheet"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "قائمة المركز المالي (الميزانية)", en: "Balance sheet" },
+    keywords: "ميزانية مركز مالي أصول خصوم حقوق ملكية balance sheet assets liabilities equity",
+    steps: {
+      ar: [
+        "اختار التاريخ في \"حتى تاريخ\" (الافتراضي النهاردة).",
+        "دوس \"عرض التقرير\".",
+        "على اليمين \"الأصول\" مع إجماليها، وعلى الشمال \"الخصوم\" و\"حقوق الملكية\" (وفيها \"صافي أرباح السنة الحالية\").",
+        "في آخر الصفحة \"إجمالي الخصوم وحقوق الملكية\" وبجانبه (متوازنة) أو (غير متوازنة!). المفروض يساوي إجمالي الأصول.",
+        "تقدر تصدّر التقرير بـ Excel أو PDF.",
+      ],
+      en: [
+        "Pick the date in \"As of Date\" (default: today).",
+        "Click \"View Report\".",
+        "\"Assets\" with their total are on one side; \"Liabilities\" and \"Equity\" (including \"Current Year Net Income\") are on the other.",
+        "At the bottom, \"Total Liabilities and Equity\" shows (Balanced) or (Not balanced!). It should equal total assets.",
+        "You can export the report to Excel or PDF.",
+      ],
+    },
+  },
+  {
+    id: "acc-s-general-ledger",
+    routes: ["/accounting/general-ledger"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "دفتر الأستاذ", en: "General ledger" },
+    keywords: "دفتر أستاذ حركة حساب كشف حساب general ledger account movements",
+    steps: {
+      ar: [
+        "اختار الحساب من القايمة (\"اختر الحساب\").",
+        "حدد \"من\" و\"إلى\" (الافتراضي من أول السنة لحد النهاردة).",
+        "دوس \"عرض التقرير\" (الزرار مقفول لحد ما تختار حساب).",
+        "هتشوف \"رصيد أول المدة\" وبعده كل حركة: التاريخ، رقم القيد، البيان، مدين، دائن، الرصيد.",
+        "في الآخر الإجمالي و\"رصيد آخر المدة\". ولو مفيش حركة هتظهر رسالة \"مفيش حركة في الفترة دي\". وتقدر تصدّر التقرير.",
+      ],
+      en: [
+        "Choose the account from the list (\"Select account\").",
+        "Set \"From\" and \"To\" (default: start of the year until today).",
+        "Click \"View Report\" (the button is disabled until you pick an account).",
+        "You will see the \"Opening Balance\" then every movement: date, entry number, description, debit, credit, balance.",
+        "At the end you get the totals and the \"Closing Balance\". If there is no activity, a \"no movements in this period\" message appears. You can export the report.",
+      ],
+    },
+  },
+  {
+    id: "acc-s-fiscal-periods",
+    routes: ["/accounting/fiscal-periods"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "إقفال الفترات المالية", en: "Closing fiscal periods" },
+    keywords: "إقفال فترة سنة مالية قفل شهر فتح closing fiscal year period reopen",
+    steps: {
+      ar: [
+        "كل سنة مالية ظاهرة في كارت ومعاها حالتها (مفتوحة أو مقفلة) وجدول فتراتها بتواريخ \"من\" و\"إلى\".",
+        "لإقفال فترة (شهر مثلًا) دوس \"إقفال\" جنب الفترة.",
+        "لو الفترة مقفلة والسنة لسه مفتوحة تقدر تدوس \"فتح\" لإعادة فتحها.",
+        "في آخر السنة دوس \"إقفال السنة المالية\" وأكّد الرسالة. النظام هيعمل قيد إقفال يصفّر الإيرادات والمصروفات ويرحّل صافي الربح أو الخسارة للأرباح المرحلة.",
+      ],
+      en: [
+        "Each fiscal year appears in a card with its status (Open or Closed) and a table of its periods with \"From\" and \"To\" dates.",
+        "To close a period (for example a month), click \"Close\" next to it.",
+        "If a period is closed and the year is still open, you can click \"Open\" to reopen it.",
+        "At year end, click \"Close Fiscal Year\" and confirm. The system creates a closing entry that zeroes revenues and expenses and carries net profit or loss to retained earnings.",
+      ],
+    },
+    tips: {
+      ar: ["بعد إقفال السنة المالية مبتظهرش أزرار فتح الفترات، فراجع أرقامك قبل ما تقفل."],
+      en: ["Once the fiscal year is closed, the reopen buttons for its periods no longer appear, so review your figures before closing."],
+    },
+  },
+  {
+    id: "acc-s-exchange-rates",
+    routes: ["/accounting/exchange-rates"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "أسعار الصرف", en: "Exchange rates" },
+    keywords: "سعر صرف عملة دولار يورو عملات أجنبية exchange rate currency USD foreign",
+    steps: {
+      ar: [
+        "لو هتتعامل بعملة أجنبية في فواتير البيع والشراء، اكتب كودها (زي USD) في \"كود العملة الجديدة\" ودوس \"تتبّع تلقائي\". النظام بيجيب السعر الحالي من السوق ويحدّثه تلقائيًا بعد كده.",
+        "جدول الأسعار بيعرض: كود العملة، التاريخ، سعر الصرف بعملة الشركة، والمصدر (تلقائي أو يدوي).",
+        "عشان تحدّث الأسعار فورًا دوس \"تحديث الأسعار دلوقتي\" فوق.",
+        "لحالات خاصة (زي سعر موازي) دوس \"تعديل يدوي (لحالات خاصة)\" واكتب كود العملة والتاريخ والسعر (1 عملة = كام بعملة الشركة) ثم \"حفظ\".",
+      ],
+      en: [
+        "To use a foreign currency in sales and purchase invoices, type its code (e.g. USD) in the new currency code box and click \"Auto-track\". The system fetches the current market rate and keeps updating it.",
+        "The rates table shows: currency code, date, rate in your company currency, and source (Auto or Manual).",
+        "To update the rates immediately, click \"Refresh rates now\" at the top.",
+        "For special cases (such as a parallel-market rate), click \"Manual override (special cases)\", enter currency code, date and rate (1 currency = how much in your company currency), then \"Save\".",
+      ],
+    },
+    tips: {
+      ar: ["استخدم التعديل اليدوي في أضيق الحدود، والتحديث التلقائي مش هيغيّر سعر اتدخل يدويًا."],
+      en: ["Use the manual override sparingly; the automatic update will not change a rate that was entered manually."],
+    },
+  },
+  {
+    id: "acc-s-budgets",
+    routes: ["/accounting/budgets"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "الموازنة التقديرية", en: "Budgets" },
+    keywords: "موازنة ميزانية تقديرية تخطيط فرق فعلي budget variance actual planning",
+    steps: {
+      ar: [
+        "اختار السنة المالية من القايمة اللي فوق.",
+        "في \"تحديد موازنة\" اختار الحساب (إيرادات أو مصروفات)، والفترة (الشهر)، واكتب \"المبلغ التقديري\" ثم دوس \"حفظ\".",
+        "كرر الخطوة لكل حساب وكل شهر. بتظهر لك قايمة بالموازنات اللي اتسجلت.",
+        "تحت هتلاقي \"الموازنة التقديرية مقابل الفعلي\" للإيرادات والمصروفات: المبلغ التقديري، الفعلي، الفرق، ونسبة الفرق، مع صافي الربح التقديري والفعلي.",
+      ],
+      en: [
+        "Pick the fiscal year from the list at the top.",
+        "Under \"Set Budget\", choose the account (revenue or expense), the period (month), type the \"Budgeted Amount\" and click \"Save\".",
+        "Repeat for each account and month. The saved budget lines appear in a list.",
+        "Below, \"Budget vs Actual\" shows revenues and expenses: budgeted, actual, variance and variance %, plus budgeted and actual net income.",
+      ],
+    },
+    tips: {
+      ar: ["الفرق بيظهر أخضر لو في صالحك وأحمر لو ضدك."],
+      en: ["Variances show in green when favorable and red when unfavorable."],
+    },
+  },
+  {
+    id: "acc-s-bank-reconciliation",
+    routes: ["/accounting/bank-feed-reconciliation"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "التسوية البنكية", en: "Bank reconciliation" },
+    keywords: "تسوية بنكية كشف حساب بنك مطابقة bank reconciliation statement csv excel match",
+    steps: {
+      ar: [
+        "اختار \"الحساب البنكي\" وحدد \"من تاريخ\" و\"إلى تاريخ\".",
+        "دوس \"رفع كشف حساب (Excel/CSV)\" واختار ملف الكشف من البنك. النظام هيستورد الحركات ويطابقها تلقائيًا مع قيود الدفاتر وهيعرض كام حركة اتطابقت.",
+        "راجع الملخص: عدد الحركات المتطابقة، صافي حركة الكشف، صافي حركة الدفاتر، ورسالة هل الدفاتر متطابقة مع البنك أو فيه فرق.",
+        "لو فيه حركات متبقية، اختار حركة من \"اختر حركة كشف الحساب\" وقيدها المقابل من \"اختر قيد الدفاتر\" ودوس \"مطابقة\".",
+        "\"إعادة محاولة المطابقة التلقائية\" بتطابق تاني. وزرار \"مزامنة لحظية الآن\" بيشتغل بس لو الربط اللحظي مع البنك متصل.",
+      ],
+      en: [
+        "Choose the \"Bank Account\" and set \"From Date\" and \"To Date\".",
+        "Click \"Upload statement (Excel/CSV)\" and choose the bank statement file. The system imports the lines and auto-matches them with your ledger entries, and shows how many matched.",
+        "Review the summary: matched count, statement net movement, ledger net movement, and whether the books match the bank or there is a difference.",
+        "For any remaining lines, pick a statement line under \"Select statement line\" and its ledger entry under \"Select ledger entry\", then click \"Match\".",
+        "\"Retry auto-match\" runs matching again. \"Sync live now\" only works when the live bank connection is connected.",
+      ],
+    },
+  },
+  {
+    id: "acc-s-fixed-assets",
+    routes: ["/accounting/fixed-assets"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "الأصول الثابتة", en: "Fixed assets" },
+    keywords: "أصول ثابتة إهلاك عربية معدات أجهزة قيمة دفترية fixed assets depreciation equipment book value",
+    steps: {
+      ar: [
+        "دوس \"+ أصل جديد\".",
+        "اكتب \"كود الأصل\" والاسم بالعربي والإنجليزي، واختار \"حساب الأصل\" و\"حساب مجمع الإهلاك\".",
+        "اكتب \"تكلفة الشراء\" و\"تاريخ الشراء\" و\"العمر الإنتاجي (سنين)\" و\"قيمة الخردة\" لو فيه.",
+        "اختار \"طريقة الإهلاك\": قسط ثابت أو قسط متناقص (ولو متناقص اكتب نسبة القسط المتناقص %).",
+        "دوس \"حفظ\". الجدول بيعرض كل أصل بتكلفته ومجمع الإهلاك والقيمة الدفترية وحالته (نشط أو مستبعد).",
+      ],
+      en: [
+        "Click \"+ New Asset\".",
+        "Enter the \"Asset Code\", Arabic and English names, and choose the \"Asset Account\" and \"Accumulated Depreciation Account\".",
+        "Enter the \"Acquisition Cost\", \"Acquisition Date\", \"Useful Life (years)\" and \"Salvage Value\" if any.",
+        "Choose the \"Depreciation Method\": Straight Line or Declining Balance (for declining, also enter the declining balance rate %).",
+        "Click \"Save\". The table shows each asset with its cost, accumulated depreciation, book value and status (Active or Disposed).",
+      ],
+    },
+    tips: {
+      ar: ["الإهلاك نفسه بتحسبه من صفحة \"قيود الإهلاك\"."],
+      en: ["Depreciation itself is calculated from the \"Depreciation Entries\" page."],
+    },
+  },
+  {
+    id: "acc-s-depreciation-runs",
+    routes: ["/accounting/depreciation-runs"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "قيود الإهلاك", en: "Depreciation entries" },
+    keywords: "إهلاك قيد إهلاك شهري ترحيل depreciation run post monthly",
+    steps: {
+      ar: [
+        "دوس \"+ قيد إهلاك جديد\".",
+        "اختار \"الفترة المحاسبية\" و\"التاريخ\"، واكتب \"البيان\" لو عايز.",
+        "دوس \"حساب وإنشاء\" وهيتحسب إهلاك الأصول الثابتة ويظهر في الجدول بحالة \"مسودة\" مع \"إجمالي الإهلاك\".",
+        "دوس \"تفاصيل\" عشان تشوف إهلاك كل أصل.",
+        "لما تتأكد دوس \"ترحيل\" عشان القيد يتسجل في الدفاتر وتتغير الحالة لـ \"مرحل\".",
+      ],
+      en: [
+        "Click \"+ New Depreciation Entry\".",
+        "Choose the \"Fiscal Period\" and \"Date\", and add a \"Description\" if you like.",
+        "Click \"Calculate and Create\". Depreciation of your fixed assets is calculated and appears in the table as a \"Draft\" with the \"Total Depreciation\".",
+        "Click \"Details\" to see the depreciation of each asset.",
+        "When you are sure, click \"Post\" to record it in the books; the status changes to \"Posted\".",
+      ],
+    },
+    tips: {
+      ar: ["راجع المسودة قبل \"ترحيل\"."],
+      en: ["Review the draft before clicking \"Post\"."],
+    },
+  },
+  {
+    id: "acc-s-loans",
+    routes: ["/accounting/loans"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "القروض", en: "Loans" },
+    keywords: "قرض قروض بنك قسط فايدة سداد جدول أقساط loan installment interest repayment schedule",
+    steps: {
+      ar: [
+        "املا نموذج القرض: \"وصف القرض\"، \"الجهة المُقرِضة\" (اختياري)، \"مبلغ القرض\"، \"الفايدة السنوية %\"، \"عدد الأقساط (شهور)\".",
+        "اكتب \"تاريخ استلام القرض\" و\"تاريخ أول قسط\"، واختار \"حساب القرض (الخصوم)\" و\"الصندوق / البنك\".",
+        "دوس \"سجّل القرض\". النظام بيعمل جدول الأقساط وقيد الاستلام، ويقسّم كل قسط بين الأصل والفايدة.",
+        "من كارت القرض دوس \"اعرض جدول الأقساط\" عشان تشوف الاستحقاق والأصل والفايدة.",
+        "لما تسدّد قسط دوس \"سدّد\" جنبه واكتب تاريخ السداد، وهيتسجل القيد. القسط المتأخر بيظهر عليه \"قسط متأخر\".",
+        "لسداد القرض كله مرة واحدة دوس \"سدّد القرض بالكامل\" وأكّد، واكتب أي فايدة أو رسوم سداد مبكر (أو 0).",
+      ],
+      en: [
+        "Fill in the loan form: \"Loan description\", \"Lender\" (optional), \"Loan amount\", \"Annual interest %\", \"Number of installments (months)\".",
+        "Enter the \"Loan received date\" and \"First installment date\", and choose the \"Loan account (liabilities)\" and the \"Cash / Bank\" account.",
+        "Click \"Register loan\". The system builds the installment schedule and the receipt entry, splitting each installment into principal and interest.",
+        "On the loan card, click \"Show schedule\" to see due dates, principal and interest.",
+        "When you pay an installment, click \"Pay\" next to it and enter the payment date; the entry is recorded. Late installments are marked \"Overdue installment\".",
+        "To pay off the whole loan at once, click \"Settle loan in full\", confirm, and enter any early-settlement interest or fees (or 0).",
+      ],
+    },
+  },
+  {
+    id: "acc-s-deferrals",
+    routes: ["/accounting/deferrals"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "المصروفات والإيرادات المؤجلة", en: "Deferred expenses and revenues" },
+    keywords: "مؤجل مصروف مقدم إيراد مقدم إيجار تأمين اشتراك سنوي توزيع على الشهور deferral prepaid unearned amortize",
+    steps: {
+      ar: [
+        "الصفحة دي لمبلغ اتدفع أو اتحصّل مرة واحدة لكنه يخص عدة شهور (إيجار سنة، تأمين، اشتراك سنوي).",
+        "املا نموذج التسجيل: \"النوع\" (مصروف مدفوع مقدمًا أو إيراد محصّل مقدمًا)، \"الوصف\"، \"إجمالي المبلغ\"، \"عدد الشهور\"، التاريخ، وأول شهر، والحسابات المطلوبة. هتشوف القسط الشهري التقريبي.",
+        "دوس \"احفظ\". بيتعمل قيد الدفع أو التحصيل.",
+        "مرة كل شهر دوس \"رحّل الشهور المستحقة\" فوق، وهيتعمل قيد لكل شهر مستحق ويتوزع المبلغ بالتساوي.",
+        "كل بند بيعرض تقدم الشهور والمتبقي وحالته: شغّال أو خلص أو ملغي.",
+      ],
+      en: [
+        "Use this page for an amount paid or collected once but covering several months (a year of rent, insurance, an annual subscription).",
+        "Fill in the form: \"Type\" (prepaid expense or revenue collected in advance), \"Description\", \"Total amount\", \"Number of months\", dates, first month, and the required accounts. You will see the approximate monthly amount.",
+        "Click \"Save\". The payment or collection entry is created.",
+        "Once a month, click \"Post due months\" at the top; an entry is created for each due month and the amount is spread evenly.",
+        "Each item shows month progress, the remaining amount and its status: Active, Done or Cancelled.",
+      ],
+    },
+    tips: {
+      ar: ["\"الغي\" بيوقف الجدول بس، والرصيد المتبقي هيفضل في الميزانية ومحتاج قيد يدوي."],
+      en: ["\"Cancel\" only stops the schedule; the remaining balance stays on the balance sheet and needs a manual entry."],
+    },
+  },
+  {
+    id: "acc-s-vat-summary",
+    routes: ["/accounting/vat-summary"],
+    section: { ar: "المحاسبة", en: "Accounting" },
+    title: { ar: "ملخص ضريبة القيمة المضافة", en: "VAT summary" },
+    keywords: "ضريبة قيمة مضافة إقرار ضريبي مخرجات مدخلات VAT tax return output input",
+    steps: {
+      ar: [
+        "حدد \"من\" و\"إلى\" (الافتراضي من أول الشهر لحد النهاردة).",
+        "دوس \"عرض التقرير\".",
+        "هتشوف \"ضريبة المخرجات (على المبيعات)\" و\"ضريبة المدخلات (على المشتريات، قابلة للخصم)\".",
+        "آخر سطر هو \"صافي الضريبة المستحقة\" (أحمر)، أو \"صافي الضريبة القابلة للاسترداد\" (أخضر) لو المدخلات أكبر.",
+        "لو الشركة بريطانية هيظهر كمان جدول إقرار القيمة المضافة (9 خانات) للتقديم يدويًا أو عن طريق المحاسب. تقدر تصدّر التقرير.",
+      ],
+      en: [
+        "Set \"From\" and \"To\" (default: start of the month until today).",
+        "Click \"View Report\".",
+        "You will see \"Output VAT (on sales)\" and \"Input VAT (on purchases, deductible)\".",
+        "The last line is \"Net VAT payable\" (red), or \"Net VAT refundable\" (green) when input VAT is larger.",
+        "For UK companies, a 9-box VAT return table also appears, to file manually or through your accountant. You can export the report.",
+      ],
+    },
+  },
+];
