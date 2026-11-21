@@ -1,6 +1,12 @@
 /** The in-app help: short step-by-step guides, written once, in Arabic and English. No cost to run and nothing is sent anywhere.
  *  `routes` are path prefixes: the "?" button opens the guide whose route best matches the page the person is on. */
 import type { HelpTopic } from "./helpTypes";
+import { TOPICS as ACCOUNTING_SETUP } from "./topics/accountingSetup";
+import { TOPICS as ACCOUNTING_ANALYSIS } from "./topics/accountingAnalysis";
+import { TOPICS as SALES_PURCHASING_MISC } from "./topics/salesPurchasingMisc";
+import { TOPICS as HR } from "./topics/hr";
+import { TOPICS as INVENTORY } from "./topics/inventory";
+import { TOPICS as RESTAURANT } from "./topics/restaurant";
 export type { HelpTopic } from "./helpTypes";
 
 const BASE_TOPICS: HelpTopic[] = [
@@ -276,8 +282,34 @@ const BASE_TOPICS: HelpTopic[] = [
   },
 ];
 
+const STATEMENT_TOPICS: HelpTopic[] = [
+  {
+    id: "partner-statements", routes: ["/sales/statement", "/purchasing/statement"], section: { ar: "المبيعات والمشتريات", en: "Sales and purchasing" },
+    title: { ar: "كشف حساب عميل أو مورد", en: "Customer or vendor statement" },
+    keywords: "كشف حساب عميل مورد رصيد statement customer vendor balance",
+    steps: {
+      ar: [
+        "اختار العميل (أو المورد) من القايمة.",
+        "حدد من تاريخ وإلى تاريخ.",
+        "دوس عرض التقرير.",
+        "هتشوف الرصيد الافتتاحي، وبعده كل الحركات: فواتير ومدفوعات وإشعارات دائنة ومدينة، ومعاها المدين والدائن والرصيد بعد كل حركة.",
+        "تقدر تصدّر الكشف أو تطبعه من شريط التصدير فوق الكشف.",
+      ],
+      en: [
+        "Choose the customer (or vendor) from the list.",
+        "Set the from date and the to date.",
+        "Press View report.",
+        "You see the opening balance, then every movement: invoices, payments, credit and debit notes, with the debit, credit and running balance after each.",
+        "You can export or print the statement from the export bar above it.",
+      ],
+    },
+  },
+];
+
 // More guides are added here, one file per area of the system.
-export const HELP_TOPICS: HelpTopic[] = [...BASE_TOPICS];
+export const HELP_TOPICS: HelpTopic[] = [
+  ...BASE_TOPICS, ...STATEMENT_TOPICS, ...ACCOUNTING_SETUP, ...ACCOUNTING_ANALYSIS, ...SALES_PURCHASING_MISC, ...HR, ...INVENTORY, ...RESTAURANT,
+];
 
 const norm = (s: string) => s.toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي");
 
