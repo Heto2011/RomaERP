@@ -809,6 +809,12 @@ jobs:
             docker ps --format '{{.Names}} {{.Image}}' 2>/dev/null | sed 's/^/container: /' || true
             docker ps -q 2>/dev/null | while read c; do docker exec "$c" sh -c 'command -v java >/dev/null 2>&1 && echo "java inside container $(hostname)"' 2>/dev/null; done
             echo "CPU flags relevant to the notice:"; grep -m1 '^flags' /proc/cpuinfo | tr ' ' '\n' | grep -E '^(avx512f|avx512bw|avx512vbmi|bmi2)$' || echo "none of the AVX-512 flags"
+            echo; echo "== Is PHP on this server? (a security notice about PHP) =="
+            command -v php >/dev/null 2>&1 && { echo "php binary found:"; php -v 2>&1 | head -1; } || echo "no php binary on the host"
+            echo "php-fpm / php processes on the host: $(ps -eo comm | grep -ciE '^php')"
+            (dpkg -l 2>/dev/null | grep -iE ' php[0-9.]*(-fpm|-cli|-common)? ' | head -3) || true
+            docker ps -q 2>/dev/null | while read c; do docker exec "$c" sh -c 'command -v php >/dev/null 2>&1 && echo "php inside container $(hostname)"' 2>/dev/null; done
+            echo "web server on the host: $(ps -eo comm | grep -E '^(nginx|apache2|httpd|caddy)$' | sort -u | tr '\n' ' ')"
             echo; echo "== Size =="
             echo "cpus: $(nproc)"; free -h | sed -n '1,3p'
             df -h / | tail -1
