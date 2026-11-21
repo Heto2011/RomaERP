@@ -1,3 +1,4 @@
+import HelpButton from "./HelpButton";
 import { useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -54,6 +55,7 @@ export default function RestaurantPortalLayout({ children }: { children: ReactNo
         <div className="sidebar-brand">
           <span className="brand-text">{t.restaurantAppName}</span>
           <div style={{ display: "flex", gap: 4 }}>
+            <HelpButton />
             <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>
