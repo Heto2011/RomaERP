@@ -12,7 +12,7 @@ public record PublicMenuItemDto(Guid Id, string NameAr, string NameEn, decimal P
 public record PublicMenuCategoryDto(string Category, List<PublicMenuItemDto> Items);
 public record PublicMenuDto(string ShopNameAr, string ShopNameEn, string? Table, List<PublicMenuCategoryDto> Categories, bool CanOrder = false, int RadiusMeters = 0);
 public record PublicOrderLineBody(Guid ItemId, decimal Quantity, string? Notes);
-public record PublicOrderBody(string Table, string Code, double? Latitude, double? Longitude, double? Accuracy, string? Note, List<PublicOrderLineBody> Lines);
+public record PublicOrderBody(string Table, string Code, double? Latitude, double? Longitude, double? Accuracy, string? Note, List<PublicOrderLineBody> Lines, string? DeviceId = null);
 
 /// <summary>The menu a diner sees after scanning the QR code on a table. No login: the company comes from the X-Company-Code header the
 /// public page sends, like every other call. It shows only what a menu board would: names, prices and categories. Nothing about
@@ -58,9 +58,11 @@ public class PublicMenuController : ControllerBase
     [EnableRateLimiting("public-order")]
     public async Task<ActionResult<object>> Order([FromBody] PublicOrderBody body, CancellationToken ct)
     {
+        // Guests in one restaurant share the Wi-Fi's public address (and many share the same phone model), so the address alone would make
+        // them count as one device. The page sends a random id it keeps on the phone; it is only a throttle, never proof of who someone is.
         var ip = HttpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown";
-        var ua = Request.Headers.UserAgent.ToString();
-        var deviceKey = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(ip + "|" + ua)));
+        var who = string.IsNullOrWhiteSpace(body.DeviceId) || body.DeviceId.Length > 64 ? Request.Headers.UserAgent.ToString() : body.DeviceId;
+        var deviceKey = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(ip + "|" + who)));
         var id = await _qr.SubmitAsync(new QrOrderSubmitInput(body.Table, body.Code, body.Latitude, body.Longitude, body.Accuracy, body.Note,
             (body.Lines ?? new()).Select(l => new QrOrderLineInput(l.ItemId, l.Quantity, l.Notes)).ToList()), deviceKey, ct);
         return Ok(new { id });

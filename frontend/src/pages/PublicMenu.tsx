@@ -25,6 +25,15 @@ const TEXT = {
   },
 };
 
+/** A random id kept on this phone so guests behind the same Wi-Fi are not counted as one device. */
+function deviceId(): string {
+  try {
+    let id = localStorage.getItem("qrDeviceId");
+    if (!id) { id = crypto.randomUUID(); localStorage.setItem("qrDeviceId", id); }
+    return id;
+  } catch { return ""; }
+}
+
 const money = (n: number) => n.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
 /** What a diner sees after scanning the QR on a table. When ordering is on for that table the diner can send an order from the phone;
@@ -76,7 +85,7 @@ export default function PublicMenu() {
       setBusy(x.sending);
       try {
         const r = await axios.post<{ id: string }>("/api/public-menu/order", {
-          table, code, latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy, note: note || null,
+          table, code, deviceId: deviceId(), latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracy: pos.coords.accuracy, note: note || null,
           lines: lines.map((i) => ({ itemId: i.id, quantity: cart[i.id], notes: null })),
         }, { headers });
         setSent({ id: r.data.id, status: 1 });
