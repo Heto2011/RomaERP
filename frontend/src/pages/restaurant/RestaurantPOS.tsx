@@ -20,6 +20,8 @@ import { bilingualName } from "../../i18n/bilingual";
 import { useAuth } from "../../context/AuthContext";
 import { IconGrid, IconBox, IconTruck } from "../../components/icons";
 import OfflinePos, { OfflineQueueNotice } from "./OfflinePos";
+import ReceiptSettingsDialog from "../../components/ReceiptSettingsDialog";
+import { loadReceiptSettings, printKitchenTicket, printReceipt } from "../../utils/receiptPrint";
 import { useOnlineStatus } from "../../offline/useOnlineStatus";
 import { listOutbox, loadSnapshot, saveSnapshot, syncOutbox, type OutboxTicket, type PosSnapshot } from "../../offline/posOffline";
 
@@ -44,6 +46,9 @@ export default function RestaurantPOS() {
   const [closedShiftSummary, setClosedShiftSummary] = useState<CashierShift | null>(null);
 
   // A reservation that was just turned into an order opens straight on it (…/pos?order=<id>).
+  const [receiptSettings, setReceiptSettings] = useState(loadReceiptSettings());
+  const [showPrintSettings, setShowPrintSettings] = useState(false);
+  const ui = lang === "ar" ? { receipt: "طباعة الإيصال", kitchen: "تذكرة المطبخ", settings: "إعدادات الطباعة" } : { receipt: "Print receipt", kitchen: "Kitchen ticket", settings: "Printing settings" };
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(() => new URLSearchParams(window.location.search).get("order"));
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
 
@@ -460,6 +465,9 @@ export default function RestaurantPOS() {
         deliveryPlatformName: billPaymentTerm === PaymentTerm.Credit ? billDeliveryPlatformName : null,
       });
       setShowBillDialog(false);
+      if (receiptSettings.autoPrint) {
+        printReceipt(selectedOrder, { lang: lang === "ar" ? "ar" : "en", settings: receiptSettings, invoiceNumber: res.data.salesInvoiceNumber, payment: billPaymentTerm });
+      }
       if (res.data.salesInvoiceId) {
         const pdfRes = await SalesApi.downloadInvoicePdf(res.data.salesInvoiceId);
         const url = window.URL.createObjectURL(pdfRes.data as Blob);
@@ -715,6 +723,17 @@ export default function RestaurantPOS() {
                   <div className="text-muted">{selectedOrder.orderNumber}</div>
                 </div>
                 <div style={{ display: "flex", gap: 8 }}>
+                  {selectedOrder.status === RestaurantOrderStatus.Open && receiptSettings.kitchenTickets && selectedOrder.lines.length > 0 && (
+                    <button className="btn btn-secondary btn-sm" title={ui.kitchen} onClick={() => printKitchenTicket(selectedOrder, { lang: lang === "ar" ? "ar" : "en", settings: receiptSettings })}>
+                      🍳
+                    </button>
+                  )}
+                  {selectedOrder.lines.length > 0 && (
+                    <button className="btn btn-secondary btn-sm" title={ui.receipt} onClick={() => printReceipt(selectedOrder, { lang: lang === "ar" ? "ar" : "en", settings: receiptSettings, invoiceNumber: selectedOrder.salesInvoiceNumber })}>
+                      🖨
+                    </button>
+                  )}
+                  <button className="btn btn-secondary btn-sm" title={ui.settings} onClick={() => setShowPrintSettings(true)}>⚙</button>
                   {selectedOrder.status === RestaurantOrderStatus.Open && selectedOrder.lines.length >= 2 && (
                     <button className="btn btn-secondary btn-sm" onClick={openSplitDialog} title={t.restaurant.splitBill}>
                       ⑂
@@ -808,6 +827,8 @@ export default function RestaurantPOS() {
           )}
         </div>
       </div>
+
+      {showPrintSettings && <ReceiptSettingsDialog onClose={(saved) => { setShowPrintSettings(false); if (saved) setReceiptSettings(saved); }} />}
 
       {showNewOrder && (
         <div className="modal-overlay" onClick={() => setShowNewOrder(false)}>
