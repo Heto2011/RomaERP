@@ -71,12 +71,14 @@ export const TOPICS: HelpTopic[] = [
         "لإضافة طاولة دوس \"+ طاولة جديدة\" واكتب \"رقم الطاولة\" و\"القسم\" (اختياري) و\"السعة\" ثم \"حفظ\".",
         "لتعليم طاولة كمحجوزة دوس \"حجز\" على بطاقتها، ولتحريرها دوس \"إلغاء الحجز\".",
         "الطاولة المشغولة بيحددها السيستم لما يتفتح عليها طلب، ومفيهاش زرار تعديل.",
+        "أكواد QR للمنيو: دوس \"أكواد QR للمنيو\"، هتظهر ورقة فيها كود لكل طاولة وكود عام. اطبعها وحط كل كود على طاولته. العميل يصوّره بموبايله ويفتح المنيو بالأسعار من غير ما يسجّل دخول. (المنيو للعرض بس، والطلب بيتم من خلال الجرسون.)",
       ],
       en: [
         "Each table is a card showing its number, section, capacity and status: Available, Occupied or Reserved.",
         "To add a table press \"+ New Table\", enter the table number, section (optional) and capacity, then \"Save\".",
         "To mark a table as reserved press \"Reserve\" on its card; press \"Cancel reservation\" to free it.",
         "An occupied table is set by the system when an order is open on it, so it has no edit button.",
+        "Menu QR codes: press \"Menu QR codes\" to get a sheet with a code for every table and a general one. Print it and place each code on its table. The guest scans it with their phone and sees the menu with prices, with no login. (The menu is for viewing only; ordering still goes through the waiter.)",
       ],
     },
   },
@@ -118,6 +120,8 @@ export const TOPICS: HelpTopic[] = [
         "لو برنامج الولاء مفعّل، دوس \"ربط عميل / نقاط\" واكتب موبايل العميل عشان يكسب نقاط أو يستبدلها.",
         "لما العميل يدفع دوس \"تحصيل الفاتورة\"، اختار طريقة الدفع (كاش أو شبكة، أو آجل منصة توصيل للدليفري) والفترة المحاسبية، ثم \"تأكيد التحصيل\".",
         "في آخر اليوم دوس \"قفل الشيفت\"، عدّ الكاش في الدرج واكتبه في \"الكاش المعدود\"، والسيستم هيحسب \"الفرق\".",
+        "الطباعة: زر الطابعة (🖨) بيطبع الإيصال، وزر المطبخ (🍳) بيطبع تذكرة للمطبخ. وزر الترس (⚙) بيفتح إعدادات الطباعة: عرض الورق (58 أو 80 مم)، والطباعة التلقائية بعد التحصيل، واسم المحل ورسالة آخر الإيصال. الإعدادات دي محفوظة على الجهاز نفسه.",
+        "سحّارة الكاشير: لو في تعريف الطابعة خيار \"فتح السحّارة\"، بتفتح مع كل طباعة. ولو عايز الطباعة من غير نافذة تأكيد، شغّل المتصفح في وضع الطباعة الصامتة.",
       ],
       en: [
         "First thing in the day: enter the \"Opening float\" (cash in the drawer) and press \"Open Shift & Start Selling\".",
@@ -127,6 +131,8 @@ export const TOPICS: HelpTopic[] = [
         "If the loyalty program is on, press \"Attach customer / points\" and enter the customer's mobile so he earns or redeems points.",
         "When the customer pays press \"Bill Order\", choose the payment method (cash or card, or delivery-platform credit for delivery) and the fiscal period, then \"Confirm\".",
         "At the end of the day press \"Close Shift\", count the cash in the drawer, enter it in \"Counted cash\" and the system shows the variance.",
+        "Printing: the printer button (🖨) prints the receipt and the kitchen button (🍳) prints a ticket for the kitchen. The gear (⚙) opens the printing settings: paper width (58 or 80 mm), automatic printing after billing, the shop name and the closing message. These settings are kept on that device.",
+        "Cash drawer: if the printer driver has an \"open cash drawer\" option, the drawer opens with every print. For printing without a confirmation window, run the browser in silent printing mode.",
       ],
     },
     tips: {

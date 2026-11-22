@@ -33,6 +33,7 @@ import LoginHistoryPage from "./pages/LoginHistory";
 import EInvoicing from "./pages/EInvoicing";
 import ChartOfAccounts from "./pages/accounting/ChartOfAccounts";
 import ChartImport from "./pages/accounting/ChartImport";
+import PublicMenu from "./pages/PublicMenu";
 import AccountBalanceTransfer from "./pages/accounting/AccountBalanceTransfer";
 import OpeningBalances from "./pages/accounting/OpeningBalances";
 import JournalEntries from "./pages/accounting/JournalEntries";
@@ -198,6 +199,7 @@ export default function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/m/:companyCode" element={<PublicMenu />} />
       <Route path="/careers/:companyCode" element={<Careers />} />
       <Route path="/careers/:companyCode/:jobId" element={<Careers />} />
       <Route path="/people-login" element={<PeopleLogin />} />

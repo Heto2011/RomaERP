@@ -164,6 +164,11 @@ builder.Services.AddRateLimiter(options =>
             QueueLimit = 0,
         }));
 
+    // The public QR menu: anyone with the table's code may read the menu, so it is throttled per address.
+    options.AddPolicy("public-menu", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+
     // An outside bot sending a company's data: generous enough for batches, per IP. (The API key check itself is in the controller.)
     options.AddPolicy("integration", httpContext => RateLimitPartition.GetFixedWindowLimiter(
         partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",

@@ -3,13 +3,15 @@ import { RestaurantApi } from "../../api/services";
 import { RestaurantTableStatus, type RestaurantTable } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import TableQrSheet from "../../components/TableQrSheet";
 
 export default function RestaurantTables() {
-  const { t } = useLanguage();
+  const { t, lang } = useLanguage();
   const [tables, setTables] = useState<RestaurantTable[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const [showForm, setShowForm] = useState(false);
+  const [showQr, setShowQr] = useState(false);
   const [number, setNumber] = useState("");
   const [sectionName, setSectionName] = useState("");
   const [capacity, setCapacity] = useState(4);
@@ -64,11 +66,15 @@ export default function RestaurantTables() {
     <div>
       <div className="page-header">
         <h1>{t.restaurant.tablesTitle}</h1>
+        <button className="btn btn-secondary" onClick={() => setShowQr(true)} disabled={tables.length === 0}>
+          {lang === "ar" ? "أكواد QR للمنيو" : "Menu QR codes"}
+        </button>
         <button className="btn" onClick={() => setShowForm((v) => !v)}>
           {showForm ? t.common.cancel : t.restaurant.newTable}
         </button>
       </div>
 
+      {showQr && <TableQrSheet tables={tables} onClose={() => setShowQr(false)} />}
       {error && <div className="alert-error">{error}</div>}
 
       {showForm && (
