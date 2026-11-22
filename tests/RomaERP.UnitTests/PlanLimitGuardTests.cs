@@ -62,6 +62,14 @@ public class PlanLimitGuardTests
     }
 
     [Fact]
+    public void PosPlus_IsPricedInEgyptAt249_WithNoExtras()
+    {
+        Assert.Equal(249m, SubscriptionPriceList.Find(SubscriptionPriceList.PosPlusPlanCode, SubscriptionPriceList.Egp)!.Base);
+        Assert.Equal((0, 0), SubscriptionPriceList.EgyptExtrasCap(SubscriptionPriceList.PosPlusPlanCode, 1, 4));
+        Assert.Equal(4, SubscriptionPriceList.PosPlusIncludedUsers);
+    }
+
+    [Fact]
     public async Task EnterprisePlan_IsNotCappedOnEmployees()
     {
         var (guard, db) = Build("Manual", 1, planCode: "enterprise");

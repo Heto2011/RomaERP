@@ -39,6 +39,12 @@ public static class SubscriptionPriceList
     /// <summary>The owner plus one cashier.</summary>
     public const int PosPlanIncludedUsers = 2;
 
+    /// <summary>Egypt-only paid POS plan (restaurant, cashier, inventory and costing, no accounting or HR): one branch, four users, no extras.
+    /// Its company stays on the POS product, and AI is by prepaid credit only.</summary>
+    public const string PosPlusPlanCode = "posplus";
+    public const int PosPlusIncludedBranches = 1;
+    public const int PosPlusIncludedUsers = 4;
+
     /// <summary>Egypt-only entry plan: one branch, five users, no extras (more means moving up to Essential).</summary>
     public const string MiniPlanCode = "mini";
     public const int MiniPlanIncludedBranches = 1;
@@ -49,7 +55,7 @@ public static class SubscriptionPriceList
     /// allows +1 branch and +4 users. Null = no cap (not Egypt, or an uncapped plan such as Enterprise or Roma HR).</summary>
     public static (int Branches, int Users)? EgyptExtrasCap(string planCode, int includedBranches, int includedUsers)
     {
-        if (string.Equals(planCode, MiniPlanCode, StringComparison.OrdinalIgnoreCase)) return (0, 0);
+        if (string.Equals(planCode, MiniPlanCode, StringComparison.OrdinalIgnoreCase) || string.Equals(planCode, PosPlusPlanCode, StringComparison.OrdinalIgnoreCase)) return (0, 0);
         if (includedBranches == int.MaxValue || includedUsers == int.MaxValue) return null;
         if (planCode.ToLowerInvariant() is not ("essential" or "business" or "professional")) return null;
         return ((int)Math.Round(includedBranches * 0.4, MidpointRounding.AwayFromZero), (int)Math.Round(includedUsers * 0.4, MidpointRounding.AwayFromZero));
@@ -97,6 +103,7 @@ public static class SubscriptionPriceList
 
         // Egypt: its own price list (not a conversion). No launch discount on the ERP plans — the Mini plan is the entry price.
         [(MiniPlanCode, Egp)] = new(Egp, 499, 0, 0, 0),
+        [(PosPlusPlanCode, Egp)] = new(Egp, 249, 0, 0, 0),
         [("essential", Egp)] = new(Egp, 999, 0, 200, 100),
         [("business", Egp)] = new(Egp, 2499, 0, 200, 100),
         [("professional", Egp)] = new(Egp, 4499, 0, 200, 100),

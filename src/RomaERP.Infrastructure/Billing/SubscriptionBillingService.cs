@@ -602,7 +602,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             tenant.ProductScope = ProductScope.Full;
             Log(tenant, "Company", "Product access changed", $"{(before == ProductScope.PosOnly ? "Roma POS" : "Roma Books (free)")} → Full ERP + HR", "automatic");
         }
-        else if (code == SubscriptionPriceList.PosPlanCode && tenant.ProductScope == ProductScope.BooksOnly)
+        else if (code is SubscriptionPriceList.PosPlanCode or SubscriptionPriceList.PosPlusPlanCode && tenant.ProductScope == ProductScope.BooksOnly)
         {
             tenant.ProductScope = ProductScope.PosOnly;
             Log(tenant, "Company", "Product access changed", "Roma Books (free) → Roma POS", "automatic");
