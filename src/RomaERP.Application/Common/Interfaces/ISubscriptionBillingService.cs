@@ -54,7 +54,9 @@ public record TenantSubscriptionDto(
     string? ContactPhone = null,
     // A temporary plan discount: percent off while months are left.
     decimal DiscountPercent = 0,
-    int DiscountMonthsLeft = 0);
+    int DiscountMonthsLeft = 0,
+    // When the company was opened (signed up). Shown in the console so the 15-day wait for never-started companies can be seen.
+    DateTime? CreatedAtUtc = null);
 
 public record SubscriptionInvoiceDto(
     Guid Id,

@@ -2490,6 +2490,7 @@ export interface TenantSubscription {
   /** A temporary plan discount: percent off while months are left. */
   discountPercent?: number;
   discountMonthsLeft?: number;
+  createdAtUtc?: string | null;
   lastLoginAtUtc?: string | null;
   salesInvoiceCount?: number;
   purchaseInvoiceCount?: number;

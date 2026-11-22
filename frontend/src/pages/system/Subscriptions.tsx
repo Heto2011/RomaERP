@@ -387,6 +387,10 @@ export default function SubscriptionsPage() {
                               {(s.salesInvoiceCount ?? 0)} sales / {(s.purchaseInvoiceCount ?? 0)} purchase invoices
                               {(s.restaurantOrderCount ?? 0) > 0 ? ` / ${s.restaurantOrderCount} POS orders` : ""} / {(s.employeeCount ?? 0)} employees
                             </div>
+                            {s.createdAtUtc && (() => {
+                              const days = Math.floor((Date.now() - new Date(s.createdAtUtc).getTime()) / 86400000);
+                              return <div className="text-muted" style={{ fontSize: 12 }}>Opened {new Date(s.createdAtUtc).toLocaleDateString()} ({days} days ago{st === "NeverStarted" ? (days >= 15 ? " - can be removed" : ` - removable after day 15`) : ""})</div>;
+                            })()}
                             {s.lastLoginAtUtc && <div className="text-muted" style={{ fontSize: 12 }}>Last login {new Date(s.lastLoginAtUtc).toLocaleDateString()}</div>}
                             {s.status === SubscriptionStatus.Trialing || hit >= 0.8 ? (hit >= 1 ? <div style={{ color: "#b42318", fontWeight: 700, fontSize: 12 }}>At the plan limit: ready to upgrade</div> : hit >= 0.8 ? <div style={{ color: "#c8862e", fontWeight: 700, fontSize: 12 }}>Near the plan limit</div> : null) : null}
                           </>

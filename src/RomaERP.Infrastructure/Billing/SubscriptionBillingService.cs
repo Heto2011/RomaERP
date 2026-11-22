@@ -93,7 +93,7 @@ public class SubscriptionBillingService : ISubscriptionBillingService
             var act = await GetTenantActivationAsync(tenant, ct);
             items.Add(dto with
             {
-                LastLoginAtUtc = act.LastLoginUtc, SalesInvoiceCount = act.SalesInvoices, PurchaseInvoiceCount = act.PurchaseInvoices,
+                CreatedAtUtc = tenant.CreatedAtUtc, LastLoginAtUtc = act.LastLoginUtc, SalesInvoiceCount = act.SalesInvoices, PurchaseInvoiceCount = act.PurchaseInvoices,
                 RestaurantOrderCount = act.RestaurantOrders, EmployeeCount = act.Employees,
                 ContactName = tenant.ContactName ?? act.AdminName, ContactEmail = tenant.ContactEmail ?? act.AdminEmail, ContactPhone = tenant.ContactPhone ?? act.AdminPhone,
                 ActivationStatus = ClassifyActivation(act.LastLoginUtc, act.SalesInvoices + act.PurchaseInvoices + act.RestaurantOrders + act.Employees, DateTime.UtcNow)
