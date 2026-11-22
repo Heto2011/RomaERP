@@ -65,6 +65,8 @@ public static class DependencyInjection
         services.AddScoped<IDeliveryPlatformProvider, RomaERP.Infrastructure.Restaurant.HungerStationDeliveryProvider>();
         services.AddScoped<IDeliveryPlatformProvider, RomaERP.Infrastructure.Restaurant.JahezDeliveryProvider>();
         services.AddScoped<IDeliveryPlatformProvider, RomaERP.Infrastructure.Restaurant.MrsoolDeliveryProvider>();
+        services.AddScoped<IDeliveryPlatformProvider, RomaERP.Infrastructure.Restaurant.TalabatDeliveryProvider>();
+        services.AddScoped<IDeliveryPlatformProvider, RomaERP.Infrastructure.Restaurant.ElmenusDeliveryProvider>();
         services.AddHttpClient<IWhatsAppSender, RomaERP.Infrastructure.Notifications.MetaWhatsAppSender>();
         services.AddHttpClient<IEmailSender, RomaERP.Infrastructure.Notifications.ResendEmailSender>();
         services.AddScoped<IPasswordRecoveryService, RomaERP.Infrastructure.Identity.PasswordRecoveryService>();
