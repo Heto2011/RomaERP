@@ -4695,6 +4695,11 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("RestaurantOrderId")
                         .HasColumnType("uniqueidentifier");
 
+                    b.Property<byte[]>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
                     b.Property<int>("Status")
                         .HasColumnType("int");
 

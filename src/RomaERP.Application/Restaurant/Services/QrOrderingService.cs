@@ -246,8 +246,16 @@ public class QrOrderingService : IQrOrderingService
         var s = await LoadSettingsAsync(ct);
         if (s.QrOrderWarehouseId is null) throw new ValidationAppException("اختار الفرع في إعدادات الطلب من الموبايل.");
 
+        // Claim the request first. If another cashier claimed it at the same moment, this save fails and nothing is added twice.
+        request.Status = QrOrderStatus.Approved;
+        try { await _context.SaveChangesAsync(ct); }
+        catch (DbUpdateConcurrencyException) { throw new ValidationAppException("الطلب ده اتراجع قبل كده."); }
+
+        Guid? orderId = null;
+        try
+        {
         // Add to the table's open order if it already has one, otherwise open a new one.
-        var orderId = await _context.RestaurantOrders
+        orderId = await _context.RestaurantOrders
             .Where(o => o.TableId == request.TableId && o.Status == RestaurantOrderStatus.Open)
             .OrderByDescending(o => o.OrderDate).Select(o => (Guid?)o.Id).FirstOrDefaultAsync(ct);
         if (orderId is null)
@@ -263,8 +271,15 @@ public class QrOrderingService : IQrOrderingService
         }
         foreach (var l in request.Lines)
             await _restaurant.AddLineAsync(orderId.Value, new AddOrderLineDto { ItemId = l.ItemId, Quantity = l.Quantity, Notes = l.Notes }, ct);
+        }
+        catch
+        {
+            // Something stopped the order (a table that is not free, a missing item): put the request back so the cashier can retry or reject it.
+            request.Status = QrOrderStatus.Pending;
+            await _context.SaveChangesAsync(CancellationToken.None);
+            throw;
+        }
 
-        request.Status = QrOrderStatus.Approved;
         request.RestaurantOrderId = orderId;
         request.DecidedAtUtc = DateTime.UtcNow;
         request.DecidedByUserId = _user.UserId;
@@ -280,6 +295,7 @@ public class QrOrderingService : IQrOrderingService
         request.Status = QrOrderStatus.Rejected;
         request.DecidedAtUtc = DateTime.UtcNow;
         request.DecidedByUserId = _user.UserId;
-        await _context.SaveChangesAsync(ct);
+        try { await _context.SaveChangesAsync(ct); }
+        catch (DbUpdateConcurrencyException) { throw new ValidationAppException("الطلب ده اتراجع قبل كده."); }
     }
 }

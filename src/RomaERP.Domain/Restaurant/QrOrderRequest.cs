@@ -25,6 +25,8 @@ public class QrOrderRequest : AuditableEntity
     public DateTime? DecidedAtUtc { get; set; }
     public string? DecidedByUserId { get; set; }
     public List<QrOrderRequestLine> Lines { get; set; } = new();
+    /// <summary>Makes two cashiers pressing Accept on the same request at the same moment safe: only one of them wins.</summary>
+    public byte[]? RowVersion { get; set; }
 }
 
 public class QrOrderRequestLine : BaseEntity

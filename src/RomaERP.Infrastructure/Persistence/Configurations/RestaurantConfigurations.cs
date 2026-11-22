@@ -23,6 +23,7 @@ public class QrOrderRequestConfiguration : IEntityTypeConfiguration<QrOrderReque
         builder.Property(r => r.TableNumber).HasMaxLength(20).IsRequired();
         builder.Property(r => r.DeviceKey).HasMaxLength(64).IsRequired();
         builder.Property(r => r.Note).HasMaxLength(300);
+        builder.Property(r => r.RowVersion).IsRowVersion();
         builder.HasIndex(r => new { r.Status, r.CreatedAtUtc });
         builder.HasMany(r => r.Lines).WithOne().HasForeignKey(l => l.QrOrderRequestId).OnDelete(DeleteBehavior.Cascade);
         builder.HasQueryFilter(r => !r.IsDeleted);
