@@ -20,6 +20,7 @@ import { bilingualName } from "../../i18n/bilingual";
 import { useAuth } from "../../context/AuthContext";
 import { IconGrid, IconBox, IconTruck } from "../../components/icons";
 import OfflinePos, { OfflineQueueNotice } from "./OfflinePos";
+import QrOrdersPanel from "../../components/QrOrdersPanel";
 import ReceiptSettingsDialog from "../../components/ReceiptSettingsDialog";
 import { loadReceiptSettings, printKitchenTicket, printReceipt } from "../../utils/receiptPrint";
 import { useOnlineStatus } from "../../offline/useOnlineStatus";
@@ -643,6 +644,7 @@ export default function RestaurantPOS() {
       {error && <div className="alert-error">{error}</div>}
       {syncMessage && <div className="alert-success">{syncMessage}</div>}
       <OfflineQueueNotice queue={queue} syncing={syncing} onSyncNow={runSync} onChanged={refreshQueue} />
+      <QrOrdersPanel onApproved={() => { load(); }} />
 
       <div className="pos-layout">
         <div className="pos-orders-rail">

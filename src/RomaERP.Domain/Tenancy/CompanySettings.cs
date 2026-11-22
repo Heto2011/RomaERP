@@ -38,6 +38,18 @@ public class CompanySettings : AuditableEntity
     /// SANED). A company cost, not deducted from the employee (% of basic salary).</summary>
     public decimal GosiNonSaudiEmployerHazardsRatePercent { get; set; } = 2.0m;
 
+    // ----- Ordering from the guest's phone through the QR code on a table (off by default) -----
+    public bool QrOrderingEnabled { get; set; }
+    /// <summary>The branch/warehouse that orders sent by phone are taken from.</summary>
+    public Guid? QrOrderWarehouseId { get; set; }
+    /// <summary>Where the restaurant is. A phone order is only accepted from inside <see cref="QrOrderRadiusMeters"/> of this point.</summary>
+    public double? RestaurantLatitude { get; set; }
+    public double? RestaurantLongitude { get; set; }
+    public int QrOrderRadiusMeters { get; set; } = 50;
+    /// <summary>The secret every table code is made from. Changing it makes all printed codes stop working at once.</summary>
+    public string? QrSecret { get; set; }
+    public DateTime? QrSecretChangedAtUtc { get; set; }
+
     // ----- Restaurant loyalty programme (off by default) -----
     public bool LoyaltyEnabled { get; set; }
     /// <summary>Amount a customer spends (after discounts, before VAT) to earn one point.</summary>

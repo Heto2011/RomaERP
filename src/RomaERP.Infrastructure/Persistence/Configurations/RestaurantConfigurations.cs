@@ -16,6 +16,30 @@ public class RestaurantTableConfiguration : IEntityTypeConfiguration<RestaurantT
     }
 }
 
+public class QrOrderRequestConfiguration : IEntityTypeConfiguration<QrOrderRequest>
+{
+    public void Configure(EntityTypeBuilder<QrOrderRequest> builder)
+    {
+        builder.Property(r => r.TableNumber).HasMaxLength(20).IsRequired();
+        builder.Property(r => r.DeviceKey).HasMaxLength(64).IsRequired();
+        builder.Property(r => r.Note).HasMaxLength(300);
+        builder.HasIndex(r => new { r.Status, r.CreatedAtUtc });
+        builder.HasMany(r => r.Lines).WithOne().HasForeignKey(l => l.QrOrderRequestId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasQueryFilter(r => !r.IsDeleted);
+    }
+}
+
+public class QrOrderRequestLineConfiguration : IEntityTypeConfiguration<QrOrderRequestLine>
+{
+    public void Configure(EntityTypeBuilder<QrOrderRequestLine> builder)
+    {
+        builder.Property(l => l.ItemName).HasMaxLength(200).IsRequired();
+        builder.Property(l => l.Quantity).HasPrecision(18, 3);
+        builder.Property(l => l.UnitPrice).HasPrecision(18, 2);
+        builder.Property(l => l.Notes).HasMaxLength(200);
+    }
+}
+
 public class RestaurantOrderConfiguration : IEntityTypeConfiguration<RestaurantOrder>
 {
     public void Configure(EntityTypeBuilder<RestaurantOrder> builder)

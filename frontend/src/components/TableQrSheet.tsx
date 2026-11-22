@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import QRCode from "qrcode";
 import { useLanguage } from "../i18n/LanguageContext";
 import type { RestaurantTable } from "../api/types";
+import { QrOrdersApi } from "../api/services";
 
 const TEXT = {
   ar: { title: "أكواد QR للمنيو", intro: "اطبع الورقة دي وحط كل كود على الطاولة بتاعته. العميل يصوّره بموبايله ويشوف المنيو بالأسعار.", menuOnly: "كود المنيو العام", table: "طاولة", scan: "صوّر الكود لتشوف المنيو", print: "طباعة", close: "إغلاق" },
@@ -15,12 +16,19 @@ export default function TableQrSheet({ tables, onClose }: { tables: RestaurantTa
   const companyCode = localStorage.getItem("companyCode") ?? "";
   const base = `${window.location.origin}/m/${encodeURIComponent(companyCode)}`;
   const [images, setImages] = useState<Record<string, string>>({});
+  // Each table's secret code, so the QR opens the menu with ordering switched on for that table only.
+  const [codes, setCodes] = useState<Record<string, string> | null>(null);
 
   useEffect(() => {
-    const targets = [{ key: "_", url: base }, ...tables.map((t) => ({ key: t.id, url: `${base}?table=${encodeURIComponent(t.number)}` }))];
+    QrOrdersApi.codes().then((r) => setCodes(Object.fromEntries(r.data.map((c) => [c.tableId, c.code])))).catch(() => setCodes({}));
+  }, []);
+
+  useEffect(() => {
+    if (codes === null) return;
+    const targets = [{ key: "_", url: base }, ...tables.map((t) => ({ key: t.id, url: `${base}?table=${encodeURIComponent(t.number)}${codes[t.id] ? `&k=${encodeURIComponent(codes[t.id])}` : ""}` }))];
     Promise.all(targets.map(async (t) => [t.key, await QRCode.toDataURL(t.url, { margin: 1, width: 240 })] as const))
       .then((pairs) => setImages(Object.fromEntries(pairs))).catch(() => setImages({}));
-  }, [base, tables]);
+  }, [base, tables, codes]);
 
   const cards = [{ key: "_", label: x.menuOnly }, ...tables.map((t) => ({ key: t.id, label: `${x.table} ${t.number}` }))];
   return (

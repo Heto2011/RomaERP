@@ -767,6 +767,21 @@ export const PurchasingApi = {
     apiClient.post<InventoryReceipt>("/purchasing/invoices/receive-inventory", data),
 };
 
+export interface QrOrderingSettings { enabled: boolean; warehouseId: string | null; latitude: number | null; longitude: number | null; radiusMeters: number; hasLocation: boolean }
+export interface QrTableCode { tableId: string; number: string; sectionName: string | null; code: string }
+export interface QrOrderRequest { id: string; tableNumber: string; status: number; distanceMeters: number; note: string | null; createdAtUtc: string; lines: { itemName: string; quantity: number; unitPrice: number; notes: string | null }[] }
+
+export const QrOrdersApi = {
+  pending: () => apiClient.get<QrOrderRequest[]>("/qr-orders/pending"),
+  approve: (id: string) => apiClient.post<{ orderId: string }>(`/qr-orders/${id}/approve`),
+  reject: (id: string) => apiClient.post(`/qr-orders/${id}/reject`),
+  getSettings: () => apiClient.get<QrOrderingSettings>("/qr-orders/settings"),
+  saveSettings: (data: QrOrderingSettings) => apiClient.put<QrOrderingSettings>("/qr-orders/settings", data),
+  setLocation: (latitude: number, longitude: number) => apiClient.put<QrOrderingSettings>("/qr-orders/location", { latitude, longitude }),
+  codes: () => apiClient.get<QrTableCode[]>("/qr-orders/codes"),
+  rotate: () => apiClient.post<QrTableCode[]>("/qr-orders/rotate-codes"),
+};
+
 export const RestaurantApi = {
   getTables: () => apiClient.get<RestaurantTable[]>("/restaurant/tables"),
   createTable: (data: CreateRestaurantTableInput) => apiClient.post<RestaurantTable>("/restaurant/tables", data),

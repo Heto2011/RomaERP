@@ -73,6 +73,7 @@ public static class DependencyInjection
         services.AddScoped<ILoanService, LoanService>();
         services.AddScoped<IInvoiceScanService, InvoiceScanService>();
         services.AddScoped<IRestaurantService, RestaurantService>();
+        services.AddScoped<IQrOrderingService, QrOrderingService>();
         services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<IMenuImportService, MenuImportService>();
         services.AddScoped<ILoyaltyService, LoyaltyService>();

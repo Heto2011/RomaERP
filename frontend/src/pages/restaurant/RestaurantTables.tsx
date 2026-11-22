@@ -4,6 +4,7 @@ import { RestaurantTableStatus, type RestaurantTable } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import TableQrSheet from "../../components/TableQrSheet";
+import QrOrderingSettings from "../../components/QrOrderingSettings";
 
 export default function RestaurantTables() {
   const { t, lang } = useLanguage();
@@ -74,6 +75,7 @@ export default function RestaurantTables() {
         </button>
       </div>
 
+      <QrOrderingSettings />
       {showQr && <TableQrSheet tables={tables} onClose={() => setShowQr(false)} />}
       {error && <div className="alert-error">{error}</div>}
 

@@ -4659,6 +4659,102 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.ToTable("MenuRecipeLines");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Restaurant.QrOrderRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DecidedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DecidedByUserId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DeviceKey")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("nvarchar(64)");
+
+                    b.Property<int>("DistanceMeters")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Note")
+                        .HasMaxLength(300)
+                        .HasColumnType("nvarchar(300)");
+
+                    b.Property<Guid?>("RestaurantOrderId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<Guid>("TableId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("TableNumber")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status", "CreatedAtUtc");
+
+                    b.ToTable("QrOrderRequests");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Restaurant.QrOrderRequestLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ItemName")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<Guid>("QrOrderRequestId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 3)
+                        .HasColumnType("decimal(18,3)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("QrOrderRequestId");
+
+                    b.ToTable("QrOrderRequestLine");
+                });
+
             modelBuilder.Entity("RomaERP.Domain.Restaurant.RestaurantOrder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5627,6 +5723,27 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
 
                     b.Property<int>("PayrollDaysPerMonth")
                         .HasColumnType("int");
+
+                    b.Property<int>("QrOrderRadiusMeters")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("QrOrderWarehouseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("QrOrderingEnabled")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("QrSecret")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("QrSecretChangedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<double?>("RestaurantLatitude")
+                        .HasColumnType("float");
+
+                    b.Property<double?>("RestaurantLongitude")
+                        .HasColumnType("float");
 
                     b.Property<string>("TaxRegistrationNumber")
                         .HasMaxLength(50)
@@ -6784,6 +6901,15 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Navigation("RawMaterialItem");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Restaurant.QrOrderRequestLine", b =>
+                {
+                    b.HasOne("RomaERP.Domain.Restaurant.QrOrderRequest", null)
+                        .WithMany("Lines")
+                        .HasForeignKey("QrOrderRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("RomaERP.Domain.Restaurant.RestaurantOrder", b =>
                 {
                     b.HasOne("RomaERP.Domain.Restaurant.CashierShift", "CashierShift")
@@ -7100,6 +7226,11 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("RomaERP.Domain.Restaurant.DeliverySettlementImport", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Restaurant.QrOrderRequest", b =>
                 {
                     b.Navigation("Lines");
                 });
