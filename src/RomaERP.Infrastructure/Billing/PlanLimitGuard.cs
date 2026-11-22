@@ -112,6 +112,18 @@ public class PlanLimitGuard : IPlanLimitGuard
                 throw new ValidationAppException($"النسخة المجانية (Roma HR) بتشمل {SubscriptionPriceList.HrFreeIncludedEmployees} موظفين. للمزيد رقّي لباقة HR المدفوعة من «اشتراكي».");
             return;
         }
+        if (_tenant.IsResolved && _tenant.ProductScope == ProductScope.Full)
+        {
+            // The full ERP plans cap employees per plan, whether the company pays by card or by invoice (Egypt).
+            var planCode = await _central.Subscriptions.AsNoTracking()
+                .Where(s => s.TenantId == _tenant.TenantId)
+                .Join(_central.SubscriptionPlans, s => s.PlanId, p => p.Id, (s, p) => p.Code)
+                .FirstOrDefaultAsync(ct);
+            if (planCode is not null && SubscriptionPriceList.ErpEmployeeCap(planCode) is { } erpCap
+                && await ActiveEmployeesAsync(ct) >= erpCap)
+                throw new ValidationAppException($"باقتك بتشمل لحد {erpCap} موظف نشط، وده العدد الحالي. رقّي الباقة من «اشتراكي» أو كلّمنا لو محتاج أكتر.");
+            return;
+        }
         var card = await CardPlanAsync(ct);
         if (card is null || _tenant.ProductScope != ProductScope.PeopleOnly) return;
         var (plan, sub) = card.Value;

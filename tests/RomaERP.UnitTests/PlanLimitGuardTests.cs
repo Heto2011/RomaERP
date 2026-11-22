@@ -48,6 +48,29 @@ public class PlanLimitGuardTests
         return (new PlanLimitGuard(central, new FakeTenant { ProductScope = scope }, db, null!), db);
     }
 
+    [Theory]
+    [InlineData("mini", 25)]
+    [InlineData("essential", 100)]
+    [InlineData("professional", 500)]
+    public async Task FullPlans_CapActiveEmployees_EvenWhenBilledByInvoice(string code, int cap)
+    {
+        var (guard, db) = Build("Manual", 1, planCode: code, country: Country.Egypt);
+        for (var i = 0; i < cap; i++)
+            db.Employees.Add(new RomaERP.Domain.HR.Employee { EmployeeCode = "E" + i, FullNameAr = "م" + i, FullNameEn = "E" + i, EmploymentStatus = RomaERP.Domain.HR.EmploymentStatus.Active });
+        db.SaveChanges();
+        await Assert.ThrowsAsync<ValidationAppException>(() => guard.EnsureCanAddEmployeeAsync());
+    }
+
+    [Fact]
+    public async Task EnterprisePlan_IsNotCappedOnEmployees()
+    {
+        var (guard, db) = Build("Manual", 1, planCode: "enterprise");
+        for (var i = 0; i < 30; i++)
+            db.Employees.Add(new RomaERP.Domain.HR.Employee { EmployeeCode = "E" + i, FullNameAr = "م", FullNameEn = "E", EmploymentStatus = RomaERP.Domain.HR.EmploymentStatus.Active });
+        db.SaveChanges();
+        await guard.EnsureCanAddEmployeeAsync();
+    }
+
     [Fact]
     public async Task FreeBooks_IsHeldToOneBranch_ButInvoicesAreNotCapped()
     {

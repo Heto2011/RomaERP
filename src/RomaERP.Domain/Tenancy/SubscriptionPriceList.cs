@@ -55,6 +55,17 @@ public static class SubscriptionPriceList
         return ((int)Math.Round(includedBranches * 0.4, MidpointRounding.AwayFromZero), (int)Math.Round(includedUsers * 0.4, MidpointRounding.AwayFromZero));
     }
 
+    /// <summary>Most active employees the full ERP plans allow (HR is part of them). Enterprise and any other plan are not capped.
+    /// This is a safety ceiling for the shared servers, not a price lever.</summary>
+    public static int? ErpEmployeeCap(string planCode) => planCode.ToLowerInvariant() switch
+    {
+        MiniPlanCode => 25,
+        "essential" => 100,
+        "business" => 250,
+        "professional" => 500,
+        _ => null,
+    };
+
     /// <summary>Paying a year up front is charged as 10 of the 12 months — "two months free".</summary>
     public const int AnnualMonthsCharged = 10;
     public const int AnnualMonthsCovered = 12;
