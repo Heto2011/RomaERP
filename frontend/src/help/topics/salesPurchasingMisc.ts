@@ -210,6 +210,33 @@ export const TOPICS: HelpTopic[] = [
     },
   },
   {
+    id: "spm-ai-actions",
+    routes: ["/assistant/actions"],
+    section: { ar: "المساعد الذكي", en: "Smart assistant" },
+    title: { ar: "اطلب من المساعد: فاتورة أو دفعة أو سعر", en: "Ask the assistant: an invoice, a payment or a price" },
+    keywords: "مساعد ذكي فاتورة دفعة سعر منيو اطلب نفذ اوامر assistant invoice payment price command action",
+    steps: {
+      ar: [
+        "افتح المساعد الذكي ثم \"اطلب من المساعد\" واكتب طلبك بكلامك العادي، زي: اعمل فاتورة لأحمد بـ 3 قهوة سعر الواحدة 40.",
+        "دوس \"جهّز\". المساعد بيفهم الطلب ويدوّر على العميل أو الفاتورة أو الصنف في بياناتك، ويعرض لك مسودة.",
+        "راجع المسودة: اختار العميل أو الفاتورة لو في أكتر من واحد، وعدّل الأوصاف والكميات والأسعار والمبلغ.",
+        "مفيش حاجة بتتسجل قبل ما تدوس \"نفّذ\". الزرار مقفول لحد ما كل حاجة ناقصة تتكمل.",
+        "ممكن تطلب: فاتورة مبيعات لعميل موجود، أو تسجيل دفعة على فاتورة مفتوحة، أو تغيير سعر صنف في المنيو.",
+      ],
+      en: [
+        "Open the Smart assistant, then \"Ask the assistant to do it\", and write your request in plain words, such as: make an invoice for Ahmed for 3 coffees at 40 each.",
+        "Press Prepare. The assistant understands the request, looks for the customer, invoice or item in your data, and shows a draft.",
+        "Review the draft: choose the customer or invoice if there is more than one match, and edit descriptions, quantities, prices and the amount.",
+        "Nothing is booked until you press Execute. The button stays off until everything missing is filled in.",
+        "You can ask for: a sales invoice for an existing customer, a payment on an open invoice, or a new price for a menu item.",
+      ],
+    },
+    tips: {
+      ar: ["المساعد مش بيضيف عملاء جداد ولا بيحذف حاجة. والسعر اللي ما قلتهوش مش بيخمّنه، إلا لو الصنف في المنيو وليه سعر.", "كل طلب بيحسب من الاستخدام الشهري المسموح لباقتك."],
+      en: ["The assistant never adds new customers and never deletes anything. It does not guess a price you did not say, unless the line is a menu item with a price.", "Each request counts against your plan's monthly AI allowance."],
+    },
+  },
+  {
     id: "spm-ai-chat",
     routes: ["/assistant/chat"],
     section: { ar: "المساعد الذكي", en: "Smart assistant" },

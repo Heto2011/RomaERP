@@ -196,6 +196,7 @@ export default function Layout({ children }: { children: ReactNode }) {
     {
       section: t.nav.assistant,
       items: [
+        { to: "/assistant/actions", label: lang === "ar" ? "اطلب من المساعد" : "Ask the assistant to do it", icon: <IconChat /> },
         { to: "/assistant/chat", label: t.nav.assistantChat, icon: <IconChat /> },
         { to: "/assistant/approvals", label: t.nav.assistantApprovals, icon: <IconCheck /> },
         { to: "/assistant/recurring", label: t.nav.assistantRecurring, icon: <IconRefresh /> },

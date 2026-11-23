@@ -18,8 +18,11 @@ public class AiAssistantController : ControllerBase
     private readonly IWebHostEnvironment _environment;
     private readonly IRecurringExpenseService _recurring;
 
-    public AiAssistantController(IExpenseAssistantService assistantService, IBusinessQaService qaService, IWebHostEnvironment environment, IRecurringExpenseService recurring)
+    private readonly IAssistantActionService _actions;
+
+    public AiAssistantController(IExpenseAssistantService assistantService, IBusinessQaService qaService, IWebHostEnvironment environment, IRecurringExpenseService recurring, IAssistantActionService actions)
     {
+        _actions = actions;
         _recurring = recurring;
         _assistantService = assistantService;
         _qaService = qaService;
@@ -34,6 +37,16 @@ public class AiAssistantController : ControllerBase
         var answer = await _qaService.AskAsync(request.Question, ct);
         return Ok(new AskQuestionResponseDto(answer));
     }
+
+    /// <summary>Prepares an invoice, a customer payment or a menu price change from one sentence. Nothing is booked here.</summary>
+    [HttpPost("actions/propose")]
+    public async Task<ActionResult<ActionProposalDto>> ProposeAction(ActionRequestDto request, CancellationToken ct)
+        => Ok(await _actions.ProposeAsync(request.Text, ct));
+
+    /// <summary>Books what the owner reviewed and approved, through the same services as the normal screens.</summary>
+    [HttpPost("actions/execute")]
+    public async Task<ActionResult<ExecuteActionResultDto>> ExecuteAction(ExecuteActionRequestDto request, CancellationToken ct)
+        => Ok(await _actions.ExecuteAsync(request, ct));
 
     [HttpPost("messages")]
     public async Task<ActionResult<ChatTurnResponseDto>> SendMessage(ChatTurnRequestDto request, CancellationToken ct)

@@ -112,6 +112,7 @@ import ComparisonToolPage from "./pages/accounting/ComparisonTool";
 import SmartPricingPage from "./pages/accounting/SmartPricing";
 import ForecastPage from "./pages/accounting/Forecast";
 import AiAssistant from "./pages/assistant/AiAssistant";
+import AssistantActions from "./pages/assistant/AssistantActions";
 import ExpenseApprovals from "./pages/assistant/ExpenseApprovals";
 import ExpensePolicies from "./pages/assistant/ExpensePolicies";
 import RecurringExpenses from "./pages/assistant/RecurringExpenses";
@@ -227,6 +228,7 @@ export default function App() {
       <Route path="/audit-log" element={<ProtectedRoute><AuditLogPage /></ProtectedRoute>} />
       <Route path="/login-history" element={<ProtectedRoute><LoginHistoryPage /></ProtectedRoute>} />
       <Route path="/einvoicing" element={<ProtectedRoute><EInvoicing /></ProtectedRoute>} />
+      <Route path="/assistant/actions" element={<ProtectedRoute><AssistantActions /></ProtectedRoute>} />
       <Route path="/assistant/chat" element={<ProtectedRoute><AiAssistant /></ProtectedRoute>} />
       <Route path="/assistant/approvals" element={<ProtectedRoute><ExpenseApprovals /></ProtectedRoute>} />
       <Route path="/assistant/recurring" element={<ProtectedRoute><RecurringExpenses /></ProtectedRoute>} />

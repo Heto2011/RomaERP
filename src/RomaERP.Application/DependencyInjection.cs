@@ -74,6 +74,7 @@ public static class DependencyInjection
         services.AddScoped<IInvoiceScanService, InvoiceScanService>();
         services.AddScoped<IRestaurantService, RestaurantService>();
         services.AddScoped<IQrOrderingService, QrOrderingService>();
+        services.AddScoped<RomaERP.Application.Assistant.Services.IAssistantActionService, RomaERP.Application.Assistant.Services.AssistantActionService>();
         services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<IMenuImportService, MenuImportService>();
         services.AddScoped<ILoyaltyService, LoyaltyService>();
