@@ -2,8 +2,9 @@
 
 Decided by the owner. They apply to every change that touches the books.
 
-1. **The accounting standards govern.** The system follows the internationally accepted standards (IFRS / IAS, and each country's adoption of
-   them, e.g. the Egyptian Accounting Standards). If an instruction conflicts with a standard, the standard wins and the owner is told why.
+1. **The accounting standards govern.** The system follows the internationally accepted standards (IFRS / IAS). They are the governing basis for every
+   country; there is no separate accounting basis per country. Only the local rules that differ by country (tax, social
+   insurance, payroll) are kept per country (see 3 below). If an instruction conflicts with a standard, the standard wins and the owner is told why.
    Examples already applied: inventory cost per IAS 2 (conversion costs and fixed production overhead on normal capacity; unabsorbed overhead,
    shortages and abnormal waste are expenses of the period; no LIFO; lower of cost and net realisable value).
 2. **The base chart of accounts is used as it is.** No new accounts for a feature unless the standard needs one (e.g. 5510, production costs

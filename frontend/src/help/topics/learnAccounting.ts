@@ -12,15 +12,17 @@ export const TOPICS: HelpTopic[] = [
     keywords: "معايير IFRS IAS معيار محاسبي دولي المصري standards accounting",
     steps: {
       ar: [
-        "السيستم بيمشي على المعايير المحاسبية الدولية (IFRS وIAS) وعلى تطبيق كل دولة ليها، زي معايير المحاسبة المصرية.",
+        "السيستم بيمشي على المعايير المحاسبية الدولية (IFRS وIAS)، وهي الأساس الحاكم لكل الدول بنفس الطريقة. مش بنبني محاسبة مختلفة لكل بلد.",
         "لو طلب من السيستم حاجة بتخالف معيار، المعيار هو اللي بيمشي، ومحدش بيغيّره بتعليمات.",
+        "الحاجات اللي بتختلف من بلد لبلد (زي الضريبة والتأمينات والمرتبات) ليها قواعد منفصلة لكل بلد، ومش بتغيّر الأساس المحاسبي.",
         "مثال: المخزون بيتقيّم بالتكلفة أو بصافي القيمة البيعية أيهما أقل، ومفيش طريقة الداخل أخيراً يخرج أولاً (LIFO).",
         "شجرة الحسابات الأساسية بتتستخدم زي ما هي. تقدر تضيف حساباتك أنت، بس مش بيتضاف حساب لمجرد ميزة جديدة.",
         "أي حاجة بتتعمل أوتوماتيك (زي فروق الجرد أو خصم سلفة من المرتب) بتستنى موافقة المحاسب أو صاحب الشركة وتقدر تعدلها قبل ما تتسجل.",
       ],
       en: [
-        "The system follows the international accounting standards (IFRS and IAS) and each country's version of them, such as the Egyptian Accounting Standards.",
+        "The system follows the international accounting standards (IFRS and IAS), which are the governing basis for every country in the same way. We do not build a different accounting basis for each country.",
         "If an instruction conflicts with a standard, the standard wins; it is not overridden by a setting.",
+        "What differs from country to country (such as tax, social insurance and payroll) lives in separate per-country rules and does not change the accounting basis.",
         "Example: inventory is valued at the lower of cost and net realisable value, and the last-in-first-out method (LIFO) is not used.",
         "The base chart of accounts is used as it is. You can add your own accounts, but accounts are not added just for a new feature.",
         "Anything automatic (such as count differences or deducting an employee advance from pay) waits for the accountant's or owner's approval, and you can edit it before it is booked.",
