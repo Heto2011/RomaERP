@@ -7,6 +7,7 @@ import { TOPICS as SALES_PURCHASING_MISC } from "./topics/salesPurchasingMisc";
 import { TOPICS as HR } from "./topics/hr";
 import { TOPICS as INVENTORY } from "./topics/inventory";
 import { TOPICS as RESTAURANT } from "./topics/restaurant";
+import { TOPICS as LEARN_ACCOUNTING } from "./topics/learnAccounting";
 export type { HelpTopic } from "./helpTypes";
 
 const BASE_TOPICS: HelpTopic[] = [
@@ -308,7 +309,7 @@ const STATEMENT_TOPICS: HelpTopic[] = [
 
 // More guides are added here, one file per area of the system.
 export const HELP_TOPICS: HelpTopic[] = [
-  ...BASE_TOPICS, ...STATEMENT_TOPICS, ...ACCOUNTING_SETUP, ...ACCOUNTING_ANALYSIS, ...SALES_PURCHASING_MISC, ...HR, ...INVENTORY, ...RESTAURANT,
+  ...BASE_TOPICS, ...STATEMENT_TOPICS, ...ACCOUNTING_SETUP, ...ACCOUNTING_ANALYSIS, ...SALES_PURCHASING_MISC, ...HR, ...INVENTORY, ...RESTAURANT, ...LEARN_ACCOUNTING,
 ];
 
 const norm = (s: string) => s.toLowerCase().replace(/[أإآ]/g, "ا").replace(/ة/g, "ه").replace(/ى/g, "ي");
