@@ -1,4 +1,5 @@
 import HelpButton from "./HelpButton";
+import FeedbackButton from "./FeedbackButton";
 import { useState, type ReactNode } from "react";
 import { NavLink } from "react-router-dom";
 import { Link } from "react-router-dom";
@@ -55,6 +56,7 @@ export default function InventoryPortalLayout({ children }: { children: ReactNod
           <span className="brand-text">{t.inventoryAppName}</span>
           <div style={{ display: "flex", gap: 4 }}>
             <HelpButton />
+            <FeedbackButton />
             <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>
               {theme === "dark" ? <IconSun /> : <IconMoon />}
             </button>

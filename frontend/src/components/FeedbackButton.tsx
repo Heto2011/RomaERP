@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { apiClient, getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 
@@ -54,7 +55,7 @@ export default function FeedbackButton() {
         <span aria-hidden style={{ fontSize: 16, lineHeight: 1 }}>★</span>
         {askNow && <span style={{ position: "absolute", top: 2, insetInlineEnd: 2, width: 8, height: 8, borderRadius: 8, background: "#f5a623" }} />}
       </button>
-      {open && (
+      {open && createPortal(
         <div className="modal-overlay" onClick={close}>
           <form className="card" style={{ maxWidth: 460, margin: "8% auto", color: "var(--color-text)" }} onClick={(e) => e.stopPropagation()} onSubmit={send}>
             {done ? <p style={{ fontWeight: 700 }}>{x.thanks}</p> : (
@@ -81,7 +82,8 @@ export default function FeedbackButton() {
               </>
             )}
           </form>
-        </div>
+        </div>,
+        document.body
       )}
     </>
   );
