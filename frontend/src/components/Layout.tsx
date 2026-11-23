@@ -65,6 +65,9 @@ export default function Layout({ children }: { children: ReactNode }) {
   // Someone given only the Purchasing module records invoices; vendors, aging and statements stay with approvers.
   const canApprovePurchases = user?.roles.some((r) => r === "Admin" || r === "Accountant") ?? false;
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  // When a tap reaches the page as a mouse (a phone in "desktop site" mode), it first "hovers" the tab, which opens its list, and then clicks it.
+  // That click must not close the list straight away.
+  const hoverOpenedAt = useRef(0);
 
   function matchesPath(to: string) {
     if (!to) return false;
@@ -557,11 +560,11 @@ export default function Layout({ children }: { children: ReactNode }) {
               <div key={group.section} className="topnav-item">
               <button
                 className={"topnav-link" + (activeSection === group.section ? " active" : "")}
-                onPointerEnter={(e) => { if (e.pointerType === "mouse") setOpenDropdown(group.section); }}
+                onPointerEnter={(e) => { if (e.pointerType === "mouse") { hoverOpenedAt.current = Date.now(); setOpenDropdown(group.section); } }}
                 onClick={() => {
                   // the first tab is the dashboard itself: clicking it goes there; the others open their screens
                   if (group.section === t.nav.general) { navigate("/"); setOpenDropdown(null); return; }
-                  setOpenDropdown((cur) => (cur === group.section ? null : group.section));
+                  setOpenDropdown((cur) => (cur === group.section && Date.now() - hoverOpenedAt.current > 700 ? null : group.section));
                 }}
               >
                 <span>{group.section}</span>
