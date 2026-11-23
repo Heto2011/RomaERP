@@ -562,8 +562,10 @@ export default function Layout({ children }: { children: ReactNode }) {
                 className={"topnav-link" + (activeSection === group.section ? " active" : "")}
                 onPointerEnter={(e) => { if (e.pointerType === "mouse") { hoverOpenedAt.current = Date.now(); setOpenDropdown(group.section); } }}
                 onClick={() => {
-                  // the first tab is the dashboard itself: clicking it goes there; the others open their screens
-                  if (group.section === t.nav.general) { navigate("/"); setOpenDropdown(null); return; }
+                  // The first tab is the dashboard itself: with a mouse, clicking it goes there (hovering shows its list). On a phone there is no hover,
+                  // so a tap opens its list like every other tab, and the first item in that list is the dashboard.
+                  const phone = window.matchMedia("(pointer: coarse)").matches;
+                  if (group.section === t.nav.general && !phone) { navigate("/"); setOpenDropdown(null); return; }
                   setOpenDropdown((cur) => (cur === group.section && Date.now() - hoverOpenedAt.current > 700 ? null : group.section));
                 }}
               >
