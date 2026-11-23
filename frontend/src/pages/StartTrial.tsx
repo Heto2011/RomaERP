@@ -233,6 +233,10 @@ export default function StartTrial() {
               <a href="/terms.html" target="_blank" rel="noopener noreferrer">
                 {t.trial.agreeToTermsLink}
               </a>
+              {" · "}
+              <a href="/privacy.html" target="_blank" rel="noopener noreferrer">
+                {lang === "ar" ? "سياسة الخصوصية" : "Privacy Policy"}
+              </a>
             </span>
           </label>
           <button className="btn" type="submit" disabled={loading || !agreedToTerms || (productScope === ProductScope.Full && businessTypes === 0)}>
