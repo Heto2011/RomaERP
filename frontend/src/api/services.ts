@@ -978,12 +978,12 @@ export const SystemSupportApi = {
   getAllTickets: (systemKey: string, status?: string) =>
     systemApiClient.get<SupportTicketSummary[]>("/system/support/tickets", {
       params: status ? { status } : undefined,
-      headers: { "X-System-Key": systemKey },
+      headers: { "X-System-Key": systemKey.trim() },
     }),
   getTicket: (systemKey: string, id: string) =>
-    systemApiClient.get<SupportTicket>(`/system/support/tickets/${id}`, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.get<SupportTicket>(`/system/support/tickets/${id}`, { headers: { "X-System-Key": systemKey.trim() } }),
   reply: (systemKey: string, id: string, body: string) =>
-    systemApiClient.post<SupportTicket>(`/system/support/tickets/${id}/messages`, { body }, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post<SupportTicket>(`/system/support/tickets/${id}/messages`, { body }, { headers: { "X-System-Key": systemKey.trim() } }),
   updateStatus: (systemKey: string, id: string, status: SupportTicketStatus) =>
     systemApiClient.patch(`/system/support/tickets/${id}/status`, JSON.stringify(status), {
       headers: { "X-System-Key": systemKey, "Content-Type": "application/json" },
@@ -991,7 +991,7 @@ export const SystemSupportApi = {
   downloadAttachment: async (systemKey: string, attachmentId: string, fileName: string) => {
     const res = await systemApiClient.get(`/system/support/attachments/${attachmentId}`, {
       responseType: "blob",
-      headers: { "X-System-Key": systemKey },
+      headers: { "X-System-Key": systemKey.trim() },
     });
     downloadBlob(res.data, fileName);
   },
@@ -1000,27 +1000,27 @@ export const SystemSupportApi = {
 /// Not tenant-scoped — authenticated by a system key passed per call, never stored.
 export const SystemApi = {
   createTenant: (systemKey: string, data: ProvisionTenantRequest) =>
-    systemApiClient.post<Tenant>("/system/tenants", data, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post<Tenant>("/system/tenants", data, { headers: { "X-System-Key": systemKey.trim() } }),
   getTenants: (systemKey: string, demoOnly: boolean) =>
-    systemApiClient.get<Tenant[]>("/system/tenants", { params: { demoOnly }, headers: { "X-System-Key": systemKey } }),
+    systemApiClient.get<Tenant[]>("/system/tenants", { params: { demoOnly }, headers: { "X-System-Key": systemKey.trim() } }),
   expireDemoTenants: (systemKey: string) =>
-    systemApiClient.post<{ deactivatedCount: number }>("/system/tenants/expire-demo", null, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post<{ deactivatedCount: number }>("/system/tenants/expire-demo", null, { headers: { "X-System-Key": systemKey.trim() } }),
   transferUser: (systemKey: string, data: TransferUserRequest) =>
-    systemApiClient.post<TransferUserResult>("/system/users/transfer", data, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post<TransferUserResult>("/system/users/transfer", data, { headers: { "X-System-Key": systemKey.trim() } }),
   resetUserPassword: (systemKey: string, data: ResetSystemUserPasswordRequest) =>
-    systemApiClient.post("/system/users/reset-password", data, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post("/system/users/reset-password", data, { headers: { "X-System-Key": systemKey.trim() } }),
   deleteTenantData: (systemKey: string, tenantId: string, data: DataDeletionRequest) =>
-    systemApiClient.post<DataDeletionRecord>(`/system/tenants/${tenantId}/delete-data`, data, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post<DataDeletionRecord>(`/system/tenants/${tenantId}/delete-data`, data, { headers: { "X-System-Key": systemKey.trim() } }),
   getDataDeletionRecords: (systemKey: string) =>
-    systemApiClient.get<DataDeletionRecord[]>("/system/data-deletion-records", { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.get<DataDeletionRecord[]>("/system/data-deletion-records", { headers: { "X-System-Key": systemKey.trim() } }),
 };
 
 /// Not tenant-scoped — reads are authenticated by a system key passed per call, never stored.
 export const MarketingApi = {
   getPageViews: (systemKey: string) =>
-    systemApiClient.get<MarketingPageView[]>("/marketing/pageviews", { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.get<MarketingPageView[]>("/marketing/pageviews", { headers: { "X-System-Key": systemKey.trim() } }),
   getStats: (systemKey: string) =>
-    systemApiClient.get<MarketingPageViewStats>("/marketing/pageviews/stats", { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.get<MarketingPageViewStats>("/marketing/pageviews/stats", { headers: { "X-System-Key": systemKey.trim() } }),
 };
 
 /// Customer-facing (JWT-authenticated, Admin role) view of the tenant's own subscription/invoices.
@@ -1066,43 +1066,43 @@ export const MySubscriptionApi = {
 
 export const SubscriptionsApi = {
   getPlans: (systemKey: string) =>
-    systemApiClient.get<SubscriptionPlan[]>("/system/subscriptions/plans", { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.get<SubscriptionPlan[]>("/system/subscriptions/plans", { headers: { "X-System-Key": systemKey.trim() } }),
   /** One page of companies; the total count comes back in the X-Total-Count header. */
   getTenantSubscriptions: (systemKey: string, search = "", page = 1, pageSize = 25) =>
     systemApiClient.get<TenantSubscription[]>("/system/subscriptions/tenants", {
       params: { search: search || undefined, page, pageSize },
-      headers: { "X-System-Key": systemKey },
+      headers: { "X-System-Key": systemKey.trim() },
     }),
   getTenantActivity: (systemKey: string, tenantId: string) =>
-    systemApiClient.get<TenantActivity[]>(`/system/subscriptions/tenants/${tenantId}/activity`, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.get<TenantActivity[]>(`/system/subscriptions/tenants/${tenantId}/activity`, { headers: { "X-System-Key": systemKey.trim() } }),
   changeProductScope: (systemKey: string, tenantId: string, productScope: number) =>
-    systemApiClient.put(`/system/tenants/${tenantId}/product-scope`, { productScope }, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.put(`/system/tenants/${tenantId}/product-scope`, { productScope }, { headers: { "X-System-Key": systemKey.trim() } }),
   changeCompanyCode: (systemKey: string, tenantId: string, newCompanyCode: string) =>
-    systemApiClient.put(`/system/tenants/${tenantId}/company-code`, { newCompanyCode }, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.put(`/system/tenants/${tenantId}/company-code`, { newCompanyCode }, { headers: { "X-System-Key": systemKey.trim() } }),
   deleteForever: (systemKey: string, tenantId: string, confirmCompanyCode: string) =>
-    systemApiClient.post(`/system/tenants/${tenantId}/delete-forever`, { confirmCompanyCode }, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post(`/system/tenants/${tenantId}/delete-forever`, { confirmCompanyCode }, { headers: { "X-System-Key": systemKey.trim() } }),
   setPlan: (systemKey: string, tenantId: string, planId: string) =>
-    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/plan`, { planId }, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/plan`, { planId }, { headers: { "X-System-Key": systemKey.trim() } }),
   setBillingAccount: (systemKey: string, tenantId: string, billingAccountId: string | null) =>
-    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/billing-account`, { billingAccountId }, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/billing-account`, { billingAccountId }, { headers: { "X-System-Key": systemKey.trim() } }),
   suspend: (systemKey: string, tenantId: string) =>
-    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/suspend`, null, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/suspend`, null, { headers: { "X-System-Key": systemKey.trim() } }),
   activatePaid: (systemKey: string, tenantId: string, planId: string, paymentReference: string | null, annual = false) =>
-    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/activate-paid`, { planId, paymentReference, annual }, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/activate-paid`, { planId, paymentReference, annual }, { headers: { "X-System-Key": systemKey.trim() } }),
   startWithFreeMonths: (systemKey: string, tenantId: string, planId: string, months: number) =>
-    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/free-months`, { planId, months }, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/free-months`, { planId, months }, { headers: { "X-System-Key": systemKey.trim() } }),
   setDiscount: (systemKey: string, tenantId: string, percent: number, months: number) =>
-    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/discount`, { percent, months }, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/discount`, { percent, months }, { headers: { "X-System-Key": systemKey.trim() } }),
   setBillingPeriod: (systemKey: string, tenantId: string, annual: boolean) =>
-    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/billing-period`, { annual }, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.put<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/billing-period`, { annual }, { headers: { "X-System-Key": systemKey.trim() } }),
   reactivate: (systemKey: string, tenantId: string) =>
-    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/reactivate`, null, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post<TenantSubscription>(`/system/subscriptions/tenants/${tenantId}/reactivate`, null, { headers: { "X-System-Key": systemKey.trim() } }),
   getInvoices: (systemKey: string, tenantId?: string) =>
-    systemApiClient.get<SubscriptionInvoice[]>("/system/subscriptions/invoices", { params: tenantId ? { tenantId } : undefined, headers: { "X-System-Key": systemKey } }),
+    systemApiClient.get<SubscriptionInvoice[]>("/system/subscriptions/invoices", { params: tenantId ? { tenantId } : undefined, headers: { "X-System-Key": systemKey.trim() } }),
   markInvoicePaid: (systemKey: string, invoiceId: string, paymentReference: string | null) =>
-    systemApiClient.post<SubscriptionInvoice>(`/system/subscriptions/invoices/${invoiceId}/mark-paid`, { paymentReference }, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post<SubscriptionInvoice>(`/system/subscriptions/invoices/${invoiceId}/mark-paid`, { paymentReference }, { headers: { "X-System-Key": systemKey.trim() } }),
   runBillingCycle: (systemKey: string) =>
-    systemApiClient.post<BillingRunResult>("/system/subscriptions/run-billing-cycle", null, { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.post<BillingRunResult>("/system/subscriptions/run-billing-cycle", null, { headers: { "X-System-Key": systemKey.trim() } }),
 };
 
 export const ReservationsApi = {
@@ -1116,7 +1116,7 @@ export const ReservationsApi = {
 
 export const AiUsageApi = {
   getOverview: (systemKey: string) =>
-    systemApiClient.get<AiUsageOverview>("/system/ai-usage", { headers: { "X-System-Key": systemKey } }),
+    systemApiClient.get<AiUsageOverview>("/system/ai-usage", { headers: { "X-System-Key": systemKey.trim() } }),
 };
 
 export const MarketersApi = {

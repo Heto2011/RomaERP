@@ -10,7 +10,7 @@ export default function ReviewsPage() {
   const [filter, setFilter] = useState("");
   const [rows, setRows] = useState<Review[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const headers = { "X-System-Key": systemKey };
+  const headers = { "X-System-Key": systemKey.trim() };
 
   async function load(status = filter) {
     if (!systemKey) { setError("Enter the system key first."); return; }

@@ -296,7 +296,7 @@ public class SystemController : ControllerBase
         if (string.IsNullOrEmpty(systemKey))
             return StatusCode(StatusCodes.Status503ServiceUnavailable, new { error = "إنشاء عملاء جدد مش مفعّل — لازم تضيف System:ProvisioningKey في الإعدادات." });
 
-        if (!Request.Headers.TryGetValue("X-System-Key", out var providedKey) || !FixedTimeEquals(providedKey.ToString(), systemKey))
+        if (!Request.Headers.TryGetValue("X-System-Key", out var providedKey) || !FixedTimeEquals(providedKey.ToString().Trim(), systemKey.Trim()))
             return Unauthorized(new { error = "مفتاح النظام غير صحيح." });
 
         return null;
