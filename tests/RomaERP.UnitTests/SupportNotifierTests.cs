@@ -36,17 +36,9 @@ public class SupportNotifierTests
     {
         var m = new Mail(); await new SupportNotifier(m, Cfg()).NotifyOwnerAsync(1, "C", "n", "s", "m", false, false);
         Assert.Equal(SupportNotifier.DefaultOwnerAddress, m.Sent[0].To);
-        var off = new Mail { IsConfigured = false }; await new SupportNotifier(off, Cfg()).NotifyCustomerAsync(1, "a@b.com", "s", "r");
+        var off = new Mail { IsConfigured = false }; await new SupportNotifier(off, Cfg()).NotifyOwnerAsync(1, "C", "n", "s", "m", true, false);
         Assert.Empty(off.Sent);
         var bad = new Mail { Throw = true };
         await new SupportNotifier(bad, Cfg()).NotifyOwnerAsync(1, "C", "n", "s", "m", true, false);
-        await new SupportNotifier(bad, Cfg()).NotifyCustomerAsync(1, "a@b.com", "s", "r");
-    }
-
-    [Fact]
-    public async Task SupportReply_EmailsTheCustomer()
-    {
-        var m = new Mail(); await new SupportNotifier(m, Cfg()).NotifyCustomerAsync(3, "cust@x.com", "طباعة", "جرّب كده");
-        Assert.Equal("cust@x.com", m.Sent[0].To); Assert.Contains("جرّب كده", m.Sent[0].Body);
     }
 }

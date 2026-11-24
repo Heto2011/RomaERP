@@ -33,18 +33,4 @@ public class SupportNotifier : ISupportNotifier
             """;
         try { await _email.SendAsync(to!, $"{head} #{ticketNumber} — {Cut(subject, 60)}", body, ct); } catch { /* never block the ticket */ }
     }
-
-    public async Task NotifyCustomerAsync(int ticketNumber, string requesterEmail, string subject, string reply, CancellationToken ct = default)
-    {
-        if (!_email.IsConfigured || string.IsNullOrWhiteSpace(requesterEmail)) return;
-        var body = $"""
-            <div dir="rtl" style="font-family:sans-serif">
-              <h3>فريق الدعم رد على تذكرتك #{ticketNumber}</h3>
-              <p>الموضوع: {Esc(subject)}</p>
-              <blockquote style="border-inline-start:3px solid #999;margin:0;padding:0 10px;white-space:pre-wrap">{Esc(Cut(reply, 1500))}</blockquote>
-              <p>تقدر تكمل الرد من صفحة "الدعم" جوه النظام.</p>
-            </div>
-            """;
-        try { await _email.SendAsync(requesterEmail, $"رد على تذكرتك #{ticketNumber}", body, ct); } catch { /* never block the reply */ }
-    }
 }

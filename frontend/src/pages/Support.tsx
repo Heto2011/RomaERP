@@ -5,6 +5,7 @@ import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 import { helpTopics } from "./helpTopics";
 import { guidesForQuestion } from "../help/helpContent";
+import { markSupportSeen } from "../components/SupportBell";
 
 const STATUS_KEY: Record<string, string> = {
   Open: "statusOpen",
@@ -54,6 +55,7 @@ export default function SupportPage() {
     try {
       const res = await SupportApi.getTicket(id);
       setSelected(res.data);
+      markSupportSeen(id);
       setCreating(false);
     } catch (err) {
       setError(getErrorMessage(err));
@@ -74,6 +76,7 @@ export default function SupportPage() {
       setFiles([]);
       setCreating(false);
       setSelected(res.data);
+      markSupportSeen(res.data.id);
       loadList();
     } catch (err) {
       setError(getErrorMessage(err));
@@ -92,6 +95,7 @@ export default function SupportPage() {
       setReplyBody("");
       setReplyFiles([]);
       setSelected(res.data);
+      markSupportSeen(res.data.id);
       loadList();
     } catch (err) {
       setError(getErrorMessage(err));
