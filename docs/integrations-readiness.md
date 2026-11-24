@@ -27,7 +27,7 @@ Rule for all of them: the connection is **off until the customer gives us the cr
 ## Bank statements
 | | |
 |---|---|
-| Today | Upload the statement file (Excel/CSV) and match against the books (to build). |
+| Today | Already built: upload the statement (Excel or CSV, Arabic or English headers) in Accounting → Bank reconciliation; lines are auto-matched to the books by amount and date, and the rest are matched by hand. A live-feed hook exists and stays off until a provider is configured. |
 | Direct bank link | Each bank gives access only to the account owner, usually after an agreement or through a paid aggregator. Per customer, after they ask for it. |
 
 ## E-invoicing

@@ -100,6 +100,18 @@ public class AssistantBatchTests
     }
 
     [Fact]
+    public async Task Attention_CountsBankLinesThatAreNotMatched_ForFinanceOnly()
+    {
+        var c = Ctx();
+        c.BankFeedTransactions.Add(new RomaERP.Domain.Accounting.BankFeedTransaction { AccountId = Guid.NewGuid(), TransactionDate = DateTime.UtcNow, Description = "x", Amount = -250 });
+        c.BankFeedTransactions.Add(new RomaERP.Domain.Accounting.BankFeedTransaction { AccountId = Guid.NewGuid(), TransactionDate = DateTime.UtcNow, Description = "y", Amount = 100, IsMatched = true });
+        await c.SaveChangesAsync();
+        var item = Assert.Single(await new AssistantAttentionService(c, new Who("u", "Accountant")).GetAsync());
+        Assert.Equal("bank-unmatched", item.Key); Assert.Equal(1, item.Count); Assert.Equal(250m, item.Amount);
+        Assert.Empty(await new AssistantAttentionService(c, new Who("u", "HR")).GetAsync());
+    }
+
+    [Fact]
     public async Task Attention_ShowsOnlyWhatTheRoleMayOpen_AndOnlyWhenThereIsSomething()
     {
         var c = Ctx();
