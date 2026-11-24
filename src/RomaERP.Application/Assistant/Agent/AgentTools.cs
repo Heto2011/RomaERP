@@ -462,3 +462,131 @@ public class PreparePurchaseInvoiceTool : PrepareTool
         return intent;
     }
 }
+
+// ---------- Inventory, restaurant, approvals and a non-sensitive HR summary ----------
+
+public class StockValuationTool : ReadTool
+{
+    private readonly RomaERP.Application.Inventory.Services.IInventoryReportService _r;
+    public StockValuationTool(RomaERP.Application.Inventory.Services.IInventoryReportService r) => _r = r;
+    public override string Name => "get_stock_valuation";
+    public override string Description => "What the stock is worth now, item by item and in total.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct) => new(ToolArgs.Ser(await _r.GetStockValuationAsync(ct)));
+}
+
+public class ReorderSuggestionsTool : ReadTool
+{
+    private readonly RomaERP.Application.Inventory.Services.IInventoryReportService _r;
+    public ReorderSuggestionsTool(RomaERP.Application.Inventory.Services.IInventoryReportService r) => _r = r;
+    public override string Name => "get_reorder_suggestions";
+    public override string Description => "Items to buy again soon and how much, based on recent usage.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct) => new(ToolArgs.Ser(await _r.GetReorderSuggestionsAsync(30, null, ct)));
+}
+
+public class WasteAnalysisTool : ReadTool
+{
+    private readonly RomaERP.Application.Inventory.Services.IInventoryReportService _r;
+    public WasteAnalysisTool(RomaERP.Application.Inventory.Services.IInventoryReportService r) => _r = r;
+    public override string Name => "get_waste_analysis";
+    public override string Description => "Waste and spoilage in a period: what was wasted, how much, and what it cost.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["from"] = ToolArgs.S("start date yyyy-MM-dd"); p["to"] = ToolArgs.S("end date yyyy-MM-dd"); }, "from", "to");
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+        => new(ToolArgs.Ser(await _r.GetWasteAnalysisAsync(ToolArgs.Date(a, "from", DateTime.UtcNow.Date.AddDays(1 - DateTime.UtcNow.Day)), ToolArgs.Date(a, "to", DateTime.UtcNow.Date), ct)));
+}
+
+public class InventoryMovementTool : ReadTool
+{
+    private readonly RomaERP.Application.Inventory.Services.IInventoryReportService _r;
+    public InventoryMovementTool(RomaERP.Application.Inventory.Services.IInventoryReportService r) => _r = r;
+    public override string Name => "get_inventory_movement";
+    public override string Description => "Stock in and out per item in a period.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["from"] = ToolArgs.S("start date yyyy-MM-dd"); p["to"] = ToolArgs.S("end date yyyy-MM-dd"); }, "from", "to");
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+        => new(ToolArgs.Ser(await _r.GetInventoryMovementAsync(ToolArgs.Date(a, "from", DateTime.UtcNow.Date.AddDays(1 - DateTime.UtcNow.Day)), ToolArgs.Date(a, "to", DateTime.UtcNow.Date), ct)));
+}
+
+public class RecipeCostTool : ReadTool
+{
+    private readonly RomaERP.Application.Inventory.Services.IInventoryReportService _r;
+    public RecipeCostTool(RomaERP.Application.Inventory.Services.IInventoryReportService r) => _r = r;
+    public override string Name => "get_recipe_cost";
+    public override string Description => "The cost of each menu item's recipe against its selling price.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct) => new(ToolArgs.Ser(await _r.GetRecipeCostAsync(ct)));
+}
+
+public class RestaurantSalesTool : ReadTool
+{
+    private readonly IApplicationDbContext _c;
+    public RestaurantSalesTool(IApplicationDbContext c) => _c = c;
+    public override string Name => "get_restaurant_sales";
+    public override string Description => "Restaurant sales in a period: number of billed orders, total, average order, and totals by day and by source (in-house or a delivery platform).";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["from"] = ToolArgs.S("start date yyyy-MM-dd"); p["to"] = ToolArgs.S("end date yyyy-MM-dd"); });
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var from = ToolArgs.Date(a, "from", DateTime.UtcNow.Date); var to = ToolArgs.Date(a, "to", DateTime.UtcNow.Date).AddDays(1);
+        var orders = await _c.RestaurantOrders.AsNoTracking().Include(o => o.SalesInvoice)
+            .Where(o => !o.IsDeleted && o.Status == RomaERP.Domain.Restaurant.RestaurantOrderStatus.Billed && o.OrderDate >= from && o.OrderDate < to && o.SalesInvoice != null).ToListAsync(ct);
+        var total = orders.Sum(o => o.SalesInvoice!.TotalAmount);
+        return new(ToolArgs.Ser(new
+        {
+            orders = orders.Count, total, average = orders.Count == 0 ? 0 : Math.Round(total / orders.Count, 2),
+            byDay = orders.GroupBy(o => o.OrderDate.Date).OrderBy(g => g.Key).Select(g => new { day = g.Key.ToString("yyyy-MM-dd"), orders = g.Count(), total = g.Sum(o => o.SalesInvoice!.TotalAmount) }),
+            bySource = orders.GroupBy(o => o.SourcePlatform ?? "in-house").Select(g => new { source = g.Key, orders = g.Count(), total = g.Sum(o => o.SalesInvoice!.TotalAmount) }),
+        }));
+    }
+}
+
+public class PendingApprovalsTool : ReadTool
+{
+    private readonly IExpenseAssistantService _e;
+    public PendingApprovalsTool(IExpenseAssistantService e) => _e = e;
+    public override string Name => "get_pending_expense_approvals";
+    public override string Description => "Expenses waiting for the owner's approval: how many and what they are.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var list = await _e.GetPendingApprovalAsync(ct);
+        return new(ToolArgs.Ser(new { count = list.Count, total = list.Sum(x => x.Amount ?? 0), items = list.Take(10).Select(x => new { x.Description, x.Amount, date = x.EntryDate.ToString("yyyy-MM-dd") }) }));
+    }
+}
+
+/// <summary>Headcount and attendance only. No salaries, ids or personal details: payroll and personal files are not reachable from the assistant.</summary>
+public class HeadcountTool : ReadTool
+{
+    private readonly IApplicationDbContext _c;
+    public HeadcountTool(IApplicationDbContext c) => _c = c;
+    public override string Name => "get_headcount_and_attendance";
+    public override string Description => "How many active employees there are (total and per department) and how many checked in today. No salaries or personal details.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var active = await _c.Employees.AsNoTracking().Include(e => e.Department).Where(e => !e.IsDeleted && e.EmploymentStatus == RomaERP.Domain.HR.EmploymentStatus.Active).ToListAsync(ct);
+        var today = DateTime.UtcNow.Date;
+        var checkedIn = await _c.AttendanceRecords.AsNoTracking().Where(r => !r.IsDeleted && r.CheckInAtUtc >= today && r.CheckInAtUtc < today.AddDays(1)).Select(r => r.EmployeeId).Distinct().CountAsync(ct);
+        return new(ToolArgs.Ser(new { activeEmployees = active.Count, checkedInToday = checkedIn, byDepartment = active.GroupBy(e => e.Department?.NameAr ?? "-").Select(g => new { department = g.Key, count = g.Count() }) }));
+    }
+}
+
+public class PrepareJournalEntryTool : PrepareTool
+{
+    public PrepareJournalEntryTool(IAssistantActionService a) : base(a) { }
+    public override string Name => "prepare_journal_entry";
+    public override string Description => "Prepare (not post) a manual journal entry as a DRAFT. Debits must equal credits. Use only when the user asked for a journal entry; the owner reviews it and posts it from the journal page.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p =>
+    {
+        p["description"] = ToolArgs.S("what the entry is for");
+        p["lines"] = new JsonObject { ["type"] = "array", ["items"] = ToolArgs.Schema(l => { l["account"] = ToolArgs.S("account code or name"); l["debit"] = ToolArgs.N("debit amount, 0 if credit"); l["credit"] = ToolArgs.N("credit amount, 0 if debit"); l["line_description"] = ToolArgs.S("optional"); }, "account") };
+    }, "lines");
+    protected override ActionIntent ToIntent(JsonObject a)
+    {
+        var intent = new ActionIntent { Kind = AssistantActionKind.JournalEntry, Note = ToolArgs.Str(a, "description") };
+        if (a["lines"] is JsonArray lines)
+            foreach (var l in lines.OfType<JsonObject>())
+                intent.JournalLines.Add(new ActionJournalLineDto
+                {
+                    Account = ToolArgs.Str(l, "account"),
+                    Debit = l["debit"] is { } d && d.GetValueKind() == JsonValueKind.Number ? d.GetValue<decimal>() : 0,
+                    Credit = l["credit"] is { } c && c.GetValueKind() == JsonValueKind.Number ? c.GetValue<decimal>() : 0,
+                    Description = ToolArgs.Str(l, "line_description"),
+                });
+        return intent;
+    }
+}

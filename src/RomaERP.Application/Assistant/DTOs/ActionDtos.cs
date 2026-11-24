@@ -10,9 +10,21 @@ public enum AssistantActionKind
     CreateVendor = 5,
     VendorPayment = 6,
     PurchaseInvoice = 7,
+    JournalEntry = 8,
 }
 
 public record ActionCandidateDto(Guid Id, string Name, string? Extra);
+
+public class ActionJournalLineDto
+{
+    /// <summary>What the user said (a code or a name). The server matches it to an account; the owner can change it on the draft.</summary>
+    public string? Account { get; set; }
+    public Guid? AccountId { get; set; }
+    public string? AccountName { get; set; }
+    public decimal Debit { get; set; }
+    public decimal Credit { get; set; }
+    public string? Description { get; set; }
+}
 
 public class ActionInvoiceLineDto
 {
@@ -42,6 +54,9 @@ public class ActionProposalDto
     /// <summary>1 cash, 2 card, 3 credit (on account).</summary>
     public int PaymentTerm { get; set; } = 3;
     public string? Note { get; set; }
+
+    // Manual journal entry (saved as a draft that still has to be posted from the journal page)
+    public List<ActionJournalLineDto> JournalLines { get; set; } = new();
 
     // New customer or supplier
     public string? PartyName { get; set; }
@@ -89,6 +104,7 @@ public class ExecuteActionRequestDto
     public string? PartyName { get; set; }
     public string? PartyPhone { get; set; }
     public string? PartyEmail { get; set; }
+    public List<ActionJournalLineDto> JournalLines { get; set; } = new();
 }
 
 public record ExecuteActionResultDto(string Message, string? Link);
@@ -111,6 +127,7 @@ public class ActionIntent
     public string? PartyName { get; set; }
     public string? PartyPhone { get; set; }
     public string? PartyEmail { get; set; }
+    public List<ActionJournalLineDto> JournalLines { get; set; } = new();
 }
 
 public record ActionRequestDto(string Text);

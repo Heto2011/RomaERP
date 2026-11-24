@@ -3,6 +3,8 @@ using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Assistant.DTOs;
 using RomaERP.Application.Assistant.Services;
+using RomaERP.Application.Accounting.DTOs;
+using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Purchasing.DTOs;
 using RomaERP.Application.Purchasing.Services;
@@ -54,7 +56,17 @@ public class AssistantActionServiceTests
         }
     }
 
-    private record Rig(AssistantActionService Svc, ApplicationDbContext Ctx, FakeParser Parser, FakeSales Sales, FakePurchasing Purchasing);
+    public class FakeJournal : DispatchProxy
+    {
+        public CreateJournalEntryDto? Created { get; set; }
+        protected override object? Invoke(MethodInfo? method, object?[]? args)
+        {
+            if (method!.Name == "CreateAsync") { Created = (CreateJournalEntryDto)args![0]!; return Task.FromResult(new JournalEntryDto()); }
+            throw new NotSupportedException(method.Name);
+        }
+    }
+
+    private record Rig(AssistantActionService Svc, ApplicationDbContext Ctx, FakeParser Parser, FakeSales Sales, FakePurchasing Purchasing, FakeJournal Journal);
 
     private static async Task<Rig> BuildAsync()
     {
@@ -75,7 +87,9 @@ public class AssistantActionServiceTests
         var fake = (FakeSales)(object)proxy;
         var pProxy = DispatchProxy.Create<IPurchasingService, FakePurchasing>();
         var pFake = (FakePurchasing)(object)pProxy;
-        return new Rig(new AssistantActionService(parser, ctx, proxy, pProxy), ctx, parser, fake, pFake);
+        var jProxy = DispatchProxy.Create<IJournalEntryService, FakeJournal>();
+        var jFake = (FakeJournal)(object)jProxy;
+        return new Rig(new AssistantActionService(parser, ctx, proxy, pProxy, jProxy), ctx, parser, fake, pFake, jFake);
     }
 
     [Fact]
@@ -269,5 +283,25 @@ public class AssistantActionServiceTests
         Assert.Equal(500m, p.Amount);
         await r.Svc.ExecuteAsync(new ExecuteActionRequestDto { Kind = AssistantActionKind.VendorPayment, InvoiceId = p.InvoiceId, Amount = 500, Method = 1 });
         Assert.Equal(500m, r.Purchasing.Paid!.Value.Dto.Amount);
+    }
+
+    [Fact]
+    public async Task JournalEntry_MatchesAccounts_WarnsWhenUnbalanced_AndIsSavedAsADraftOnly()
+    {
+        var r = await BuildAsync();
+        var cash = new Account { Code = "1111", NameAr = "الصندوق", NameEn = "Cash", AccountType = AccountType.Asset, Nature = AccountNature.Debit };
+        var rev = new Account { Code = "4100", NameAr = "إيرادات المبيعات", NameEn = "Sales", AccountType = AccountType.Revenue, Nature = AccountNature.Credit };
+        r.Ctx.Accounts.AddRange(cash, rev);
+        await r.Ctx.SaveChangesAsync();
+        r.Parser.Intent = new ActionIntent { Kind = AssistantActionKind.JournalEntry, Note = "بيع نقدي", JournalLines = { new ActionJournalLineDto { Account = "1111", Debit = 100 }, new ActionJournalLineDto { Account = "إيرادات المبيعات", Credit = 90 } } };
+        var p = await r.Svc.ProposeAsync("قيد");
+        Assert.All(p.JournalLines, l => Assert.NotNull(l.AccountId));
+        Assert.Contains(p.Warnings, w => w.Contains("مش متوازن"));
+        Assert.Null(r.Journal.Created);
+        await Assert.ThrowsAsync<ValidationAppException>(() => r.Svc.ExecuteAsync(new ExecuteActionRequestDto { Kind = AssistantActionKind.JournalEntry, JournalLines = p.JournalLines }));
+        p.JournalLines[1].Credit = 100;
+        var res = await r.Svc.ExecuteAsync(new ExecuteActionRequestDto { Kind = AssistantActionKind.JournalEntry, Note = p.Note, JournalLines = p.JournalLines });
+        Assert.Equal(2, r.Journal.Created!.Lines.Count);
+        Assert.Contains("مسودة", res.Message);
     }
 }

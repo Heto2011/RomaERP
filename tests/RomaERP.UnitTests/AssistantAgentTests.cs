@@ -111,7 +111,7 @@ public class AssistantAgentTests
         var ctx = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         ctx.Customers.Add(new Customer { Code = "C1", NameAr = "منى", NameEn = "Mona" });
         await ctx.SaveChangesAsync();
-        var actions = new AssistantActionService(new NoParser(), ctx, null!, null!);
+        var actions = new AssistantActionService(new NoParser(), ctx, null!, null!, null!);
         var tool = new PrepareSalesInvoiceTool(actions);
         var model = new ScriptedModel();
         model.Answers.Enqueue(Use("prepare_sales_invoice", """{"customer_name":"منى","lines":[{"description":"اشتراك","quantity":2,"unit_price":500}],"payment_term":"credit"}"""));
@@ -159,5 +159,24 @@ public class AssistantAgentTests
         Assert.Equal(300m, inv["outstanding"]!.GetValue<decimal>());
 
         await Assert.ThrowsAsync<ValidationAppException>(() => new ListSalesInvoicesTool(ctx).RunAsync(new JsonObject { ["from"] = "13/2/2026" }, default));
+    }
+
+    [Fact]
+    public void EveryToolHasAUniqueNameAndAValidSchema_AndNoToolWritesWithoutBeingAPrepareTool()
+    {
+        var tools = typeof(IAgentTool).Assembly.GetTypes().Where(x => typeof(IAgentTool).IsAssignableFrom(x) && !x.IsAbstract && !x.IsInterface).ToList();
+        Assert.True(tools.Count >= 35);
+        var names = new HashSet<string>();
+        foreach (var type in tools)
+        {
+            var ctor = type.GetConstructors().Single();
+            var instance = (IAgentTool)ctor.Invoke(ctor.GetParameters().Select(_ => (object?)null).ToArray());
+            Assert.True(names.Add(instance.Name), "duplicate tool name " + instance.Name);
+            Assert.Equal("object", instance.InputSchema["type"]!.GetValue<string>());
+            Assert.False(string.IsNullOrWhiteSpace(instance.Description));
+            // A tool that changes anything must be a draft-only PrepareTool; the read tools only look.
+            if (instance.Name.StartsWith("prepare_")) Assert.True(type.IsSubclassOf(typeof(PrepareTool)));
+            else Assert.True(type.IsSubclassOf(typeof(ReadTool)), instance.Name + " must be a ReadTool");
+        }
     }
 }

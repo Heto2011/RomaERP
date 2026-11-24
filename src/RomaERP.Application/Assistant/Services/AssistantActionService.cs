@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Assistant.DTOs;
+using RomaERP.Application.Accounting.DTOs;
+using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Common.Exceptions;
 using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.Purchasing.DTOs;
@@ -19,9 +21,11 @@ public class AssistantActionService : IAssistantActionService
     private readonly IApplicationDbContext _context;
     private readonly ISalesService _sales;
     private readonly IPurchasingService _purchasing;
+    private readonly IJournalEntryService _journal;
 
-    public AssistantActionService(IClaudeActionParser parser, IApplicationDbContext context, ISalesService sales, IPurchasingService purchasing)
+    public AssistantActionService(IClaudeActionParser parser, IApplicationDbContext context, ISalesService sales, IPurchasingService purchasing, IJournalEntryService journal)
     {
+        _journal = journal;
         _purchasing = purchasing;
         _parser = parser;
         _context = context;
@@ -52,6 +56,7 @@ public class AssistantActionService : IAssistantActionService
             case AssistantActionKind.CreateVendor: await FillNewPartyAsync(p, intent, ct); break;
             case AssistantActionKind.VendorPayment: await FillVendorPaymentAsync(p, intent, ct); break;
             case AssistantActionKind.PurchaseInvoice: await FillPurchaseInvoiceAsync(p, intent, ct); break;
+            case AssistantActionKind.JournalEntry: await FillJournalEntryAsync(p, intent, ct); break;
             default:
                 p.Kind = AssistantActionKind.None;
                 p.Summary = intent.Question ?? "ما فهمتش طلب أقدر أجهّزه. جرّب: \"اعمل فاتورة لأحمد بـ 3 قهوة سعر الواحدة 40\".";
@@ -222,6 +227,28 @@ public class AssistantActionService : IAssistantActionService
         p.Summary = $"فاتورة مشتريات{(p.VendorName is null ? string.Empty : $" من {p.VendorName}")}.";
     }
 
+    private async Task FillJournalEntryAsync(ActionProposalDto p, ActionIntent intent, CancellationToken ct)
+    {
+        p.Note = intent.Note;
+        var accounts = await _context.Accounts.AsNoTracking().Where(a => !a.IsDeleted && a.IsActive && !a.IsControlAccount).OrderBy(a => a.Code).ToListAsync(ct);
+        p.AccountCandidates = accounts.Take(300).Select(a => new ActionCandidateDto(a.Id, $"{a.Code} {a.NameAr}", null)).ToList();
+        foreach (var l in intent.JournalLines.Take(MaxLines))
+        {
+            var q = Norm(l.Account);
+            var hit = accounts.Where(a => Norm(a.Code) == q).ToList();
+            if (hit.Count == 0 && q.Length > 0) hit = accounts.Where(a => Norm(a.NameAr).Contains(q) || Norm(a.NameEn).Contains(q)).ToList();
+            var line = new ActionJournalLineDto { Account = l.Account, Debit = Math.Max(0, l.Debit), Credit = Math.Max(0, l.Credit), Description = l.Description };
+            if (hit.Count == 1) { line.AccountId = hit[0].Id; line.AccountName = $"{hit[0].Code} {hit[0].NameAr}"; }
+            else p.Warnings.Add(hit.Count == 0 ? $"مفيش حساب مطابق لـ \"{l.Account}\". اختار الحساب." : $"في أكتر من حساب مطابق لـ \"{l.Account}\". اختار الحساب.");
+            p.JournalLines.Add(line);
+        }
+        if (p.JournalLines.Count < 2) p.Warnings.Add("القيد لازم يكون له طرفين على الأقل.");
+        var debit = p.JournalLines.Sum(l => l.Debit); var credit = p.JournalLines.Sum(l => l.Credit);
+        if (debit != credit) p.Warnings.Add($"القيد مش متوازن: المدين {debit:0.##} والدائن {credit:0.##}.");
+        p.Warnings.Add("القيد بيتحفظ كمسودة، وإنت اللي بترحّله من صفحة القيود اليومية.");
+        p.Summary = "قيد يومي يدوي.";
+    }
+
     private async Task<string> NextCodeAsync(bool vendor, CancellationToken ct)
     {
         var prefix = vendor ? "V-" : "C-";
@@ -323,6 +350,23 @@ public class AssistantActionService : IAssistantActionService
                     Lines = r.Lines.Select(l => new PurchaseInvoiceLineInputDto { Description = l.Description.Trim(), AccountId = l.AccountId!.Value, Quantity = l.Quantity, UnitPrice = l.UnitPrice!.Value }).ToList(),
                 }, ct);
                 return new ExecuteActionResultDto($"اتعملت فاتورة المشتريات {invoice.InvoiceNumber}.", "/purchasing/invoices");
+            }
+            case AssistantActionKind.JournalEntry:
+            {
+                if (r.JournalLines.Count < 2 || r.JournalLines.Count > MaxLines) throw new ValidationAppException("القيد لازم يكون له طرفين على الأقل.");
+                if (r.JournalLines.Any(l => l.AccountId is null || l.Debit < 0 || l.Credit < 0 || (l.Debit > 0) == (l.Credit > 0)))
+                    throw new ValidationAppException("كل سطر لازم يكون له حساب، ومدين أو دائن (واحد بس منهم).");
+                if (r.JournalLines.Sum(l => l.Debit) != r.JournalLines.Sum(l => l.Credit)) throw new ValidationAppException("القيد مش متوازن.");
+                var today = DateTime.UtcNow.Date;
+                var period = await _context.FiscalPeriods.AsNoTracking().FirstOrDefaultAsync(x => x.StartDate <= today && x.EndDate >= today && !x.IsClosed, ct)
+                    ?? throw new ValidationAppException("مفيش فترة محاسبية مفتوحة لتاريخ النهارده.");
+                var entry = await _journal.CreateAsync(new CreateJournalEntryDto
+                {
+                    EntryDate = today, FiscalPeriodId = period.Id,
+                    Description = string.IsNullOrWhiteSpace(r.Note) ? "قيد بمساعدة المساعد الذكي" : $"{r.Note.Trim()} (بمساعدة المساعد الذكي)",
+                    Lines = r.JournalLines.Select(l => new CreateJournalEntryLineDto { AccountId = l.AccountId!.Value, Debit = l.Debit, Credit = l.Credit, Description = l.Description }).ToList(),
+                }, ct);
+                return new ExecuteActionResultDto("اتحفظ القيد كمسودة. افتح القيود اليومية وراجعه ورحّله.", "/accounting/journal-entries");
             }
             default:
                 throw new ValidationAppException("الطلب ده مش قابل للتنفيذ.");

@@ -219,8 +219,8 @@ export const TOPICS: HelpTopic[] = [
       ar: [
         "افتح المساعد الذكي ثم \"اطلب من المساعد\" واكتب بكلامك العادي. ده شات: المساعد بيفتكر كلامك وإنت بتكمل عليه.",
         "للأسئلة: المساعد بيدوّر في بياناتك ويجاوب. مثال: كام اللي العملاء علينا؟ إيه الأصناف اللي قربت تخلص؟ إيه أرباح الشهر ده؟ كام فواتير منى المفتوحة؟",
-        "بيقدر يبحث في العملاء والموردين والأصناف والحسابات والفواتير، ويجيب كشف حساب عميل أو مورد، ودفتر أستاذ حساب، وميزان المراجعة، وأعمار الديون، وقائمة الدخل، والميزانية، والضريبة، والتدفق النقدي، وربحية العملاء والأصناف والفروع.",
-        "للإجراءات: اطلب فاتورة مبيعات أو مشتريات، أو تسجيل دفعة من عميل أو لمورد، أو إضافة عميل أو مورد جديد، أو تغيير سعر صنف في المنيو. المساعد بيجهّز مسودة قدامك.",
+        "بيقدر يبحث في العملاء والموردين والأصناف والحسابات والفواتير، ويجيب كشف حساب عميل أو مورد، ودفتر أستاذ حساب، وميزان المراجعة، وأعمار الديون، وقائمة الدخل، والميزانية، والضريبة، والتدفق النقدي، وربحية العملاء والأصناف والفروع. وكمان تقييم المخزون، واقتراحات إعادة الطلب، والهالك، وحركة المخزون، وتكلفة الوصفات، ومبيعات المطعم، والمصروفات المنتظرة اعتمادك، وعدد الموظفين والحضور النهاردة.",
+        "للإجراءات: اطلب فاتورة مبيعات أو مشتريات، أو تسجيل دفعة من عميل أو لمورد، أو إضافة عميل أو مورد جديد، أو قيد يومي يدوي، أو تغيير سعر صنف في المنيو. المساعد بيجهّز مسودة قدامك. القيد اليومي بيتحفظ كمسودة وإنت اللي بترحّله من صفحة القيود.",
         "راجع المسودة: اختار العميل أو الفاتورة لو في أكتر من واحد، وعدّل الأوصاف والكميات والأسعار والمبلغ. مفيش حاجة بتتسجل قبل ما تدوس \"نفّذ\".",
       ],
       en: [
@@ -232,8 +232,8 @@ export const TOPICS: HelpTopic[] = [
       ],
     },
     tips: {
-      ar: ["الأرقام اللي بيقولها المساعد بتيجي من بياناتك فعلاً. لو مش لاقي حاجة بيقول كده، ومش بيخمّن.", "المساعد مش بيحذف حاجة، ومفيش عنده إجراءات على الرواتب أو الموظفين. وإضافة عميل أو مورد بتتعمل بمسودة بتوافق عليها زي أي إجراء، وبيحذّرك لو الاسم موجود.", "في فاتورة المشتريات بتختار حساب كل بند بنفسك، لأن ده قرار محاسبي ومش بيتخمّن.", "كل سؤال أو طلب بيتحسب مرة من الاستخدام الشهري المسموح لباقتك."],
-      en: ["The figures the assistant quotes come from your own data. If it cannot find something it says so; it does not guess.", "The assistant never deletes anything and has no actions on payroll or employees. A new customer or supplier is a draft you approve like any action, and it warns you if the name already exists.", "On a purchase invoice you choose the account of each line yourself, because that is a bookkeeping decision and is not guessed.", "Each question or request counts once against your plan's monthly AI allowance."],
+      ar: ["الأرقام اللي بيقولها المساعد بتيجي من بياناتك فعلاً. لو مش لاقي حاجة بيقول كده، ومش بيخمّن.", "المساعد مش بيحذف حاجة، ومفيش عنده إجراءات على الرواتب أو الموظفين. وإضافة عميل أو مورد بتتعمل بمسودة بتوافق عليها زي أي إجراء، وبيحذّرك لو الاسم موجود.", "في فاتورة المشتريات بتختار حساب كل بند بنفسك، لأن ده قرار محاسبي ومش بيتخمّن.", "المصروفات اليومية والجرد ليهم صفحاتهم (تسجيل مصروف، الجرد) لأنهم بيسألوا عن مصدر الدفع وبيستنوا الاعتماد، والمساعد بيوجّهك ليهم.", "المساعد بيشوف عدد الموظفين والحضور بس، من غير مرتبات أو ملفات شخصية.", "كل سؤال أو طلب بيتحسب مرة من الاستخدام الشهري المسموح لباقتك."],
+      en: ["The figures the assistant quotes come from your own data. If it cannot find something it says so; it does not guess.", "The assistant never deletes anything and has no actions on payroll or employees. A new customer or supplier is a draft you approve like any action, and it warns you if the name already exists.", "On a purchase invoice you choose the account of each line yourself, because that is a bookkeeping decision and is not guessed.", "Everyday expenses and stock counts keep their own pages (Record an expense, Stock count) because they ask about the payment source and wait for approval; the assistant points you there.", "The assistant sees only headcount and attendance for staff: no salaries or personal files.", "Each question or request counts once against your plan's monthly AI allowance."],
     },
   },
   {

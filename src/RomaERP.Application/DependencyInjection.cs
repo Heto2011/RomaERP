@@ -89,6 +89,9 @@ public static class DependencyInjection
             typeof(RomaERP.Application.Assistant.Agent.CustomerProfitabilityTool), typeof(RomaERP.Application.Assistant.Agent.ItemProfitabilityTool),
             typeof(RomaERP.Application.Assistant.Agent.PrepareNewCustomerTool), typeof(RomaERP.Application.Assistant.Agent.PrepareNewVendorTool),
             typeof(RomaERP.Application.Assistant.Agent.PrepareVendorPaymentTool), typeof(RomaERP.Application.Assistant.Agent.PreparePurchaseInvoiceTool),
+            typeof(RomaERP.Application.Assistant.Agent.StockValuationTool), typeof(RomaERP.Application.Assistant.Agent.ReorderSuggestionsTool), typeof(RomaERP.Application.Assistant.Agent.WasteAnalysisTool),
+            typeof(RomaERP.Application.Assistant.Agent.InventoryMovementTool), typeof(RomaERP.Application.Assistant.Agent.RecipeCostTool), typeof(RomaERP.Application.Assistant.Agent.RestaurantSalesTool),
+            typeof(RomaERP.Application.Assistant.Agent.PendingApprovalsTool), typeof(RomaERP.Application.Assistant.Agent.HeadcountTool), typeof(RomaERP.Application.Assistant.Agent.PrepareJournalEntryTool),
         })
             services.AddScoped(typeof(RomaERP.Application.Assistant.Agent.IAgentTool), tool);
         services.AddScoped<IReservationService, ReservationService>();

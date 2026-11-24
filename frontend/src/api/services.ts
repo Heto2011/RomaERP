@@ -509,6 +509,7 @@ export const RecurringExpensesApi = {
   remove: (id: string) => apiClient.delete(`/recurring-expenses/${id}`),
 };
 
+export interface ActionJournalLine { account: string | null; accountId: string | null; accountName: string | null; debit: number; credit: number; description: string | null }
 export interface ActionCandidate { id: string; name: string; extra: string | null }
 export interface ActionInvoiceLine { description: string; quantity: number; unitPrice: number | null; accountId?: string | null }
 export interface ActionProposal {
@@ -518,6 +519,7 @@ export interface ActionProposal {
   itemId: string | null; itemName: string | null; itemCandidates: ActionCandidate[]; oldPrice: number | null; newPrice: number | null;
   partyName: string | null; partyPhone: string | null; partyEmail: string | null; similarParties: ActionCandidate[];
   vendorId: string | null; vendorName: string | null; vendorCandidates: ActionCandidate[]; accountCandidates: ActionCandidate[];
+  journalLines: ActionJournalLine[];
 }
 
 export interface AgentMessage { role: string; content: string }
@@ -528,7 +530,7 @@ export const AiAssistantApi = {
   executeAction: (data: {
     kind: number; customerId?: string | null; lines?: ActionInvoiceLine[]; paymentTerm?: number; note?: string | null;
     invoiceId?: string | null; amount?: number | null; method?: number; itemId?: string | null; newPrice?: number | null;
-    vendorId?: string | null; partyName?: string | null; partyPhone?: string | null; partyEmail?: string | null;
+    vendorId?: string | null; partyName?: string | null; partyPhone?: string | null; partyEmail?: string | null; journalLines?: ActionJournalLine[];
   }) => apiClient.post<{ message: string; link: string | null }>("/aiassistant/actions/execute", data),
   setPaymentMethod: (captureId: string, paymentMethod: number) => apiClient.put<ExpenseCapture>(`/aiassistant/captures/${captureId}/payment-method`, { paymentMethod }),
   setAmount: (captureId: string, amount: number) => apiClient.put<ExpenseCapture>(`/aiassistant/captures/${captureId}/amount`, { amount }),

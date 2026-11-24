@@ -11,7 +11,7 @@ const TEXT = {
     customer: "العميل", choose: "اختار...", lines: "البنود", desc: "الوصف", qty: "الكمية", price: "السعر", addLine: "إضافة بند", payment: "طريقة الدفع",
     cash: "نقدي", card: "كارت", credit: "آجل", note: "ملاحظة", invoice: "الفاتورة", outstanding: "المتبقي", amount: "المبلغ", method: "الطريقة",
     item: "الصنف", oldPrice: "السعر الحالي", newPrice: "السعر الجديد", run: "نفّذ", cancel: "إلغاء", done: "تم", open: "افتح الصفحة", another: "طلب جديد",
-    review: "راجع المسودة قبل التنفيذ", total: "الإجمالي", name: "الاسم", phone: "التليفون", email: "الإيميل", similar: "أسماء قريبة موجودة", vendor: "المورد",
+    review: "راجع المسودة قبل التنفيذ", total: "الإجمالي", name: "الاسم", debit: "مدين", credit2: "دائن", diff: "الفرق (لازم يكون صفر)", phone: "التليفون", email: "الإيميل", similar: "أسماء قريبة موجودة", vendor: "المورد",
   },
   en: {
     title: "Ask the assistant to do it", intro: "Ask about your business or request an action in plain words. The assistant looks through your data and answers; for an action it prepares a draft that you review and approve. Nothing is booked until you press Execute.",
@@ -20,11 +20,11 @@ const TEXT = {
     customer: "Customer", choose: "Choose...", lines: "Lines", desc: "Description", qty: "Qty", price: "Price", addLine: "Add line", payment: "Payment",
     cash: "Cash", card: "Card", credit: "On account", note: "Note", invoice: "Invoice", outstanding: "Outstanding", amount: "Amount", method: "Method",
     item: "Item", oldPrice: "Current price", newPrice: "New price", run: "Execute", cancel: "Cancel", done: "Done", open: "Open the page", another: "New request",
-    review: "Review the draft before executing", total: "Total", name: "Name", phone: "Phone", email: "Email", similar: "Similar names already there", vendor: "Supplier",
+    review: "Review the draft before executing", total: "Total", name: "Name", debit: "Debit", credit2: "Credit", diff: "Difference (must be zero)", phone: "Phone", email: "Email", similar: "Similar names already there", vendor: "Supplier",
   },
 };
 
-const KIND = { None: 0, SalesInvoice: 1, CustomerPayment: 2, MenuPrice: 3, CreateCustomer: 4, CreateVendor: 5, VendorPayment: 6, PurchaseInvoice: 7 };
+const KIND = { None: 0, SalesInvoice: 1, CustomerPayment: 2, MenuPrice: 3, CreateCustomer: 4, CreateVendor: 5, VendorPayment: 6, PurchaseInvoice: 7, JournalEntry: 8 };
 
 /** A draft the assistant prepared. The owner edits it and presses Execute; only then does the normal service book it. */
 function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionProposal; onExecuted: (message: string, link: string | null) => void; onCancel: () => void }) {
@@ -36,11 +36,13 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
   const set = (patch: Partial<ActionProposal>) => setP((cur) => (cur ? { ...cur, ...patch } : cur));
   const setLine = (i: number, patch: Partial<ActionProposal["lines"][number]>) => p && set({ lines: p.lines.map((l, k) => (k === i ? { ...l, ...patch } : l)) });
 
+  const journalDiff = p && p.kind === KIND.JournalEntry ? Math.round((p.journalLines.reduce((s, l) => s + l.debit, 0) - p.journalLines.reduce((s, l) => s + l.credit, 0)) * 100) / 100 : 0;
   const ready = (() => {
     if (!p) return false;
     if (p.kind === KIND.SalesInvoice) return !!p.customerId && p.lines.length > 0 && p.lines.every((l) => l.description.trim() && l.quantity > 0 && l.unitPrice !== null && l.unitPrice >= 0);
     if (p.kind === KIND.CustomerPayment || p.kind === KIND.VendorPayment) return !!p.invoiceId && (p.amount ?? 0) > 0;
     if (p.kind === KIND.CreateCustomer || p.kind === KIND.CreateVendor) return !!p.partyName?.trim();
+    if (p.kind === KIND.JournalEntry) return p.journalLines.length >= 2 && p.journalLines.every((l) => !!l.accountId && l.debit >= 0 && l.credit >= 0 && (l.debit > 0) !== (l.credit > 0)) && journalDiff === 0;
     if (p.kind === KIND.PurchaseInvoice) return !!p.vendorId && p.lines.length > 0 && p.lines.every((l) => l.description.trim() && l.quantity > 0 && l.unitPrice !== null && l.unitPrice >= 0 && !!l.accountId);
     if (p.kind === KIND.MenuPrice) return !!p.itemId && p.newPrice !== null && p.newPrice >= 0;
     return false;
@@ -54,7 +56,7 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
       const r = await AiAssistantApi.executeAction({
         kind: p.kind, customerId: p.customerId, lines: p.lines, paymentTerm: p.paymentTerm, note: p.note,
         invoiceId: p.invoiceId, amount: p.amount, method: p.method, itemId: p.itemId, newPrice: p.newPrice,
-        vendorId: p.vendorId, partyName: p.partyName, partyPhone: p.partyPhone, partyEmail: p.partyEmail,
+        vendorId: p.vendorId, partyName: p.partyName, partyPhone: p.partyPhone, partyEmail: p.partyEmail, journalLines: p.journalLines,
       });
       onExecuted(r.data.message, r.data.link);
     } catch (err) { setError(getErrorMessage(err)); } finally { setBusy(false); }
@@ -112,6 +114,21 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
               <div className="form-field"><label>{x.amount}</label><input type="number" min={0} step="any" value={p.amount ?? ""} onChange={(e) => set({ amount: e.target.value === "" ? null : Number(e.target.value) })} /></div>
               <div className="form-field"><label>{x.method}</label>
                 <select value={p.method} onChange={(e) => set({ method: Number(e.target.value) })}><option value={1}>{x.cash}</option><option value={2}>{x.card}</option></select></div>
+            </div>
+          )}
+
+          {p.kind === KIND.JournalEntry && (
+            <div style={{ marginTop: 10 }}>
+              <div className="form-field"><label>{x.note}</label><input value={p.note ?? ""} onChange={(e) => set({ note: e.target.value })} maxLength={200} /></div>
+              {p.journalLines.map((l, i) => (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 6 }}>
+                  <div style={{ gridColumn: "1 / -1" }}>{pick(p.accountCandidates, l.accountId, (id, name) => set({ journalLines: p.journalLines.map((k, n) => (n === i ? { ...k, accountId: id, accountName: name } : k)) }))}</div>
+                  <input type="number" min={0} step="any" value={l.debit || ""} placeholder={x.debit} onChange={(e) => set({ journalLines: p.journalLines.map((k, n) => (n === i ? { ...k, debit: Number(e.target.value) || 0 } : k)) })} />
+                  <input type="number" min={0} step="any" value={l.credit || ""} placeholder={x.credit2} onChange={(e) => set({ journalLines: p.journalLines.map((k, n) => (n === i ? { ...k, credit: Number(e.target.value) || 0 } : k)) })} />
+                </div>
+              ))}
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => set({ journalLines: [...p.journalLines, { account: null, accountId: null, accountName: null, debit: 0, credit: 0, description: null }] })}>{x.addLine}</button>
+              <div style={{ marginTop: 6 }}><strong>{x.diff}: {journalDiff}</strong></div>
             </div>
           )}
 
