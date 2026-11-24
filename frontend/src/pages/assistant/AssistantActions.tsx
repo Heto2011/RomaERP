@@ -7,11 +7,11 @@ const TEXT = {
   ar: {
     title: "اطلب من المساعد", intro: "اسأل عن شغلك أو اطلب إجراء بكلامك العادي. المساعد بيدوّر في بياناتك ويجاوب، ولو طلبت إجراء بيجهّز مسودة، وإنت بتراجعها وتوافق. مفيش حاجة بتتسجل قبل ما تدوس \"نفّذ\".",
     placeholder: "اكتب سؤالك أو طلبك...", prepare: "جهّز", preparing: "جاري التفكير...", send: "إرسال", you: "إنت", assistant: "المساعد",
-    examples: ["كام اللي العملاء عليهم لينا؟", "إيه الأصناف اللي قربت تخلص؟", "اعمل فاتورة لمنى بـ 2 اشتراك سعر الواحد 500"],
+    examples: ["كام اللي العملاء عليهم لينا؟", "إيه الأصناف اللي قربت تخلص؟", "ضيف مورد اسمه شركة النور", "اعمل فاتورة لمنى بـ 2 اشتراك سعر الواحد 500"],
     customer: "العميل", choose: "اختار...", lines: "البنود", desc: "الوصف", qty: "الكمية", price: "السعر", addLine: "إضافة بند", payment: "طريقة الدفع",
     cash: "نقدي", card: "كارت", credit: "آجل", note: "ملاحظة", invoice: "الفاتورة", outstanding: "المتبقي", amount: "المبلغ", method: "الطريقة",
     item: "الصنف", oldPrice: "السعر الحالي", newPrice: "السعر الجديد", run: "نفّذ", cancel: "إلغاء", done: "تم", open: "افتح الصفحة", another: "طلب جديد",
-    review: "راجع المسودة قبل التنفيذ", total: "الإجمالي",
+    review: "راجع المسودة قبل التنفيذ", total: "الإجمالي", name: "الاسم", phone: "التليفون", email: "الإيميل", similar: "أسماء قريبة موجودة", vendor: "المورد",
   },
   en: {
     title: "Ask the assistant to do it", intro: "Ask about your business or request an action in plain words. The assistant looks through your data and answers; for an action it prepares a draft that you review and approve. Nothing is booked until you press Execute.",
@@ -20,11 +20,11 @@ const TEXT = {
     customer: "Customer", choose: "Choose...", lines: "Lines", desc: "Description", qty: "Qty", price: "Price", addLine: "Add line", payment: "Payment",
     cash: "Cash", card: "Card", credit: "On account", note: "Note", invoice: "Invoice", outstanding: "Outstanding", amount: "Amount", method: "Method",
     item: "Item", oldPrice: "Current price", newPrice: "New price", run: "Execute", cancel: "Cancel", done: "Done", open: "Open the page", another: "New request",
-    review: "Review the draft before executing", total: "Total",
+    review: "Review the draft before executing", total: "Total", name: "Name", phone: "Phone", email: "Email", similar: "Similar names already there", vendor: "Supplier",
   },
 };
 
-const KIND = { None: 0, SalesInvoice: 1, CustomerPayment: 2, MenuPrice: 3 };
+const KIND = { None: 0, SalesInvoice: 1, CustomerPayment: 2, MenuPrice: 3, CreateCustomer: 4, CreateVendor: 5, VendorPayment: 6, PurchaseInvoice: 7 };
 
 /** A draft the assistant prepared. The owner edits it and presses Execute; only then does the normal service book it. */
 function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionProposal; onExecuted: (message: string, link: string | null) => void; onCancel: () => void }) {
@@ -39,11 +39,13 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
   const ready = (() => {
     if (!p) return false;
     if (p.kind === KIND.SalesInvoice) return !!p.customerId && p.lines.length > 0 && p.lines.every((l) => l.description.trim() && l.quantity > 0 && l.unitPrice !== null && l.unitPrice >= 0);
-    if (p.kind === KIND.CustomerPayment) return !!p.invoiceId && (p.amount ?? 0) > 0;
+    if (p.kind === KIND.CustomerPayment || p.kind === KIND.VendorPayment) return !!p.invoiceId && (p.amount ?? 0) > 0;
+    if (p.kind === KIND.CreateCustomer || p.kind === KIND.CreateVendor) return !!p.partyName?.trim();
+    if (p.kind === KIND.PurchaseInvoice) return !!p.vendorId && p.lines.length > 0 && p.lines.every((l) => l.description.trim() && l.quantity > 0 && l.unitPrice !== null && l.unitPrice >= 0 && !!l.accountId);
     if (p.kind === KIND.MenuPrice) return !!p.itemId && p.newPrice !== null && p.newPrice >= 0;
     return false;
   })();
-  const total = p && p.kind === KIND.SalesInvoice ? p.lines.reduce((s, l) => s + l.quantity * (l.unitPrice ?? 0), 0) : 0;
+  const total = p && (p.kind === KIND.SalesInvoice || p.kind === KIND.PurchaseInvoice) ? p.lines.reduce((s, l) => s + l.quantity * (l.unitPrice ?? 0), 0) : 0;
 
   async function run() {
     if (!p) return;
@@ -52,6 +54,7 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
       const r = await AiAssistantApi.executeAction({
         kind: p.kind, customerId: p.customerId, lines: p.lines, paymentTerm: p.paymentTerm, note: p.note,
         invoiceId: p.invoiceId, amount: p.amount, method: p.method, itemId: p.itemId, newPrice: p.newPrice,
+        vendorId: p.vendorId, partyName: p.partyName, partyPhone: p.partyPhone, partyEmail: p.partyEmail,
       });
       onExecuted(r.data.message, r.data.link);
     } catch (err) { setError(getErrorMessage(err)); } finally { setBusy(false); }
@@ -98,7 +101,7 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
             </div>
           )}
 
-          {p.kind === KIND.CustomerPayment && (
+          {(p.kind === KIND.CustomerPayment || p.kind === KIND.VendorPayment) && (
             <div className="form-grid" style={{ marginTop: 10 }}>
               <div className="form-field"><label>{x.invoice}</label>
                 {p.invoiceCandidates.length > 0
@@ -109,6 +112,43 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
               <div className="form-field"><label>{x.amount}</label><input type="number" min={0} step="any" value={p.amount ?? ""} onChange={(e) => set({ amount: e.target.value === "" ? null : Number(e.target.value) })} /></div>
               <div className="form-field"><label>{x.method}</label>
                 <select value={p.method} onChange={(e) => set({ method: Number(e.target.value) })}><option value={1}>{x.cash}</option><option value={2}>{x.card}</option></select></div>
+            </div>
+          )}
+
+          {(p.kind === KIND.CreateCustomer || p.kind === KIND.CreateVendor) && (
+            <div style={{ marginTop: 10 }}>
+              <div className="form-grid">
+                <div className="form-field"><label>{x.name}</label><input value={p.partyName ?? ""} maxLength={150} onChange={(e) => set({ partyName: e.target.value })} /></div>
+                <div className="form-field"><label>{x.phone}</label><input value={p.partyPhone ?? ""} maxLength={40} onChange={(e) => set({ partyPhone: e.target.value })} /></div>
+                <div className="form-field"><label>{x.email}</label><input type="email" value={p.partyEmail ?? ""} maxLength={120} onChange={(e) => set({ partyEmail: e.target.value })} /></div>
+              </div>
+              {p.similarParties.length > 0 && <div className="text-muted" style={{ marginTop: 6 }}>{x.similar}: {p.similarParties.map((s) => s.name).join("، ")}</div>}
+            </div>
+          )}
+
+          {p.kind === KIND.PurchaseInvoice && (
+            <div style={{ marginTop: 10 }}>
+              <div className="form-field"><label>{x.vendor}</label>
+                {p.vendorCandidates.length > 0 ? pick(p.vendorCandidates, p.vendorId, (id, name) => set({ vendorId: id, vendorName: name })) : <span className="text-muted">-</span>}
+              </div>
+              <label>{x.lines}</label>
+              {p.lines.map((l, i) => (
+                <div key={i} style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr", gap: 8, marginBottom: 6 }}>
+                  <input value={l.description} placeholder={x.desc} onChange={(e) => setLine(i, { description: e.target.value })} />
+                  <input type="number" min={0} step="any" value={l.quantity} placeholder={x.qty} onChange={(e) => setLine(i, { quantity: Number(e.target.value) })} />
+                  <input type="number" min={0} step="any" value={l.unitPrice ?? ""} placeholder={x.price} onChange={(e) => setLine(i, { unitPrice: e.target.value === "" ? null : Number(e.target.value) })} />
+                  <div style={{ gridColumn: "1 / -1" }}>{pick(p.accountCandidates, l.accountId ?? null, (id) => setLine(i, { accountId: id }))}</div>
+                </div>
+              ))}
+              <button type="button" className="btn btn-secondary btn-sm" onClick={() => set({ lines: [...p.lines, { description: "", quantity: 1, unitPrice: null, accountId: null }] })}>{x.addLine}</button>
+              <div className="form-grid" style={{ marginTop: 10 }}>
+                <div className="form-field"><label>{x.payment}</label>
+                  <select value={p.paymentTerm} onChange={(e) => set({ paymentTerm: Number(e.target.value) })}>
+                    <option value={1}>{x.cash}</option><option value={2}>{x.card}</option><option value={3}>{x.credit}</option>
+                  </select></div>
+                <div className="form-field"><label>{x.note}</label><input value={p.note ?? ""} onChange={(e) => set({ note: e.target.value })} maxLength={200} /></div>
+              </div>
+              <div style={{ marginTop: 6 }}><strong>{x.total}: {total.toLocaleString(undefined, { maximumFractionDigits: 2 })}</strong></div>
             </div>
           )}
 

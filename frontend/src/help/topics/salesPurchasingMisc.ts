@@ -219,21 +219,21 @@ export const TOPICS: HelpTopic[] = [
       ar: [
         "افتح المساعد الذكي ثم \"اطلب من المساعد\" واكتب بكلامك العادي. ده شات: المساعد بيفتكر كلامك وإنت بتكمل عليه.",
         "للأسئلة: المساعد بيدوّر في بياناتك ويجاوب. مثال: كام اللي العملاء علينا؟ إيه الأصناف اللي قربت تخلص؟ إيه أرباح الشهر ده؟ كام فواتير منى المفتوحة؟",
-        "بيقدر يبحث في العملاء والموردين والأصناف والفواتير، ويجيب أعمار الديون وقائمة الدخل والميزانية والضريبة والتدفق النقدي وربح الفروع.",
-        "للإجراءات: اطلب فاتورة مبيعات لعميل موجود، أو تسجيل دفعة على فاتورة مفتوحة، أو تغيير سعر صنف في المنيو. المساعد بيجهّز مسودة قدامك.",
+        "بيقدر يبحث في العملاء والموردين والأصناف والحسابات والفواتير، ويجيب كشف حساب عميل أو مورد، ودفتر أستاذ حساب، وميزان المراجعة، وأعمار الديون، وقائمة الدخل، والميزانية، والضريبة، والتدفق النقدي، وربحية العملاء والأصناف والفروع.",
+        "للإجراءات: اطلب فاتورة مبيعات أو مشتريات، أو تسجيل دفعة من عميل أو لمورد، أو إضافة عميل أو مورد جديد، أو تغيير سعر صنف في المنيو. المساعد بيجهّز مسودة قدامك.",
         "راجع المسودة: اختار العميل أو الفاتورة لو في أكتر من واحد، وعدّل الأوصاف والكميات والأسعار والمبلغ. مفيش حاجة بتتسجل قبل ما تدوس \"نفّذ\".",
       ],
       en: [
         "Open the Smart assistant, then \"Ask the assistant to do it\", and write in plain words. It is a chat: the assistant remembers what you said as you continue.",
         "For questions, the assistant looks through your data and answers. For example: how much do customers owe us? Which items are running low? What is this month's profit? Which of Mona's invoices are open?",
-        "It can search customers, suppliers, items and invoices, and bring the aging of debts, the income statement, the balance sheet, VAT, cash flow and branch profit.",
-        "For actions: ask for a sales invoice for an existing customer, a payment on an open invoice, or a new price for a menu item. The assistant prepares a draft in front of you.",
+        "It can search customers, suppliers, items, accounts and invoices, and bring a customer or supplier statement, an account ledger, the trial balance, aging of debts, the income statement, the balance sheet, VAT, cash flow, and profitability by customer, item and branch.",
+        "For actions: ask for a sales or purchase invoice, a payment from a customer or to a supplier, a new customer or supplier, or a new price for a menu item. The assistant prepares a draft in front of you.",
         "Review the draft: choose the customer or invoice if there is more than one match, and edit descriptions, quantities, prices and the amount. Nothing is booked until you press Execute.",
       ],
     },
     tips: {
-      ar: ["الأرقام اللي بيقولها المساعد بتيجي من بياناتك فعلاً. لو مش لاقي حاجة بيقول كده، ومش بيخمّن.", "المساعد مش بيضيف عملاء جداد ولا بيحذف حاجة، ومفيش عنده إجراءات على الرواتب أو الموظفين.", "كل سؤال أو طلب بيتحسب مرة من الاستخدام الشهري المسموح لباقتك."],
-      en: ["The figures the assistant quotes come from your own data. If it cannot find something it says so; it does not guess.", "The assistant never adds new customers or deletes anything, and has no actions on payroll or employees.", "Each question or request counts once against your plan's monthly AI allowance."],
+      ar: ["الأرقام اللي بيقولها المساعد بتيجي من بياناتك فعلاً. لو مش لاقي حاجة بيقول كده، ومش بيخمّن.", "المساعد مش بيحذف حاجة، ومفيش عنده إجراءات على الرواتب أو الموظفين. وإضافة عميل أو مورد بتتعمل بمسودة بتوافق عليها زي أي إجراء، وبيحذّرك لو الاسم موجود.", "في فاتورة المشتريات بتختار حساب كل بند بنفسك، لأن ده قرار محاسبي ومش بيتخمّن.", "كل سؤال أو طلب بيتحسب مرة من الاستخدام الشهري المسموح لباقتك."],
+      en: ["The figures the assistant quotes come from your own data. If it cannot find something it says so; it does not guess.", "The assistant never deletes anything and has no actions on payroll or employees. A new customer or supplier is a draft you approve like any action, and it warns you if the name already exists.", "On a purchase invoice you choose the account of each line yourself, because that is a bookkeeping decision and is not guessed.", "Each question or request counts once against your plan's monthly AI allowance."],
     },
   },
   {

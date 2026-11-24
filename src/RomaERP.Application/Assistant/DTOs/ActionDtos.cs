@@ -6,6 +6,10 @@ public enum AssistantActionKind
     SalesInvoice = 1,
     CustomerPayment = 2,
     MenuPrice = 3,
+    CreateCustomer = 4,
+    CreateVendor = 5,
+    VendorPayment = 6,
+    PurchaseInvoice = 7,
 }
 
 public record ActionCandidateDto(Guid Id, string Name, string? Extra);
@@ -15,6 +19,8 @@ public class ActionInvoiceLineDto
     public string Description { get; set; } = string.Empty;
     public decimal Quantity { get; set; } = 1;
     public decimal? UnitPrice { get; set; }
+    /// <summary>Purchase invoices only: the expense or stock account the line is booked to. The owner chooses it; it is never guessed.</summary>
+    public Guid? AccountId { get; set; }
 }
 
 /// <summary>What the assistant understood from the owner's sentence, with the names already matched to real records where it could.
@@ -37,7 +43,19 @@ public class ActionProposalDto
     public int PaymentTerm { get; set; } = 3;
     public string? Note { get; set; }
 
-    // Customer payment
+    // New customer or supplier
+    public string? PartyName { get; set; }
+    public string? PartyPhone { get; set; }
+    public string? PartyEmail { get; set; }
+    public List<ActionCandidateDto> SimilarParties { get; set; } = new();
+
+    // Purchase invoice (supplier is chosen like a customer, and each line needs an account)
+    public Guid? VendorId { get; set; }
+    public string? VendorName { get; set; }
+    public List<ActionCandidateDto> VendorCandidates { get; set; } = new();
+    public List<ActionCandidateDto> AccountCandidates { get; set; } = new();
+
+    // Customer payment (also used for a payment to a supplier)
     public Guid? InvoiceId { get; set; }
     public string? InvoiceNumber { get; set; }
     public List<ActionCandidateDto> InvoiceCandidates { get; set; } = new();
@@ -67,6 +85,10 @@ public class ExecuteActionRequestDto
     public int Method { get; set; } = 1;
     public Guid? ItemId { get; set; }
     public decimal? NewPrice { get; set; }
+    public Guid? VendorId { get; set; }
+    public string? PartyName { get; set; }
+    public string? PartyPhone { get; set; }
+    public string? PartyEmail { get; set; }
 }
 
 public record ExecuteActionResultDto(string Message, string? Link);
@@ -85,6 +107,10 @@ public class ActionIntent
     public string? Method { get; set; }
     public string? ItemName { get; set; }
     public decimal? NewPrice { get; set; }
+    public string? VendorName { get; set; }
+    public string? PartyName { get; set; }
+    public string? PartyPhone { get; set; }
+    public string? PartyEmail { get; set; }
 }
 
 public record ActionRequestDto(string Text);

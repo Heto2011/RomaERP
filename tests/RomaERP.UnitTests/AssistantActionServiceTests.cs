@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using RomaERP.Application.Assistant.DTOs;
 using RomaERP.Application.Assistant.Services;
 using RomaERP.Application.Common.Exceptions;
+using RomaERP.Application.Purchasing.DTOs;
+using RomaERP.Application.Purchasing.Services;
 using RomaERP.Application.Sales.DTOs;
 using RomaERP.Application.Sales.Services;
 using RomaERP.Domain.Accounting;
@@ -38,7 +40,21 @@ public class AssistantActionServiceTests
         }
     }
 
-    private record Rig(AssistantActionService Svc, ApplicationDbContext Ctx, FakeParser Parser, FakeSales Sales);
+    public class FakePurchasing : DispatchProxy
+    {
+        public CreateVendorDto? Vendor { get; set; }
+        public CreatePurchaseInvoiceDto? Invoice { get; set; }
+        public (Guid Id, RecordPurchasePaymentDto Dto)? Paid { get; set; }
+        protected override object? Invoke(MethodInfo? method, object?[]? args)
+        {
+            if (method!.Name == "CreateVendorAsync") { Vendor = (CreateVendorDto)args![0]!; return Task.FromResult(new VendorDto()); }
+            if (method.Name == "CreateInvoiceAsync") { Invoice = (CreatePurchaseInvoiceDto)args![0]!; return Task.FromResult(new PurchaseInvoiceDto { InvoiceNumber = "PI-1" }); }
+            if (method.Name == "RecordPaymentAsync") { Paid = ((Guid)args![0]!, (RecordPurchasePaymentDto)args[1]!); return Task.FromResult(new PurchaseInvoiceDto { InvoiceNumber = "PI-7" }); }
+            throw new NotSupportedException(method.Name);
+        }
+    }
+
+    private record Rig(AssistantActionService Svc, ApplicationDbContext Ctx, FakeParser Parser, FakeSales Sales, FakePurchasing Purchasing);
 
     private static async Task<Rig> BuildAsync()
     {
@@ -57,7 +73,9 @@ public class AssistantActionServiceTests
         var parser = new FakeParser();
         var proxy = DispatchProxy.Create<ISalesService, FakeSales>();
         var fake = (FakeSales)(object)proxy;
-        return new Rig(new AssistantActionService(parser, ctx, proxy), ctx, parser, fake);
+        var pProxy = DispatchProxy.Create<IPurchasingService, FakePurchasing>();
+        var pFake = (FakePurchasing)(object)pProxy;
+        return new Rig(new AssistantActionService(parser, ctx, proxy, pProxy), ctx, parser, fake, pFake);
     }
 
     [Fact]
@@ -187,5 +205,69 @@ public class AssistantActionServiceTests
         Assert.Equal(AssistantActionKind.SalesInvoice, read.Kind);
         Assert.Null(read.Lines[0].UnitPrice);
         Assert.Equal(AssistantActionKind.None, ClaudeActionParser.Read(JsonNode.Parse("""{"kind":"delete_everything"}""")!.AsObject()).Kind);
+    }
+
+    [Fact]
+    public async Task NewCustomer_WarnsAboutALookAlike_AndRefusesAnExactDuplicate()
+    {
+        var r = await BuildAsync();
+        r.Parser.Intent = new ActionIntent { Kind = AssistantActionKind.CreateCustomer, PartyName = "منى" };
+        var p = await r.Svc.ProposeAsync("ضيف عميل منى");
+        Assert.Single(p.SimilarParties);
+        Assert.NotEmpty(p.Warnings);
+        await Assert.ThrowsAsync<ValidationAppException>(() => r.Svc.ExecuteAsync(new ExecuteActionRequestDto { Kind = AssistantActionKind.CreateCustomer, PartyName = "منى" }));
+        Assert.Null(r.Sales.Created);
+    }
+
+    [Fact]
+    public async Task NewVendor_GetsTheNextFreeCode_AndIsBookedOnlyOnExecute()
+    {
+        var r = await BuildAsync();
+        r.Ctx.Vendors.Add(new RomaERP.Domain.Purchasing.Vendor { Code = "V-0001", NameAr = "مورد قديم", NameEn = "Old" });
+        await r.Ctx.SaveChangesAsync();
+        r.Parser.Intent = new ActionIntent { Kind = AssistantActionKind.CreateVendor, PartyName = "شركة النور", PartyPhone = "0100" };
+        var p = await r.Svc.ProposeAsync("ضيف مورد شركة النور");
+        Assert.Null(r.Purchasing.Vendor);
+        var res = await r.Svc.ExecuteAsync(new ExecuteActionRequestDto { Kind = AssistantActionKind.CreateVendor, PartyName = p.PartyName, PartyPhone = p.PartyPhone });
+        Assert.Equal("V-0002", r.Purchasing.Vendor!.Code);
+        Assert.Equal("شركة النور", r.Purchasing.Vendor.NameAr);
+        Assert.Contains("V-0002", res.Message);
+    }
+
+    [Fact]
+    public async Task PurchaseInvoice_NeedsAnAccountOnEveryLine_AndOffersTheExpenseAccounts()
+    {
+        var r = await BuildAsync();
+        var vendor = new RomaERP.Domain.Purchasing.Vendor { Code = "V-1", NameAr = "النور", NameEn = "Nour" };
+        r.Ctx.Vendors.Add(vendor);
+        var exp = new Account { Code = "5300", NameAr = "إيجار", NameEn = "Rent", AccountType = AccountType.Expense, Nature = AccountNature.Debit };
+        r.Ctx.Accounts.Add(exp);
+        await r.Ctx.SaveChangesAsync();
+        r.Parser.Intent = new ActionIntent { Kind = AssistantActionKind.PurchaseInvoice, VendorName = "النور", Lines = { new ActionInvoiceLineDto { Description = "إيجار", Quantity = 1, UnitPrice = 5000 } } };
+        var p = await r.Svc.ProposeAsync("فاتورة من النور");
+        Assert.Equal(vendor.Id, p.VendorId);
+        Assert.Contains(p.AccountCandidates, a => a.Id == exp.Id);
+        await Assert.ThrowsAsync<ValidationAppException>(() => r.Svc.ExecuteAsync(new ExecuteActionRequestDto
+        { Kind = AssistantActionKind.PurchaseInvoice, VendorId = vendor.Id, Lines = { new ActionInvoiceLineDto { Description = "إيجار", Quantity = 1, UnitPrice = 5000 } } }));
+        Assert.Null(r.Purchasing.Invoice);
+        await r.Svc.ExecuteAsync(new ExecuteActionRequestDto
+        { Kind = AssistantActionKind.PurchaseInvoice, VendorId = vendor.Id, PaymentTerm = 3, Lines = { new ActionInvoiceLineDto { Description = "إيجار", Quantity = 1, UnitPrice = 5000, AccountId = exp.Id } } });
+        Assert.Equal(exp.Id, r.Purchasing.Invoice!.Lines[0].AccountId);
+    }
+
+    [Fact]
+    public async Task VendorPayment_FindsTheOpenInvoice_AndRecordsIt()
+    {
+        var r = await BuildAsync();
+        var vendor = new RomaERP.Domain.Purchasing.Vendor { Code = "V-1", NameAr = "النور", NameEn = "Nour" };
+        r.Ctx.Vendors.Add(vendor);
+        var period = await r.Ctx.FiscalPeriods.FirstAsync();
+        r.Ctx.PurchaseInvoices.Add(new RomaERP.Domain.Purchasing.PurchaseInvoice { InvoiceNumber = "PI-000009", VendorId = vendor.Id, FiscalPeriodId = period.Id, InvoiceDate = DateTime.UtcNow, TotalAmount = 800, PaidAmount = 300 });
+        await r.Ctx.SaveChangesAsync();
+        r.Parser.Intent = new ActionIntent { Kind = AssistantActionKind.VendorPayment, VendorName = "النور" };
+        var p = await r.Svc.ProposeAsync("ادفع للنور");
+        Assert.Equal(500m, p.Amount);
+        await r.Svc.ExecuteAsync(new ExecuteActionRequestDto { Kind = AssistantActionKind.VendorPayment, InvoiceId = p.InvoiceId, Amount = 500, Method = 1 });
+        Assert.Equal(500m, r.Purchasing.Paid!.Value.Dto.Amount);
     }
 }

@@ -111,7 +111,7 @@ public class AssistantAgentTests
         var ctx = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         ctx.Customers.Add(new Customer { Code = "C1", NameAr = "منى", NameEn = "Mona" });
         await ctx.SaveChangesAsync();
-        var actions = new AssistantActionService(new NoParser(), ctx, null!);
+        var actions = new AssistantActionService(new NoParser(), ctx, null!, null!);
         var tool = new PrepareSalesInvoiceTool(actions);
         var model = new ScriptedModel();
         model.Answers.Enqueue(Use("prepare_sales_invoice", """{"customer_name":"منى","lines":[{"description":"اشتراك","quantity":2,"unit_price":500}],"payment_term":"credit"}"""));

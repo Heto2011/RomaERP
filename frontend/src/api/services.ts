@@ -510,12 +510,14 @@ export const RecurringExpensesApi = {
 };
 
 export interface ActionCandidate { id: string; name: string; extra: string | null }
-export interface ActionInvoiceLine { description: string; quantity: number; unitPrice: number | null }
+export interface ActionInvoiceLine { description: string; quantity: number; unitPrice: number | null; accountId?: string | null }
 export interface ActionProposal {
   kind: number; summary: string; question: string | null; warnings: string[];
   customerId: string | null; customerName: string | null; customerCandidates: ActionCandidate[]; lines: ActionInvoiceLine[]; paymentTerm: number; note: string | null;
   invoiceId: string | null; invoiceNumber: string | null; invoiceCandidates: ActionCandidate[]; outstandingAmount: number | null; amount: number | null; method: number;
   itemId: string | null; itemName: string | null; itemCandidates: ActionCandidate[]; oldPrice: number | null; newPrice: number | null;
+  partyName: string | null; partyPhone: string | null; partyEmail: string | null; similarParties: ActionCandidate[];
+  vendorId: string | null; vendorName: string | null; vendorCandidates: ActionCandidate[]; accountCandidates: ActionCandidate[];
 }
 
 export interface AgentMessage { role: string; content: string }
@@ -526,6 +528,7 @@ export const AiAssistantApi = {
   executeAction: (data: {
     kind: number; customerId?: string | null; lines?: ActionInvoiceLine[]; paymentTerm?: number; note?: string | null;
     invoiceId?: string | null; amount?: number | null; method?: number; itemId?: string | null; newPrice?: number | null;
+    vendorId?: string | null; partyName?: string | null; partyPhone?: string | null; partyEmail?: string | null;
   }) => apiClient.post<{ message: string; link: string | null }>("/aiassistant/actions/execute", data),
   setPaymentMethod: (captureId: string, paymentMethod: number) => apiClient.put<ExpenseCapture>(`/aiassistant/captures/${captureId}/payment-method`, { paymentMethod }),
   setAmount: (captureId: string, amount: number) => apiClient.put<ExpenseCapture>(`/aiassistant/captures/${captureId}/amount`, { amount }),

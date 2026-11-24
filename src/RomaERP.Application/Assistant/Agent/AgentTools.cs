@@ -296,3 +296,169 @@ public class PrepareMenuPriceTool : PrepareTool
         NewPrice = a["new_price"] is { } n && n.GetValueKind() == JsonValueKind.Number ? n.GetValue<decimal>() : null,
     };
 }
+
+// ---------- More ways to look things up ----------
+
+public class TrialBalanceTool : ReadTool
+{
+    private readonly IJournalEntryService _j;
+    public TrialBalanceTool(IJournalEntryService j) => _j = j;
+    public override string Name => "get_trial_balance";
+    public override string Description => "The trial balance: every account with its debit and credit balance as of a date.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => p["as_of"] = ToolArgs.S("date yyyy-MM-dd (empty = today)"));
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+        => new(ToolArgs.Ser(await _j.GetTrialBalanceAsync(ToolArgs.Date(a, "as_of", DateTime.UtcNow.Date), ct)));
+}
+
+public class SearchAccountsTool : ReadTool
+{
+    private readonly IApplicationDbContext _c;
+    public SearchAccountsTool(IApplicationDbContext c) => _c = c;
+    public override string Name => "search_accounts";
+    public override string Description => "Find accounts in the chart of accounts by code or part of the name. Returns up to 15.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => p["query"] = ToolArgs.S("code or part of the name"), "query");
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var q = ToolArgs.Norm(ToolArgs.Str(a, "query"));
+        var list = (await _c.Accounts.AsNoTracking().Where(x => !x.IsDeleted && x.IsActive).OrderBy(x => x.Code).ToListAsync(ct))
+            .Where(x => q.Length == 0 || x.Code.StartsWith(q) || ToolArgs.Norm(x.NameAr).Contains(q) || ToolArgs.Norm(x.NameEn).Contains(q)).Take(15)
+            .Select(x => new { x.Id, x.Code, name = x.NameAr, type = x.AccountType.ToString() });
+        return new(ToolArgs.Ser(list));
+    }
+}
+
+public class AccountLedgerTool : ReadTool
+{
+    private readonly IApplicationDbContext _c; private readonly ILedgerReportService _l;
+    public AccountLedgerTool(IApplicationDbContext c, ILedgerReportService l) { _c = c; _l = l; }
+    public override string Name => "get_account_ledger";
+    public override string Description => "The general ledger of one account for a period: opening balance, every movement and the closing balance. Give the account code or a name that matches exactly one account.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["account"] = ToolArgs.S("account code or name"); p["from"] = ToolArgs.S("start date yyyy-MM-dd"); p["to"] = ToolArgs.S("end date yyyy-MM-dd"); }, "account", "from", "to");
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var q = ToolArgs.Norm(ToolArgs.Str(a, "account"));
+        var all = await _c.Accounts.AsNoTracking().Where(x => !x.IsDeleted && x.IsActive).ToListAsync(ct);
+        var hit = all.Where(x => ToolArgs.Norm(x.Code) == q).ToList();
+        if (hit.Count == 0) hit = all.Where(x => ToolArgs.Norm(x.NameAr).Contains(q) || ToolArgs.Norm(x.NameEn).Contains(q)).ToList();
+        if (hit.Count == 0) throw new ValidationAppException("مفيش حساب بالاسم أو الكود ده.");
+        if (hit.Count > 1) return new("More than one account matches: " + ToolArgs.Ser(hit.Take(8).Select(x => new { x.Code, name = x.NameAr })) + ". Ask the user which one.");
+        return new(ToolArgs.Ser(await _l.GetGeneralLedgerAsync(hit[0].Id, ToolArgs.Date(a, "from", DateTime.UtcNow.Date.AddDays(1 - DateTime.UtcNow.Day)), ToolArgs.Date(a, "to", DateTime.UtcNow.Date), ct)));
+    }
+}
+
+public class CustomerStatementTool : ReadTool
+{
+    private readonly IApplicationDbContext _c; private readonly ILedgerReportService _l;
+    public CustomerStatementTool(IApplicationDbContext c, ILedgerReportService l) { _c = c; _l = l; }
+    public override string Name => "get_customer_statement";
+    public override string Description => "A customer's account statement for a period: opening balance, invoices, payments and the closing balance. The name must match one customer.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["customer"] = ToolArgs.S("customer name"); p["from"] = ToolArgs.S("start date yyyy-MM-dd"); p["to"] = ToolArgs.S("end date yyyy-MM-dd"); }, "customer");
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var q = ToolArgs.Norm(ToolArgs.Str(a, "customer"));
+        var hit = (await _c.Customers.AsNoTracking().Where(x => !x.IsDeleted && x.IsActive).ToListAsync(ct)).Where(x => q.Length > 0 && (ToolArgs.Norm(x.NameAr).Contains(q) || ToolArgs.Norm(x.NameEn).Contains(q))).ToList();
+        if (hit.Count == 0) throw new ValidationAppException("مفيش عميل بالاسم ده.");
+        if (hit.Count > 1) return new("More than one customer matches: " + ToolArgs.Ser(hit.Take(8).Select(x => x.NameAr)) + ". Ask the user which one.");
+        var from = ToolArgs.Date(a, "from", new DateTime(DateTime.UtcNow.Year, 1, 1));
+        return new(ToolArgs.Ser(await _l.GetCustomerStatementAsync(hit[0].Id, from, ToolArgs.Date(a, "to", DateTime.UtcNow.Date), ct)));
+    }
+}
+
+public class VendorStatementTool : ReadTool
+{
+    private readonly IApplicationDbContext _c; private readonly ILedgerReportService _l;
+    public VendorStatementTool(IApplicationDbContext c, ILedgerReportService l) { _c = c; _l = l; }
+    public override string Name => "get_vendor_statement";
+    public override string Description => "A supplier's account statement for a period: opening balance, invoices, payments and the closing balance. The name must match one supplier.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["vendor"] = ToolArgs.S("supplier name"); p["from"] = ToolArgs.S("start date yyyy-MM-dd"); p["to"] = ToolArgs.S("end date yyyy-MM-dd"); }, "vendor");
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var q = ToolArgs.Norm(ToolArgs.Str(a, "vendor"));
+        var hit = (await _c.Vendors.AsNoTracking().Where(x => !x.IsDeleted && x.IsActive).ToListAsync(ct)).Where(x => q.Length > 0 && (ToolArgs.Norm(x.NameAr).Contains(q) || ToolArgs.Norm(x.NameEn).Contains(q))).ToList();
+        if (hit.Count == 0) throw new ValidationAppException("مفيش مورد بالاسم ده.");
+        if (hit.Count > 1) return new("More than one supplier matches: " + ToolArgs.Ser(hit.Take(8).Select(x => x.NameAr)) + ". Ask the user which one.");
+        var from = ToolArgs.Date(a, "from", new DateTime(DateTime.UtcNow.Year, 1, 1));
+        return new(ToolArgs.Ser(await _l.GetVendorStatementAsync(hit[0].Id, from, ToolArgs.Date(a, "to", DateTime.UtcNow.Date), ct)));
+    }
+}
+
+public class CustomerProfitabilityTool : ReadTool
+{
+    private readonly IFinancialReportService _r;
+    public CustomerProfitabilityTool(IFinancialReportService r) => _r = r;
+    public override string Name => "get_customer_profitability";
+    public override string Description => "Which customers bring the most profit in a period.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["from"] = ToolArgs.S("start date yyyy-MM-dd"); p["to"] = ToolArgs.S("end date yyyy-MM-dd"); }, "from", "to");
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+        => new(ToolArgs.Ser(await _r.GetCustomerProfitabilityAsync(ToolArgs.Date(a, "from", DateTime.UtcNow.Date.AddDays(1 - DateTime.UtcNow.Day)), ToolArgs.Date(a, "to", DateTime.UtcNow.Date), ct)));
+}
+
+public class ItemProfitabilityTool : ReadTool
+{
+    private readonly IFinancialReportService _r;
+    public ItemProfitabilityTool(IFinancialReportService r) => _r = r;
+    public override string Name => "get_item_profitability";
+    public override string Description => "Which items sell most and bring the most profit in a period.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["from"] = ToolArgs.S("start date yyyy-MM-dd"); p["to"] = ToolArgs.S("end date yyyy-MM-dd"); }, "from", "to");
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+        => new(ToolArgs.Ser(await _r.GetItemProfitabilityAsync(ToolArgs.Date(a, "from", DateTime.UtcNow.Date.AddDays(1 - DateTime.UtcNow.Day)), ToolArgs.Date(a, "to", DateTime.UtcNow.Date), ct)));
+}
+
+// ---------- More drafts (nothing is booked until the owner approves) ----------
+
+public class PrepareNewCustomerTool : PrepareTool
+{
+    public PrepareNewCustomerTool(IAssistantActionService a) : base(a) { }
+    public override string Name => "prepare_new_customer";
+    public override string Description => "Prepare (not add) a new customer. Use only when the user asked to add one.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["name"] = ToolArgs.S("the customer's name"); p["phone"] = ToolArgs.S("phone, only if stated"); p["email"] = ToolArgs.S("email, only if stated"); }, "name");
+    protected override ActionIntent ToIntent(JsonObject a) => new() { Kind = AssistantActionKind.CreateCustomer, PartyName = ToolArgs.Str(a, "name"), PartyPhone = ToolArgs.Str(a, "phone"), PartyEmail = ToolArgs.Str(a, "email") };
+}
+
+public class PrepareNewVendorTool : PrepareTool
+{
+    public PrepareNewVendorTool(IAssistantActionService a) : base(a) { }
+    public override string Name => "prepare_new_vendor";
+    public override string Description => "Prepare (not add) a new supplier. Use only when the user asked to add one.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["name"] = ToolArgs.S("the supplier's name"); p["phone"] = ToolArgs.S("phone, only if stated"); p["email"] = ToolArgs.S("email, only if stated"); }, "name");
+    protected override ActionIntent ToIntent(JsonObject a) => new() { Kind = AssistantActionKind.CreateVendor, PartyName = ToolArgs.Str(a, "name"), PartyPhone = ToolArgs.Str(a, "phone"), PartyEmail = ToolArgs.Str(a, "email") };
+}
+
+public class PrepareVendorPaymentTool : PrepareTool
+{
+    public PrepareVendorPaymentTool(IAssistantActionService a) : base(a) { }
+    public override string Name => "prepare_vendor_payment";
+    public override string Description => "Prepare (not book) a payment the company makes to a supplier on an open purchase invoice. Give the invoice number or the supplier's name.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p =>
+    {
+        p["invoice_number"] = ToolArgs.S("purchase invoice number if known"); p["vendor_name"] = ToolArgs.S("supplier name if the number is not known");
+        p["amount"] = ToolArgs.N("amount paid, only if stated"); p["method"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray("cash", "card") };
+    });
+    protected override ActionIntent ToIntent(JsonObject a) => new()
+    {
+        Kind = AssistantActionKind.VendorPayment, InvoiceNumber = ToolArgs.Str(a, "invoice_number"), VendorName = ToolArgs.Str(a, "vendor_name"), Method = ToolArgs.Str(a, "method"),
+        Amount = a["amount"] is { } n && n.GetValueKind() == JsonValueKind.Number ? n.GetValue<decimal>() : null,
+    };
+}
+
+public class PreparePurchaseInvoiceTool : PrepareTool
+{
+    public PreparePurchaseInvoiceTool(IAssistantActionService a) : base(a) { }
+    public override string Name => "prepare_purchase_invoice";
+    public override string Description => "Prepare (not book) a purchase invoice from an existing supplier. Do not invent prices or accounts: the user chooses the account of each line on the draft.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p =>
+    {
+        p["vendor_name"] = ToolArgs.S("the supplier's name as the user said it");
+        p["lines"] = new JsonObject { ["type"] = "array", ["items"] = ToolArgs.Schema(l => { l["description"] = ToolArgs.S("what was bought"); l["quantity"] = ToolArgs.N("quantity"); l["unit_price"] = ToolArgs.N("price of one, only if stated"); }, "description", "quantity") };
+        p["payment_term"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray("cash", "card", "credit") };
+        p["note"] = ToolArgs.S("optional note");
+    }, "vendor_name", "lines");
+    protected override ActionIntent ToIntent(JsonObject a)
+    {
+        var intent = new ActionIntent { Kind = AssistantActionKind.PurchaseInvoice, VendorName = ToolArgs.Str(a, "vendor_name"), PaymentTerm = ToolArgs.Str(a, "payment_term"), Note = ToolArgs.Str(a, "note") };
+        if (a["lines"] is JsonArray lines)
+            foreach (var l in lines.OfType<JsonObject>())
+                intent.Lines.Add(new ActionInvoiceLineDto { Description = ToolArgs.Str(l, "description"), Quantity = l["quantity"] is { } q && q.GetValueKind() == JsonValueKind.Number ? q.GetValue<decimal>() : 1, UnitPrice = l["unit_price"] is { } u && u.GetValueKind() == JsonValueKind.Number ? u.GetValue<decimal>() : null });
+        return intent;
+    }
+}
