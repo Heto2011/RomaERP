@@ -35,11 +35,13 @@ public class AssistantActionServiceTests
     public class FakeSales : DispatchProxy
     {
         public CreateSalesInvoiceDto? Created { get; set; }
+        public CreateCustomerDto? CreatedCustomer { get; set; }
         public (Guid Id, RecordSalesPaymentDto Dto)? Paid { get; set; }
 
         protected override object? Invoke(MethodInfo? method, object?[]? args)
         {
             if (method!.Name == "CreateInvoiceAsync") { Created = (CreateSalesInvoiceDto)args![0]!; return Task.FromResult(new SalesInvoiceDto { InvoiceNumber = "INV-1", TotalAmount = 100 }); }
+            if (method.Name == "CreateCustomerAsync") { CreatedCustomer = (CreateCustomerDto)args![0]!; return Task.FromResult(new CustomerDto()); }
             if (method.Name == "RecordPaymentAsync") { Paid = ((Guid)args![0]!, (RecordSalesPaymentDto)args[1]!); return Task.FromResult(new SalesInvoiceDto { InvoiceNumber = "INV-7" }); }
             throw new NotSupportedException(method.Name);
         }
@@ -306,5 +308,48 @@ public class AssistantActionServiceTests
         var res = await r.Svc.ExecuteAsync(new ExecuteActionRequestDto { Kind = AssistantActionKind.JournalEntry, Note = p.Note, JournalLines = p.JournalLines });
         Assert.Equal(2, r.Journal.Created!.Lines.Count);
         Assert.Contains("مسودة", res.Message);
+    }
+
+    [Fact]
+    public async Task NewVendor_WithMissingDetails_SaysWhatIsMissing_AndPassesEveryDetailOnWhenComplete()
+    {
+        var r = await BuildAsync();
+        r.Parser.Intent = new ActionIntent { Kind = AssistantActionKind.CreateVendor, PartyName = "شركة الأمل" };
+        var partial = await r.Svc.ProposeAsync("ضيف مورد");
+        var warning = Assert.Single(partial.Warnings, w => w.Contains("البيانات ناقصة"));
+        foreach (var field in new[] { "الرقم الضريبي", "السجل التجاري", "العنوان", "المدينة", "التليفون" }) Assert.Contains(field, warning);
+
+        r.Parser.Intent = new ActionIntent
+        {
+            Kind = AssistantActionKind.CreateVendor, PartyName = "شركة الأمل", PartyNameEn = "Al Amal Co", PartyTaxNumber = "123456789", PartyCommercialRegister = "55521", PartyAddress = "شارع النصر 10",
+            PartyCity = "القاهرة", PartyPhone = "0233333333", PartyMobile = "01000000000", PartyEmail = "a@amal.com", PartyContactPerson = "أحمد", PartyPaymentTermsDays = 30, PartyBankName = "البنك الأهلي", PartyBankAccount = "1234567",
+        };
+        var full = await r.Svc.ProposeAsync("ضيف مورد بكل بياناته");
+        Assert.DoesNotContain(full.Warnings, w => w.Contains("البيانات ناقصة"));
+        await r.Svc.ExecuteAsync(new ExecuteActionRequestDto
+        {
+            Kind = AssistantActionKind.CreateVendor, PartyName = full.PartyName, PartyNameEn = full.PartyNameEn, PartyTaxNumber = full.PartyTaxNumber, PartyCommercialRegister = full.PartyCommercialRegister,
+            PartyAddress = full.PartyAddress, PartyCity = full.PartyCity, PartyPhone = full.PartyPhone, PartyMobile = full.PartyMobile, PartyEmail = full.PartyEmail, PartyContactPerson = full.PartyContactPerson,
+            PartyPaymentTermsDays = full.PartyPaymentTermsDays, PartyBankName = full.PartyBankName, PartyBankAccount = full.PartyBankAccount,
+        });
+        var v = r.Purchasing.Vendor!;
+        Assert.Equal("Al Amal Co", v.NameEn);
+        Assert.Equal("123456789", v.TaxRegistrationNumber);
+        Assert.Equal("55521", v.CommercialRegisterNumber);
+        Assert.Equal("شارع النصر 10", v.Address);
+        Assert.Equal("القاهرة", v.City);
+        Assert.Equal(30, v.PaymentTermsDays);
+        Assert.Equal("1234567", v.BankAccountNumber);
+    }
+
+    [Fact]
+    public async Task NewCustomer_ByDefaultUsesTheSameNameInBothLanguages_AndKeepsTheCreditTerms()
+    {
+        var r = await BuildAsync();
+        await r.Svc.ExecuteAsync(new ExecuteActionRequestDto { Kind = AssistantActionKind.CreateCustomer, PartyName = "عميل جديد", PartyCreditLimit = 5000, PartyPaymentTermsDays = 14, PartyTaxNumber = "999" });
+        Assert.NotNull(r.Sales.CreatedCustomer);
+        Assert.Equal("عميل جديد", r.Sales.CreatedCustomer!.NameEn);
+        Assert.Equal(5000m, r.Sales.CreatedCustomer.CreditLimit);
+        Assert.Equal("999", r.Sales.CreatedCustomer.TaxRegistrationNumber);
     }
 }

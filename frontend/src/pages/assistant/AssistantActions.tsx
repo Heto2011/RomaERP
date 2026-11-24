@@ -11,7 +11,7 @@ const TEXT = {
     customer: "العميل", choose: "اختار...", lines: "البنود", desc: "الوصف", qty: "الكمية", price: "السعر", addLine: "إضافة بند", payment: "طريقة الدفع",
     cash: "نقدي", card: "كارت", credit: "آجل", note: "ملاحظة", invoice: "الفاتورة", outstanding: "المتبقي", amount: "المبلغ", method: "الطريقة",
     item: "الصنف", oldPrice: "السعر الحالي", newPrice: "السعر الجديد", run: "نفّذ", cancel: "إلغاء", done: "تم", open: "افتح الصفحة", another: "طلب جديد",
-    review: "راجع المسودة قبل التنفيذ", total: "الإجمالي", expenseFor: "وصف المصروف", expenseAccount: "حساب المصروف", funding: "مصدر الصرف", company: "حساب الشركة", custody: "عهدة موظف", custodyHolder: "صاحب العهدة", name: "الاسم", debit: "مدين", credit2: "دائن", diff: "الفرق (لازم يكون صفر)", phone: "التليفون", email: "الإيميل", similar: "أسماء قريبة موجودة", vendor: "المورد",
+    review: "راجع المسودة قبل التنفيذ", total: "الإجمالي", expenseFor: "وصف المصروف", expenseAccount: "حساب المصروف", funding: "مصدر الصرف", company: "حساب الشركة", custody: "عهدة موظف", custodyHolder: "صاحب العهدة", name: "الاسم", nameEn: "الاسم بالإنجليزي", taxNumber: "الرقم الضريبي", commercialRegister: "السجل التجاري", address: "العنوان", city: "المدينة", mobile: "الموبايل", contactPerson: "الشخص المسؤول", termsDays: "أيام الائتمان", creditLimit: "حد الائتمان", bankName: "البنك", bankAccount: "رقم الحساب البنكي", debit: "مدين", credit2: "دائن", diff: "الفرق (لازم يكون صفر)", phone: "التليفون", email: "الإيميل", similar: "أسماء قريبة موجودة", vendor: "المورد",
   },
   en: {
     title: "Ask the assistant to do it", intro: "Ask about your business or request an action in plain words. The assistant looks through your data and answers; for an action it prepares a draft that you review and approve. Nothing is booked until you press Execute.",
@@ -20,7 +20,7 @@ const TEXT = {
     customer: "Customer", choose: "Choose...", lines: "Lines", desc: "Description", qty: "Qty", price: "Price", addLine: "Add line", payment: "Payment",
     cash: "Cash", card: "Card", credit: "On account", note: "Note", invoice: "Invoice", outstanding: "Outstanding", amount: "Amount", method: "Method",
     item: "Item", oldPrice: "Current price", newPrice: "New price", run: "Execute", cancel: "Cancel", done: "Done", open: "Open the page", another: "New request",
-    review: "Review the draft before executing", total: "Total", expenseFor: "What it is for", expenseAccount: "Expense account", funding: "Paid from", company: "Company account", custody: "Employee custody", custodyHolder: "Custody holder", name: "Name", debit: "Debit", credit2: "Credit", diff: "Difference (must be zero)", phone: "Phone", email: "Email", similar: "Similar names already there", vendor: "Supplier",
+    review: "Review the draft before executing", total: "Total", expenseFor: "What it is for", expenseAccount: "Expense account", funding: "Paid from", company: "Company account", custody: "Employee custody", custodyHolder: "Custody holder", name: "Name", nameEn: "English name", taxNumber: "Tax registration number", commercialRegister: "Commercial register", address: "Address", city: "City", mobile: "Mobile", contactPerson: "Contact person", termsDays: "Credit days", creditLimit: "Credit limit", bankName: "Bank", bankAccount: "Bank account number", debit: "Debit", credit2: "Credit", diff: "Difference (must be zero)", phone: "Phone", email: "Email", similar: "Similar names already there", vendor: "Supplier",
   },
 };
 
@@ -59,6 +59,8 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
         invoiceId: p.invoiceId, amount: p.amount, method: p.method, itemId: p.itemId, newPrice: p.newPrice,
         vendorId: p.vendorId, partyName: p.partyName, partyPhone: p.partyPhone, partyEmail: p.partyEmail, journalLines: p.journalLines,
         accountId: p.accountId, fundingSource: p.fundingSource, employeeId: p.employeeId,
+        partyNameEn: p.partyNameEn, partyMobile: p.partyMobile, partyTaxNumber: p.partyTaxNumber, partyCommercialRegister: p.partyCommercialRegister, partyContactPerson: p.partyContactPerson,
+        partyAddress: p.partyAddress, partyCity: p.partyCity, partyPaymentTermsDays: p.partyPaymentTermsDays, partyCreditLimit: p.partyCreditLimit, partyBankName: p.partyBankName, partyBankAccount: p.partyBankAccount,
       });
       onExecuted(r.data.message, r.data.link);
     } catch (err) { setError(getErrorMessage(err)); } finally { setBusy(false); }
@@ -155,9 +157,20 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
           {(p.kind === KIND.CreateCustomer || p.kind === KIND.CreateVendor) && (
             <div style={{ marginTop: 10 }}>
               <div className="form-grid">
-                <div className="form-field"><label>{x.name}</label><input value={p.partyName ?? ""} maxLength={150} onChange={(e) => set({ partyName: e.target.value })} /></div>
-                <div className="form-field"><label>{x.phone}</label><input value={p.partyPhone ?? ""} maxLength={40} onChange={(e) => set({ partyPhone: e.target.value })} /></div>
+                <div className="form-field"><label>{x.name}</label><input type="text" value={p.partyName ?? ""} maxLength={150} onChange={(e) => set({ partyName: e.target.value })} /></div>
+                <div className="form-field"><label>{x.nameEn}</label><input type="text" value={p.partyNameEn ?? ""} maxLength={150} onChange={(e) => set({ partyNameEn: e.target.value })} /></div>
+                <div className="form-field"><label>{x.taxNumber}</label><input type="text" value={p.partyTaxNumber ?? ""} maxLength={40} onChange={(e) => set({ partyTaxNumber: e.target.value })} /></div>
+                <div className="form-field"><label>{x.commercialRegister}</label><input type="text" value={p.partyCommercialRegister ?? ""} maxLength={40} onChange={(e) => set({ partyCommercialRegister: e.target.value })} /></div>
+                <div className="form-field"><label>{x.address}</label><input type="text" value={p.partyAddress ?? ""} maxLength={250} onChange={(e) => set({ partyAddress: e.target.value })} /></div>
+                <div className="form-field"><label>{x.city}</label><input type="text" value={p.partyCity ?? ""} maxLength={80} onChange={(e) => set({ partyCity: e.target.value })} /></div>
+                <div className="form-field"><label>{x.phone}</label><input type="text" value={p.partyPhone ?? ""} maxLength={40} onChange={(e) => set({ partyPhone: e.target.value })} /></div>
+                <div className="form-field"><label>{x.mobile}</label><input type="text" value={p.partyMobile ?? ""} maxLength={40} onChange={(e) => set({ partyMobile: e.target.value })} /></div>
                 <div className="form-field"><label>{x.email}</label><input type="email" value={p.partyEmail ?? ""} maxLength={120} onChange={(e) => set({ partyEmail: e.target.value })} /></div>
+                <div className="form-field"><label>{x.contactPerson}</label><input type="text" value={p.partyContactPerson ?? ""} maxLength={100} onChange={(e) => set({ partyContactPerson: e.target.value })} /></div>
+                <div className="form-field"><label>{x.termsDays}</label><input type="number" min={0} max={365} value={p.partyPaymentTermsDays || ""} onChange={(e) => set({ partyPaymentTermsDays: Number(e.target.value) || 0 })} /></div>
+                {p.kind === KIND.CreateCustomer && <div className="form-field"><label>{x.creditLimit}</label><input type="number" min={0} step="any" value={p.partyCreditLimit || ""} onChange={(e) => set({ partyCreditLimit: Number(e.target.value) || 0 })} /></div>}
+                {p.kind === KIND.CreateVendor && <div className="form-field"><label>{x.bankName}</label><input value={p.partyBankName ?? ""} maxLength={100} onChange={(e) => set({ partyBankName: e.target.value })} /></div>}
+                {p.kind === KIND.CreateVendor && <div className="form-field"><label>{x.bankAccount}</label><input value={p.partyBankAccount ?? ""} maxLength={60} onChange={(e) => set({ partyBankAccount: e.target.value })} /></div>}
               </div>
               {p.similarParties.length > 0 && <div className="text-muted" style={{ marginTop: 6 }}>{x.similar}: {p.similarParties.map((s) => s.name).join("، ")}</div>}
             </div>

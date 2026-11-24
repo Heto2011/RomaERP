@@ -160,6 +160,17 @@ public class AssistantActionService : IAssistantActionService
         p.PartyName = intent.PartyName?.Trim();
         p.PartyPhone = intent.PartyPhone?.Trim();
         p.PartyEmail = intent.PartyEmail?.Trim();
+        p.PartyNameEn = intent.PartyNameEn?.Trim();
+        p.PartyMobile = intent.PartyMobile?.Trim();
+        p.PartyTaxNumber = intent.PartyTaxNumber?.Trim();
+        p.PartyCommercialRegister = intent.PartyCommercialRegister?.Trim();
+        p.PartyContactPerson = intent.PartyContactPerson?.Trim();
+        p.PartyAddress = intent.PartyAddress?.Trim();
+        p.PartyCity = intent.PartyCity?.Trim();
+        p.PartyPaymentTermsDays = Math.Clamp(intent.PartyPaymentTermsDays, 0, 365);
+        p.PartyCreditLimit = Math.Max(0, intent.PartyCreditLimit);
+        p.PartyBankName = isVendor ? intent.PartyBankName?.Trim() : null;
+        p.PartyBankAccount = isVendor ? intent.PartyBankAccount?.Trim() : null;
         var q = Norm(p.PartyName);
         if (q.Length == 0) p.Warnings.Add("ما ذكرتش الاسم.");
         else if (isVendor)
@@ -172,6 +183,14 @@ public class AssistantActionService : IAssistantActionService
             var same = (await _context.Customers.AsNoTracking().Where(c => !c.IsDeleted).ToListAsync(ct)).Where(c => Norm(c.NameAr).Contains(q) || Norm(c.NameEn).Contains(q)).Take(MaxCandidates).ToList();
             p.SimilarParties = same.Select(c => new ActionCandidateDto(c.Id, c.NameAr, c.Phone ?? c.Mobile)).ToList();
         }
+        // Complete records matter (tax deduction, e-invoicing, collection), so say what is still missing. The owner may proceed if the party truly has no such detail.
+        var missing = new List<string>();
+        if (string.IsNullOrWhiteSpace(p.PartyTaxNumber)) missing.Add("الرقم الضريبي");
+        if (string.IsNullOrWhiteSpace(p.PartyCommercialRegister)) missing.Add("السجل التجاري");
+        if (string.IsNullOrWhiteSpace(p.PartyAddress)) missing.Add("العنوان");
+        if (string.IsNullOrWhiteSpace(p.PartyCity)) missing.Add("المدينة");
+        if (string.IsNullOrWhiteSpace(p.PartyPhone) && string.IsNullOrWhiteSpace(p.PartyMobile)) missing.Add("التليفون");
+        if (missing.Count > 0) p.Warnings.Add("البيانات ناقصة: " + string.Join("، ", missing) + ". كمّلها لو متوفرة.");
         if (p.SimilarParties.Count > 0) p.Warnings.Add($"في بالفعل {(isVendor ? "مورد" : "عميل")} بنفس الاسم أو قريب منه. اتأكد إنه مش مكرر.");
         p.Summary = $"إضافة {(isVendor ? "مورد" : "عميل")} جديد{(p.PartyName is null ? string.Empty : $": {p.PartyName}")}.";
     }
@@ -352,11 +371,24 @@ public class AssistantActionService : IAssistantActionService
                     ? await _context.Vendors.AsNoTracking().AnyAsync(v => !v.IsDeleted && (v.NameAr.ToLower() == q || v.NameEn.ToLower() == q), ct)
                     : await _context.Customers.AsNoTracking().AnyAsync(c => !c.IsDeleted && (c.NameAr.ToLower() == q || c.NameEn.ToLower() == q), ct);
                 if (duplicate) throw new ValidationAppException($"في {(vendor ? "مورد" : "عميل")} بنفس الاسم بالظبط. استخدمه بدل ما تكرره.");
-                var phone = string.IsNullOrWhiteSpace(r.PartyPhone) ? null : r.PartyPhone.Trim();
-                var email = string.IsNullOrWhiteSpace(r.PartyEmail) ? null : r.PartyEmail.Trim();
+                static string? T(string? v, int max) { var t = v?.Trim(); if (string.IsNullOrEmpty(t)) return null; if (t.Length > max) throw new ValidationAppException("في بيان أطول من المسموح."); return t; }
+                var phone = T(r.PartyPhone, 40); var email = T(r.PartyEmail, 120);
+                var nameEn = T(r.PartyNameEn, 150) ?? name;
+                var tax = T(r.PartyTaxNumber, 40); var register = T(r.PartyCommercialRegister, 40);
+                var contact = T(r.PartyContactPerson, 100); var mobile = T(r.PartyMobile, 40);
+                var address = T(r.PartyAddress, 250); var city = T(r.PartyCity, 80);
+                var termsDays = Math.Clamp(r.PartyPaymentTermsDays, 0, 365); var credit = Math.Max(0, r.PartyCreditLimit);
                 var code = await NextCodeAsync(vendor, ct);
-                if (vendor) await _purchasing.CreateVendorAsync(new CreateVendorDto { Code = code, NameAr = name, NameEn = name, Phone = phone, Email = email }, ct);
-                else await _sales.CreateCustomerAsync(new CreateCustomerDto { Code = code, NameAr = name, NameEn = name, Phone = phone, Email = email }, ct);
+                if (vendor) await _purchasing.CreateVendorAsync(new CreateVendorDto
+                {
+                    Code = code, NameAr = name, NameEn = nameEn, Phone = phone, Email = email, TaxRegistrationNumber = tax, CommercialRegisterNumber = register, ContactPerson = contact, Mobile = mobile,
+                    Address = address, City = city, PaymentTermsDays = termsDays, CreditLimit = credit, BankName = T(r.PartyBankName, 100), BankAccountNumber = T(r.PartyBankAccount, 60),
+                }, ct);
+                else await _sales.CreateCustomerAsync(new CreateCustomerDto
+                {
+                    Code = code, NameAr = name, NameEn = nameEn, Phone = phone, Email = email, TaxRegistrationNumber = tax, CommercialRegisterNumber = register, ContactPerson = contact, Mobile = mobile,
+                    Address = address, City = city, PaymentTermsDays = termsDays, CreditLimit = credit,
+                }, ct);
                 return new ExecuteActionResultDto($"اتضاف {(vendor ? "المورد" : "العميل")} {name} بكود {code}.", vendor ? "/purchasing/vendors" : "/sales/customers");
             }
             case AssistantActionKind.VendorPayment:

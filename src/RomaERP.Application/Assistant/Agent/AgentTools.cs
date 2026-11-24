@@ -407,22 +407,49 @@ public class ItemProfitabilityTool : ReadTool
 
 // ---------- More drafts (nothing is booked until the owner approves) ----------
 
-public class PrepareNewCustomerTool : PrepareTool
+public abstract class PrepareNewPartyTool : PrepareTool
 {
-    public PrepareNewCustomerTool(IAssistantActionService a) : base(a) { }
-    public override string Name => "prepare_new_customer";
-    public override string Description => "Prepare (not add) a new customer. Use only when the user asked to add one.";
-    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["name"] = ToolArgs.S("the customer's name"); p["phone"] = ToolArgs.S("phone, only if stated"); p["email"] = ToolArgs.S("email, only if stated"); }, "name");
-    protected override ActionIntent ToIntent(JsonObject a) => new() { Kind = AssistantActionKind.CreateCustomer, PartyName = ToolArgs.Str(a, "name"), PartyPhone = ToolArgs.Str(a, "phone"), PartyEmail = ToolArgs.Str(a, "email") };
+    protected PrepareNewPartyTool(IAssistantActionService a) : base(a) { }
+    protected abstract bool IsVendor { get; }
+    public override JsonObject InputSchema => ToolArgs.Schema(p =>
+    {
+        p["name"] = ToolArgs.S("the name (Arabic or as the user said it)"); p["name_en"] = ToolArgs.S("the English name, if given");
+        p["tax_number"] = ToolArgs.S("tax registration number"); p["commercial_register"] = ToolArgs.S("commercial register number");
+        p["address"] = ToolArgs.S("street address"); p["city"] = ToolArgs.S("city");
+        p["phone"] = ToolArgs.S("landline or main phone"); p["mobile"] = ToolArgs.S("mobile"); p["email"] = ToolArgs.S("email");
+        p["contact_person"] = ToolArgs.S("name of the person to contact");
+        p["payment_terms_days"] = ToolArgs.N("days of credit given or received, if stated");
+        if (IsVendor) { p["bank_name"] = ToolArgs.S("the supplier's bank, if given"); p["bank_account"] = ToolArgs.S("the supplier's bank account number, if given"); }
+        else p["credit_limit"] = ToolArgs.N("the customer's credit limit, if stated");
+    }, "name");
+    protected override ActionIntent ToIntent(JsonObject a)
+    {
+        static decimal Num(JsonObject o, string k) => o[k] is { } n && n.GetValueKind() == JsonValueKind.Number ? n.GetValue<decimal>() : 0;
+        return new()
+        {
+            Kind = IsVendor ? AssistantActionKind.CreateVendor : AssistantActionKind.CreateCustomer,
+            PartyName = ToolArgs.Str(a, "name"), PartyNameEn = ToolArgs.Str(a, "name_en"), PartyTaxNumber = ToolArgs.Str(a, "tax_number"), PartyCommercialRegister = ToolArgs.Str(a, "commercial_register"),
+            PartyAddress = ToolArgs.Str(a, "address"), PartyCity = ToolArgs.Str(a, "city"), PartyPhone = ToolArgs.Str(a, "phone"), PartyMobile = ToolArgs.Str(a, "mobile"),
+            PartyEmail = ToolArgs.Str(a, "email"), PartyContactPerson = ToolArgs.Str(a, "contact_person"), PartyPaymentTermsDays = (int)Num(a, "payment_terms_days"),
+            PartyCreditLimit = Num(a, "credit_limit"), PartyBankName = ToolArgs.Str(a, "bank_name"), PartyBankAccount = ToolArgs.Str(a, "bank_account"),
+        };
+    }
 }
 
-public class PrepareNewVendorTool : PrepareTool
+public class PrepareNewCustomerTool : PrepareNewPartyTool
+{
+    public PrepareNewCustomerTool(IAssistantActionService a) : base(a) { }
+    protected override bool IsVendor => false;
+    public override string Name => "prepare_new_customer";
+    public override string Description => "Prepare (not add) a new customer record. The record must be complete: BEFORE calling this, ask the user for any missing detail (tax registration number, commercial register, address, city, phone, contact person, email). If the user says they do not have a detail, go on without it. Never invent a detail.";
+}
+
+public class PrepareNewVendorTool : PrepareNewPartyTool
 {
     public PrepareNewVendorTool(IAssistantActionService a) : base(a) { }
+    protected override bool IsVendor => true;
     public override string Name => "prepare_new_vendor";
-    public override string Description => "Prepare (not add) a new supplier. Use only when the user asked to add one.";
-    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["name"] = ToolArgs.S("the supplier's name"); p["phone"] = ToolArgs.S("phone, only if stated"); p["email"] = ToolArgs.S("email, only if stated"); }, "name");
-    protected override ActionIntent ToIntent(JsonObject a) => new() { Kind = AssistantActionKind.CreateVendor, PartyName = ToolArgs.Str(a, "name"), PartyPhone = ToolArgs.Str(a, "phone"), PartyEmail = ToolArgs.Str(a, "email") };
+    public override string Description => "Prepare (not add) a new supplier record. The record must be complete: BEFORE calling this, ask the user for any missing detail (tax registration number, commercial register, address, city, phone, contact person, email, bank name and account). If the user says they do not have a detail, go on without it. Never invent a detail.";
 }
 
 public class PrepareVendorPaymentTool : PrepareTool

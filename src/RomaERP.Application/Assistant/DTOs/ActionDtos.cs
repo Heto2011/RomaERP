@@ -71,6 +71,17 @@ public class ActionProposalDto
     public string? PartyName { get; set; }
     public string? PartyPhone { get; set; }
     public string? PartyEmail { get; set; }
+    public string? PartyNameEn { get; set; }
+    public string? PartyMobile { get; set; }
+    public string? PartyTaxNumber { get; set; }
+    public string? PartyCommercialRegister { get; set; }
+    public string? PartyContactPerson { get; set; }
+    public string? PartyAddress { get; set; }
+    public string? PartyCity { get; set; }
+    public int PartyPaymentTermsDays { get; set; }
+    public decimal PartyCreditLimit { get; set; }
+    public string? PartyBankName { get; set; }
+    public string? PartyBankAccount { get; set; }
     public List<ActionCandidateDto> SimilarParties { get; set; } = new();
 
     // Purchase invoice (supplier is chosen like a customer, and each line needs an account)
@@ -113,6 +124,17 @@ public class ExecuteActionRequestDto
     public string? PartyName { get; set; }
     public string? PartyPhone { get; set; }
     public string? PartyEmail { get; set; }
+    public string? PartyNameEn { get; set; }
+    public string? PartyMobile { get; set; }
+    public string? PartyTaxNumber { get; set; }
+    public string? PartyCommercialRegister { get; set; }
+    public string? PartyContactPerson { get; set; }
+    public string? PartyAddress { get; set; }
+    public string? PartyCity { get; set; }
+    public int PartyPaymentTermsDays { get; set; }
+    public decimal PartyCreditLimit { get; set; }
+    public string? PartyBankName { get; set; }
+    public string? PartyBankAccount { get; set; }
     public List<ActionJournalLineDto> JournalLines { get; set; } = new();
     public Guid? AccountId { get; set; }
     public int FundingSource { get; set; } = 1;
@@ -139,6 +161,17 @@ public class ActionIntent
     public string? PartyName { get; set; }
     public string? PartyPhone { get; set; }
     public string? PartyEmail { get; set; }
+    public string? PartyNameEn { get; set; }
+    public string? PartyMobile { get; set; }
+    public string? PartyTaxNumber { get; set; }
+    public string? PartyCommercialRegister { get; set; }
+    public string? PartyContactPerson { get; set; }
+    public string? PartyAddress { get; set; }
+    public string? PartyCity { get; set; }
+    public int PartyPaymentTermsDays { get; set; }
+    public decimal PartyCreditLimit { get; set; }
+    public string? PartyBankName { get; set; }
+    public string? PartyBankAccount { get; set; }
     public List<ActionJournalLineDto> JournalLines { get; set; } = new();
     public string? AccountHint { get; set; }
     public string? FundingSource { get; set; }
