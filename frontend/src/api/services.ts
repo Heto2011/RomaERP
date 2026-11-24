@@ -523,7 +523,11 @@ export interface ActionProposal {
   partyNameEn: string | null; partyMobile: string | null; partyTaxNumber: string | null; partyCommercialRegister: string | null; partyContactPerson: string | null;
   partyAddress: string | null; partyCity: string | null; partyPaymentTermsDays: number; partyCreditLimit: number; partyBankName: string | null; partyBankAccount: string | null;
   accountId: string | null; accountName: string | null; fundingSource: number; employeeId: string | null; employeeName: string | null; employeeCandidates: ActionCandidate[];
+  formKind?: string | null; fields?: ActionField[];
 }
+export interface ActionField { key: string; label: string; type: string; value: string | null; required: boolean; options: ActionCandidate[] }
+export interface AttentionItem { key: string; label: string; count: number; amount: number | null; question: string }
+export interface ChatSessionSummary { id: string; title: string; updatedAtUtc: string }
 
 export interface AgentMessage { role: string; content: string }
 
@@ -531,13 +535,22 @@ export const AiAssistantApi = {
   agentChat: (messages: AgentMessage[]) => apiClient.post<{ reply: string; drafts: ActionProposal[]; toolsUsed: string[] }>("/assistant-agent/chat", { messages }),
   proposeAction: (text: string) => apiClient.post<ActionProposal>("/aiassistant/actions/propose", { text }),
   executeAction: (data: {
-    kind: number; customerId?: string | null; lines?: ActionInvoiceLine[]; paymentTerm?: number; note?: string | null;
+    kind: number; formKind?: string | null; values?: Record<string, string | null>; customerId?: string | null; lines?: ActionInvoiceLine[]; paymentTerm?: number; note?: string | null;
     invoiceId?: string | null; amount?: number | null; method?: number; itemId?: string | null; newPrice?: number | null;
     vendorId?: string | null; partyName?: string | null; partyPhone?: string | null; partyEmail?: string | null; journalLines?: ActionJournalLine[];
     accountId?: string | null; fundingSource?: number; employeeId?: string | null;
     partyNameEn?: string | null; partyMobile?: string | null; partyTaxNumber?: string | null; partyCommercialRegister?: string | null; partyContactPerson?: string | null;
     partyAddress?: string | null; partyCity?: string | null; partyPaymentTermsDays?: number; partyCreditLimit?: number; partyBankName?: string | null; partyBankAccount?: string | null;
-  }) => apiClient.post<{ message: string; link: string | null }>("/aiassistant/actions/execute", data),
+  }) => apiClient.post<{ message: string; link: string | null }>("/assistant-agent/execute", data),
+  attach: (file: File, mode: "vendor_invoice" | "receipt") => {
+    const fd = new FormData(); fd.append("file", file); fd.append("mode", mode);
+    return apiClient.post<ActionProposal>("/assistant-agent/attach", fd, { headers: { "Content-Type": "multipart/form-data" } });
+  },
+  attention: () => apiClient.get<AttentionItem[]>("/assistant-agent/attention"),
+  chatSessions: () => apiClient.get<ChatSessionSummary[]>("/assistant-agent/sessions"),
+  chatSession: (id: string) => apiClient.get<{ id: string; title: string; messages: AgentMessage[] }>(`/assistant-agent/sessions/${id}`),
+  saveChat: (id: string | null, messages: AgentMessage[]) => apiClient.put<ChatSessionSummary>("/assistant-agent/sessions", { id, messages }),
+  deleteChat: (id: string) => apiClient.delete(`/assistant-agent/sessions/${id}`),
   setPaymentMethod: (captureId: string, paymentMethod: number) => apiClient.put<ExpenseCapture>(`/aiassistant/captures/${captureId}/payment-method`, { paymentMethod }),
   setAmount: (captureId: string, amount: number) => apiClient.put<ExpenseCapture>(`/aiassistant/captures/${captureId}/amount`, { amount }),
   sendMessage: (captureId: string | null, message: string) =>

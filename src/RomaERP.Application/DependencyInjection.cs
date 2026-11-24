@@ -75,6 +75,9 @@ public static class DependencyInjection
         services.AddScoped<IRestaurantService, RestaurantService>();
         services.AddScoped<IQrOrderingService, QrOrderingService>();
         services.AddScoped<RomaERP.Application.Assistant.Services.IAssistantActionService, RomaERP.Application.Assistant.Services.AssistantActionService>();
+        services.AddScoped<RomaERP.Application.Assistant.Services.IAssistantChatStore, RomaERP.Application.Assistant.Services.AssistantChatStore>();
+        services.AddScoped<RomaERP.Application.Assistant.Services.IAssistantAttentionService, RomaERP.Application.Assistant.Services.AssistantAttentionService>();
+        services.AddScoped<RomaERP.Application.Assistant.Services.IAssistantFormService, RomaERP.Application.Assistant.Services.AssistantFormService>();
         services.AddScoped<RomaERP.Application.Assistant.Agent.IAssistantAgentService, RomaERP.Application.Assistant.Agent.AssistantAgentService>();
         foreach (var tool in new[]
         {
@@ -92,7 +95,13 @@ public static class DependencyInjection
             typeof(RomaERP.Application.Assistant.Agent.StockValuationTool), typeof(RomaERP.Application.Assistant.Agent.ReorderSuggestionsTool), typeof(RomaERP.Application.Assistant.Agent.WasteAnalysisTool),
             typeof(RomaERP.Application.Assistant.Agent.InventoryMovementTool), typeof(RomaERP.Application.Assistant.Agent.RecipeCostTool), typeof(RomaERP.Application.Assistant.Agent.RestaurantSalesTool),
             typeof(RomaERP.Application.Assistant.Agent.PendingApprovalsTool), typeof(RomaERP.Application.Assistant.Agent.HeadcountTool), typeof(RomaERP.Application.Assistant.Agent.PrepareJournalEntryTool),
-            typeof(RomaERP.Application.Assistant.Agent.PrepareExpenseTool), typeof(RomaERP.Application.Assistant.Agent.SearchEmployeesTool), typeof(RomaERP.Application.Assistant.Agent.EmployeePayTool),
+            typeof(RomaERP.Application.Assistant.Agent.PrepareExpenseTool),
+            typeof(RomaERP.Application.Assistant.Agent.PrepareUpdateCustomerTool), typeof(RomaERP.Application.Assistant.Agent.PrepareUpdateVendorTool), typeof(RomaERP.Application.Assistant.Agent.PrepareNewItemTool),
+            typeof(RomaERP.Application.Assistant.Agent.PrepareUpdateItemTool), typeof(RomaERP.Application.Assistant.Agent.PrepareExpenseDecisionTool), typeof(RomaERP.Application.Assistant.Agent.PrepareRequestDecisionTool),
+            typeof(RomaERP.Application.Assistant.Agent.PrepareCreditNoteTool), typeof(RomaERP.Application.Assistant.Agent.PrepareStockTransferTool), typeof(RomaERP.Application.Assistant.Agent.PrepareWasteEntryTool),
+            typeof(RomaERP.Application.Assistant.Agent.BudgetVsActualTool), typeof(RomaERP.Application.Assistant.Agent.FiscalPeriodsTool), typeof(RomaERP.Application.Assistant.Agent.FixedAssetsTool),
+            typeof(RomaERP.Application.Assistant.Agent.LoansTool), typeof(RomaERP.Application.Assistant.Agent.ExpiringStockTool), typeof(RomaERP.Application.Assistant.Agent.ForecastTool),
+            typeof(RomaERP.Application.Assistant.Agent.CashFlowIntelligenceTool), typeof(RomaERP.Application.Assistant.Agent.ExchangeRatesTool), typeof(RomaERP.Application.Assistant.Agent.AssistantActivityTool), typeof(RomaERP.Application.Assistant.Agent.SearchEmployeesTool), typeof(RomaERP.Application.Assistant.Agent.EmployeePayTool),
             typeof(RomaERP.Application.Assistant.Agent.PayrollRunsTool), typeof(RomaERP.Application.Assistant.Agent.AttendanceDetailsTool),
             typeof(RomaERP.Application.Assistant.Agent.EmployeeRequestsTool), typeof(RomaERP.Application.Assistant.Agent.LeaveBalanceTool),
         })

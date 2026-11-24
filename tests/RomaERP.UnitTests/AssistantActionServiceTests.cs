@@ -23,7 +23,9 @@ namespace RomaERP.UnitTests;
 
 public class AssistantActionServiceTests
 {
-    private class User : ICurrentUserService { public string? UserId => "u1"; public string? UserName => "u"; }
+    private class User : ICurrentUserService { public string? UserId => "u1"; public string? UserName => "u"; public IReadOnlyList<string> Roles => new[] { "Admin" }; }
+
+    private class HrUser : ICurrentUserService { public string? UserId => "h"; public string? UserName => "h"; public IReadOnlyList<string> Roles => new[] { "HR" }; }
 
     private class FakeParser : IClaudeActionParser
     {
@@ -94,7 +96,7 @@ public class AssistantActionServiceTests
         var pFake = (FakePurchasing)(object)pProxy;
         var jProxy = DispatchProxy.Create<IJournalEntryService, FakeJournal>();
         var jFake = (FakeJournal)(object)jProxy;
-        return new Rig(new AssistantActionService(parser, ctx, proxy, pProxy, jProxy, null!, new User()), ctx, parser, fake, pFake, jFake);
+        return new Rig(new AssistantActionService(parser, ctx, proxy, pProxy, jProxy, null!, new User(), null!, null!), ctx, parser, fake, pFake, jFake);
     }
 
     [Fact]
@@ -154,6 +156,20 @@ public class AssistantActionServiceTests
         Assert.Equal(mona.Id, r.Sales.Created!.CustomerId);
         Assert.Equal(PaymentTerm.Cash, r.Sales.Created.PaymentTerm);
         Assert.Equal(45m, r.Sales.Created.Lines[0].UnitPrice);
+    }
+
+    [Fact]
+    public async Task Execute_WritesOneLogLine_AndAPersonWithoutTheRoleIsRefused()
+    {
+        var r = await BuildAsync();
+        var mona = await r.Ctx.Customers.FirstAsync(c => c.NameAr == "منى");
+        await r.Svc.ExecuteAsync(new ExecuteActionRequestDto { Kind = AssistantActionKind.SalesInvoice, CustomerId = mona.Id, PaymentTerm = 1, Lines = { new ActionInvoiceLineDto { Description = "قهوة", Quantity = 1, UnitPrice = 45 } } });
+        var log = await r.Ctx.AssistantActionLogs.ToListAsync();
+        Assert.Single(log);
+        Assert.Equal("u1", log[0].UserId);
+        var hr = new AssistantActionService(new FakeParser(), r.Ctx, null!, null!, null!, null!, new HrUser(), null!, null!);
+        await Assert.ThrowsAsync<ValidationAppException>(() => hr.ExecuteAsync(new ExecuteActionRequestDto { Kind = AssistantActionKind.SalesInvoice, CustomerId = mona.Id, Lines = { new ActionInvoiceLineDto { Description = "x", UnitPrice = 1 } } }));
+        Assert.Single(await r.Ctx.AssistantActionLogs.ToListAsync());
     }
 
     [Fact]

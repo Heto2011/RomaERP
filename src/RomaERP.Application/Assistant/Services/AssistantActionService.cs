@@ -24,10 +24,14 @@ public class AssistantActionService : IAssistantActionService
     private readonly IJournalEntryService _journal;
     private readonly IExpenseAssistantService _expenses;
     private readonly ICurrentUserService _user;
+    private readonly IAssistantFormService _forms;
+    private readonly IClaudeExpenseParser _scanner;
 
     public AssistantActionService(IClaudeActionParser parser, IApplicationDbContext context, ISalesService sales, IPurchasingService purchasing, IJournalEntryService journal,
-        IExpenseAssistantService expenses, ICurrentUserService user)
+        IExpenseAssistantService expenses, ICurrentUserService user, IAssistantFormService forms, IClaudeExpenseParser scanner)
     {
+        _forms = forms;
+        _scanner = scanner;
         _expenses = expenses;
         _user = user;
         _journal = journal;
@@ -313,7 +317,62 @@ public class AssistantActionService : IAssistantActionService
         for (var n = codes.Count + 1; ; n++) { var c = $"{prefix}{n:D4}"; if (!set.Contains(c)) return c; }
     }
 
+    private static string KindLabel(ExecuteActionRequestDto r) => r.Kind == AssistantActionKind.Form ? (r.FormKind ?? "form") : r.Kind.ToString();
+
+    /// <summary>Books what the owner approved. Every kind except the HR decisions is for the finance roles; the form kinds check their own roles.</summary>
     public async Task<ExecuteActionResultDto> ExecuteAsync(ExecuteActionRequestDto r, CancellationToken ct = default)
+    {
+        ExecuteActionResultDto result;
+        if (r.Kind == AssistantActionKind.Form) result = await _forms.ExecuteAsync(r.FormKind ?? string.Empty, r.Values, ct);
+        else
+        {
+            if (!_user.Roles.Any(x => x is "Admin" or "Accountant")) throw new ValidationAppException("مفيش عندك صلاحية لتنفيذ ده.");
+            result = await ExecuteCoreAsync(r, ct);
+        }
+        // A trail of what the assistant booked, so the owner can always see who asked for what and when.
+        _context.AssistantActionLogs.Add(new RomaERP.Domain.Assistant.AssistantActionLog { UserId = _user.UserId ?? "", UserName = _user.UserName ?? "", Kind = KindLabel(r), Result = result.Message.Length > 400 ? result.Message[..400] : result.Message });
+        await _context.SaveChangesAsync(ct);
+        return result;
+    }
+
+    // ---- reading a photo of a supplier invoice or a receipt into a draft ----
+
+    public async Task<ActionProposalDto> ProposeFromImageAsync(byte[] bytes, string mediaType, string mode, CancellationToken ct = default)
+    {
+        if (!_user.Roles.Any(x => x is "Admin" or "Accountant")) throw new ValidationAppException("مفيش عندك صلاحية لتنفيذ ده.");
+        if (bytes.Length == 0 || bytes.Length > 8 * 1024 * 1024) throw new ValidationAppException("حجم الصورة لازم يكون أقل من 8 ميجا.");
+        if (mediaType is not ("image/jpeg" or "image/png" or "image/webp" or "image/gif")) throw new ValidationAppException("الصورة لازم تكون JPEG أو PNG أو WEBP أو GIF.");
+        var accounts = await _context.Accounts.AsNoTracking().Where(a => !a.IsDeleted && a.IsActive && !a.IsControlAccount && a.AccountType == RomaERP.Domain.Accounting.AccountType.Expense)
+            .OrderBy(a => a.Code).ToListAsync(ct);
+        var candidates = accounts.Select(a => new ExpenseAccountCandidate(a.Code, a.NameAr)).ToList();
+        if (mode == "receipt")
+        {
+            var rc = await _scanner.ExtractFromReceiptImageAsync(bytes, mediaType, candidates, ct);
+            var d = await ProposeFromIntentAsync(new ActionIntent { Kind = AssistantActionKind.Expense, Note = rc.Description, Amount = rc.Amount, AccountHint = rc.SuggestedAccountCode, Method = "cash", FundingSource = "company" }, ct);
+            if (rc.NeedsClarification && !string.IsNullOrWhiteSpace(rc.ClarifyingQuestion)) d.Warnings.Insert(0, rc.ClarifyingQuestion!);
+            if (rc.EntryDate is { } date) d.Warnings.Add($"تاريخ الإيصال {date:yyyy-MM-dd}. المصروف بيتسجل بتاريخ النهارده.");
+            return d;
+        }
+        var scan = await _scanner.ExtractInvoiceFromImageAsync(bytes, mediaType, candidates, ct);
+        var intent = new ActionIntent { Kind = AssistantActionKind.PurchaseInvoice, VendorName = scan.VendorName, PaymentTerm = "credit", Note = scan.InvoiceNumber is null ? null : $"فاتورة المورد رقم {scan.InvoiceNumber}" };
+        foreach (var l in scan.Lines.Take(MaxLines)) intent.Lines.Add(new ActionInvoiceLineDto { Description = l.Description, Quantity = l.Quantity is > 0 ? l.Quantity.Value : 1, UnitPrice = l.UnitPrice });
+        if (intent.Lines.Count == 0 && scan.SubTotal is > 0) intent.Lines.Add(new ActionInvoiceLineDto { Description = scan.VendorName is null ? "فاتورة مورد" : $"فاتورة {scan.VendorName}", Quantity = 1, UnitPrice = scan.SubTotal });
+        var draft = await ProposeFromIntentAsync(intent, ct);
+        if (draft.VendorId is null && !string.IsNullOrWhiteSpace(scan.VendorTaxNumber))
+        {
+            var tax = scan.VendorTaxNumber.Trim();
+            var byTax = await _context.Vendors.AsNoTracking().Where(v => !v.IsDeleted && v.IsActive && v.TaxRegistrationNumber == tax).ToListAsync(ct);
+            if (byTax.Count == 1) { draft.VendorId = byTax[0].Id; draft.VendorName = byTax[0].NameAr; draft.VendorCandidates = new() { new(byTax[0].Id, byTax[0].NameAr, byTax[0].Phone) }; draft.Warnings.RemoveAll(w => w.Contains("مفيش مورد") || w.Contains("ما ذكرتش اسم المورد")); }
+        }
+        var code = Norm(scan.SuggestedAccountCode);
+        var suggested = accounts.FirstOrDefault(a => Norm(a.Code) == code);
+        if (suggested is not null) { foreach (var l in draft.Lines) l.AccountId = suggested.Id; draft.Warnings.RemoveAll(w => w.Contains("اختار حساب المصروف لكل بند")); draft.Warnings.Add($"الحساب المقترح: {suggested.Code} {suggested.NameAr}. راجعه."); }
+        if (scan.NeedsClarification && !string.IsNullOrWhiteSpace(scan.ClarifyingQuestion)) draft.Warnings.Insert(0, scan.ClarifyingQuestion!);
+        if (scan.Total is > 0) draft.Warnings.Add($"الإجمالي المكتوب في الفاتورة {scan.Total:0.##}. اتأكد إنه بيطابق إجمالي المسودة بعد الضريبة.");
+        return draft;
+    }
+
+    private async Task<ExecuteActionResultDto> ExecuteCoreAsync(ExecuteActionRequestDto r, CancellationToken ct)
     {
         switch (r.Kind)
         {

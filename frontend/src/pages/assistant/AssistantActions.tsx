@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { AiAssistantApi, type ActionProposal, type AgentMessage } from "../../api/services";
+import { useEffect, useRef, useState } from "react";
+import { AiAssistantApi, type ActionProposal, type AgentMessage, type AttentionItem, type ChatSessionSummary } from "../../api/services";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 
@@ -11,7 +11,7 @@ const TEXT = {
     customer: "العميل", choose: "اختار...", lines: "البنود", desc: "الوصف", qty: "الكمية", price: "السعر", addLine: "إضافة بند", payment: "طريقة الدفع",
     cash: "نقدي", card: "كارت", credit: "آجل", note: "ملاحظة", invoice: "الفاتورة", outstanding: "المتبقي", amount: "المبلغ", method: "الطريقة",
     item: "الصنف", oldPrice: "السعر الحالي", newPrice: "السعر الجديد", run: "نفّذ", cancel: "إلغاء", done: "تم", open: "افتح الصفحة", another: "طلب جديد",
-    review: "راجع المسودة قبل التنفيذ", total: "الإجمالي", expenseFor: "وصف المصروف", expenseAccount: "حساب المصروف", funding: "مصدر الصرف", company: "حساب الشركة", custody: "عهدة موظف", custodyHolder: "صاحب العهدة", name: "الاسم", nameEn: "الاسم بالإنجليزي", taxNumber: "الرقم الضريبي", commercialRegister: "السجل التجاري", address: "العنوان", city: "المدينة", mobile: "الموبايل", contactPerson: "الشخص المسؤول", termsDays: "أيام الائتمان", creditLimit: "حد الائتمان", bankName: "البنك", bankAccount: "رقم الحساب البنكي", debit: "مدين", credit2: "دائن", diff: "الفرق (لازم يكون صفر)", phone: "التليفون", email: "الإيميل", similar: "أسماء قريبة موجودة", vendor: "المورد",
+    review: "راجع المسودة قبل التنفيذ", total: "الإجمالي", expenseFor: "وصف المصروف", expenseAccount: "حساب المصروف", funding: "مصدر الصرف", company: "حساب الشركة", custody: "عهدة موظف", custodyHolder: "صاحب العهدة", name: "الاسم", nameEn: "الاسم بالإنجليزي", taxNumber: "الرقم الضريبي", commercialRegister: "السجل التجاري", address: "العنوان", city: "المدينة", mobile: "الموبايل", contactPerson: "الشخص المسؤول", termsDays: "أيام الائتمان", creditLimit: "حد الائتمان", bankName: "البنك", bankAccount: "رقم الحساب البنكي", debit: "مدين", credit2: "دائن", diff: "الفرق (لازم يكون صفر)", phone: "التليفون", email: "الإيميل", similar: "أسماء قريبة موجودة", vendor: "المورد", attach: "إرفاق صورة", attachInvoice: "فاتورة مورد", attachReceipt: "إيصال مصروف", attachHint: "الصورة بتتحوّل لمسودة تراجعها، ومفيش حاجة بتتسجل.", saved: "محادثاتي", delete: "مسح", attention: "محتاج انتباهك", yourAnswer: "اتفضل",
   },
   en: {
     title: "Ask the assistant to do it", intro: "Ask about your business or request an action in plain words. The assistant looks through your data and answers; for an action it prepares a draft that you review and approve. Nothing is booked until you press Execute.",
@@ -20,11 +20,11 @@ const TEXT = {
     customer: "Customer", choose: "Choose...", lines: "Lines", desc: "Description", qty: "Qty", price: "Price", addLine: "Add line", payment: "Payment",
     cash: "Cash", card: "Card", credit: "On account", note: "Note", invoice: "Invoice", outstanding: "Outstanding", amount: "Amount", method: "Method",
     item: "Item", oldPrice: "Current price", newPrice: "New price", run: "Execute", cancel: "Cancel", done: "Done", open: "Open the page", another: "New request",
-    review: "Review the draft before executing", total: "Total", expenseFor: "What it is for", expenseAccount: "Expense account", funding: "Paid from", company: "Company account", custody: "Employee custody", custodyHolder: "Custody holder", name: "Name", nameEn: "English name", taxNumber: "Tax registration number", commercialRegister: "Commercial register", address: "Address", city: "City", mobile: "Mobile", contactPerson: "Contact person", termsDays: "Credit days", creditLimit: "Credit limit", bankName: "Bank", bankAccount: "Bank account number", debit: "Debit", credit2: "Credit", diff: "Difference (must be zero)", phone: "Phone", email: "Email", similar: "Similar names already there", vendor: "Supplier",
+    review: "Review the draft before executing", total: "Total", expenseFor: "What it is for", expenseAccount: "Expense account", funding: "Paid from", company: "Company account", custody: "Employee custody", custodyHolder: "Custody holder", name: "Name", nameEn: "English name", taxNumber: "Tax registration number", commercialRegister: "Commercial register", address: "Address", city: "City", mobile: "Mobile", contactPerson: "Contact person", termsDays: "Credit days", creditLimit: "Credit limit", bankName: "Bank", bankAccount: "Bank account number", debit: "Debit", credit2: "Credit", diff: "Difference (must be zero)", phone: "Phone", email: "Email", similar: "Similar names already there", vendor: "Supplier", attach: "Attach a photo", attachInvoice: "Supplier invoice", attachReceipt: "Expense receipt", attachHint: "The photo becomes a draft you review; nothing is booked.", saved: "My chats", delete: "Delete", attention: "Needs your attention", yourAnswer: "Go",
   },
 };
 
-const KIND = { None: 0, SalesInvoice: 1, CustomerPayment: 2, MenuPrice: 3, CreateCustomer: 4, CreateVendor: 5, VendorPayment: 6, PurchaseInvoice: 7, JournalEntry: 8, Expense: 9 };
+const KIND = { None: 0, SalesInvoice: 1, CustomerPayment: 2, MenuPrice: 3, CreateCustomer: 4, CreateVendor: 5, VendorPayment: 6, PurchaseInvoice: 7, JournalEntry: 8, Expense: 9, Form: 100 };
 
 /** A draft the assistant prepared. The owner edits it and presses Execute; only then does the normal service book it. */
 function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionProposal; onExecuted: (message: string, link: string | null) => void; onCancel: () => void }) {
@@ -46,14 +46,23 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
     if (p.kind === KIND.JournalEntry) return p.journalLines.length >= 2 && p.journalLines.every((l) => !!l.accountId && l.debit >= 0 && l.credit >= 0 && (l.debit > 0) !== (l.credit > 0)) && journalDiff === 0;
     if (p.kind === KIND.PurchaseInvoice) return !!p.vendorId && p.lines.length > 0 && p.lines.every((l) => l.description.trim() && l.quantity > 0 && l.unitPrice !== null && l.unitPrice >= 0 && !!l.accountId);
     if (p.kind === KIND.MenuPrice) return !!p.itemId && p.newPrice !== null && p.newPrice >= 0;
+    if (p.kind === KIND.Form) return (p.fields ?? []).every((f) => !f.required || !!(f.value ?? "").trim());
     return false;
   })();
+  const setField = (key: string, value: string) => setP((cur) => (cur ? { ...cur, fields: (cur.fields ?? []).map((f) => (f.key === key ? { ...f, value } : f)) } : cur));
   const total = p && (p.kind === KIND.SalesInvoice || p.kind === KIND.PurchaseInvoice) ? p.lines.reduce((s, l) => s + l.quantity * (l.unitPrice ?? 0), 0) : 0;
 
   async function run() {
     if (!p) return;
     setBusy(true); setError(null);
     try {
+      if (p.kind === KIND.Form) {
+        const values: Record<string, string | null> = {};
+        (p.fields ?? []).forEach((f) => { values[f.key] = f.value; });
+        const r = await AiAssistantApi.executeAction({ kind: p.kind, formKind: p.formKind, values });
+        onExecuted(r.data.message, r.data.link);
+        return;
+      }
       const r = await AiAssistantApi.executeAction({
         kind: p.kind, customerId: p.customerId, lines: p.lines, paymentTerm: p.paymentTerm, note: p.note,
         invoiceId: p.invoiceId, amount: p.amount, method: p.method, itemId: p.itemId, newPrice: p.newPrice,
@@ -214,6 +223,26 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
             </div>
           )}
 
+          {p.kind === KIND.Form && (
+            <div className="form-grid" style={{ marginTop: 10 }}>
+              {(p.fields ?? []).filter((f) => f.type !== "hidden").map((f) => (
+                <div className="form-field" key={f.key}>
+                  <label>{f.label}{f.required ? " *" : ""}</label>
+                  {f.type === "select" ? (
+                    <select value={f.value ?? ""} onChange={(e) => setField(f.key, e.target.value)}>
+                      <option value="">{x.choose}</option>
+                      {f.options.map((o) => <option key={o.id} value={o.id}>{o.name}{o.extra ? ` (${o.extra})` : ""}</option>)}
+                    </select>
+                  ) : f.type === "textarea" ? (
+                    <textarea rows={3} value={f.value ?? ""} onChange={(e) => setField(f.key, e.target.value)} />
+                  ) : (
+                    <input type={f.type === "number" ? "number" : "text"} step={f.type === "number" ? "any" : undefined} value={f.value ?? ""} disabled={f.type === "readonly"} onChange={(e) => setField(f.key, e.target.value)} />
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+
           {p.kind !== KIND.None && (
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
               <button className="btn" disabled={!ready || busy} onClick={run}>{x.run}</button>
@@ -233,6 +262,39 @@ export default function AssistantActions() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [closed, setClosed] = useState<Record<string, boolean>>({});
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<ChatSessionSummary[]>([]);
+  const [attention, setAttention] = useState<AttentionItem[]>([]);
+  const [attachMode, setAttachMode] = useState<"vendor_invoice" | "receipt">("vendor_invoice");
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  const loadSessions = () => AiAssistantApi.chatSessions().then((r) => setSessions(r.data)).catch(() => undefined);
+  useEffect(() => {
+    loadSessions();
+    AiAssistantApi.attention().then((r) => setAttention(r.data)).catch(() => undefined);
+  }, []);
+
+  async function persist(list: (AgentMessage & { drafts?: ActionProposal[] })[]) {
+    try {
+      const r = await AiAssistantApi.saveChat(sessionId, list.map(({ role, content }) => ({ role, content })));
+      setSessionId(r.data.id); loadSessions();
+    } catch { /* the chat still works if saving fails */ }
+  }
+  async function openSession(id: string) {
+    try { const r = await AiAssistantApi.chatSession(id); setMessages(r.data.messages); setSessionId(id); setClosed({}); setError(null); } catch (err) { setError(getErrorMessage(err)); }
+  }
+  async function removeSession(id: string) {
+    try { await AiAssistantApi.deleteChat(id); if (id === sessionId) { setMessages([]); setSessionId(null); } loadSessions(); } catch (err) { setError(getErrorMessage(err)); }
+  }
+  async function attachFile(file: File | undefined) {
+    if (!file || busy) return;
+    setBusy(true); setError(null);
+    try {
+      const r = await AiAssistantApi.attach(file, attachMode);
+      const history = [...messages, { role: "user", content: `📎 ${attachMode === "receipt" ? x.attachReceipt : x.attachInvoice}: ${file.name}` } as AgentMessage];
+      setMessages([...history, { role: "assistant", content: r.data.summary, drafts: [r.data] }]);
+    } catch (err) { setError(getErrorMessage(err)); } finally { setBusy(false); if (fileRef.current) fileRef.current.value = ""; }
+  }
 
   async function send(e?: React.FormEvent, override?: string) {
     e?.preventDefault();
@@ -242,7 +304,8 @@ export default function AssistantActions() {
     setMessages(history); setText(""); setBusy(true); setError(null);
     try {
       const r = await AiAssistantApi.agentChat(history.map(({ role, content }) => ({ role, content })));
-      setMessages([...history, { role: "assistant", content: r.data.reply, drafts: r.data.drafts }]);
+      const next = [...history, { role: "assistant", content: r.data.reply, drafts: r.data.drafts }];
+      setMessages(next); persist(next);
     } catch (err) { setError(getErrorMessage(err)); } finally { setBusy(false); }
   }
 
@@ -254,6 +317,29 @@ export default function AssistantActions() {
       <div className="page-header"><h1>{x.title}</h1></div>
       <div className="card" style={{ maxWidth: 760 }}>
         <p className="text-muted" style={{ marginTop: 0 }}>{x.intro}</p>
+        {messages.length === 0 && attention.length > 0 && (
+          <div style={{ marginBottom: 10 }}>
+            <strong>{x.attention}</strong>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginTop: 6 }}>
+              {attention.map((a) => (
+                <button key={a.key} type="button" className="btn btn-secondary btn-sm" onClick={() => send(undefined, a.question)}>
+                  {a.label}: {a.count}{a.amount ? ` (${a.amount.toLocaleString(undefined, { maximumFractionDigits: 0 })})` : ""}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+        {messages.length === 0 && sessions.length > 0 && (
+          <div style={{ marginBottom: 10 }}>
+            <strong>{x.saved}</strong>
+            {sessions.map((s) => (
+              <div key={s.id} style={{ display: "flex", gap: 8, alignItems: "center", marginTop: 4 }}>
+                <button type="button" className="btn btn-secondary btn-sm" style={{ flex: 1, textAlign: "start" }} onClick={() => openSession(s.id)}>{s.title}</button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => removeSession(s.id)}>{x.delete}</button>
+              </div>
+            ))}
+          </div>
+        )}
         {messages.length === 0 && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
             {x.examples.map((ex) => <button key={ex} type="button" className="btn btn-secondary btn-sm" onClick={() => send(undefined, ex)}>{ex}</button>)}
@@ -276,7 +362,12 @@ export default function AssistantActions() {
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
           <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
             <button className="btn" type="submit" disabled={busy || !text.trim()}>{x.send}</button>
-            {messages.length > 0 && <button type="button" className="btn btn-secondary" onClick={() => { setMessages([]); setClosed({}); setError(null); }}>{x.another}</button>}
+            <select value={attachMode} onChange={(e) => setAttachMode(e.target.value as "vendor_invoice" | "receipt")} aria-label={x.attach}>
+              <option value="vendor_invoice">{x.attachInvoice}</option><option value="receipt">{x.attachReceipt}</option>
+            </select>
+            <button type="button" className="btn btn-secondary" disabled={busy} title={x.attachHint} onClick={() => fileRef.current?.click()}>📎 {x.attach}</button>
+            <input ref={fileRef} type="file" accept="image/jpeg,image/png,image/webp,image/gif" hidden onChange={(e) => attachFile(e.target.files?.[0])} />
+            {messages.length > 0 && <button type="button" className="btn btn-secondary" onClick={() => { setMessages([]); setSessionId(null); setClosed({}); setError(null); }}>{x.another}</button>}
           </div>
         </form>
       </div>

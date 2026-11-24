@@ -12,9 +12,22 @@ public enum AssistantActionKind
     PurchaseInvoice = 7,
     JournalEntry = 8,
     Expense = 9,
+    /// <summary>A generic reviewed form (update a record, approve something, a credit note...): the fields travel as key/value pairs.</summary>
+    Form = 100,
 }
 
 public record ActionCandidateDto(Guid Id, string Name, string? Extra);
+
+/// <summary>One editable (or read-only) field of a generic draft. Type: text, number, select, textarea, readonly, hidden.</summary>
+public class ActionFieldDto
+{
+    public string Key { get; set; } = string.Empty;
+    public string Label { get; set; } = string.Empty;
+    public string Type { get; set; } = "text";
+    public string? Value { get; set; }
+    public bool Required { get; set; }
+    public List<ActionCandidateDto> Options { get; set; } = new();
+}
 
 public class ActionJournalLineDto
 {
@@ -55,6 +68,10 @@ public class ActionProposalDto
     /// <summary>1 cash, 2 card, 3 credit (on account).</summary>
     public int PaymentTerm { get; set; } = 3;
     public string? Note { get; set; }
+
+    // Generic form drafts
+    public string? FormKind { get; set; }
+    public List<ActionFieldDto> Fields { get; set; } = new();
 
     // Daily expense (note = description, amount, accountId, method 1 cash/2 card, fundingSource 1 company/2 custody)
     public Guid? AccountId { get; set; }
@@ -139,6 +156,8 @@ public class ExecuteActionRequestDto
     public Guid? AccountId { get; set; }
     public int FundingSource { get; set; } = 1;
     public Guid? EmployeeId { get; set; }
+    public string? FormKind { get; set; }
+    public Dictionary<string, string?> Values { get; set; } = new();
 }
 
 public record ExecuteActionResultDto(string Message, string? Link);

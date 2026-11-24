@@ -49,6 +49,8 @@ public interface IApplicationDbContext
     DbSet<Candidate> Candidates { get; }
     DbSet<ExpensePolicy> ExpensePolicies { get; }
     DbSet<RecurringExpense> RecurringExpenses { get; }
+    DbSet<AssistantChatSession> AssistantChatSessions { get; }
+    DbSet<AssistantActionLog> AssistantActionLogs { get; }
     DbSet<ReviewCycle> ReviewCycles { get; }
     DbSet<ReviewAssignment> ReviewAssignments { get; }
     DbSet<Survey> Surveys { get; }

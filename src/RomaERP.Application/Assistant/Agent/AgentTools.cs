@@ -232,15 +232,17 @@ public class BranchProfitTool : ReadTool
 /// <summary>Write tools never write. They match the names in the request to real records and hand back a draft for the owner to approve on screen.</summary>
 public abstract class PrepareTool : IAgentTool
 {
-    protected readonly IAssistantActionService Actions;
-    protected PrepareTool(IAssistantActionService actions) => Actions = actions;
+    protected readonly IAssistantActionService? Actions;
+    protected PrepareTool(IAssistantActionService? actions) => Actions = actions;
     public abstract string Name { get; }
     public abstract string Description { get; }
     public abstract JsonObject InputSchema { get; }
-    protected abstract ActionIntent ToIntent(JsonObject a);
+    public virtual IReadOnlyList<string>? AllowedRoles => null;
+    protected virtual ActionIntent ToIntent(JsonObject a) => throw new NotSupportedException();
+    protected virtual Task<ActionProposalDto> PrepareAsync(JsonObject a, CancellationToken ct) => Actions!.ProposeFromIntentAsync(ToIntent(a), ct);
     public async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
     {
-        var draft = await Actions.ProposeFromIntentAsync(ToIntent(a), ct);
+        var draft = await PrepareAsync(a, ct);
         var note = draft.Warnings.Count > 0 ? " Needs attention: " + string.Join(" | ", draft.Warnings) : string.Empty;
         return new($"A draft was prepared and is now shown to the user for review. NOTHING was booked. Tell the user to review it and press Execute. Draft: {draft.Summary}{note}", draft);
     }
@@ -756,4 +758,240 @@ public class LeaveBalanceTool : HrTool
         if (hit.Count > 1) return new("More than one employee matches: " + ToolArgs.Ser(hit.Take(8).Select(x => new { x.EmployeeCode, name = x.FullNameAr })) + ". Ask the user which one.");
         return new(ToolArgs.Ser(new { name = hit[0].FullNameAr, balance = await _r.GetLeaveBalanceAsync(hit[0].Id, ct) }));
     }
+}
+
+// ---------- Drafts that are plain forms (update a record, approve something, credit note, transfer, waste) ----------
+
+public abstract class PrepareFormTool : PrepareTool
+{
+    private readonly IAssistantFormService _forms;
+    protected PrepareFormTool(IAssistantFormService forms) : base(null) => _forms = forms;
+    protected abstract string FormKind { get; }
+    protected override Task<ActionProposalDto> PrepareAsync(JsonObject a, CancellationToken ct)
+    {
+        var values = new Dictionary<string, string?>();
+        foreach (var (k, v) in a)
+            if (v is not null && v.GetValueKind() is JsonValueKind.String or JsonValueKind.Number) values[k] = v.ToString();
+            else if (v is not null && v.GetValueKind() is JsonValueKind.True or JsonValueKind.False) values[k] = v.GetValueKind() == JsonValueKind.True ? "true" : "false";
+        return _forms.PrepareAsync(FormKind, values, ct);
+    }
+    protected static JsonObject Opt(Action<JsonObject> props, params string[] required) => ToolArgs.Schema(props, required);
+}
+
+public class PrepareUpdateCustomerTool : PrepareFormTool
+{
+    public PrepareUpdateCustomerTool(IAssistantFormService f) : base(f) { }
+    protected override string FormKind => "update_customer";
+    public override string Name => "prepare_update_customer";
+    public override string Description => "Prepare (not save) a change to an EXISTING customer's details. Give the customer's name and only the details that change. The draft shows the current values with your changes in them.";
+    public override JsonObject InputSchema => Opt(p =>
+    {
+        p["customer"] = ToolArgs.S("the customer's name as the user said it");
+        foreach (var k in new[] { "name", "name_en", "tax_number", "commercial_register", "address", "city", "phone", "mobile", "email", "contact_person" }) p[k] = ToolArgs.S("new value, only if it changes");
+        p["payment_terms_days"] = ToolArgs.N("new credit days, only if it changes"); p["credit_limit"] = ToolArgs.N("new credit limit, only if it changes");
+    }, "customer");
+}
+
+public class PrepareUpdateVendorTool : PrepareFormTool
+{
+    public PrepareUpdateVendorTool(IAssistantFormService f) : base(f) { }
+    protected override string FormKind => "update_vendor";
+    public override string Name => "prepare_update_vendor";
+    public override string Description => "Prepare (not save) a change to an EXISTING supplier's details. Give the supplier's name and only the details that change.";
+    public override JsonObject InputSchema => Opt(p =>
+    {
+        p["vendor"] = ToolArgs.S("the supplier's name as the user said it");
+        foreach (var k in new[] { "name", "name_en", "tax_number", "commercial_register", "address", "city", "phone", "mobile", "email", "contact_person", "bank_name", "bank_account" }) p[k] = ToolArgs.S("new value, only if it changes");
+        p["payment_terms_days"] = ToolArgs.N("new credit days, only if it changes");
+    }, "vendor");
+}
+
+public class PrepareNewItemTool : PrepareFormTool
+{
+    public PrepareNewItemTool(IAssistantFormService f) : base(f) { }
+    protected override string FormKind => "new_item";
+    public override string Name => "prepare_new_item";
+    public override string Description => "Prepare (not add) a new stock item. Ask the user for the name, unit and category first; never invent them.";
+    public override JsonObject InputSchema => Opt(p =>
+    {
+        p["name"] = ToolArgs.S("the item name"); p["name_en"] = ToolArgs.S("the English name, if given"); p["unit"] = ToolArgs.S("unit of measure, e.g. kg or piece");
+        p["category"] = ToolArgs.S("the item category name"); p["reorder_level"] = ToolArgs.N("quantity at which to reorder, if stated"); p["lead_time_days"] = ToolArgs.N("supplier lead time in days, if stated");
+    }, "name");
+}
+
+public class PrepareUpdateItemTool : PrepareFormTool
+{
+    public PrepareUpdateItemTool(IAssistantFormService f) : base(f) { }
+    protected override string FormKind => "update_item";
+    public override string Name => "prepare_update_item";
+    public override string Description => "Prepare (not save) a change to an EXISTING stock item (name, unit, reorder level, lead time). A menu price is changed with prepare_menu_price instead.";
+    public override JsonObject InputSchema => Opt(p =>
+    {
+        p["item"] = ToolArgs.S("the item name or code"); p["name"] = ToolArgs.S("new name, only if it changes"); p["name_en"] = ToolArgs.S("new English name, only if it changes");
+        p["unit"] = ToolArgs.S("new unit, only if it changes"); p["reorder_level"] = ToolArgs.N("new reorder level, only if it changes"); p["lead_time_days"] = ToolArgs.N("new lead time, only if it changes");
+    }, "item");
+}
+
+public class PrepareExpenseDecisionTool : PrepareFormTool
+{
+    private static readonly string[] Roles = { "Admin" };
+    public PrepareExpenseDecisionTool(IAssistantFormService f) : base(f) { }
+    protected override string FormKind => "decide_expense";
+    public override IReadOnlyList<string>? AllowedRoles => Roles;
+    public override string Name => "prepare_expense_decision";
+    public override string Description => "Prepare the owner's decision (approve or reject) on an expense waiting for approval. Search by words from its description or its amount. Approving books it to the accounts, so the owner confirms it on the draft.";
+    public override JsonObject InputSchema => Opt(p =>
+    {
+        p["search"] = ToolArgs.S("words from the description or the amount (may be empty to list all)");
+        p["decision"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray("approve", "reject") };
+    });
+}
+
+public class PrepareRequestDecisionTool : PrepareFormTool
+{
+    private static readonly string[] Roles = { "Admin", "HR" };
+    public PrepareRequestDecisionTool(IAssistantFormService f) : base(f) { }
+    protected override string FormKind => "decide_request";
+    public override IReadOnlyList<string>? AllowedRoles => Roles;
+    public override string Name => "prepare_request_decision";
+    public override string Description => "Prepare a decision (approve or reject) on an employee's leave or permission request that is waiting. Search by the employee's name.";
+    public override JsonObject InputSchema => Opt(p =>
+    {
+        p["employee"] = ToolArgs.S("the employee's name (may be empty to list all)"); p["note"] = ToolArgs.S("an optional note for the employee");
+        p["decision"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray("approve", "reject") };
+    });
+}
+
+public class PrepareCreditNoteTool : PrepareFormTool
+{
+    public PrepareCreditNoteTool(IAssistantFormService f) : base(f) { }
+    protected override string FormKind => "credit_note";
+    public override string Name => "prepare_credit_note";
+    public override string Description => "Prepare (not issue) a credit note (return or price reduction) on a sales invoice. Give the invoice number or the customer's name. It is financial only: it does not return goods to stock.";
+    public override JsonObject InputSchema => Opt(p =>
+    {
+        p["invoice_number"] = ToolArgs.S("sales invoice number if known"); p["customer"] = ToolArgs.S("customer name if the number is not known");
+        p["reason"] = ToolArgs.S("why the credit is given"); p["description"] = ToolArgs.S("what is credited"); p["quantity"] = ToolArgs.N("quantity"); p["unit_price"] = ToolArgs.N("price of one, only if stated");
+    });
+}
+
+public class PrepareStockTransferTool : PrepareFormTool
+{
+    public PrepareStockTransferTool(IAssistantFormService f) : base(f) { }
+    protected override string FormKind => "stock_transfer";
+    public override string Name => "prepare_stock_transfer";
+    public override string Description => "Prepare (not send) a transfer of one item between two branches/warehouses.";
+    public override JsonObject InputSchema => Opt(p =>
+    {
+        p["item"] = ToolArgs.S("the item name or code"); p["quantity"] = ToolArgs.N("quantity"); p["from"] = ToolArgs.S("the sending branch"); p["to"] = ToolArgs.S("the receiving branch"); p["notes"] = ToolArgs.S("optional note");
+    }, "item");
+}
+
+public class PrepareWasteEntryTool : PrepareFormTool
+{
+    public PrepareWasteEntryTool(IAssistantFormService f) : base(f) { }
+    protected override string FormKind => "waste_entry";
+    public override string Name => "prepare_waste_entry";
+    public override string Description => "Prepare (not record) a stock waste or spoilage entry for one item in a branch. Reasons: waste, expired, damaged, production waste, over portion.";
+    public override JsonObject InputSchema => Opt(p =>
+    {
+        p["item"] = ToolArgs.S("the item name or code"); p["warehouse"] = ToolArgs.S("the branch"); p["quantity"] = ToolArgs.N("quantity wasted"); p["reason"] = ToolArgs.S("the reason"); p["notes"] = ToolArgs.S("optional note");
+    }, "item");
+}
+
+// ---------- More reports ----------
+
+public class BudgetVsActualTool : ReadTool
+{
+    private readonly IBudgetService _b; private readonly IFiscalPeriodService _f;
+    public BudgetVsActualTool(IBudgetService b, IFiscalPeriodService f) { _b = b; _f = f; }
+    public override string Name => "get_budget_vs_actual";
+    public override string Description => "The budget against what actually happened for the current fiscal year, with the variance.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var years = await _f.GetAllYearsAsync(ct); var today = DateTime.UtcNow.Date;
+        var year = years.FirstOrDefault(y => y.StartDate <= today && y.EndDate >= today) ?? years.OrderByDescending(y => y.StartDate).FirstOrDefault() ?? throw new ValidationAppException("مفيش سنة مالية.");
+        return new(ToolArgs.Ser(await _b.GetBudgetVsActualAsync(year.Id, ct)));
+    }
+}
+
+public class FiscalPeriodsTool : ReadTool
+{
+    private readonly IFiscalPeriodService _f;
+    public FiscalPeriodsTool(IFiscalPeriodService f) => _f = f;
+    public override string Name => "get_fiscal_periods";
+    public override string Description => "The fiscal years and periods and which are open or closed.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct) => new(ToolArgs.Ser(await _f.GetAllYearsAsync(ct)));
+}
+
+public class FixedAssetsTool : ReadTool
+{
+    private readonly IFixedAssetService _f;
+    public FixedAssetsTool(IFixedAssetService f) => _f = f;
+    public override string Name => "get_fixed_assets";
+    public override string Description => "The fixed assets register: each asset with its cost, life and depreciation.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct) => new(ToolArgs.Ser((await _f.GetAllAsync(ct)).Take(40)));
+}
+
+public class LoansTool : ReadTool
+{
+    private readonly ILoanService _l;
+    public LoansTool(ILoanService l) => _l = l;
+    public override string Name => "get_loans";
+    public override string Description => "The company's loans with their installments and what is still due.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct) => new(ToolArgs.Ser((await _l.GetAllAsync(ct)).Take(20)));
+}
+
+public class ExpiringStockTool : ReadTool
+{
+    private readonly RomaERP.Application.Inventory.Services.IItemLotService _l;
+    public ExpiringStockTool(RomaERP.Application.Inventory.Services.IItemLotService l) => _l = l;
+    public override string Name => "get_expiring_stock";
+    public override string Description => "Stock lots that expire within a number of days (default 14).";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => p["within_days"] = ToolArgs.N("days ahead, default 14"));
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var days = a["within_days"] is { } n && n.GetValueKind() == JsonValueKind.Number ? Math.Clamp(n.GetValue<int>(), 1, 365) : 14;
+        return new(ToolArgs.Ser((await _l.GetExpiringLotsAsync(days, ct)).Take(40)));
+    }
+}
+
+public class ForecastTool : ReadTool
+{
+    private readonly IFinancialReportService _r;
+    public ForecastTool(IFinancialReportService r) => _r = r;
+    public override string Name => "get_forecast";
+    public override string Description => "A forecast of the next months' sales and costs, based on the last six months.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct) => new(ToolArgs.Ser(await _r.GetForecastAsync(DateTime.UtcNow.Date, 6, 3, ct)));
+}
+
+public class CashFlowIntelligenceTool : ReadTool
+{
+    private readonly IFinancialReportService _r;
+    public CashFlowIntelligenceTool(IFinancialReportService r) => _r = r;
+    public override string Name => "get_cash_outlook";
+    public override string Description => "The cash outlook: current cash, what is coming in and going out soon, and any risk of running short.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct) => new(ToolArgs.Ser(await _r.GetCashFlowIntelligenceAsync(DateTime.UtcNow.Date, ct)));
+}
+
+public class ExchangeRatesTool : ReadTool
+{
+    private readonly IExchangeRateService _e;
+    public ExchangeRatesTool(IExchangeRateService e) => _e = e;
+    public override string Name => "get_exchange_rates";
+    public override string Description => "The exchange rates the company uses.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct) => new(ToolArgs.Ser(await _e.GetRatesAsync(ct)));
+}
+
+public class AssistantActivityTool : ReadTool
+{
+    private static readonly string[] Roles = { "Admin" };
+    private readonly IApplicationDbContext _c;
+    public AssistantActivityTool(IApplicationDbContext c) => _c = c;
+    public override IReadOnlyList<string>? AllowedRoles => Roles;
+    public override string Name => "get_assistant_activity";
+    public override string Description => "What the assistant booked recently and for whom: the trail of approved actions (the last 25).";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+        => new(ToolArgs.Ser((await _c.AssistantActionLogs.AsNoTracking().OrderByDescending(l => l.CreatedAtUtc).Take(25).ToListAsync(ct))
+            .Select(l => new { whenUtc = l.CreatedAtUtc.ToString("yyyy-MM-dd HH:mm"), by = l.UserName, what = l.Kind, result = l.Result })));
 }

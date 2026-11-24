@@ -116,3 +116,26 @@ public class RecurringExpenseConfiguration : IEntityTypeConfiguration<RecurringE
         builder.HasQueryFilter(r => !r.IsDeleted);
     }
 }
+
+public class AssistantChatSessionConfiguration : IEntityTypeConfiguration<AssistantChatSession>
+{
+    public void Configure(EntityTypeBuilder<AssistantChatSession> builder)
+    {
+        builder.Property(s => s.UserId).HasMaxLength(64).IsRequired();
+        builder.Property(s => s.Title).HasMaxLength(120).IsRequired();
+        builder.HasIndex(s => new { s.UserId, s.UpdatedAtUtc });
+        builder.HasQueryFilter(s => !s.IsDeleted);
+    }
+}
+
+public class AssistantActionLogConfiguration : IEntityTypeConfiguration<AssistantActionLog>
+{
+    public void Configure(EntityTypeBuilder<AssistantActionLog> builder)
+    {
+        builder.Property(l => l.UserId).HasMaxLength(64).IsRequired();
+        builder.Property(l => l.UserName).HasMaxLength(120);
+        builder.Property(l => l.Kind).HasMaxLength(40).IsRequired();
+        builder.Property(l => l.Result).HasMaxLength(400);
+        builder.HasIndex(l => l.CreatedAtUtc);
+    }
+}

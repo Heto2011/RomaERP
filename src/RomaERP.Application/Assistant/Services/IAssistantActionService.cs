@@ -13,5 +13,7 @@ public interface IAssistantActionService
 {
     Task<ActionProposalDto> ProposeAsync(string text, CancellationToken ct = default);
     Task<ActionProposalDto> ProposeFromIntentAsync(ActionIntent intent, CancellationToken ct = default);
+    /// <summary>Reads a photo of a supplier invoice (mode "vendor_invoice") or a receipt (mode "receipt") into a draft for the owner to review.</summary>
+    Task<ActionProposalDto> ProposeFromImageAsync(byte[] bytes, string mediaType, string mode, CancellationToken ct = default);
     Task<ExecuteActionResultDto> ExecuteAsync(ExecuteActionRequestDto request, CancellationToken ct = default);
 }
