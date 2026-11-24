@@ -520,17 +520,19 @@ export interface ActionProposal {
   partyName: string | null; partyPhone: string | null; partyEmail: string | null; similarParties: ActionCandidate[];
   vendorId: string | null; vendorName: string | null; vendorCandidates: ActionCandidate[]; accountCandidates: ActionCandidate[];
   journalLines: ActionJournalLine[];
+  accountId: string | null; accountName: string | null; fundingSource: number; employeeId: string | null; employeeName: string | null; employeeCandidates: ActionCandidate[];
 }
 
 export interface AgentMessage { role: string; content: string }
 
 export const AiAssistantApi = {
-  agentChat: (messages: AgentMessage[]) => apiClient.post<{ reply: string; drafts: ActionProposal[]; toolsUsed: string[] }>("/aiassistant/agent/chat", { messages }),
+  agentChat: (messages: AgentMessage[]) => apiClient.post<{ reply: string; drafts: ActionProposal[]; toolsUsed: string[] }>("/assistant-agent/chat", { messages }),
   proposeAction: (text: string) => apiClient.post<ActionProposal>("/aiassistant/actions/propose", { text }),
   executeAction: (data: {
     kind: number; customerId?: string | null; lines?: ActionInvoiceLine[]; paymentTerm?: number; note?: string | null;
     invoiceId?: string | null; amount?: number | null; method?: number; itemId?: string | null; newPrice?: number | null;
     vendorId?: string | null; partyName?: string | null; partyPhone?: string | null; partyEmail?: string | null; journalLines?: ActionJournalLine[];
+    accountId?: string | null; fundingSource?: number; employeeId?: string | null;
   }) => apiClient.post<{ message: string; link: string | null }>("/aiassistant/actions/execute", data),
   setPaymentMethod: (captureId: string, paymentMethod: number) => apiClient.put<ExpenseCapture>(`/aiassistant/captures/${captureId}/payment-method`, { paymentMethod }),
   setAmount: (captureId: string, amount: number) => apiClient.put<ExpenseCapture>(`/aiassistant/captures/${captureId}/amount`, { amount }),

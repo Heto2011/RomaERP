@@ -19,11 +19,9 @@ public class AiAssistantController : ControllerBase
     private readonly IRecurringExpenseService _recurring;
 
     private readonly IAssistantActionService _actions;
-    private readonly RomaERP.Application.Assistant.Agent.IAssistantAgentService _agent;
 
-    public AiAssistantController(IExpenseAssistantService assistantService, IBusinessQaService qaService, IWebHostEnvironment environment, IRecurringExpenseService recurring, IAssistantActionService actions, RomaERP.Application.Assistant.Agent.IAssistantAgentService agent)
+    public AiAssistantController(IExpenseAssistantService assistantService, IBusinessQaService qaService, IWebHostEnvironment environment, IRecurringExpenseService recurring, IAssistantActionService actions)
     {
-        _agent = agent;
         _actions = actions;
         _recurring = recurring;
         _assistantService = assistantService;
@@ -39,11 +37,6 @@ public class AiAssistantController : ControllerBase
         var answer = await _qaService.AskAsync(request.Question, ct);
         return Ok(new AskQuestionResponseDto(answer));
     }
-
-    /// <summary>A conversation with the assistant: it can look things up in the books and prepare drafts, but it never books anything itself.</summary>
-    [HttpPost("agent/chat")]
-    public async Task<ActionResult<RomaERP.Application.Assistant.Agent.AgentChatResponseDto>> AgentChat(RomaERP.Application.Assistant.Agent.AgentChatRequestDto request, CancellationToken ct)
-        => Ok(await _agent.ChatAsync(request, ct));
 
     /// <summary>Prepares an invoice, a customer payment or a menu price change from one sentence. Nothing is booked here.</summary>
     [HttpPost("actions/propose")]

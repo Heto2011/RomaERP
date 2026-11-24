@@ -10,6 +10,8 @@ public interface IAgentTool
     string Description { get; }
     /// <summary>JSON schema of the arguments.</summary>
     JsonObject InputSchema { get; }
+    /// <summary>Roles allowed to use this tool. Null means the usual assistant roles (Admin and Accountant). A tool is neither offered to the model nor run for anyone else.</summary>
+    IReadOnlyList<string>? AllowedRoles => null;
     Task<AgentToolResult> RunAsync(JsonObject args, CancellationToken ct);
 }
 

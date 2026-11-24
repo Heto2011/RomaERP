@@ -11,6 +11,7 @@ public enum AssistantActionKind
     VendorPayment = 6,
     PurchaseInvoice = 7,
     JournalEntry = 8,
+    Expense = 9,
 }
 
 public record ActionCandidateDto(Guid Id, string Name, string? Extra);
@@ -54,6 +55,14 @@ public class ActionProposalDto
     /// <summary>1 cash, 2 card, 3 credit (on account).</summary>
     public int PaymentTerm { get; set; } = 3;
     public string? Note { get; set; }
+
+    // Daily expense (note = description, amount, accountId, method 1 cash/2 card, fundingSource 1 company/2 custody)
+    public Guid? AccountId { get; set; }
+    public string? AccountName { get; set; }
+    public int FundingSource { get; set; } = 1;
+    public Guid? EmployeeId { get; set; }
+    public string? EmployeeName { get; set; }
+    public List<ActionCandidateDto> EmployeeCandidates { get; set; } = new();
 
     // Manual journal entry (saved as a draft that still has to be posted from the journal page)
     public List<ActionJournalLineDto> JournalLines { get; set; } = new();
@@ -105,6 +114,9 @@ public class ExecuteActionRequestDto
     public string? PartyPhone { get; set; }
     public string? PartyEmail { get; set; }
     public List<ActionJournalLineDto> JournalLines { get; set; } = new();
+    public Guid? AccountId { get; set; }
+    public int FundingSource { get; set; } = 1;
+    public Guid? EmployeeId { get; set; }
 }
 
 public record ExecuteActionResultDto(string Message, string? Link);
@@ -128,6 +140,9 @@ public class ActionIntent
     public string? PartyPhone { get; set; }
     public string? PartyEmail { get; set; }
     public List<ActionJournalLineDto> JournalLines { get; set; } = new();
+    public string? AccountHint { get; set; }
+    public string? FundingSource { get; set; }
+    public string? EmployeeName { get; set; }
 }
 
 public record ActionRequestDto(string Text);

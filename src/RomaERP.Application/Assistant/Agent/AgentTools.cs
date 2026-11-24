@@ -14,7 +14,7 @@ namespace RomaERP.Application.Assistant.Agent;
 
 internal static class ToolArgs
 {
-    public static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull };
+    public static readonly JsonSerializerOptions Json = new() { PropertyNamingPolicy = JsonNamingPolicy.CamelCase, DefaultIgnoreCondition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull, Encoder = System.Text.Encodings.Web.JavaScriptEncoder.UnsafeRelaxedJsonEscaping };
     public static string Str(JsonObject a, string k) => a[k] is { } n && n.GetValueKind() == JsonValueKind.String ? n.GetValue<string>().Trim() : string.Empty;
     public static bool Flag(JsonObject a, string k) => a[k] is { } n && n.GetValueKind() == JsonValueKind.True;
     public static DateTime Date(JsonObject a, string k, DateTime fallback)
@@ -42,6 +42,7 @@ public abstract class ReadTool : IAgentTool
     public abstract string Name { get; }
     public abstract string Description { get; }
     public virtual JsonObject InputSchema => ToolArgs.Schema(_ => { });
+    public virtual IReadOnlyList<string>? AllowedRoles => null;
     public abstract Task<AgentToolResult> RunAsync(JsonObject args, CancellationToken ct);
 }
 
@@ -552,6 +553,8 @@ public class PendingApprovalsTool : ReadTool
 /// <summary>Headcount and attendance only. No salaries, ids or personal details: payroll and personal files are not reachable from the assistant.</summary>
 public class HeadcountTool : ReadTool
 {
+    private static readonly string[] Roles = { "Admin", "Accountant", "HR" };
+    public override IReadOnlyList<string>? AllowedRoles => Roles;
     private readonly IApplicationDbContext _c;
     public HeadcountTool(IApplicationDbContext c) => _c = c;
     public override string Name => "get_headcount_and_attendance";
@@ -588,5 +591,142 @@ public class PrepareJournalEntryTool : PrepareTool
                     Description = ToolArgs.Str(l, "line_description"),
                 });
         return intent;
+    }
+}
+
+// ---------- The daily expense (still waits for the manager's approval) ----------
+
+public class PrepareExpenseTool : PrepareTool
+{
+    public PrepareExpenseTool(IAssistantActionService a) : base(a) { }
+    public override string Name => "prepare_expense";
+    public override string Description => "Prepare (not book) a daily expense such as rent, electricity or supplies. After the owner reviews it, it waits for the manager's approval before reaching the books. Do not invent the amount.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p =>
+    {
+        p["description"] = ToolArgs.S("what the expense is for");
+        p["amount"] = ToolArgs.N("the amount, only if stated");
+        p["account_hint"] = ToolArgs.S("an expense account code or name if the user implied one, e.g. electricity");
+        p["funding"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray("company", "custody"), ["description"] = "company cash/bank, or an employee's custody advance" };
+        p["payment_method"] = new JsonObject { ["type"] = "string", ["enum"] = new JsonArray("cash", "card") };
+        p["employee_name"] = ToolArgs.S("the custody holder, only when funding is custody");
+    }, "description");
+    protected override ActionIntent ToIntent(JsonObject a) => new()
+    {
+        Kind = AssistantActionKind.Expense, Note = ToolArgs.Str(a, "description"), AccountHint = ToolArgs.Str(a, "account_hint"), FundingSource = ToolArgs.Str(a, "funding"),
+        Method = ToolArgs.Str(a, "payment_method"), EmployeeName = ToolArgs.Str(a, "employee_name"),
+        Amount = a["amount"] is { } n && n.GetValueKind() == JsonValueKind.Number ? n.GetValue<decimal>() : null,
+    };
+}
+
+// ---------- HR and payroll: read only, and each tool is open only to the roles that can open the same data on its own page ----------
+// Not reachable from the assistant: national ids, home addresses, bank account numbers, tax and insurance numbers.
+
+public abstract class HrTool : ReadTool
+{
+    protected static readonly string[] HrRoles = { "Admin", "HR" };
+    public override IReadOnlyList<string>? AllowedRoles => HrRoles;
+}
+
+public class SearchEmployeesTool : HrTool
+{
+    private readonly RomaERP.Application.HR.Services.IEmployeeService _e;
+    public SearchEmployeesTool(RomaERP.Application.HR.Services.IEmployeeService e) => _e = e;
+    public override string Name => "search_employees";
+    public override string Description => "Find employees by name or code: department, position, status, hire date, work location, phone and email, leave days per year. Up to 15. No ids, addresses or bank details.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["query"] = ToolArgs.S("part of the name or the code (may be empty)"); p["active_only"] = ToolArgs.B("only active employees"); });
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var q = ToolArgs.Norm(ToolArgs.Str(a, "query")); var active = ToolArgs.Flag(a, "active_only");
+        var list = (await _e.GetAllAsync(ct)).Where(x => (!active || x.EmploymentStatus == RomaERP.Domain.HR.EmploymentStatus.Active)
+            && (q.Length == 0 || ToolArgs.Norm(x.EmployeeCode) == q || ToolArgs.Norm(x.FullNameAr).Contains(q) || ToolArgs.Norm(x.FullNameEn).Contains(q))).Take(15)
+            .Select(x => new { x.EmployeeCode, name = x.FullNameAr, department = x.DepartmentNameAr, position = x.PositionNameAr, status = x.EmploymentStatus.ToString(), hired = x.HireDate.ToString("yyyy-MM-dd"), x.WorkLocationName, x.Phone, x.Email, x.AnnualLeaveDaysPerYear });
+        return new(ToolArgs.Ser(list));
+    }
+}
+
+public class EmployeePayTool : HrTool
+{
+    private readonly RomaERP.Application.HR.Services.IEmployeeService _e;
+    public EmployeePayTool(RomaERP.Application.HR.Services.IEmployeeService e) => _e = e;
+    public override string Name => "get_employee_pay";
+    public override string Description => "The basic salary of one employee (the name must match one active employee).";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => p["employee"] = ToolArgs.S("the employee's name or code"), "employee");
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var q = ToolArgs.Norm(ToolArgs.Str(a, "employee"));
+        var hit = (await _e.GetAllAsync(ct)).Where(x => x.EmploymentStatus == RomaERP.Domain.HR.EmploymentStatus.Active && q.Length > 0 && (ToolArgs.Norm(x.EmployeeCode) == q || ToolArgs.Norm(x.FullNameAr).Contains(q) || ToolArgs.Norm(x.FullNameEn).Contains(q))).ToList();
+        if (hit.Count == 0) throw new ValidationAppException("مفيش موظف نشط بالاسم ده.");
+        if (hit.Count > 1) return new("More than one employee matches: " + ToolArgs.Ser(hit.Take(8).Select(x => new { x.EmployeeCode, name = x.FullNameAr })) + ". Ask the user which one.");
+        return new(ToolArgs.Ser(new { hit[0].EmployeeCode, name = hit[0].FullNameAr, basicSalary = hit[0].BasicSalary, department = hit[0].DepartmentNameAr }));
+    }
+}
+
+public class PayrollRunsTool : ReadTool
+{
+    private readonly RomaERP.Application.HR.Services.IPayrollService _p; private readonly ICurrentUserService _user;
+    public PayrollRunsTool(RomaERP.Application.HR.Services.IPayrollService p, ICurrentUserService user) { _p = p; _user = user; }
+    // The payroll page is open to Admin, HR and Accountant for totals; the per-employee lines stay with Admin and HR.
+    private static readonly string[] Roles = { "Admin", "HR", "Accountant" };
+    public override IReadOnlyList<string>? AllowedRoles => Roles;
+    public override string Name => "get_payroll_runs";
+    public override string Description => "Payroll runs, newest first (up to 6): date, status, number of employees and the total net pay. Set detail to also list each employee's net pay for the newest run (Admin and HR only).";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => p["detail"] = ToolArgs.B("list each employee's pay for the newest run"));
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var runs = (await _p.GetAllAsync(ct)).OrderByDescending(r => r.RunDate).Take(6).ToList();
+        var mayDetail = ToolArgs.Flag(a, "detail") && _user.Roles.Any(r => r is "Admin" or "HR");
+        return new(ToolArgs.Ser(new
+        {
+            runs = runs.Select((r, i) => new
+            {
+                date = r.RunDate.ToString("yyyy-MM-dd"), status = r.Status.ToString(), r.Description, employees = r.Lines.Count, totalNet = r.TotalNet,
+                lines = mayDetail && i == 0 ? r.Lines.OrderByDescending(l => l.NetSalary).Take(40).Select(l => new { employee = l.EmployeeName, basic = l.BasicSalary, allowances = l.TotalAllowances, deductions = l.TotalDeductions, net = l.NetSalary }) : null,
+            }),
+            detailNote = ToolArgs.Flag(a, "detail") && !mayDetail ? "Per-employee pay is open to Admin and HR only." : null,
+        }));
+    }
+}
+
+public class AttendanceDetailsTool : HrTool
+{
+    private readonly RomaERP.Application.HR.Services.IAttendanceService _a;
+    public AttendanceDetailsTool(RomaERP.Application.HR.Services.IAttendanceService a) => _a = a;
+    public override string Name => "get_attendance";
+    public override string Description => "Attendance records for a period: who checked in and out and when (up to 40, newest first). Optionally for one employee name.";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => { p["from"] = ToolArgs.S("start date yyyy-MM-dd"); p["to"] = ToolArgs.S("end date yyyy-MM-dd"); p["employee"] = ToolArgs.S("part of the employee's name"); });
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var from = ToolArgs.Date(a, "from", DateTime.UtcNow.Date); var to = ToolArgs.Date(a, "to", DateTime.UtcNow.Date).AddDays(1);
+        var q = ToolArgs.Norm(ToolArgs.Str(a, "employee"));
+        var rows = (await _a.GetAllAsync(from, to, null, ct)).Where(r => q.Length == 0 || ToolArgs.Norm(r.EmployeeName).Contains(q)).OrderByDescending(r => r.CheckInAtUtc).Take(40)
+            .Select(r => new { employee = r.EmployeeName, checkIn = r.CheckInAtUtc.ToString("yyyy-MM-dd HH:mm"), checkOut = r.CheckOutAtUtc?.ToString("yyyy-MM-dd HH:mm"), insideWorkArea = r.CheckInWithinGeofence });
+        return new(ToolArgs.Ser(rows));
+    }
+}
+
+public class EmployeeRequestsTool : HrTool
+{
+    private readonly RomaERP.Application.HR.Services.IEmployeeRequestService _r;
+    public EmployeeRequestsTool(RomaERP.Application.HR.Services.IEmployeeRequestService r) => _r = r;
+    public override string Name => "get_pending_employee_requests";
+    public override string Description => "Leave, permission and other requests from employees that are waiting for a decision.";
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+        => new(ToolArgs.Ser((await _r.GetPendingAsync(ct)).Take(20).Select(r => new { employee = r.EmployeeName, type = r.Type.ToString(), from = r.DateFrom.ToString("yyyy-MM-dd"), to = r.DateTo?.ToString("yyyy-MM-dd"), r.Reason })));
+}
+
+public class LeaveBalanceTool : HrTool
+{
+    private readonly RomaERP.Application.HR.Services.IEmployeeService _e; private readonly RomaERP.Application.HR.Services.IEmployeeRequestService _r;
+    public LeaveBalanceTool(RomaERP.Application.HR.Services.IEmployeeService e, RomaERP.Application.HR.Services.IEmployeeRequestService r) { _e = e; _r = r; }
+    public override string Name => "get_leave_balance";
+    public override string Description => "An employee's leave balance this year: days per year, used and remaining (the name must match one active employee).";
+    public override JsonObject InputSchema => ToolArgs.Schema(p => p["employee"] = ToolArgs.S("the employee's name or code"), "employee");
+    public override async Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct)
+    {
+        var q = ToolArgs.Norm(ToolArgs.Str(a, "employee"));
+        var hit = (await _e.GetAllAsync(ct)).Where(x => x.EmploymentStatus == RomaERP.Domain.HR.EmploymentStatus.Active && q.Length > 0 && (ToolArgs.Norm(x.EmployeeCode) == q || ToolArgs.Norm(x.FullNameAr).Contains(q) || ToolArgs.Norm(x.FullNameEn).Contains(q))).ToList();
+        if (hit.Count == 0) throw new ValidationAppException("مفيش موظف نشط بالاسم ده.");
+        if (hit.Count > 1) return new("More than one employee matches: " + ToolArgs.Ser(hit.Take(8).Select(x => new { x.EmployeeCode, name = x.FullNameAr })) + ". Ask the user which one.");
+        return new(ToolArgs.Ser(new { name = hit[0].FullNameAr, balance = await _r.GetLeaveBalanceAsync(hit[0].Id, ct) }));
     }
 }

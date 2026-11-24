@@ -5,6 +5,11 @@ using RomaERP.Application.Assistant.Agent;
 using RomaERP.Application.Assistant.DTOs;
 using RomaERP.Application.Assistant.Services;
 using RomaERP.Application.Common.Exceptions;
+using RomaERP.Application.Common.Interfaces;
+using RomaERP.Application.HR.DTOs;
+using RomaERP.Application.HR.Services;
+using RomaERP.Domain.Assistant;
+using RomaERP.Domain.HR;
 using RomaERP.Domain.Accounting;
 using RomaERP.Domain.Inventory;
 using RomaERP.Domain.Sales;
@@ -27,6 +32,7 @@ public class AssistantAgentTests
             return Task.FromResult(Answers.Count > 0 ? Answers.Dequeue() : Text("(نهاية)"));
         }
     }
+    private class Who : ICurrentUserService { public Who(params string[] roles) { Roles = roles; } public string? UserId => "u1"; public string? UserName => "u"; public IReadOnlyList<string> Roles { get; } }
     private class NoLimit : IAiUsageLimiter { public int Calls { get; private set; } public Task EnsureWithinDailyLimitAsync(string k, CancellationToken ct = default) { Calls++; return Task.CompletedTask; } }
 
     private static JsonObject Text(string t) => new() { ["content"] = new JsonArray(new JsonObject { ["type"] = "text", ["text"] = t }) };
@@ -47,7 +53,7 @@ public class AssistantAgentTests
         var model = new ScriptedModel(); model.Answers.Enqueue(Use("fake", "{}")); model.Answers.Enqueue(Text("عندك 3 عملاء."));
         var tool = new FakeTool { Run = () => new("[{\"name\":\"منى\"}]") };
         var limiter = new NoLimit();
-        var svc = new AssistantAgentService(model, new[] { tool }, limiter);
+        var svc = new AssistantAgentService(model, new[] { tool }, limiter, new Who("Admin"));
         var res = await svc.ChatAsync(Ask("كام عميل؟"));
         Assert.Equal("عندك 3 عملاء.", res.Reply);
         Assert.Equal(new[] { "fake" }, res.ToolsUsed);
@@ -63,7 +69,7 @@ public class AssistantAgentTests
     {
         var model = new ScriptedModel(); model.Answers.Enqueue(Use("nope", "{}")); model.Answers.Enqueue(Use("fake", "{}", "t2")); model.Answers.Enqueue(Text("تمام"));
         var tool = new FakeTool { Run = () => throw new ValidationAppException("التاريخ غلط") };
-        var svc = new AssistantAgentService(model, new[] { tool }, new NoLimit());
+        var svc = new AssistantAgentService(model, new[] { tool }, new NoLimit(), new Who("Admin"));
         var res = await svc.ChatAsync(Ask("x"));
         Assert.Equal("تمام", res.Reply);
         var results = model.Seen[2].Last()!["content"]!.AsArray();
@@ -76,7 +82,7 @@ public class AssistantAgentTests
     {
         var model = new ScriptedModel();
         for (var i = 0; i < 20; i++) model.Answers.Enqueue(Use("fake", "{}", "t" + i));
-        var svc = new AssistantAgentService(model, new[] { new FakeTool() }, new NoLimit());
+        var svc = new AssistantAgentService(model, new[] { new FakeTool() }, new NoLimit(), new Who("Admin"));
         var res = await svc.ChatAsync(Ask("x"));
         Assert.Equal(AssistantAgentService.MaxRounds, model.Calls);
         Assert.Contains("خطوات كتير", res.Reply);
@@ -86,7 +92,7 @@ public class AssistantAgentTests
     public async Task OversizedToolOutput_IsCutBeforeItReachesTheModel()
     {
         var model = new ScriptedModel(); model.Answers.Enqueue(Use("fake", "{}")); model.Answers.Enqueue(Text("x"));
-        var svc = new AssistantAgentService(model, new[] { new FakeTool { Run = () => new(new string('a', 50_000)) } }, new NoLimit());
+        var svc = new AssistantAgentService(model, new[] { new FakeTool { Run = () => new(new string('a', 50_000)) } }, new NoLimit(), new Who("Admin"));
         await svc.ChatAsync(Ask("x"));
         var content = model.Seen[1].Last()!["content"]!.AsArray()[0]!["content"]!.GetValue<string>();
         Assert.True(content.Length < AssistantAgentService.MaxToolResultChars + 100);
@@ -98,7 +104,7 @@ public class AssistantAgentTests
         var model = new ScriptedModel(); model.Answers.Enqueue(Text("ok"));
         var msgs = Enumerable.Range(0, 40).Select(i => new AgentMessageDto(i % 2 == 0 ? "user" : "assistant", "m" + i)).ToList();
         msgs.Add(new AgentMessageDto("user", "الأخير"));
-        var svc = new AssistantAgentService(model, new IAgentTool[0], new NoLimit());
+        var svc = new AssistantAgentService(model, new IAgentTool[0], new NoLimit(), new Who("Admin"));
         await svc.ChatAsync(new AgentChatRequestDto(msgs));
         Assert.Equal(AssistantAgentService.MaxHistory, model.Seen[0].Count);
         await Assert.ThrowsAsync<ValidationAppException>(() => svc.ChatAsync(new AgentChatRequestDto(new() { new AgentMessageDto("assistant", "x") })));
@@ -111,12 +117,12 @@ public class AssistantAgentTests
         var ctx = new ApplicationDbContext(new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
         ctx.Customers.Add(new Customer { Code = "C1", NameAr = "منى", NameEn = "Mona" });
         await ctx.SaveChangesAsync();
-        var actions = new AssistantActionService(new NoParser(), ctx, null!, null!, null!);
+        var actions = new AssistantActionService(new NoParser(), ctx, null!, null!, null!, null!, new Who("Admin"));
         var tool = new PrepareSalesInvoiceTool(actions);
         var model = new ScriptedModel();
         model.Answers.Enqueue(Use("prepare_sales_invoice", """{"customer_name":"منى","lines":[{"description":"اشتراك","quantity":2,"unit_price":500}],"payment_term":"credit"}"""));
         model.Answers.Enqueue(Text("جهّزت مسودة، راجعها ودوس نفّذ."));
-        var svc = new AssistantAgentService(model, new IAgentTool[] { tool }, new NoLimit());
+        var svc = new AssistantAgentService(model, new IAgentTool[] { tool }, new NoLimit(), new Who("Admin"));
         var res = await svc.ChatAsync(Ask("اعمل فاتورة لمنى"));
         var draft = Assert.Single(res.Drafts);
         Assert.Equal(AssistantActionKind.SalesInvoice, draft.Kind);
@@ -178,5 +184,74 @@ public class AssistantAgentTests
             if (instance.Name.StartsWith("prepare_")) Assert.True(type.IsSubclassOf(typeof(PrepareTool)));
             else Assert.True(type.IsSubclassOf(typeof(ReadTool)), instance.Name + " must be a ReadTool");
         }
+    }
+
+    private class Capturing : IAgentModelClient
+    {
+        public List<string> OfferedTools { get; } = new();
+        public Task<JsonObject> CompleteAsync(string system, JsonArray messages, JsonArray tools, CancellationToken ct)
+        {
+            OfferedTools.AddRange(tools.OfType<JsonObject>().Select(x => x["name"]!.GetValue<string>()));
+            return Task.FromResult(Text("ok"));
+        }
+    }
+
+    private class NamedTool : IAgentTool
+    {
+        public NamedTool(string name, params string[]? roles) { Name = name; AllowedRoles = roles is { Length: > 0 } ? roles : null; }
+        public string Name { get; } public string Description => "x"; public IReadOnlyList<string>? AllowedRoles { get; }
+        public JsonObject InputSchema => new() { ["type"] = "object", ["properties"] = new JsonObject() };
+        public Task<AgentToolResult> RunAsync(JsonObject a, CancellationToken ct) => Task.FromResult(new AgentToolResult("secret"));
+    }
+
+    [Theory]
+    [InlineData("Accountant", "accounts,pay_runs")]
+    [InlineData("HR", "employees,pay_runs")]
+    [InlineData("Admin", "accounts,employees,pay_runs")]
+    public async Task EachPerson_IsOnlyOfferedTheToolsTheirRoleAllows(string role, string expected)
+    {
+        var model = new Capturing();
+        var tools = new IAgentTool[] { new NamedTool("accounts"), new NamedTool("employees", "Admin", "HR"), new NamedTool("pay_runs", "Admin", "HR", "Accountant") };
+        await new AssistantAgentService(model, tools, new NoLimit(), new Who(role)).ChatAsync(Ask("x"));
+        Assert.Equal(expected.Split(',').OrderBy(x => x), model.OfferedTools.OrderBy(x => x));
+    }
+
+    [Fact]
+    public async Task ATool_TheRoleDoesNotAllow_CannotBeCalledEvenIfTheModelAsksForIt()
+    {
+        var model = new ScriptedModel(); model.Answers.Enqueue(Use("employees", "{}")); model.Answers.Enqueue(Text("تمام"));
+        var svc = new AssistantAgentService(model, new IAgentTool[] { new NamedTool("employees", "Admin", "HR") }, new NoLimit(), new Who("Accountant"));
+        var res = await svc.ChatAsync(Ask("x"));
+        Assert.Empty(res.ToolsUsed);
+        var result = model.Seen[1].Last()!["content"]!.AsArray()[0]!;
+        Assert.True(result["is_error"]!.GetValue<bool>());
+        Assert.DoesNotContain("secret", result["content"]!.GetValue<string>());
+    }
+
+    private class FakeEmployees : DispatchProxy
+    {
+        protected override object? Invoke(MethodInfo? method, object?[]? args)
+        {
+            if (method!.Name == "GetAllAsync") return Task.FromResult(new List<EmployeeDto>
+            {
+                new() { EmployeeCode = "E1", FullNameAr = "سارة", FullNameEn = "Sara", NationalId = "29001010101010", Iban = "EG12ABCD", BankAccountNumber = "999888", Address = "شارع السر 5", UkNationalInsuranceNumber = "QQ123456C",
+                        EmploymentStatus = EmploymentStatus.Active, DepartmentNameAr = "المبيعات", PositionNameAr = "مندوبة", BasicSalary = 9000, Phone = "0100" }
+            });
+            throw new NotSupportedException(method.Name);
+        }
+    }
+
+    [Fact]
+    public async Task EmployeeSearch_NeverReturnsIdsAddressesOrBankDetails_ButPayIsASeparateHrTool()
+    {
+        var proxy = DispatchProxy.Create<IEmployeeService, FakeEmployees>();
+        var found = (await new SearchEmployeesTool(proxy).RunAsync(new JsonObject { ["query"] = "سارة" }, default)).Text;
+        Assert.Contains("سارة", found);
+        foreach (var secret in new[] { "29001010101010", "EG12ABCD", "999888", "شارع السر", "QQ123456C", "9000" })
+            Assert.DoesNotContain(secret, found);
+        var pay = (await new EmployeePayTool(proxy).RunAsync(new JsonObject { ["employee"] = "E1" }, default)).Text;
+        Assert.Contains("9000", pay);
+        Assert.DoesNotContain("29001010101010", pay);
+        Assert.Equal(new[] { "Admin", "HR" }, new EmployeePayTool(proxy).AllowedRoles);
     }
 }

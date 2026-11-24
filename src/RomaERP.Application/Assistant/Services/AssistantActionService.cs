@@ -22,9 +22,14 @@ public class AssistantActionService : IAssistantActionService
     private readonly ISalesService _sales;
     private readonly IPurchasingService _purchasing;
     private readonly IJournalEntryService _journal;
+    private readonly IExpenseAssistantService _expenses;
+    private readonly ICurrentUserService _user;
 
-    public AssistantActionService(IClaudeActionParser parser, IApplicationDbContext context, ISalesService sales, IPurchasingService purchasing, IJournalEntryService journal)
+    public AssistantActionService(IClaudeActionParser parser, IApplicationDbContext context, ISalesService sales, IPurchasingService purchasing, IJournalEntryService journal,
+        IExpenseAssistantService expenses, ICurrentUserService user)
     {
+        _expenses = expenses;
+        _user = user;
         _journal = journal;
         _purchasing = purchasing;
         _parser = parser;
@@ -57,6 +62,7 @@ public class AssistantActionService : IAssistantActionService
             case AssistantActionKind.VendorPayment: await FillVendorPaymentAsync(p, intent, ct); break;
             case AssistantActionKind.PurchaseInvoice: await FillPurchaseInvoiceAsync(p, intent, ct); break;
             case AssistantActionKind.JournalEntry: await FillJournalEntryAsync(p, intent, ct); break;
+            case AssistantActionKind.Expense: await FillExpenseAsync(p, intent, ct); break;
             default:
                 p.Kind = AssistantActionKind.None;
                 p.Summary = intent.Question ?? "ما فهمتش طلب أقدر أجهّزه. جرّب: \"اعمل فاتورة لأحمد بـ 3 قهوة سعر الواحدة 40\".";
@@ -227,6 +233,37 @@ public class AssistantActionService : IAssistantActionService
         p.Summary = $"فاتورة مشتريات{(p.VendorName is null ? string.Empty : $" من {p.VendorName}")}.";
     }
 
+    private async Task FillExpenseAsync(ActionProposalDto p, ActionIntent intent, CancellationToken ct)
+    {
+        p.Note = intent.Note;
+        p.Amount = intent.Amount;
+        p.Method = intent.Method == "card" ? 2 : 1;
+        p.FundingSource = intent.FundingSource == "custody" ? 2 : 1;
+        var accounts = await _context.Accounts.AsNoTracking().Where(a => !a.IsDeleted && a.IsActive && !a.IsControlAccount && a.AccountType == RomaERP.Domain.Accounting.AccountType.Expense).OrderBy(a => a.Code).ToListAsync(ct);
+        p.AccountCandidates = accounts.Take(150).Select(a => new ActionCandidateDto(a.Id, $"{a.Code} {a.NameAr}", null)).ToList();
+        var q = Norm(intent.AccountHint);
+        if (q.Length > 0)
+        {
+            var hit = accounts.Where(a => Norm(a.Code) == q).ToList();
+            if (hit.Count == 0) hit = accounts.Where(a => Norm(a.NameAr).Contains(q) || Norm(a.NameEn).Contains(q)).ToList();
+            if (hit.Count == 1) { p.AccountId = hit[0].Id; p.AccountName = $"{hit[0].Code} {hit[0].NameAr}"; }
+        }
+        if (p.AccountId is null) p.Warnings.Add("اختار حساب المصروف.");
+        if (p.Amount is null) p.Warnings.Add("ما ذكرتش المبلغ.");
+        if (string.IsNullOrWhiteSpace(p.Note)) p.Warnings.Add("اكتب وصف المصروف.");
+        if (p.FundingSource == 2)
+        {
+            var e = Norm(intent.EmployeeName);
+            var staff = (await _context.Employees.AsNoTracking().Where(x => !x.IsDeleted && x.EmploymentStatus == RomaERP.Domain.HR.EmploymentStatus.Active).ToListAsync(ct))
+                .Where(x => e.Length > 0 && (Norm(x.EmployeeCode) == e || Norm(x.FullNameAr).Contains(e) || Norm(x.FullNameEn).Contains(e))).ToList();
+            p.EmployeeCandidates = staff.Take(MaxCandidates).Select(x => new ActionCandidateDto(x.Id, x.FullNameAr, x.EmployeeCode)).ToList();
+            if (staff.Count == 1) { p.EmployeeId = staff[0].Id; p.EmployeeName = staff[0].FullNameAr; }
+            else p.Warnings.Add(staff.Count == 0 ? "اختار الموظف صاحب العهدة." : "في أكتر من موظف. اختار صاحب العهدة.");
+        }
+        p.Warnings.Add("المصروف بيتسجل في انتظار اعتماد المدير، ومش بيترحّل للدفاتر قبل كده.");
+        p.Summary = "مصروف يومي.";
+    }
+
     private async Task FillJournalEntryAsync(ActionProposalDto p, ActionIntent intent, CancellationToken ct)
     {
         p.Note = intent.Note;
@@ -350,6 +387,21 @@ public class AssistantActionService : IAssistantActionService
                     Lines = r.Lines.Select(l => new PurchaseInvoiceLineInputDto { Description = l.Description.Trim(), AccountId = l.AccountId!.Value, Quantity = l.Quantity, UnitPrice = l.UnitPrice!.Value }).ToList(),
                 }, ct);
                 return new ExecuteActionResultDto($"اتعملت فاتورة المشتريات {invoice.InvoiceNumber}.", "/purchasing/invoices");
+            }
+            case AssistantActionKind.Expense:
+            {
+                if (r.Amount is null || r.Amount <= 0) throw new ValidationAppException("اكتب مبلغ صحيح.");
+                if (r.AccountId is null) throw new ValidationAppException("اختار حساب المصروف.");
+                if (r.FundingSource is not (1 or 2)) throw new ValidationAppException("مصدر الصرف غير صحيح.");
+                if (r.Method is not (1 or 2)) throw new ValidationAppException("طريقة الدفع غير صحيحة.");
+                var capture = await _expenses.SubmitDirectAsync(new SubmitExpenseDto
+                {
+                    Description = r.Note ?? string.Empty, Amount = r.Amount.Value, AccountId = r.AccountId.Value,
+                    FundingSource = r.FundingSource, CustodyEmployeeId = r.EmployeeId, PaymentMethod = r.Method,
+                }, _user.UserId ?? "assistant", ct);
+                return new ExecuteActionResultDto(r.FundingSource == 1 && r.Method == 2
+                    ? "اتسجل المصروف وبيستنى مطابقة كشف البنك."
+                    : "اتسجل المصروف وبيستنى اعتماد المدير في صفحة اعتماد المصروفات.", "/assistant/approvals");
             }
             case AssistantActionKind.JournalEntry:
             {

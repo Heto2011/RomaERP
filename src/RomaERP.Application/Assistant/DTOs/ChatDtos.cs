@@ -2,6 +2,19 @@ using RomaERP.Domain.Assistant;
 
 namespace RomaERP.Application.Assistant.DTOs;
 
+public class SubmitExpenseDto
+{
+    public string Description { get; set; } = string.Empty;
+    public decimal Amount { get; set; }
+    public DateTime? EntryDate { get; set; }
+    public Guid AccountId { get; set; }
+    /// <summary>1 company account, 2 employee custody.</summary>
+    public int FundingSource { get; set; } = 1;
+    public Guid? CustodyEmployeeId { get; set; }
+    /// <summary>1 cash, 2 card (only for a company expense).</summary>
+    public int PaymentMethod { get; set; } = 1;
+}
+
 public class ChatTurnRequestDto
 {
     public Guid? CaptureId { get; set; }

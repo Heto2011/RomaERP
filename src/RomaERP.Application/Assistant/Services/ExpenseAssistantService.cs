@@ -26,6 +26,58 @@ public class ExpenseAssistantService : IExpenseAssistantService
         _parser = parser;
     }
 
+    public async Task<ExpenseCaptureDto> SubmitDirectAsync(SubmitExpenseDto dto, string userId, CancellationToken ct = default)
+    {
+        if (string.IsNullOrWhiteSpace(dto.Description) || dto.Description.Length > 300) throw new ValidationAppException("اكتب وصف المصروف.");
+        if (dto.Amount <= 0 || dto.Amount > 1_000_000_000m) throw new ValidationAppException("اكتب مبلغًا صحيحًا أكبر من صفر.");
+        var date = (dto.EntryDate ?? DateTime.UtcNow).Date;
+        if (date > DateTime.UtcNow.Date) throw new ValidationAppException("تاريخ المصروف مينفعش يكون في المستقبل.");
+        await FindOpenPeriodAsync(date, ct);
+        var account = await _context.Accounts.FirstOrDefaultAsync(a => a.Id == dto.AccountId && a.AccountType == AccountType.Expense && !a.IsControlAccount && a.IsActive && !a.IsDeleted, ct)
+            ?? throw new ValidationAppException("اختار حساب مصروفات صحيح.");
+
+        var capture = new ExpenseCapture
+        {
+            RawText = $"[من المساعد الذكي] {dto.Description.Trim()}",
+            Amount = decimal.Round(dto.Amount, 2),
+            Currency = (await _context.CompanySettings.AsNoTracking().Select(s => s.DefaultCurrency).FirstOrDefaultAsync(ct)) ?? "EGP",
+            Description = dto.Description.Trim(),
+            EntryDate = date,
+            SuggestedAccountId = account.Id,
+            SuggestedAccount = account,
+            SubmittedByUserId = userId,
+        };
+        string reply;
+        if (dto.FundingSource == 2)
+        {
+            var employee = await _context.Employees.FirstOrDefaultAsync(e => e.Id == dto.CustodyEmployeeId && !e.IsDeleted && e.EmploymentStatus == EmploymentStatus.Active, ct)
+                ?? throw new ValidationAppException("اختار موظف صحيح للعهدة.");
+            capture.FundingSource = FundingSource.EmployeeCustody;
+            capture.CustodyEmployeeId = employee.Id;
+            capture.Status = ExpenseCaptureStatus.PendingApproval;
+            reply = $"اتسجل على عهدة {employee.FullNameAr} وهيتراجع من المدير للاعتماد.";
+        }
+        else if (dto.PaymentMethod == 2)
+        {
+            capture.FundingSource = FundingSource.CompanyAccount;
+            capture.PaymentMethod = PaymentMethod.Card;
+            capture.Status = ExpenseCaptureStatus.AwaitingReconciliation;
+            reply = "اتسجل وهيفضل معلّق لحد ما كشف البنك يتطابق معاه.";
+        }
+        else
+        {
+            capture.FundingSource = FundingSource.CompanyAccount;
+            capture.PaymentMethod = PaymentMethod.Cash;
+            capture.Status = ExpenseCaptureStatus.PendingApproval;
+            reply = "اتسجل وهيتراجع من المدير للاعتماد قبل ما يترحّل.";
+        }
+        _context.ExpenseCaptures.Add(capture);
+        _context.ExpenseCaptureMessages.Add(new ExpenseCaptureMessage { ExpenseCaptureId = capture.Id, Role = ChatRole.User, Content = capture.RawText });
+        _context.ExpenseCaptureMessages.Add(new ExpenseCaptureMessage { ExpenseCaptureId = capture.Id, Role = ChatRole.Assistant, Content = reply });
+        await _context.SaveChangesAsync(ct);
+        return Map(capture);
+    }
+
     public async Task<ChatTurnResponseDto> SendMessageAsync(ChatTurnRequestDto request, string userId, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(request.Message))

@@ -11,7 +11,7 @@ const TEXT = {
     customer: "العميل", choose: "اختار...", lines: "البنود", desc: "الوصف", qty: "الكمية", price: "السعر", addLine: "إضافة بند", payment: "طريقة الدفع",
     cash: "نقدي", card: "كارت", credit: "آجل", note: "ملاحظة", invoice: "الفاتورة", outstanding: "المتبقي", amount: "المبلغ", method: "الطريقة",
     item: "الصنف", oldPrice: "السعر الحالي", newPrice: "السعر الجديد", run: "نفّذ", cancel: "إلغاء", done: "تم", open: "افتح الصفحة", another: "طلب جديد",
-    review: "راجع المسودة قبل التنفيذ", total: "الإجمالي", name: "الاسم", debit: "مدين", credit2: "دائن", diff: "الفرق (لازم يكون صفر)", phone: "التليفون", email: "الإيميل", similar: "أسماء قريبة موجودة", vendor: "المورد",
+    review: "راجع المسودة قبل التنفيذ", total: "الإجمالي", expenseFor: "وصف المصروف", expenseAccount: "حساب المصروف", funding: "مصدر الصرف", company: "حساب الشركة", custody: "عهدة موظف", custodyHolder: "صاحب العهدة", name: "الاسم", debit: "مدين", credit2: "دائن", diff: "الفرق (لازم يكون صفر)", phone: "التليفون", email: "الإيميل", similar: "أسماء قريبة موجودة", vendor: "المورد",
   },
   en: {
     title: "Ask the assistant to do it", intro: "Ask about your business or request an action in plain words. The assistant looks through your data and answers; for an action it prepares a draft that you review and approve. Nothing is booked until you press Execute.",
@@ -20,11 +20,11 @@ const TEXT = {
     customer: "Customer", choose: "Choose...", lines: "Lines", desc: "Description", qty: "Qty", price: "Price", addLine: "Add line", payment: "Payment",
     cash: "Cash", card: "Card", credit: "On account", note: "Note", invoice: "Invoice", outstanding: "Outstanding", amount: "Amount", method: "Method",
     item: "Item", oldPrice: "Current price", newPrice: "New price", run: "Execute", cancel: "Cancel", done: "Done", open: "Open the page", another: "New request",
-    review: "Review the draft before executing", total: "Total", name: "Name", debit: "Debit", credit2: "Credit", diff: "Difference (must be zero)", phone: "Phone", email: "Email", similar: "Similar names already there", vendor: "Supplier",
+    review: "Review the draft before executing", total: "Total", expenseFor: "What it is for", expenseAccount: "Expense account", funding: "Paid from", company: "Company account", custody: "Employee custody", custodyHolder: "Custody holder", name: "Name", debit: "Debit", credit2: "Credit", diff: "Difference (must be zero)", phone: "Phone", email: "Email", similar: "Similar names already there", vendor: "Supplier",
   },
 };
 
-const KIND = { None: 0, SalesInvoice: 1, CustomerPayment: 2, MenuPrice: 3, CreateCustomer: 4, CreateVendor: 5, VendorPayment: 6, PurchaseInvoice: 7, JournalEntry: 8 };
+const KIND = { None: 0, SalesInvoice: 1, CustomerPayment: 2, MenuPrice: 3, CreateCustomer: 4, CreateVendor: 5, VendorPayment: 6, PurchaseInvoice: 7, JournalEntry: 8, Expense: 9 };
 
 /** A draft the assistant prepared. The owner edits it and presses Execute; only then does the normal service book it. */
 function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionProposal; onExecuted: (message: string, link: string | null) => void; onCancel: () => void }) {
@@ -42,6 +42,7 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
     if (p.kind === KIND.SalesInvoice) return !!p.customerId && p.lines.length > 0 && p.lines.every((l) => l.description.trim() && l.quantity > 0 && l.unitPrice !== null && l.unitPrice >= 0);
     if (p.kind === KIND.CustomerPayment || p.kind === KIND.VendorPayment) return !!p.invoiceId && (p.amount ?? 0) > 0;
     if (p.kind === KIND.CreateCustomer || p.kind === KIND.CreateVendor) return !!p.partyName?.trim();
+    if (p.kind === KIND.Expense) return !!p.accountId && (p.amount ?? 0) > 0 && !!p.note?.trim() && (p.fundingSource !== 2 || !!p.employeeId);
     if (p.kind === KIND.JournalEntry) return p.journalLines.length >= 2 && p.journalLines.every((l) => !!l.accountId && l.debit >= 0 && l.credit >= 0 && (l.debit > 0) !== (l.credit > 0)) && journalDiff === 0;
     if (p.kind === KIND.PurchaseInvoice) return !!p.vendorId && p.lines.length > 0 && p.lines.every((l) => l.description.trim() && l.quantity > 0 && l.unitPrice !== null && l.unitPrice >= 0 && !!l.accountId);
     if (p.kind === KIND.MenuPrice) return !!p.itemId && p.newPrice !== null && p.newPrice >= 0;
@@ -57,6 +58,7 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
         kind: p.kind, customerId: p.customerId, lines: p.lines, paymentTerm: p.paymentTerm, note: p.note,
         invoiceId: p.invoiceId, amount: p.amount, method: p.method, itemId: p.itemId, newPrice: p.newPrice,
         vendorId: p.vendorId, partyName: p.partyName, partyPhone: p.partyPhone, partyEmail: p.partyEmail, journalLines: p.journalLines,
+        accountId: p.accountId, fundingSource: p.fundingSource, employeeId: p.employeeId,
       });
       onExecuted(r.data.message, r.data.link);
     } catch (err) { setError(getErrorMessage(err)); } finally { setBusy(false); }
@@ -114,6 +116,24 @@ function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionPropos
               <div className="form-field"><label>{x.amount}</label><input type="number" min={0} step="any" value={p.amount ?? ""} onChange={(e) => set({ amount: e.target.value === "" ? null : Number(e.target.value) })} /></div>
               <div className="form-field"><label>{x.method}</label>
                 <select value={p.method} onChange={(e) => set({ method: Number(e.target.value) })}><option value={1}>{x.cash}</option><option value={2}>{x.card}</option></select></div>
+            </div>
+          )}
+
+          {p.kind === KIND.Expense && (
+            <div style={{ marginTop: 10 }}>
+              <div className="form-grid">
+                <div className="form-field"><label>{x.expenseFor}</label><input value={p.note ?? ""} maxLength={300} onChange={(e) => set({ note: e.target.value })} /></div>
+                <div className="form-field"><label>{x.amount}</label><input type="number" min={0} step="any" value={p.amount ?? ""} onChange={(e) => set({ amount: e.target.value === "" ? null : Number(e.target.value) })} /></div>
+              </div>
+              <div className="form-field"><label>{x.expenseAccount}</label>{pick(p.accountCandidates, p.accountId, (id, name) => set({ accountId: id, accountName: name }))}</div>
+              <div className="form-grid">
+                <div className="form-field"><label>{x.funding}</label>
+                  <select value={p.fundingSource} onChange={(e) => set({ fundingSource: Number(e.target.value) })}><option value={1}>{x.company}</option><option value={2}>{x.custody}</option></select></div>
+                {p.fundingSource === 1 && <div className="form-field"><label>{x.method}</label>
+                  <select value={p.method} onChange={(e) => set({ method: Number(e.target.value) })}><option value={1}>{x.cash}</option><option value={2}>{x.card}</option></select></div>}
+                {p.fundingSource === 2 && <div className="form-field"><label>{x.custodyHolder}</label>
+                  {p.employeeCandidates.length > 0 ? pick(p.employeeCandidates, p.employeeId, (id, name) => set({ employeeId: id, employeeName: name })) : <span className="text-muted">-</span>}</div>}
+              </div>
             </div>
           )}
 

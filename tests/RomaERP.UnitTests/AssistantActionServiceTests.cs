@@ -6,6 +6,7 @@ using RomaERP.Application.Assistant.Services;
 using RomaERP.Application.Accounting.DTOs;
 using RomaERP.Application.Accounting.Services;
 using RomaERP.Application.Common.Exceptions;
+using RomaERP.Application.Common.Interfaces;
 using RomaERP.Application.Purchasing.DTOs;
 using RomaERP.Application.Purchasing.Services;
 using RomaERP.Application.Sales.DTOs;
@@ -22,6 +23,8 @@ namespace RomaERP.UnitTests;
 
 public class AssistantActionServiceTests
 {
+    private class User : ICurrentUserService { public string? UserId => "u1"; public string? UserName => "u"; }
+
     private class FakeParser : IClaudeActionParser
     {
         public ActionIntent Intent { get; set; } = new();
@@ -89,7 +92,7 @@ public class AssistantActionServiceTests
         var pFake = (FakePurchasing)(object)pProxy;
         var jProxy = DispatchProxy.Create<IJournalEntryService, FakeJournal>();
         var jFake = (FakeJournal)(object)jProxy;
-        return new Rig(new AssistantActionService(parser, ctx, proxy, pProxy, jProxy), ctx, parser, fake, pFake, jFake);
+        return new Rig(new AssistantActionService(parser, ctx, proxy, pProxy, jProxy, null!, new User()), ctx, parser, fake, pFake, jFake);
     }
 
     [Fact]

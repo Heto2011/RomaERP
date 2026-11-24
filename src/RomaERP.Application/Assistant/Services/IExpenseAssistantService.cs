@@ -4,6 +4,9 @@ namespace RomaERP.Application.Assistant.Services;
 
 public interface IExpenseAssistantService
 {
+    /// <summary>Registers an expense the owner already reviewed on a draft. It follows the same path as the chat: a company cash or custody expense waits for the manager's approval,
+    /// a card payment waits for the bank statement match. Nothing is posted to the books here.</summary>
+    Task<ExpenseCaptureDto> SubmitDirectAsync(SubmitExpenseDto dto, string userId, CancellationToken ct = default);
     Task<ChatTurnResponseDto> SendMessageAsync(ChatTurnRequestDto request, string userId, CancellationToken ct = default);
 
     /// <summary>Starts a brand-new expense capture from a photo of a receipt/invoice instead of typed text —
