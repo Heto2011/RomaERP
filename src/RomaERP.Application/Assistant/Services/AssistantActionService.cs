@@ -32,6 +32,12 @@ public class AssistantActionService : IAssistantActionService
         if (text.Length > 1000) throw new ValidationAppException("الطلب طويل. اكتبه في جملة أو جملتين.");
 
         var intent = await _parser.ParseAsync(text.Trim(), ct);
+        return await ProposeFromIntentAsync(intent, ct);
+    }
+
+    /// <summary>Matches names in an already-understood request to real records and returns the draft. Used by the one-sentence page and by the assistant's tools.</summary>
+    public async Task<ActionProposalDto> ProposeFromIntentAsync(ActionIntent intent, CancellationToken ct = default)
+    {
         var p = new ActionProposalDto { Kind = intent.Kind, Question = intent.Question };
         switch (intent.Kind)
         {

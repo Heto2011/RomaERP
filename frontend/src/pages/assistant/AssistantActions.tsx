@@ -1,23 +1,22 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
-import { AiAssistantApi, type ActionProposal } from "../../api/services";
+import { AiAssistantApi, type ActionProposal, type AgentMessage } from "../../api/services";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 
 const TEXT = {
   ar: {
-    title: "اطلب من المساعد", intro: "اكتب طلبك بكلامك العادي، والمساعد يجهّز لك المسودة. إنت بتراجعها وتعدّلها وتوافق، ومفيش حاجة بتتسجل قبل ما تدوس \"نفّذ\".",
-    placeholder: "مثال: اعمل فاتورة لأحمد بـ 3 قهوة سعر الواحدة 40", prepare: "جهّز", preparing: "جاري التجهيز...",
-    examples: ["اعمل فاتورة لمنى بـ 2 اشتراك شهري سعر الواحد 500", "سجّل دفعة من أحمد علي", "غيّر سعر القهوة لـ 50"],
+    title: "اطلب من المساعد", intro: "اسأل عن شغلك أو اطلب إجراء بكلامك العادي. المساعد بيدوّر في بياناتك ويجاوب، ولو طلبت إجراء بيجهّز مسودة، وإنت بتراجعها وتوافق. مفيش حاجة بتتسجل قبل ما تدوس \"نفّذ\".",
+    placeholder: "اكتب سؤالك أو طلبك...", prepare: "جهّز", preparing: "جاري التفكير...", send: "إرسال", you: "إنت", assistant: "المساعد",
+    examples: ["كام اللي العملاء عليهم لينا؟", "إيه الأصناف اللي قربت تخلص؟", "اعمل فاتورة لمنى بـ 2 اشتراك سعر الواحد 500"],
     customer: "العميل", choose: "اختار...", lines: "البنود", desc: "الوصف", qty: "الكمية", price: "السعر", addLine: "إضافة بند", payment: "طريقة الدفع",
     cash: "نقدي", card: "كارت", credit: "آجل", note: "ملاحظة", invoice: "الفاتورة", outstanding: "المتبقي", amount: "المبلغ", method: "الطريقة",
     item: "الصنف", oldPrice: "السعر الحالي", newPrice: "السعر الجديد", run: "نفّذ", cancel: "إلغاء", done: "تم", open: "افتح الصفحة", another: "طلب جديد",
     review: "راجع المسودة قبل التنفيذ", total: "الإجمالي",
   },
   en: {
-    title: "Ask the assistant to do it", intro: "Write your request in plain words and the assistant prepares the draft. You review, edit and approve it, and nothing is booked until you press Execute.",
-    placeholder: "For example: make an invoice for Ahmed for 3 coffees at 40 each", prepare: "Prepare", preparing: "Preparing...",
-    examples: ["Invoice Mona for 2 monthly subscriptions at 500 each", "Record a payment from Ahmed Ali", "Change the price of coffee to 50"],
+    title: "Ask the assistant to do it", intro: "Ask about your business or request an action in plain words. The assistant looks through your data and answers; for an action it prepares a draft that you review and approve. Nothing is booked until you press Execute.",
+    placeholder: "Type your question or request...", prepare: "Prepare", preparing: "Thinking...", send: "Send", you: "You", assistant: "Assistant",
+    examples: ["How much do customers owe us?", "Which items are running low?", "Invoice Mona for 2 monthly subscriptions at 500 each"],
     customer: "Customer", choose: "Choose...", lines: "Lines", desc: "Description", qty: "Qty", price: "Price", addLine: "Add line", payment: "Payment",
     cash: "Cash", card: "Card", credit: "On account", note: "Note", invoice: "Invoice", outstanding: "Outstanding", amount: "Amount", method: "Method",
     item: "Item", oldPrice: "Current price", newPrice: "New price", run: "Execute", cancel: "Cancel", done: "Done", open: "Open the page", another: "New request",
@@ -27,23 +26,13 @@ const TEXT = {
 
 const KIND = { None: 0, SalesInvoice: 1, CustomerPayment: 2, MenuPrice: 3 };
 
-/** One sentence in, a draft out. The assistant only prepares: the owner edits it and presses Execute, and the normal services book it. */
-export default function AssistantActions() {
+/** A draft the assistant prepared. The owner edits it and presses Execute; only then does the normal service book it. */
+function ProposalCard({ initial, onExecuted, onCancel }: { initial: ActionProposal; onExecuted: (message: string, link: string | null) => void; onCancel: () => void }) {
   const { lang } = useLanguage();
   const x = TEXT[lang === "ar" ? "ar" : "en"];
-  const [text, setText] = useState("");
-  const [p, setP] = useState<ActionProposal | null>(null);
+  const [p, setP] = useState<ActionProposal | null>(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [result, setResult] = useState<{ message: string; link: string | null } | null>(null);
-
-  async function prepare(e?: React.FormEvent) {
-    e?.preventDefault();
-    if (!text.trim()) return;
-    setBusy(true); setError(null); setResult(null); setP(null);
-    try { setP((await AiAssistantApi.proposeAction(text)).data); } catch (err) { setError(getErrorMessage(err)); } finally { setBusy(false); }
-  }
-
   const set = (patch: Partial<ActionProposal>) => setP((cur) => (cur ? { ...cur, ...patch } : cur));
   const setLine = (i: number, patch: Partial<ActionProposal["lines"][number]>) => p && set({ lines: p.lines.map((l, k) => (k === i ? { ...l, ...patch } : l)) });
 
@@ -64,7 +53,7 @@ export default function AssistantActions() {
         kind: p.kind, customerId: p.customerId, lines: p.lines, paymentTerm: p.paymentTerm, note: p.note,
         invoiceId: p.invoiceId, amount: p.amount, method: p.method, itemId: p.itemId, newPrice: p.newPrice,
       });
-      setResult(r.data); setP(null); setText("");
+      onExecuted(r.data.message, r.data.link);
     } catch (err) { setError(getErrorMessage(err)); } finally { setBusy(false); }
   }
 
@@ -75,32 +64,10 @@ export default function AssistantActions() {
     </select>
   );
 
+  if (!p) return null;
   return (
-    <div>
-      <div className="page-header"><h1>{x.title}</h1></div>
-      <div className="card" style={{ maxWidth: 760 }}>
-        <p className="text-muted" style={{ marginTop: 0 }}>{x.intro}</p>
-        <form onSubmit={prepare}>
-          <textarea rows={3} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)} placeholder={x.placeholder} style={{ width: "100%" }} />
-          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", margin: "8px 0" }}>
-            {x.examples.map((ex) => <button key={ex} type="button" className="btn btn-secondary btn-sm" onClick={() => setText(ex)}>{ex}</button>)}
-          </div>
-          <button className="btn" type="submit" disabled={busy || !text.trim()}>{busy && !p ? x.preparing : x.prepare}</button>
-        </form>
-        {error && <div className="alert-error" style={{ marginTop: 10 }}>{error}</div>}
-        {result && (
-          <div className="alert-success" style={{ marginTop: 10 }}>
-            <div>{x.done}: {result.message}</div>
-            <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-              {result.link && <Link className="btn btn-secondary btn-sm" to={result.link}>{x.open}</Link>}
-              <button className="btn btn-secondary btn-sm" onClick={() => setResult(null)}>{x.another}</button>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {p && (
-        <div className="card" style={{ maxWidth: 760, marginTop: 12 }}>
+        <div className="card" style={{ maxWidth: 760, marginTop: 8 }}>
+          {error && <div className="alert-error" style={{ marginBottom: 8 }}>{error}</div>}
           <strong>{p.kind === KIND.None ? p.summary : x.review}</strong>
           {p.kind !== KIND.None && <div className="text-muted" style={{ marginTop: 4 }}>{p.summary}</div>}
           {p.question && p.kind !== KIND.None && <div style={{ marginTop: 8 }}>{p.question}</div>}
@@ -160,11 +127,69 @@ export default function AssistantActions() {
           {p.kind !== KIND.None && (
             <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
               <button className="btn" disabled={!ready || busy} onClick={run}>{x.run}</button>
-              <button className="btn btn-secondary" disabled={busy} onClick={() => setP(null)}>{x.cancel}</button>
+              <button className="btn btn-secondary" disabled={busy} onClick={onCancel}>{x.cancel}</button>
             </div>
           )}
         </div>
-      )}
+  );
+}
+
+/** A conversation with the assistant. It looks things up in the books and prepares drafts; the owner approves any change before it is booked. */
+export default function AssistantActions() {
+  const { lang } = useLanguage();
+  const x = TEXT[lang === "ar" ? "ar" : "en"];
+  const [messages, setMessages] = useState<(AgentMessage & { drafts?: ActionProposal[] })[]>([]);
+  const [text, setText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [closed, setClosed] = useState<Record<string, boolean>>({});
+
+  async function send(e?: React.FormEvent, override?: string) {
+    e?.preventDefault();
+    const q = (override ?? text).trim();
+    if (!q || busy) return;
+    const history = [...messages, { role: "user", content: q } as AgentMessage];
+    setMessages(history); setText(""); setBusy(true); setError(null);
+    try {
+      const r = await AiAssistantApi.agentChat(history.map(({ role, content }) => ({ role, content })));
+      setMessages([...history, { role: "assistant", content: r.data.reply, drafts: r.data.drafts }]);
+    } catch (err) { setError(getErrorMessage(err)); } finally { setBusy(false); }
+  }
+
+  const executed = (message: string, link: string | null) =>
+    setMessages((m) => [...m, { role: "assistant", content: `${x.done}: ${message}${link ? "" : ""}` }]);
+
+  return (
+    <div>
+      <div className="page-header"><h1>{x.title}</h1></div>
+      <div className="card" style={{ maxWidth: 760 }}>
+        <p className="text-muted" style={{ marginTop: 0 }}>{x.intro}</p>
+        {messages.length === 0 && (
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 8 }}>
+            {x.examples.map((ex) => <button key={ex} type="button" className="btn btn-secondary btn-sm" onClick={() => send(undefined, ex)}>{ex}</button>)}
+          </div>
+        )}
+        {messages.map((m, i) => (
+          <div key={i} style={{ margin: "10px 0" }}>
+            <div style={{ fontSize: 12, opacity: 0.7 }}>{m.role === "user" ? x.you : x.assistant}</div>
+            <div style={{ whiteSpace: "pre-wrap", padding: "8px 10px", borderRadius: 8, background: m.role === "user" ? "rgba(128,128,128,.12)" : "transparent", border: m.role === "user" ? "none" : "1px solid rgba(128,128,128,.3)" }}>{m.content}</div>
+            {m.drafts?.map((d, k) => closed[`${i}-${k}`] ? null : (
+              <ProposalCard key={k} initial={d} onCancel={() => setClosed((c) => ({ ...c, [`${i}-${k}`]: true }))}
+                onExecuted={(msg, link) => { setClosed((c) => ({ ...c, [`${i}-${k}`]: true })); executed(msg, link); }} />
+            ))}
+          </div>
+        ))}
+        {busy && <p className="text-muted">{x.preparing}</p>}
+        {error && <div className="alert-error" style={{ marginTop: 10 }}>{error}</div>}
+        <form onSubmit={send} style={{ marginTop: 10 }}>
+          <textarea rows={2} maxLength={1000} value={text} onChange={(e) => setText(e.target.value)} placeholder={x.placeholder} style={{ width: "100%" }}
+            onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} />
+          <div style={{ display: "flex", gap: 8, marginTop: 6 }}>
+            <button className="btn" type="submit" disabled={busy || !text.trim()}>{x.send}</button>
+            {messages.length > 0 && <button type="button" className="btn btn-secondary" onClick={() => { setMessages([]); setClosed({}); setError(null); }}>{x.another}</button>}
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

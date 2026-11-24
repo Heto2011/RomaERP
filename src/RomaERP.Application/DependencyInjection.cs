@@ -75,6 +75,17 @@ public static class DependencyInjection
         services.AddScoped<IRestaurantService, RestaurantService>();
         services.AddScoped<IQrOrderingService, QrOrderingService>();
         services.AddScoped<RomaERP.Application.Assistant.Services.IAssistantActionService, RomaERP.Application.Assistant.Services.AssistantActionService>();
+        services.AddScoped<RomaERP.Application.Assistant.Agent.IAssistantAgentService, RomaERP.Application.Assistant.Agent.AssistantAgentService>();
+        foreach (var tool in new[]
+        {
+            typeof(RomaERP.Application.Assistant.Agent.SearchCustomersTool), typeof(RomaERP.Application.Assistant.Agent.SearchVendorsTool), typeof(RomaERP.Application.Assistant.Agent.SearchItemsTool),
+            typeof(RomaERP.Application.Assistant.Agent.ListSalesInvoicesTool), typeof(RomaERP.Application.Assistant.Agent.ListPurchaseInvoicesTool),
+            typeof(RomaERP.Application.Assistant.Agent.ReceivablesTool), typeof(RomaERP.Application.Assistant.Agent.PayablesTool),
+            typeof(RomaERP.Application.Assistant.Agent.IncomeStatementTool), typeof(RomaERP.Application.Assistant.Agent.BalanceSheetTool), typeof(RomaERP.Application.Assistant.Agent.VatSummaryTool),
+            typeof(RomaERP.Application.Assistant.Agent.CashFlowTool), typeof(RomaERP.Application.Assistant.Agent.BranchProfitTool),
+            typeof(RomaERP.Application.Assistant.Agent.PrepareSalesInvoiceTool), typeof(RomaERP.Application.Assistant.Agent.PrepareCustomerPaymentTool), typeof(RomaERP.Application.Assistant.Agent.PrepareMenuPriceTool),
+        })
+            services.AddScoped(typeof(RomaERP.Application.Assistant.Agent.IAgentTool), tool);
         services.AddScoped<IReservationService, ReservationService>();
         services.AddScoped<IMenuImportService, MenuImportService>();
         services.AddScoped<ILoyaltyService, LoyaltyService>();

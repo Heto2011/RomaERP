@@ -518,7 +518,10 @@ export interface ActionProposal {
   itemId: string | null; itemName: string | null; itemCandidates: ActionCandidate[]; oldPrice: number | null; newPrice: number | null;
 }
 
+export interface AgentMessage { role: string; content: string }
+
 export const AiAssistantApi = {
+  agentChat: (messages: AgentMessage[]) => apiClient.post<{ reply: string; drafts: ActionProposal[]; toolsUsed: string[] }>("/aiassistant/agent/chat", { messages }),
   proposeAction: (text: string) => apiClient.post<ActionProposal>("/aiassistant/actions/propose", { text }),
   executeAction: (data: {
     kind: number; customerId?: string | null; lines?: ActionInvoiceLine[]; paymentTerm?: number; note?: string | null;

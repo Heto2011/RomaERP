@@ -12,5 +12,6 @@ public interface IClaudeActionParser
 public interface IAssistantActionService
 {
     Task<ActionProposalDto> ProposeAsync(string text, CancellationToken ct = default);
+    Task<ActionProposalDto> ProposeFromIntentAsync(ActionIntent intent, CancellationToken ct = default);
     Task<ExecuteActionResultDto> ExecuteAsync(ExecuteActionRequestDto request, CancellationToken ct = default);
 }
