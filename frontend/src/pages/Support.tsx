@@ -60,6 +60,8 @@ export default function SupportPage() {
     }
   }
 
+  const suggested = creating && (subject + body).trim().length > 6 ? guidesForQuestion(`${subject} ${body}`, lang === "ar" ? "ar" : "en", 2) : [];
+
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
@@ -184,6 +186,17 @@ export default function SupportPage() {
             <label>{t.support.description}</label>
             <textarea rows={4} value={body} onChange={(e) => setBody(e.target.value)} placeholder={t.support.descriptionPlaceholder} required />
           </div>
+          {suggested.length > 0 && (
+            <div className="card" style={{ marginBottom: 12 }}>
+              <strong>{lang === "ar" ? "ممكن الإجابة هنا (من غير ما تبعت تذكرة):" : "The answer may be here (no need to send a ticket):"}</strong>
+              {suggested.map((g) => (
+                <details key={g.id} style={{ marginTop: 6 }}>
+                  <summary style={{ cursor: "pointer", fontWeight: 600 }}>{g.title[lang === "ar" ? "ar" : "en"]}</summary>
+                  <ol style={{ margin: "6px 0" }}>{g.steps[lang === "ar" ? "ar" : "en"].map((st, i) => <li key={i}>{st}</li>)}</ol>
+                </details>
+              ))}
+            </div>
+          )}
           <div className="form-field">
             <label>{t.support.attachments}</label>
             <input type="file" multiple onChange={(e) => setFiles(Array.from(e.target.files ?? []))} />

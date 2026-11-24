@@ -24,9 +24,11 @@ public class SupportController : ControllerBase
     private readonly CentralDbContext _central;
     private readonly ITenantContext _tenantContext;
     private readonly ISupportAiTriageService _triage;
+    private readonly ISupportNotifier _notifier;
 
-    public SupportController(CentralDbContext central, ITenantContext tenantContext, ISupportAiTriageService triage)
+    public SupportController(CentralDbContext central, ITenantContext tenantContext, ISupportAiTriageService triage, ISupportNotifier notifier)
     {
+        _notifier = notifier;
         _central = central;
         _tenantContext = tenantContext;
         _triage = triage;
@@ -95,6 +97,7 @@ public class SupportController : ControllerBase
             ticket.Status = SupportTicketStatus.AwaitingCustomer;
         }
         await _central.SaveChangesAsync(ct);
+        await _notifier.NotifyOwnerAsync(ticket.TicketNumber, ticket.CompanyCode, ticket.RequesterName, ticket.Subject, request.Body.Trim(), true, ticket.Status == SupportTicketStatus.AwaitingCustomer, ct);
 
         return Ok(ToDetailDto(ticket));
     }
@@ -127,6 +130,7 @@ public class SupportController : ControllerBase
         ticket.UpdatedAtUtc = DateTime.UtcNow;
 
         await _central.SaveChangesAsync(ct);
+        await _notifier.NotifyOwnerAsync(ticket.TicketNumber, ticket.CompanyCode, ticket.RequesterName, ticket.Subject, request.Body.Trim(), false, false, ct);
         return Ok(ToDetailDto(ticket));
     }
 

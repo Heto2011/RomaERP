@@ -26,6 +26,7 @@ public class SystemController : ControllerBase
     private readonly IUserTransferService _userTransfer;
     private readonly ISystemPasswordResetService _passwordReset;
     private readonly IConfiguration _configuration;
+    private readonly RomaERP.Application.Support.Services.ISupportNotifier _supportNotifier;
     private readonly CentralDbContext _central;
     private readonly IWebHostEnvironment _environment;
     private readonly RomaERP.Application.Common.Interfaces.ISubscriptionBillingService _billing;
@@ -39,8 +40,10 @@ public class SystemController : ControllerBase
         CentralDbContext central,
         IWebHostEnvironment environment,
         RomaERP.Application.Assistant.Services.IAiUsageOverviewService aiUsage,
-        RomaERP.Application.Common.Interfaces.ISubscriptionBillingService billing)
+        RomaERP.Application.Common.Interfaces.ISubscriptionBillingService billing,
+        RomaERP.Application.Support.Services.ISupportNotifier supportNotifier)
     {
+        _supportNotifier = supportNotifier;
         _billing = billing;
         _aiUsage = aiUsage;
         _environment = environment;
@@ -250,6 +253,7 @@ public class SystemController : ControllerBase
         ticket.UpdatedAtUtc = DateTime.UtcNow;
 
         await _central.SaveChangesAsync(ct);
+        await _supportNotifier.NotifyCustomerAsync(ticket.TicketNumber, ticket.RequesterEmail, ticket.Subject, request.Body.Trim(), ct);
         return Ok(ToDetailDto(ticket));
     }
 

@@ -110,6 +110,7 @@ public static class DependencyInjection
         services.AddHttpClient<IClaudeExpenseParser, ClaudeExpenseParser>();
         services.AddHttpClient<RomaERP.Application.Assistant.Services.IClaudeActionParser, ClaudeActionParser>();
         services.AddHttpClient<RomaERP.Application.Assistant.Agent.IAgentModelClient, ClaudeAgentClient>();
+        services.AddScoped<RomaERP.Application.Support.Services.ISupportNotifier, RomaERP.Infrastructure.Support.SupportNotifier>();
         services.AddHttpClient<RomaERP.Application.Support.Services.ISupportAiTriageService, RomaERP.Infrastructure.Support.ClaudeSupportTriageService>();
         services.AddHttpClient<RomaERP.Application.Assistant.Services.IBusinessQaService, ClaudeBusinessQaService>();
         services.AddScoped<RomaERP.Application.Assistant.Services.IAiUsageLimiter, AiUsageLimiter>();
