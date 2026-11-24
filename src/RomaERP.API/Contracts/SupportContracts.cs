@@ -1,6 +1,6 @@
 namespace RomaERP.API.Contracts;
 
-public record CreateSupportTicketRequest(string Subject, string Body);
+public record CreateSupportTicketRequest(string Subject, string Body, string? HelpContext = null);
 
 public record AddSupportTicketMessageRequest(string Body);
 

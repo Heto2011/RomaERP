@@ -4,6 +4,7 @@ import type { SupportTicket, SupportTicketSummary } from "../api/types";
 import { getErrorMessage } from "../api/client";
 import { useLanguage } from "../i18n/LanguageContext";
 import { helpTopics } from "./helpTopics";
+import { guidesForQuestion } from "../help/helpContent";
 
 const STATUS_KEY: Record<string, string> = {
   Open: "statusOpen",
@@ -64,7 +65,8 @@ export default function SupportPage() {
     setError(null);
     setSubmitting(true);
     try {
-      const res = await SupportApi.createTicket(subject, body, files);
+      const res = await SupportApi.createTicket(subject, body, files,
+        guidesForQuestion(`${subject} ${body}`, lang === "ar" ? "ar" : "en").map((g) => `${g.title[lang === "ar" ? "ar" : "en"]}:\n${g.steps[lang === "ar" ? "ar" : "en"].map((s, i) => `${i + 1}. ${s}`).join("\n")}`).join("\n\n"));
       setSubject("");
       setBody("");
       setFiles([]);

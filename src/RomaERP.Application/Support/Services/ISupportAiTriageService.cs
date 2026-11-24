@@ -14,5 +14,6 @@ public interface ISupportAiTriageService
     /// ever returns CanAnswer=true for generic "how do I / what is" questions it can answer confidently and
     /// safely without touching the customer's own account or data — anything account-specific, billing, or
     /// bug-shaped is left for a human, never guessed at.</summary>
-    Task<SupportTriageResult> TriageAsync(string subject, string body, CancellationToken ct = default);
+    /// <param name="guides">Optional: the in-app help guides that best match the question, so the reply follows the product's own steps instead of general knowledge.</param>
+    Task<SupportTriageResult> TriageAsync(string subject, string body, string? guides = null, CancellationToken ct = default);
 }

@@ -326,6 +326,18 @@ export function topicForPath(pathname: string): HelpTopic {
   return best ?? HELP_TOPICS[0];
 }
 
+/** The guides that best match a free-text question (any shared word counts, best first). Used to ground the support assistant's first reply in the product's own steps. */
+export function guidesForQuestion(text: string, lang: "ar" | "en", max = 3): HelpTopic[] {
+  const words = norm(text).split(/[^\p{L}\p{N}]+/u).filter((w) => w.length > 2);
+  if (words.length === 0) return [];
+  return HELP_TOPICS
+    .map((t) => {
+      const hay = norm([t.title.ar, t.title.en, t.section.ar, t.section.en, t.keywords, ...t.steps[lang]].join(" "));
+      return { t, score: words.filter((w) => hay.includes(w)).length };
+    })
+    .filter((x) => x.score > 0).sort((a, b) => b.score - a.score).slice(0, max).map((x) => x.t);
+}
+
 export function searchTopics(query: string, lang: "ar" | "en"): HelpTopic[] {
   const q = norm(query.trim());
   if (!q) return HELP_TOPICS;

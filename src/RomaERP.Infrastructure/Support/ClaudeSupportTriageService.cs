@@ -36,7 +36,7 @@ public class ClaudeSupportTriageService : ISupportAiTriageService
         _language = language;
     }
 
-    public async Task<SupportTriageResult> TriageAsync(string subject, string body, CancellationToken ct = default)
+    public async Task<SupportTriageResult> TriageAsync(string subject, string body, string? guides = null, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(_settings.ApiKey))
             return new SupportTriageResult(false, null, "المساعد الذكي مش مفعّل — التذكرة محتاجة مراجعة بشرية.");
@@ -50,7 +50,12 @@ public class ClaudeSupportTriageService : ISupportAiTriageService
             لو السؤال يحتاج الوصول لبيانات حساب العميل، أو مشكلة تقنية/باغ، أو موضوع فواتير ودفع،
             أو أي حاجة مش متأكد منها 100%، سيبها لفريق الدعم البشري ومتخمنش.
             استخدم أداة triage_ticket دايمًا للرد.
-            """;
+            """ + (string.IsNullOrWhiteSpace(guides) ? string.Empty : $"""
+
+
+            أدلة المساعدة الرسمية داخل النظام الأقرب لسؤال العميل. لو السؤال "إزاي أعمل كذا" وإجابته في الأدلة دي، جاوب بخطواتها بالظبط وباختصار، ومتزودش خطوات من عندك. لو الأدلة مش بتغطي السؤال، سيبه للدعم البشري:
+            {guides}
+            """);
 
         var requestBody = new JsonObject
         {

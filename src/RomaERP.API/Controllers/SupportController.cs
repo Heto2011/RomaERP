@@ -82,7 +82,7 @@ public class SupportController : ControllerBase
         await _central.SaveChangesAsync(ct);
 
         // Best-effort AI first look — never blocks ticket creation on failure.
-        var triageResult = await _triage.TriageAsync(ticket.Subject, request.Body, ct);
+        var triageResult = await _triage.TriageAsync(ticket.Subject, request.Body, Guides(request.HelpContext), ct);
         if (triageResult.CanAnswer && triageResult.AnswerBody is not null)
         {
             ticket.Messages.Add(new SupportTicketMessage
@@ -98,6 +98,9 @@ public class SupportController : ControllerBase
 
         return Ok(ToDetailDto(ticket));
     }
+
+    /// <summary>The guides the page found for the question. Only used to help the first reply, so it is capped and never stored.</summary>
+    private static string? Guides(string? s) { s = s?.Trim(); return string.IsNullOrEmpty(s) ? null : s.Length > 5000 ? s[..5000] : s; }
 
     [HttpPost("tickets/{id:guid}/messages")]
     [RequestSizeLimit(6 * 1024 * 1024)]

@@ -953,10 +953,11 @@ function downloadBlob(data: Blob, fileName: string) {
 export const SupportApi = {
   getMyTickets: () => apiClient.get<SupportTicketSummary[]>("/support/tickets"),
   getTicket: (id: string) => apiClient.get<SupportTicket>(`/support/tickets/${id}`),
-  createTicket: (subject: string, body: string, files: File[]) => {
+  createTicket: (subject: string, body: string, files: File[], helpContext?: string) => {
     const form = new FormData();
     form.append("Subject", subject);
     form.append("Body", body);
+    if (helpContext) form.append("HelpContext", helpContext);
     files.forEach((f) => form.append("attachments", f));
     return apiClient.post<SupportTicket>("/support/tickets", form);
   },
