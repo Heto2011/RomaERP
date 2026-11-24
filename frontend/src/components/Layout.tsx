@@ -262,6 +262,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       items: [
         { to: "/sales/customers", label: t.nav.customers, icon: <IconUsers /> },
         { to: "/sales/customers/new", label: t.nav.addCustomerFull, icon: <IconUser /> },
+        { to: "/sales/quotations", label: t.nav.quotations, icon: <IconFile /> },
         { to: "/sales/invoices", label: t.nav.salesInvoices, icon: <IconFile /> },
         { to: "/sales/notes", label: t.nav.salesNotes, icon: <IconEdit /> },
         { to: "/sales/aging", label: t.nav.arAging, icon: <IconClock /> },
@@ -306,6 +307,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       items: [
         { to: "/purchasing/vendors", label: t.nav.vendors, icon: <IconTruck /> },
         { to: "/purchasing/vendors/new", label: t.nav.addVendorFull, icon: <IconUser /> },
+        { to: "/purchasing/orders", label: t.nav.purchaseOrders, icon: <IconCart /> },
         { to: "/purchasing/invoices", label: t.nav.purchaseInvoices, icon: <IconCart /> },
         { to: "/purchasing/aging", label: t.nav.apAging, icon: <IconClock /> },
         { to: "/purchasing/statement", label: t.nav.vendorStatement, icon: <IconFile /> },

@@ -1170,3 +1170,29 @@ export const EmployeeDebtsApi = {
   proposals: (runId: string) => apiClient.get<unknown[]>(`/employee-debts/payroll/${runId}`),
   approve: (runId: string, items: { debtId: string; amount: number }[]) => apiClient.post(`/employee-debts/payroll/${runId}/approve`, { items }),
 };
+
+export interface TradeLineInput { description: string; quantity: number; unitPrice: number; vatRate: number | null; accountId?: string | null }
+export interface TradeLine { lineNumber: number; description: string; quantity: number; unitPrice: number; lineTotal: number; vatRate: number; vatAmount: number; accountId?: string | null }
+export interface Quotation {
+  id: string; quotationNumber: string; quotationDate: string; validUntil: string | null; isExpired: boolean; customerId: string; customerName: string;
+  status: number; notes: string | null; terms: string | null; subTotal: number; vatAmount: number; totalAmount: number; convertedInvoiceId: string | null; lines: TradeLine[];
+}
+export interface PurchaseOrder {
+  id: string; orderNumber: string; orderDate: string; expectedDate: string | null; vendorId: string; vendorName: string; status: number; notes: string | null;
+  subTotal: number; vatAmount: number; totalAmount: number; approvedBy: string | null; convertedInvoiceId: string | null; lines: TradeLine[];
+}
+export const QuotationsApi = {
+  getAll: () => apiClient.get<Quotation[]>("/sales/quotations"),
+  create: (d: { customerId: string; quotationDate: string; validUntil: string | null; notes: string | null; terms: string | null; lines: TradeLineInput[] }) => apiClient.post<Quotation>("/sales/quotations", d),
+  update: (id: string, d: { customerId: string; quotationDate: string; validUntil: string | null; notes: string | null; terms: string | null; lines: TradeLineInput[] }) => apiClient.put<Quotation>(`/sales/quotations/${id}`, d),
+  setStatus: (id: string, status: number) => apiClient.post<Quotation>(`/sales/quotations/${id}/status`, { status }),
+  convert: (id: string, d: { invoiceDate: string; fiscalPeriodId: string; paymentTerm: number; warehouseId?: string | null }) => apiClient.post<Quotation>(`/sales/quotations/${id}/convert`, d),
+};
+export const PurchaseOrdersApi = {
+  getAll: () => apiClient.get<PurchaseOrder[]>("/purchasing/orders"),
+  create: (d: { vendorId: string; orderDate: string; expectedDate: string | null; notes: string | null; lines: TradeLineInput[] }) => apiClient.post<PurchaseOrder>("/purchasing/orders", d),
+  update: (id: string, d: { vendorId: string; orderDate: string; expectedDate: string | null; notes: string | null; lines: TradeLineInput[] }) => apiClient.put<PurchaseOrder>(`/purchasing/orders/${id}`, d),
+  approve: (id: string) => apiClient.post<PurchaseOrder>(`/purchasing/orders/${id}/approve`),
+  cancel: (id: string) => apiClient.post<PurchaseOrder>(`/purchasing/orders/${id}/cancel`),
+  convert: (id: string, d: { invoiceDate: string; fiscalPeriodId: string; paymentTerm: number; defaultAccountId?: string | null }) => apiClient.post<PurchaseOrder>(`/purchasing/orders/${id}/convert`, d),
+};

@@ -108,6 +108,10 @@ public interface IApplicationDbContext
     DbSet<SalesInstallmentLine> SalesInstallmentLines { get; }
     DbSet<SalesNote> SalesNotes { get; }
     DbSet<SalesNoteLine> SalesNoteLines { get; }
+    DbSet<SalesQuotation> SalesQuotations { get; }
+    DbSet<SalesQuotationLine> SalesQuotationLines { get; }
+    DbSet<RomaERP.Domain.Purchasing.PurchaseOrder> PurchaseOrders { get; }
+    DbSet<RomaERP.Domain.Purchasing.PurchaseOrderLine> PurchaseOrderLines { get; }
 
     DbSet<Vendor> Vendors { get; }
     DbSet<PurchaseInvoice> PurchaseInvoices { get; }

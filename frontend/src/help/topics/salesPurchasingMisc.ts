@@ -210,6 +210,60 @@ export const TOPICS: HelpTopic[] = [
     },
   },
   {
+    id: "spm-quotations",
+    routes: ["/sales/quotations"],
+    section: { ar: "المبيعات", en: "Sales" },
+    title: { ar: "عروض الأسعار", en: "Quotations" },
+    keywords: "عرض سعر عروض اسعار تسعير عميل تحويل فاتورة quotation quote offer proposal estimate",
+    steps: {
+      ar: [
+        "افتح المبيعات ثم \"عروض الأسعار\" ودوس \"عرض سعر جديد\".",
+        "اختار العميل وتاريخ العرض وصلاحيته، وأضف البنود بالوصف والكمية والسعر ونسبة الضريبة، واكتب الشروط لو في (توريد، دفع).",
+        "دوس \"اتبعت للعميل\" لما تبعته، وبعدها \"العميل وافق\" أو \"العميل رفض\". العرض المرفوض تقدر ترجّعه مسودة.",
+        "لما العميل يوافق دوس \"حوّله لفاتورة\"، اختار الفترة وطريقة الدفع، وهتتعمل فاتورة مبيعات عادية ببنود العرض.",
+        "زر \"طباعة\" بيفتح نسخة مرتبة تطبعها أو تحفظها PDF وتبعتها للعميل.",
+      ],
+      en: [
+        "Open Sales, then \"Quotations\", and press \"New quotation\".",
+        "Choose the customer, the date and validity, add the lines with description, quantity, price and tax rate, and write the terms if any.",
+        "Press \"Sent to customer\" once you send it, then \"Customer accepted\" or \"Customer rejected\". A rejected one can be put back to draft.",
+        "When the customer agrees, press \"Make an invoice\", choose the period and payment, and a normal sales invoice is made from the lines.",
+        "\"Print\" opens a tidy copy to print or save as PDF and send to the customer.",
+      ],
+    },
+    tips: {
+      ar: ["العرض مش بيتسجل في الدفاتر ولا بيحجز مخزون. الدفاتر بتشوفه بس لما يتحوّل لفاتورة.", "العرض المقبول أو اللي اتحوّل مينفعش يتعدّل. لو محتاج تعديل، اعمل عرض جديد."],
+      en: ["A quotation is not booked in the ledger and does not reserve stock. The ledger only sees it once it becomes an invoice.", "An accepted or converted quotation cannot be edited. Make a new one if you need changes."],
+    },
+  },
+  {
+    id: "spm-purchase-orders",
+    routes: ["/purchasing/orders"],
+    section: { ar: "المشتريات", en: "Purchasing" },
+    title: { ar: "أوامر الشراء", en: "Purchase orders" },
+    keywords: "أمر شراء اوامر شراء مورد اعتماد توريد فاتورة purchase order PO supplier approval",
+    steps: {
+      ar: [
+        "افتح المشتريات ثم \"أوامر الشراء\" ودوس \"أمر شراء جديد\".",
+        "اختار المورد وتاريخ الأمر والتوريد المتوقع، وأضف البنود بالوصف والكمية والسعر والضريبة.",
+        "دوس \"اعتمد\" لما الأمر يبقى جاهز. الاعتماد للمدير والمحاسب بس، وبيتسجل اسم اللي اعتمد.",
+        "لما المورد يبعت الفاتورة دوس \"سجّل فاتورة المورد\"، اختار الفترة وطريقة الدفع وحساب البنود، وهتتعمل فاتورة مشتريات عادية.",
+        "\"طباعة\" بيطلّع نسخة تبعتها للمورد.",
+      ],
+      en: [
+        "Open Purchasing, then \"Purchase orders\", and press \"New purchase order\".",
+        "Choose the supplier, the order date and the expected delivery, and add the lines with description, quantity, price and tax.",
+        "Press \"Approve\" when the order is ready. Only the owner and the accountant can approve, and the approver's name is kept.",
+        "When the supplier sends the invoice press \"Book the supplier invoice\", choose the period, payment and the account for the lines, and a normal purchase invoice is made.",
+        "\"Print\" gives a copy to send to the supplier.",
+      ],
+    },
+    tips: {
+      ar: ["الأمر مش بيتسجل في الدفاتر. الدفاتر بتشوفه بس لما تسجّل فاتورة المورد منه.", "الأمر المعتمد مينفعش يتعدّل. تقدر تلغيه وتعمل أمر جديد."],
+      en: ["An order is not booked in the ledger. The ledger only sees it when you book the supplier's invoice from it.", "An approved order cannot be edited. You can cancel it and make a new one."],
+    },
+  },
+  {
     id: "spm-ai-actions",
     routes: ["/assistant/actions"],
     section: { ar: "المساعد الذكي", en: "Smart assistant" },

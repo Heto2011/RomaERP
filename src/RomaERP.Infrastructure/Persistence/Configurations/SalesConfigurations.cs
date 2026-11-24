@@ -194,3 +194,64 @@ public class CustomerFollowUpConfiguration : IEntityTypeConfiguration<CustomerFo
         builder.HasQueryFilter(f => !f.IsDeleted);
     }
 }
+
+public class SalesQuotationConfiguration : IEntityTypeConfiguration<SalesQuotation>
+{
+    public void Configure(EntityTypeBuilder<SalesQuotation> builder)
+    {
+        builder.Property(q => q.QuotationNumber).HasMaxLength(20).IsRequired();
+        builder.Property(q => q.Notes).HasMaxLength(1000);
+        builder.Property(q => q.Terms).HasMaxLength(2000);
+        builder.Property(q => q.SubTotal).HasPrecision(18, 2);
+        builder.Property(q => q.VatAmount).HasPrecision(18, 2);
+        builder.Property(q => q.TotalAmount).HasPrecision(18, 2);
+        builder.HasIndex(q => q.QuotationNumber).IsUnique();
+        builder.HasOne(q => q.Customer).WithMany().HasForeignKey(q => q.CustomerId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasMany(q => q.Lines).WithOne(l => l.SalesQuotation).HasForeignKey(l => l.SalesQuotationId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class SalesQuotationLineConfiguration : IEntityTypeConfiguration<SalesQuotationLine>
+{
+    public void Configure(EntityTypeBuilder<SalesQuotationLine> builder)
+    {
+        builder.Property(l => l.Description).HasMaxLength(500).IsRequired();
+        builder.Property(l => l.Quantity).HasPrecision(18, 4);
+        builder.Property(l => l.UnitPrice).HasPrecision(18, 2);
+        builder.Property(l => l.LineTotal).HasPrecision(18, 2);
+        builder.Property(l => l.VatRate).HasPrecision(5, 4);
+        builder.Property(l => l.VatAmount).HasPrecision(18, 2);
+        builder.HasOne(l => l.Item).WithMany().HasForeignKey(l => l.ItemId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
+
+public class PurchaseOrderConfiguration : IEntityTypeConfiguration<RomaERP.Domain.Purchasing.PurchaseOrder>
+{
+    public void Configure(EntityTypeBuilder<RomaERP.Domain.Purchasing.PurchaseOrder> builder)
+    {
+        builder.Property(o => o.OrderNumber).HasMaxLength(20).IsRequired();
+        builder.Property(o => o.Notes).HasMaxLength(1000);
+        builder.Property(o => o.ApprovedBy).HasMaxLength(100);
+        builder.Property(o => o.SubTotal).HasPrecision(18, 2);
+        builder.Property(o => o.VatAmount).HasPrecision(18, 2);
+        builder.Property(o => o.TotalAmount).HasPrecision(18, 2);
+        builder.HasIndex(o => o.OrderNumber).IsUnique();
+        builder.HasOne(o => o.Vendor).WithMany().HasForeignKey(o => o.VendorId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasMany(o => o.Lines).WithOne(l => l.PurchaseOrder).HasForeignKey(l => l.PurchaseOrderId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class PurchaseOrderLineConfiguration : IEntityTypeConfiguration<RomaERP.Domain.Purchasing.PurchaseOrderLine>
+{
+    public void Configure(EntityTypeBuilder<RomaERP.Domain.Purchasing.PurchaseOrderLine> builder)
+    {
+        builder.Property(l => l.Description).HasMaxLength(500).IsRequired();
+        builder.Property(l => l.Quantity).HasPrecision(18, 4);
+        builder.Property(l => l.UnitPrice).HasPrecision(18, 2);
+        builder.Property(l => l.LineTotal).HasPrecision(18, 2);
+        builder.Property(l => l.VatRate).HasPrecision(5, 4);
+        builder.Property(l => l.VatAmount).HasPrecision(18, 2);
+        builder.HasOne(l => l.Item).WithMany().HasForeignKey(l => l.ItemId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(l => l.Account).WithMany().HasForeignKey(l => l.AccountId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
