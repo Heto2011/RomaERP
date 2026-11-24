@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SystemKeyInput, { useSystemKey } from "../../components/SystemKeyInput";
 import { MarketersApi } from "../../api/services";
 import type { MarketerCommission, MarketerSummary } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -10,7 +11,7 @@ function money(n: number, currency: string) {
 }
 
 export default function MarketersPage() {
-  const [systemKey, setSystemKey] = useState("");
+  const [systemKey, setSystemKey] = useSystemKey();
   const [marketers, setMarketers] = useState<MarketerSummary[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [rows, setRows] = useState<MarketerCommission[]>([]);
@@ -47,7 +48,7 @@ export default function MarketersPage() {
       <div className="card">
         <div className="form-field">
           <label>System Key</label>
-          <input type="password" value={systemKey} onChange={(e) => setSystemKey(e.target.value)} placeholder="X-System-Key" />
+          <SystemKeyInput value={systemKey} onChange={setSystemKey} />
         </div>
         <button className="btn btn-secondary btn-sm" onClick={load}>Load</button>
       </div>

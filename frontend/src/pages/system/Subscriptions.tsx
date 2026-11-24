@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SystemKeyInput, { useSystemKey } from "../../components/SystemKeyInput";
 import { SubscriptionsApi } from "../../api/services";
 import { ProductScope, SubscriptionStatus, SubscriptionInvoiceStatus, type TenantActivity, type SubscriptionPlan, type TenantSubscription, type SubscriptionInvoice, type BillingRunResult } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -27,7 +28,7 @@ const invoiceStatusLabel: Record<SubscriptionInvoiceStatus, string> = {
 };
 
 export default function SubscriptionsPage() {
-  const [systemKey, setSystemKey] = useState("");
+  const [systemKey, setSystemKey] = useSystemKey();
   const [plans, setPlans] = useState<SubscriptionPlan[] | null>(null);
   const [subscriptions, setSubscriptions] = useState<TenantSubscription[] | null>(null);
   const [invoices, setInvoices] = useState<SubscriptionInvoice[] | null>(null);
@@ -266,7 +267,7 @@ export default function SubscriptionsPage() {
       <div className="card">
         <div className="form-field">
           <label>System Key</label>
-          <input type="password" value={systemKey} onChange={(e) => setSystemKey(e.target.value)} placeholder="X-System-Key" />
+          <SystemKeyInput value={systemKey} onChange={setSystemKey} />
         </div>
         <div style={{ display: "flex", gap: 8, marginTop: 10 }}>
           <button className="btn" onClick={() => { setPage(1); void loadAll(search, 1); }}>Load</button>

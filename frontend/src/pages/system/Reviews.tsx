@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SystemKeyInput, { useSystemKey } from "../../components/SystemKeyInput";
 import { systemApiClient, getErrorMessage } from "../../api/client";
 
 type Review = { id: string; companyCode: string; companyName?: string | null; userName: string; displayName: string; rating: number; comment?: string | null; product: string;
@@ -6,7 +7,7 @@ type Review = { id: string; companyCode: string; companyName?: string | null; us
 const STATUS = ["Pending", "Approved", "Rejected"];
 
 export default function ReviewsPage() {
-  const [systemKey, setSystemKey] = useState("");
+  const [systemKey, setSystemKey] = useSystemKey();
   const [filter, setFilter] = useState("");
   const [rows, setRows] = useState<Review[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -27,7 +28,7 @@ export default function ReviewsPage() {
       <h1>Customer reviews</h1>
       <p className="text-muted">What customers wrote when asked at the end of the month. A review appears on the website only when the customer agreed to publish it AND you approved it here. Nothing is edited or invented.</p>
       <div className="card" style={{ display: "flex", gap: 8, alignItems: "end", flexWrap: "wrap" }}>
-        <div className="form-field"><label>System Key</label><input type="password" value={systemKey} onChange={(e) => setSystemKey(e.target.value)} placeholder="X-System-Key" /></div>
+        <div className="form-field"><label>System Key</label><SystemKeyInput value={systemKey} onChange={setSystemKey} /></div>
         <div className="form-field"><label>Show</label>
           <select value={filter} onChange={(e) => { setFilter(e.target.value); void load(e.target.value); }}>
             <option value="">All</option><option value="Pending">Waiting for a decision</option><option value="Approved">Approved</option><option value="Rejected">Rejected</option>

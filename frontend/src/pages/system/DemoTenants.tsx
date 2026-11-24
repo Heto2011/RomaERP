@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SystemKeyInput, { useSystemKey } from "../../components/SystemKeyInput";
 import { SystemApi } from "../../api/services";
 import { Country, ProductScope, type ProvisionTenantRequest, type Tenant, type TransferUserResult } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -20,7 +21,7 @@ function randomPassword() {
 }
 
 export default function DemoTenantsPage() {
-  const [systemKey, setSystemKey] = useState("");
+  const [systemKey, setSystemKey] = useSystemKey();
   const [tenants, setTenants] = useState<Tenant[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -176,7 +177,7 @@ export default function DemoTenantsPage() {
       <div className="card">
         <div className="form-field">
           <label>System Key</label>
-          <input type="password" value={systemKey} onChange={(e) => setSystemKey(e.target.value)} placeholder="X-System-Key" />
+          <SystemKeyInput value={systemKey} onChange={setSystemKey} />
         </div>
       </div>
 

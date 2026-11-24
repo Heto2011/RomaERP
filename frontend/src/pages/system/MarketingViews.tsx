@@ -1,10 +1,11 @@
 import { useState } from "react";
+import SystemKeyInput, { useSystemKey } from "../../components/SystemKeyInput";
 import { MarketingApi } from "../../api/services";
 import { type MarketingPageView, type MarketingPageViewStats } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 
 export default function MarketingViewsPage() {
-  const [systemKey, setSystemKey] = useState("");
+  const [systemKey, setSystemKey] = useSystemKey();
   const [stats, setStats] = useState<MarketingPageViewStats | null>(null);
   const [views, setViews] = useState<MarketingPageView[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -38,7 +39,7 @@ export default function MarketingViewsPage() {
       <div className="card">
         <div className="form-field">
           <label>System Key</label>
-          <input type="password" value={systemKey} onChange={(e) => setSystemKey(e.target.value)} placeholder="X-System-Key" />
+          <SystemKeyInput value={systemKey} onChange={setSystemKey} />
         </div>
         <button className="btn btn-secondary btn-sm" onClick={load} style={{ marginTop: 8 }}>Load</button>
       </div>

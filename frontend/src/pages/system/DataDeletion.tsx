@@ -1,10 +1,11 @@
 import { useState } from "react";
+import SystemKeyInput, { useSystemKey } from "../../components/SystemKeyInput";
 import { SystemApi } from "../../api/services";
 import { type Tenant, type DataDeletionRecord } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 
 export default function DataDeletionPage() {
-  const [systemKey, setSystemKey] = useState("");
+  const [systemKey, setSystemKey] = useSystemKey();
   const [tenants, setTenants] = useState<Tenant[] | null>(null);
   const [records, setRecords] = useState<DataDeletionRecord[] | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -93,7 +94,7 @@ export default function DataDeletionPage() {
       <div className="card">
         <div className="form-field">
           <label>System Key</label>
-          <input type="password" value={systemKey} onChange={(e) => setSystemKey(e.target.value)} placeholder="X-System-Key" />
+          <SystemKeyInput value={systemKey} onChange={setSystemKey} />
         </div>
       </div>
 

@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SystemKeyInput, { useSystemKey } from "../../components/SystemKeyInput";
 import { AiUsageApi } from "../../api/services";
 import type { AiUsageOverview, TenantAiUsage } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -17,7 +18,7 @@ const levelClass: Record<TenantAiUsage["level"], string> = {
 };
 
 export default function AiUsagePage() {
-  const [systemKey, setSystemKey] = useState("");
+  const [systemKey, setSystemKey] = useSystemKey();
   const [data, setData] = useState<AiUsageOverview | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -49,7 +50,7 @@ export default function AiUsagePage() {
       <div className="card">
         <div className="form-field">
           <label>System Key</label>
-          <input type="password" value={systemKey} onChange={(e) => setSystemKey(e.target.value)} placeholder="X-System-Key" />
+          <SystemKeyInput value={systemKey} onChange={setSystemKey} />
         </div>
         <button className="btn btn-secondary btn-sm" onClick={load} disabled={loading} style={{ marginTop: 8 }}>
           {loading ? "Loading…" : "Load"}

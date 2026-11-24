@@ -1,4 +1,5 @@
 import { useState } from "react";
+import SystemKeyInput, { useSystemKey } from "../../components/SystemKeyInput";
 import { SystemSupportApi } from "../../api/services";
 import type { SupportTicket, SupportTicketStatus, SupportTicketSummary } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
@@ -6,7 +7,7 @@ import { getErrorMessage } from "../../api/client";
 const STATUSES: SupportTicketStatus[] = ["Open", "AwaitingCustomer", "InProgress", "Resolved", "Closed"];
 
 export default function SupportTicketsPage() {
-  const [systemKey, setSystemKey] = useState("");
+  const [systemKey, setSystemKey] = useSystemKey();
   const [tickets, setTickets] = useState<SupportTicketSummary[] | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>("");
   const [selected, setSelected] = useState<SupportTicket | null>(null);
@@ -131,7 +132,7 @@ export default function SupportTicketsPage() {
         <div className="form-grid">
           <div className="form-field">
             <label>System Key</label>
-            <input type="password" value={systemKey} onChange={(e) => setSystemKey(e.target.value)} placeholder="X-System-Key" />
+            <SystemKeyInput value={systemKey} onChange={setSystemKey} />
           </div>
           <div className="form-field">
             <label>Filter by status</label>
