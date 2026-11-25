@@ -16,4 +16,4 @@ For each: say what you will do (5 sec), do it slowly, say the result (5 sec). No
 ## Status
 Recorded from the real screens with demo data (captions only, no voice): `docs/videos/`
 1-first-sales-invoice, 2-collect-payment, 3-purchase-order, 4-ask-the-assistant, 5-install-the-app-iphone, quotation-to-invoice.
-Not recorded yet: stock count and low stock, payroll in 3 minutes.
+Also recorded: 6-payroll. Not recorded yet: stock count and low stock (the stock count screen needs a longer, careful demo).
