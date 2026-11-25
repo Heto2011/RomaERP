@@ -33,6 +33,8 @@ public class AssistantAttentionService : IAssistantAttentionService
             if (ap.Count > 0) items.Add(new("overdue-ap", $"فواتير موردين متأخرة أكتر من {OverdueDays} يوم", ap.Count, ap.Sum(), "إيه الفواتير اللي علينا للموردين ومتأخرة؟"));
             var bank = await _c.BankFeedTransactions.AsNoTracking().Where(b => !b.IsDeleted && !b.IsMatched).Select(b => Math.Abs(b.Amount)).ToListAsync(ct);
             if (bank.Count > 0) items.Add(new("bank-unmatched", "حركات بنك مرفوعة ومش متطابقة مع الدفاتر", bank.Count, bank.Sum(), "إيه حركات البنك اللي لسه مش متطابقة؟"));
+            var rec = await _c.RecurringInvoiceDues.AsNoTracking().CountAsync(d => !d.IsDeleted && d.Status == RomaERP.Domain.Sales.RecurringDueStatus.Pending, ct);
+            if (rec > 0) items.Add(new("recurring-invoices", "فواتير متكررة مستنية إصدارك", rec, null, "إيه الفواتير المتكررة المستنية؟"));
             var low = await _c.Items.AsNoTracking().CountAsync(i => !i.IsDeleted && i.IsActive && i.ReorderLevel > 0 && i.QuantityOnHand <= i.ReorderLevel, ct);
             if (low > 0) items.Add(new("low-stock", "أصناف وصلت لحد إعادة الطلب", low, null, "إيه الأصناف اللي قربت تخلص؟"));
         }

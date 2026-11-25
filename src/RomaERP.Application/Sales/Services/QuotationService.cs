@@ -39,7 +39,7 @@ public class QuotationService : IQuotationService
     public async Task<QuotationDto> CreateAsync(SaveQuotationDto dto, CancellationToken ct = default)
     {
         var q = new SalesQuotation { QuotationNumber = $"QT-{(await _c.SalesQuotations.CountAsync(ct) + 1):D6}" };
-        await FillAsync(q, dto, ct);
+        foreach (var l in await FillAsync(q, dto, ct)) q.Lines.Add(l);
         _c.SalesQuotations.Add(q);
         await _c.SaveChangesAsync(ct);
         return await GetAsync(q.Id, ct);
@@ -49,14 +49,15 @@ public class QuotationService : IQuotationService
     {
         var q = await LoadAsync(id, true, ct);
         if (q.Status is QuotationStatus.Converted or QuotationStatus.Accepted) throw new ValidationAppException("العرض ده اتقبل أو اتحوّل لفاتورة ومينفعش يتعدّل.");
+        var newLines = await FillAsync(q, dto, ct);
         _c.SalesQuotationLines.RemoveRange(q.Lines.ToList());
-        q.Lines.Clear();
-        await FillAsync(q, dto, ct);
+        // New lines are added through their own set: a line added to a tracked quotation's collection with a preset key would be treated as an existing row.
+        foreach (var l in newLines) { l.SalesQuotationId = q.Id; _c.SalesQuotationLines.Add(l); }
         await _c.SaveChangesAsync(ct);
         return await GetAsync(id, ct);
     }
 
-    private async Task FillAsync(SalesQuotation q, SaveQuotationDto dto, CancellationToken ct)
+    private async Task<List<SalesQuotationLine>> FillAsync(SalesQuotation q, SaveQuotationDto dto, CancellationToken ct)
     {
         if (dto.Lines.Count == 0) throw new ValidationAppException("لازم يكون في بند واحد على الأقل.");
         if (dto.Lines.Any(l => string.IsNullOrWhiteSpace(l.Description))) throw new ValidationAppException("اكتب وصف لكل بند.");
@@ -69,14 +70,16 @@ public class QuotationService : IQuotationService
         q.CustomerId = dto.CustomerId; q.QuotationDate = dto.QuotationDate.Date; q.ValidUntil = dto.ValidUntil?.Date;
         q.Notes = Clean(dto.Notes, 1000); q.Terms = Clean(dto.Terms, 2000);
         var n = 0;
+        var built = new List<SalesQuotationLine>();
         foreach (var l in dto.Lines)
         {
             var total = Math.Round(l.Quantity * l.UnitPrice, 2); var rate = l.VatRate ?? vat;
-            q.Lines.Add(new SalesQuotationLine { LineNumber = ++n, Description = l.Description.Trim(), Quantity = l.Quantity, UnitPrice = l.UnitPrice, LineTotal = total, VatRate = rate, VatAmount = Math.Round(total * rate, 2), ItemId = l.ItemId });
+            built.Add(new SalesQuotationLine { LineNumber = ++n, Description = l.Description.Trim(), Quantity = l.Quantity, UnitPrice = l.UnitPrice, LineTotal = total, VatRate = rate, VatAmount = Math.Round(total * rate, 2), ItemId = l.ItemId });
         }
-        q.SubTotal = q.Lines.Sum(l => l.LineTotal);
-        q.VatAmount = q.Lines.GroupBy(l => l.VatRate).Sum(g => Math.Round(g.Sum(l => l.LineTotal) * g.Key, 2));
+        q.SubTotal = built.Sum(l => l.LineTotal);
+        q.VatAmount = built.GroupBy(l => l.VatRate).Sum(g => Math.Round(g.Sum(l => l.LineTotal) * g.Key, 2));
         q.TotalAmount = q.SubTotal + q.VatAmount;
+        return built;
     }
 
     private static string? Clean(string? s, int max) { s = s?.Trim(); return string.IsNullOrEmpty(s) ? null : s.Length > max ? s[..max] : s; }

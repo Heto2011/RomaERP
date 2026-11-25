@@ -128,4 +128,29 @@ public class QuotationAndOrderTests
         await Assert.ThrowsAsync<ValidationAppException>(() => s.ConvertAsync(o.Id, new ConvertPurchaseOrderDto { DefaultAccountId = Guid.NewGuid() }));
         await Assert.ThrowsAsync<ValidationAppException>(() => s.CancelAsync(o.Id));
     }
+
+    [Fact]
+    public async Task Quotation_Update_ReplacesTheLines_AndTheTotalsFollow()
+    {
+        var (s, c, _, cust) = Quote();
+        var q = await s.CreateAsync(Q(cust.Id));
+        var dto = Q(cust.Id); dto.Lines.Clear();
+        dto.Lines.Add(new QuotationLineInputDto { Description = "خدمة أ", Quantity = 1, UnitPrice = 100, VatRate = 0 });
+        dto.Lines.Add(new QuotationLineInputDto { Description = "خدمة ب", Quantity = 3, UnitPrice = 50, VatRate = 0 });
+        var up = await s.UpdateAsync(q.Id, dto);
+        Assert.Equal(2, up.Lines.Count); Assert.Equal(250m, up.TotalAmount);
+        Assert.Equal(2, await c.SalesQuotationLines.CountAsync());
+    }
+
+    [Fact]
+    public async Task Order_Update_ReplacesTheLines_AndTheTotalsFollow()
+    {
+        var (s, _, v) = Order();
+        var o = await s.CreateAsync(O(v.Id));
+        var dto = O(v.Id); dto.Lines.Clear();
+        dto.Lines.Add(new PurchaseOrderLineInputDto { Description = "سكر", Quantity = 4, UnitPrice = 30, VatRate = 0 });
+        dto.Lines.Add(new PurchaseOrderLineInputDto { Description = "زيت", Quantity = 1, UnitPrice = 80, VatRate = 0 });
+        var up = await s.UpdateAsync(o.Id, dto);
+        Assert.Equal(2, up.Lines.Count); Assert.Equal(200m, up.TotalAmount);
+    }
 }

@@ -41,7 +41,7 @@ public class PurchaseOrderService : IPurchaseOrderService
     public async Task<PurchaseOrderDto> CreateAsync(SavePurchaseOrderDto dto, CancellationToken ct = default)
     {
         var o = new PurchaseOrder { OrderNumber = $"PO-{(await _c.PurchaseOrders.CountAsync(ct) + 1):D6}" };
-        await FillAsync(o, dto, ct);
+        foreach (var l in await FillAsync(o, dto, ct)) o.Lines.Add(l);
         _c.PurchaseOrders.Add(o);
         await _c.SaveChangesAsync(ct);
         return await GetAsync(o.Id, ct);
@@ -51,14 +51,15 @@ public class PurchaseOrderService : IPurchaseOrderService
     {
         var o = await LoadAsync(id, true, ct);
         if (o.Status != PurchaseOrderStatus.Draft) throw new ValidationAppException("الأمر ده اتعتمد أو اتقفل ومينفعش يتعدّل.");
+        var newLines = await FillAsync(o, dto, ct);
         _c.PurchaseOrderLines.RemoveRange(o.Lines.ToList());
-        o.Lines.Clear();
-        await FillAsync(o, dto, ct);
+        // New lines are added through their own set: a line added to a tracked order's collection with a preset key would be treated as an existing row.
+        foreach (var l in newLines) { l.PurchaseOrderId = o.Id; _c.PurchaseOrderLines.Add(l); }
         await _c.SaveChangesAsync(ct);
         return await GetAsync(id, ct);
     }
 
-    private async Task FillAsync(PurchaseOrder o, SavePurchaseOrderDto dto, CancellationToken ct)
+    private async Task<List<PurchaseOrderLine>> FillAsync(PurchaseOrder o, SavePurchaseOrderDto dto, CancellationToken ct)
     {
         if (dto.Lines.Count == 0) throw new ValidationAppException("لازم يكون في بند واحد على الأقل.");
         if (dto.Lines.Any(l => string.IsNullOrWhiteSpace(l.Description))) throw new ValidationAppException("اكتب وصف لكل بند.");
@@ -71,14 +72,16 @@ public class PurchaseOrderService : IPurchaseOrderService
         o.VendorId = dto.VendorId; o.OrderDate = dto.OrderDate.Date; o.ExpectedDate = dto.ExpectedDate?.Date;
         var notes = dto.Notes?.Trim(); o.Notes = string.IsNullOrEmpty(notes) ? null : notes.Length > 1000 ? notes[..1000] : notes;
         var n = 0;
+        var built = new List<PurchaseOrderLine>();
         foreach (var l in dto.Lines)
         {
             var total = Math.Round(l.Quantity * l.UnitPrice, 2); var rate = l.VatRate ?? vat;
-            o.Lines.Add(new PurchaseOrderLine { LineNumber = ++n, Description = l.Description.Trim(), Quantity = l.Quantity, UnitPrice = l.UnitPrice, LineTotal = total, VatRate = rate, VatAmount = Math.Round(total * rate, 2), ItemId = l.ItemId, AccountId = l.AccountId });
+            built.Add(new PurchaseOrderLine { LineNumber = ++n, Description = l.Description.Trim(), Quantity = l.Quantity, UnitPrice = l.UnitPrice, LineTotal = total, VatRate = rate, VatAmount = Math.Round(total * rate, 2), ItemId = l.ItemId, AccountId = l.AccountId });
         }
-        o.SubTotal = o.Lines.Sum(l => l.LineTotal);
-        o.VatAmount = o.Lines.GroupBy(l => l.VatRate).Sum(g => Math.Round(g.Sum(l => l.LineTotal) * g.Key, 2));
+        o.SubTotal = built.Sum(l => l.LineTotal);
+        o.VatAmount = built.GroupBy(l => l.VatRate).Sum(g => Math.Round(g.Sum(l => l.LineTotal) * g.Key, 2));
         o.TotalAmount = o.SubTotal + o.VatAmount;
+        return built;
     }
 
     public async Task<PurchaseOrderDto> ApproveAsync(Guid id, CancellationToken ct = default)

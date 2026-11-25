@@ -288,3 +288,36 @@ public class PurchaseNoteLineConfiguration : IEntityTypeConfiguration<RomaERP.Do
         builder.HasOne(l => l.Account).WithMany().HasForeignKey(l => l.AccountId).OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public class RecurringInvoiceConfiguration : IEntityTypeConfiguration<RecurringInvoice>
+{
+    public void Configure(EntityTypeBuilder<RecurringInvoice> builder)
+    {
+        builder.Property(r => r.Title).HasMaxLength(200).IsRequired();
+        builder.Property(r => r.Notes).HasMaxLength(1000);
+        builder.HasOne(r => r.Customer).WithMany().HasForeignKey(r => r.CustomerId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasMany(r => r.Lines).WithOne(l => l.RecurringInvoice).HasForeignKey(l => l.RecurringInvoiceId).OnDelete(DeleteBehavior.Cascade);
+        builder.HasMany(r => r.Dues).WithOne(d => d.RecurringInvoice).HasForeignKey(d => d.RecurringInvoiceId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class RecurringInvoiceLineConfiguration : IEntityTypeConfiguration<RecurringInvoiceLine>
+{
+    public void Configure(EntityTypeBuilder<RecurringInvoiceLine> builder)
+    {
+        builder.Property(l => l.Description).HasMaxLength(500).IsRequired();
+        builder.Property(l => l.Quantity).HasPrecision(18, 4);
+        builder.Property(l => l.UnitPrice).HasPrecision(18, 2);
+        builder.Property(l => l.VatRate).HasPrecision(5, 4);
+    }
+}
+
+public class RecurringInvoiceDueConfiguration : IEntityTypeConfiguration<RecurringInvoiceDue>
+{
+    public void Configure(EntityTypeBuilder<RecurringInvoiceDue> builder)
+    {
+        builder.Property(d => d.PeriodKey).HasMaxLength(7).IsRequired();
+        builder.Property(d => d.DecidedBy).HasMaxLength(100);
+        builder.HasIndex(d => new { d.RecurringInvoiceId, d.PeriodKey }).IsUnique();
+    }
+}

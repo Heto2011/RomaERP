@@ -109,6 +109,9 @@ public interface IApplicationDbContext
     DbSet<SalesNote> SalesNotes { get; }
     DbSet<SalesNoteLine> SalesNoteLines { get; }
     DbSet<SalesQuotation> SalesQuotations { get; }
+    DbSet<RecurringInvoice> RecurringInvoices { get; }
+    DbSet<RecurringInvoiceLine> RecurringInvoiceLines { get; }
+    DbSet<RecurringInvoiceDue> RecurringInvoiceDues { get; }
     DbSet<RomaERP.Domain.Purchasing.PurchaseNote> PurchaseNotes { get; }
     DbSet<RomaERP.Domain.Purchasing.PurchaseNoteLine> PurchaseNoteLines { get; }
     DbSet<SalesQuotationLine> SalesQuotationLines { get; }

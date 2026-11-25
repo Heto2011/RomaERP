@@ -1208,3 +1208,20 @@ export const PurchaseNotesApi = {
   getAll: () => apiClient.get<PurchaseNote[]>("/purchasing/notes"),
   create: (d: { originalInvoiceId: string; noteType: number; noteDate: string; fiscalPeriodId: string; reason: string; notes: string | null; lines: { description: string; quantity: number; unitPrice: number; vatRate: number | null; accountId: string }[] }) => apiClient.post<PurchaseNote>("/purchasing/notes", d),
 };
+
+export interface RecurringLine { description: string; quantity: number; unitPrice: number; vatRate: number | null }
+export interface RecurringInvoice {
+  id: string; title: string; customerId: string; customerName: string; intervalMonths: number; dayOfMonth: number; startDate: string; endDate: string | null;
+  paymentTerm: number; notes: string | null; isActive: boolean; total: number; pendingCount: number; lines: RecurringLine[];
+}
+export interface RecurringDue { id: string; recurringInvoiceId: string; title: string; customerName: string; dueDate: string; periodKey: string; status: number; paymentTerm: number; total: number; invoiceId: string | null; lines: RecurringLine[] }
+export const RecurringInvoicesApi = {
+  getAll: () => apiClient.get<RecurringInvoice[]>("/sales/recurring"),
+  pending: () => apiClient.get<RecurringDue[]>("/sales/recurring/pending"),
+  create: (d: unknown) => apiClient.post<RecurringInvoice>("/sales/recurring", d),
+  update: (id: string, d: unknown) => apiClient.put<RecurringInvoice>(`/sales/recurring/${id}`, d),
+  setActive: (id: string, active: boolean) => apiClient.post<RecurringInvoice>(`/sales/recurring/${id}/active`, { active }),
+  issue: (dueId: string, d: { invoiceDate: string; fiscalPeriodId: string; lines?: RecurringLine[] }) => apiClient.post<RecurringDue>(`/sales/recurring/pending/${dueId}/issue`, d),
+  skip: (dueId: string) => apiClient.post<RecurringDue>(`/sales/recurring/pending/${dueId}/skip`),
+  prepareNow: () => apiClient.post<number>("/sales/recurring/prepare-now"),
+};

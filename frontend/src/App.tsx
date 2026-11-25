@@ -68,6 +68,7 @@ import Customers from "./pages/sales/Customers";
 import SalesInvoices from "./pages/sales/SalesInvoices";
 import SalesNotes from "./pages/sales/SalesNotes";
 import Quotations from "./pages/sales/Quotations";
+import RecurringInvoices from "./pages/sales/RecurringInvoices";
 import PurchaseOrders from "./pages/purchasing/PurchaseOrders";
 import PurchaseNotes from "./pages/purchasing/PurchaseNotes";
 import ArAging from "./pages/sales/ArAging";
@@ -279,6 +280,7 @@ export default function App() {
       <Route path="/sales/invoices" element={<ProtectedRoute><SalesInvoices /></ProtectedRoute>} />
       <Route path="/sales/notes" element={<ProtectedRoute><SalesNotes /></ProtectedRoute>} />
       <Route path="/sales/quotations" element={<ProtectedRoute><Quotations /></ProtectedRoute>} />
+      <Route path="/sales/recurring" element={<ProtectedRoute><RecurringInvoices /></ProtectedRoute>} />
       <Route path="/purchasing/orders" element={<ProtectedRoute><PurchaseOrders /></ProtectedRoute>} />
       <Route path="/purchasing/notes" element={<ProtectedRoute><PurchaseNotes /></ProtectedRoute>} />
       <Route path="/sales/follow-ups" element={<ProtectedRoute><CustomerFollowUps /></ProtectedRoute>} />

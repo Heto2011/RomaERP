@@ -5533,6 +5533,153 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.ToTable("CustomerFollowUps");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Sales.RecurringInvoice", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("DayOfMonth")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("IntervalMonths")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<int>("PaymentTerm")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.ToTable("RecurringInvoices");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Sales.RecurringInvoiceDue", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DecidedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DecidedBy")
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<DateTime>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("InvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("PeriodKey")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
+                    b.Property<Guid>("RecurringInvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("UpdatedAtUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecurringInvoiceId", "PeriodKey")
+                        .IsUnique();
+
+                    b.ToTable("RecurringInvoiceDues");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Sales.RecurringInvoiceLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<int>("LineNumber")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("Quantity")
+                        .HasPrecision(18, 4)
+                        .HasColumnType("decimal(18,4)");
+
+                    b.Property<Guid>("RecurringInvoiceId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<decimal?>("VatRate")
+                        .HasPrecision(5, 4)
+                        .HasColumnType("decimal(5,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RecurringInvoiceId");
+
+                    b.ToTable("RecurringInvoiceLines");
+                });
+
             modelBuilder.Entity("RomaERP.Domain.Sales.SalesInstallmentLine", b =>
                 {
                     b.Property<Guid>("Id")
@@ -7561,6 +7708,39 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
                     b.Navigation("Customer");
                 });
 
+            modelBuilder.Entity("RomaERP.Domain.Sales.RecurringInvoice", b =>
+                {
+                    b.HasOne("RomaERP.Domain.Sales.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Sales.RecurringInvoiceDue", b =>
+                {
+                    b.HasOne("RomaERP.Domain.Sales.RecurringInvoice", "RecurringInvoice")
+                        .WithMany("Dues")
+                        .HasForeignKey("RecurringInvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RecurringInvoice");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Sales.RecurringInvoiceLine", b =>
+                {
+                    b.HasOne("RomaERP.Domain.Sales.RecurringInvoice", "RecurringInvoice")
+                        .WithMany("Lines")
+                        .HasForeignKey("RecurringInvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("RecurringInvoice");
+                });
+
             modelBuilder.Entity("RomaERP.Domain.Sales.SalesInstallmentLine", b =>
                 {
                     b.HasOne("RomaERP.Domain.Sales.SalesInvoice", "SalesInvoice")
@@ -7834,6 +8014,13 @@ namespace RomaERP.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("RomaERP.Domain.Restaurant.RestaurantOrder", b =>
                 {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("RomaERP.Domain.Sales.RecurringInvoice", b =>
+                {
+                    b.Navigation("Dues");
+
                     b.Navigation("Lines");
                 });
 

@@ -291,6 +291,33 @@ export const TOPICS: HelpTopic[] = [
     },
   },
   {
+    id: "spm-recurring-invoices",
+    routes: ["/sales/recurring"],
+    section: { ar: "المبيعات", en: "Sales" },
+    title: { ar: "فواتير متكررة", en: "Recurring invoices" },
+    keywords: "فاتورة متكررة اشتراك شهري ايجار دوري تكرار تلقائي recurring invoice subscription monthly rent repeat",
+    steps: {
+      ar: [
+        "افتح المبيعات ثم \"فواتير متكررة\" ودوس \"فاتورة متكررة جديدة\".",
+        "اكتب الاسم (مثلًا اشتراك شهري)، واختار العميل والتكرار (كل شهر أو 3 أو 6 أو 12)، ويوم الاستحقاق، وتاريخ البداية (والنهاية لو في)، وطريقة الدفع، وأضف البنود.",
+        "لما ميعاد الفاتورة يجي، السيستم بيحضّرها في قسم \"مستنية إصدارك\" (مرة واحدة لكل فترة). مفيش حاجة بتتسجل في الدفاتر من نفسها.",
+        "دوس \"أصدر الفاتورة\"، راجع البنود وعدّلها لو محتاج (التعديل للفاتورة دي بس)، اختار الفترة المحاسبية، ودوس \"أصدر\". بتتعمل فاتورة مبيعات عادية.",
+        "أو دوس \"تخطّى الشهر ده\" لو مش عايز تفوتر الفترة دي. وتقدر توقف الفاتورة المتكررة وتشغّلها تاني.",
+      ],
+      en: [
+        "Open Sales, then \"Recurring invoices\", and press \"New recurring invoice\".",
+        "Write the name (for example monthly subscription), choose the customer, the repeat (every month, 3, 6 or 12), the day it falls due, the start date (and an end date if any), the payment, and add the lines.",
+        "When the invoice comes due the system prepares it under \"Waiting for you to issue\" (once per period). Nothing reaches the ledger by itself.",
+        "Press \"Issue the invoice\", check the lines and edit them if needed (the edit is for this invoice only), choose the fiscal period, and press \"Issue\". A normal sales invoice is made.",
+        "Or press \"Skip this period\" if you do not want to invoice it. You can pause a recurring invoice and resume it later.",
+      ],
+    },
+    tips: {
+      ar: ["اليوم 29 أو 30 أو 31 معناه آخر يوم في الشهر الأقصر.", "الإصدار والتعديل للمدير والمحاسب بس."],
+      en: ["Day 29, 30 or 31 means the last day of a shorter month.", "Only the owner and the accountant can make or issue them."],
+    },
+  },
+  {
     id: "spm-ai-actions",
     routes: ["/assistant/actions"],
     section: { ar: "المساعد الذكي", en: "Smart assistant" },
