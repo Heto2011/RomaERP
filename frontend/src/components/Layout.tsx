@@ -6,6 +6,7 @@ import { hiddenSectionsFor, SHOW_ALL_KEY, type NavSectionKey } from "../business
 import { useTheme } from "../context/ThemeContext";
 import { useLanguage } from "../i18n/LanguageContext";
 import HelpButton from "./HelpButton";
+import TableScrollHint from "./TableScrollHint";
 import InstallAppButton from "./InstallAppButton";
 import SupportBell from "./SupportBell";
 import FeedbackButton from "./FeedbackButton";
@@ -548,6 +549,7 @@ export default function Layout({ children }: { children: ReactNode }) {
             </span>
             <InstallAppButton />
             <SupportBell />
+            <TableScrollHint />
             <HelpButton />
             <FeedbackButton />
             <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>

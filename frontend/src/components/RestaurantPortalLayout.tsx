@@ -1,4 +1,5 @@
 import HelpButton from "./HelpButton";
+import TableScrollHint from "./TableScrollHint";
 import FeedbackButton from "./FeedbackButton";
 import { useState, type ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
@@ -56,6 +57,7 @@ export default function RestaurantPortalLayout({ children }: { children: ReactNo
         <div className="sidebar-brand">
           <span className="brand-text">{t.restaurantAppName}</span>
           <div style={{ display: "flex", gap: 4 }}>
+            <TableScrollHint />
             <HelpButton />
             <FeedbackButton />
             <button className="sidebar-toggle" onClick={toggleTheme} title={theme === "dark" ? t.lightMode : t.darkMode}>
