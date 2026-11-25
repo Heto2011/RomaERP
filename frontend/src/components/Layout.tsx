@@ -312,6 +312,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/purchasing/vendors/new", label: t.nav.addVendorFull, icon: <IconUser /> },
         { to: "/purchasing/orders", label: t.nav.purchaseOrders, icon: <IconCart /> },
         { to: "/purchasing/invoices", label: t.nav.purchaseInvoices, icon: <IconCart /> },
+        { to: "/purchasing/notes", label: t.nav.purchaseNotes, icon: <IconEdit /> },
         { to: "/purchasing/aging", label: t.nav.apAging, icon: <IconClock /> },
         { to: "/purchasing/statement", label: t.nav.vendorStatement, icon: <IconFile /> },
       ].filter((item) => canApprovePurchases || item.to === "/purchasing/invoices"),

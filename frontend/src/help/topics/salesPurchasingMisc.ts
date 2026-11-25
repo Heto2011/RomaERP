@@ -264,6 +264,33 @@ export const TOPICS: HelpTopic[] = [
     },
   },
   {
+    id: "spm-purchase-notes",
+    routes: ["/purchasing/notes"],
+    section: { ar: "المشتريات", en: "Purchasing" },
+    title: { ar: "مرتجعات المشتريات والرسوم الإضافية", en: "Purchase returns and extra charges" },
+    keywords: "مرتجع مشتريات اشعار مدين مورد رسوم اضافية ارجاع بضاعة تالفة purchase return debit note supplier credit extra charge",
+    steps: {
+      ar: [
+        "افتح المشتريات ثم \"مرتجعات المشتريات\" ودوس \"إشعار جديد\".",
+        "اختار فاتورة المورد الأصلية، والنوع: \"مرتجع للمورد\" (علينا أقل) أو \"رسوم إضافية من المورد\" (علينا أكتر).",
+        "اكتب السبب، وأضف البنود بالوصف والكمية والسعر، واختار لكل بند نفس الحساب اللي اتسجلت عليه المشتريات (مثلًا المخزون).",
+        "دوس \"سجّل الإشعار\". بيتسجل قيد في الدفاتر ويتعدّل رصيد المورد في نفس اللحظة.",
+        "لو رجّعت بضاعة من المخزن بالفعل، سجّل حركة مخزون منفصلة من تسويات المخزون.",
+      ],
+      en: [
+        "Open Purchasing, then \"Purchase returns\", and press \"New note\".",
+        "Choose the original supplier invoice and the type: \"Return to the supplier\" (we owe less) or \"Extra charge from the supplier\" (we owe more).",
+        "Write the reason, add the lines with description, quantity and price, and choose for each line the same account the purchase was booked to (for example stock).",
+        "Press \"Post the note\". A ledger entry is posted and the supplier balance changes at once.",
+        "If goods physically went back, record a separate stock movement from the stock adjustments page.",
+      ],
+    },
+    tips: {
+      ar: ["الإشعار بيتسجل مباشرة ومفيش مسودة. المحاسب والمدير بس هم اللي يسجّلوه.", "الإشعار على فاتورة بعملة أجنبية لسه مش مدعوم."],
+      en: ["The note posts straight away; there is no draft. Only the accountant and the owner can post it.", "A note against a foreign-currency invoice is not supported yet."],
+    },
+  },
+  {
     id: "spm-ai-actions",
     routes: ["/assistant/actions"],
     section: { ar: "المساعد الذكي", en: "Smart assistant" },

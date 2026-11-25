@@ -23,6 +23,8 @@ public static class AccountingConstants
     public const string PurchaseInvoiceReference = "PURCHASE-INVOICE";
     public const string SalesCreditNoteReference = "SALES-CREDIT-NOTE";
     public const string SalesDebitNoteReference = "SALES-DEBIT-NOTE";
+    public const string PurchaseReturnNoteReference = "PURCHASE-RETURN-NOTE";
+    public const string PurchaseChargeNoteReference = "PURCHASE-CHARGE-NOTE";
     public const string DepreciationExpenseAccountCode = "5400";
     public const string DepreciationRunReference = "DEPRECIATION-RUN";
     public const string PrepaidExpensesAccountCode = "1140";

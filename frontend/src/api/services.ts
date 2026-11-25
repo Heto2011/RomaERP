@@ -1198,3 +1198,13 @@ export const PurchaseOrdersApi = {
   cancel: (id: string) => apiClient.post<PurchaseOrder>(`/purchasing/orders/${id}/cancel`),
   convert: (id: string, d: { invoiceDate: string; fiscalPeriodId: string; paymentTerm: number; defaultAccountId?: string | null }) => apiClient.post<PurchaseOrder>(`/purchasing/orders/${id}/convert`, d),
 };
+
+export interface PurchaseNote {
+  id: string; noteNumber: string; noteType: number; noteDate: string; originalInvoiceId: string; originalInvoiceNumber: string; vendorId: string; vendorName: string;
+  reason: string; notes: string | null; subTotal: number; vatAmount: number; totalAmount: number; journalEntryId: string | null;
+  lines: { lineNumber: number; description: string; quantity: number; unitPrice: number; lineTotal: number; vatRate: number; vatAmount: number; accountId: string }[];
+}
+export const PurchaseNotesApi = {
+  getAll: () => apiClient.get<PurchaseNote[]>("/purchasing/notes"),
+  create: (d: { originalInvoiceId: string; noteType: number; noteDate: string; fiscalPeriodId: string; reason: string; notes: string | null; lines: { description: string; quantity: number; unitPrice: number; vatRate: number | null; accountId: string }[] }) => apiClient.post<PurchaseNote>("/purchasing/notes", d),
+};

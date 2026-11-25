@@ -154,6 +154,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<SalesNote> SalesNotes => Set<SalesNote>();
     public DbSet<SalesNoteLine> SalesNoteLines => Set<SalesNoteLine>();
     public DbSet<SalesQuotation> SalesQuotations => Set<SalesQuotation>();
+    public DbSet<RomaERP.Domain.Purchasing.PurchaseNote> PurchaseNotes => Set<RomaERP.Domain.Purchasing.PurchaseNote>();
+    public DbSet<RomaERP.Domain.Purchasing.PurchaseNoteLine> PurchaseNoteLines => Set<RomaERP.Domain.Purchasing.PurchaseNoteLine>();
     public DbSet<SalesQuotationLine> SalesQuotationLines => Set<SalesQuotationLine>();
     public DbSet<RomaERP.Domain.Purchasing.PurchaseOrder> PurchaseOrders => Set<RomaERP.Domain.Purchasing.PurchaseOrder>();
     public DbSet<RomaERP.Domain.Purchasing.PurchaseOrderLine> PurchaseOrderLines => Set<RomaERP.Domain.Purchasing.PurchaseOrderLine>();

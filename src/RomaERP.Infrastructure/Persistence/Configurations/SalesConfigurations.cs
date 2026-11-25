@@ -255,3 +255,36 @@ public class PurchaseOrderLineConfiguration : IEntityTypeConfiguration<RomaERP.D
         builder.HasOne(l => l.Account).WithMany().HasForeignKey(l => l.AccountId).OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public class PurchaseNoteConfiguration : IEntityTypeConfiguration<RomaERP.Domain.Purchasing.PurchaseNote>
+{
+    public void Configure(EntityTypeBuilder<RomaERP.Domain.Purchasing.PurchaseNote> builder)
+    {
+        builder.Property(n => n.NoteNumber).HasMaxLength(20).IsRequired();
+        builder.Property(n => n.Reason).HasMaxLength(500).IsRequired();
+        builder.Property(n => n.Notes).HasMaxLength(1000);
+        builder.Property(n => n.SubTotal).HasPrecision(18, 2);
+        builder.Property(n => n.VatAmount).HasPrecision(18, 2);
+        builder.Property(n => n.TotalAmount).HasPrecision(18, 2);
+        builder.HasIndex(n => n.NoteNumber).IsUnique();
+        builder.HasOne(n => n.OriginalInvoice).WithMany().HasForeignKey(n => n.OriginalInvoiceId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(n => n.Vendor).WithMany().HasForeignKey(n => n.VendorId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(n => n.FiscalPeriod).WithMany().HasForeignKey(n => n.FiscalPeriodId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(n => n.JournalEntry).WithMany().HasForeignKey(n => n.JournalEntryId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasMany(n => n.Lines).WithOne(l => l.PurchaseNote).HasForeignKey(l => l.PurchaseNoteId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class PurchaseNoteLineConfiguration : IEntityTypeConfiguration<RomaERP.Domain.Purchasing.PurchaseNoteLine>
+{
+    public void Configure(EntityTypeBuilder<RomaERP.Domain.Purchasing.PurchaseNoteLine> builder)
+    {
+        builder.Property(l => l.Description).HasMaxLength(500).IsRequired();
+        builder.Property(l => l.Quantity).HasPrecision(18, 4);
+        builder.Property(l => l.UnitPrice).HasPrecision(18, 2);
+        builder.Property(l => l.LineTotal).HasPrecision(18, 2);
+        builder.Property(l => l.VatRate).HasPrecision(5, 4);
+        builder.Property(l => l.VatAmount).HasPrecision(18, 2);
+        builder.HasOne(l => l.Account).WithMany().HasForeignKey(l => l.AccountId).OnDelete(DeleteBehavior.Restrict);
+    }
+}
