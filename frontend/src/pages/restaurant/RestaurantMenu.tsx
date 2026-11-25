@@ -188,7 +188,7 @@ export default function RestaurantMenu() {
                         </select>
                       </td>
                       <td>
-                        <input type="number" min={0.0001} step="0.01" value={newQuantity} onChange={(e) => setNewQuantity(Number(e.target.value))} style={{ width: 90 }} />
+                        <input type="number" min={0.0001} step="any" value={newQuantity} onChange={(e) => setNewQuantity(Number(e.target.value))} style={{ width: 90 }} />
                       </td>
                       <td>
                         <button type="button" className="btn btn-secondary btn-sm" onClick={addRecipeLine} disabled={!newRawMaterialId}>

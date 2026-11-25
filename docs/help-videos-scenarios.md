@@ -12,3 +12,8 @@ Record the screen of a demo company (a phone-size window is best). Speak in Egyp
 8. **Install the app on the phone**: the "Install app" button (Android), Share → Add to Home Screen (iPhone).
 
 For each: say what you will do (5 sec), do it slowly, say the result (5 sec). No intro music, no logo animation.
+
+## Status
+Recorded from the real screens with demo data (captions only, no voice): `docs/videos/`
+1-first-sales-invoice, 2-collect-payment, 3-purchase-order, 4-ask-the-assistant, 5-install-the-app-iphone, quotation-to-invoice.
+Not recorded yet: stock count and low stock, payroll in 3 minutes.

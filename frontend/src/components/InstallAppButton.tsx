@@ -23,7 +23,7 @@ export default function InstallAppButton() {
     <span style={{ position: "relative" }}>
       <button type="button" className="btn btn-secondary btn-sm" onClick={() => (evt ? evt.prompt() : setHint((h) => !h))}>{ar ? "ثبّت التطبيق" : "Install app"}</button>
       {hint && (
-        <div className="card" style={{ position: "absolute", insetInlineEnd: 0, top: "110%", width: 240, zIndex: 50 }}>
+        <div className="card" style={{ position: "fixed", top: 64, insetInlineStart: 12, insetInlineEnd: 12, zIndex: 50, color: "var(--color-text)" }}>
           {ar ? "من زر المشاركة في سفاري اختار \"إضافة إلى الشاشة الرئيسية\"." : "In Safari tap the Share button, then \"Add to Home Screen\"."}
         </div>
       )}

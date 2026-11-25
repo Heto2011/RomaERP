@@ -234,7 +234,7 @@ export default function Manufacturing() {
 
               <div className="form-field" style={{ marginTop: 10 }}>
                 <label>{t.inventory.manufacturingBatchYield}</label>
-                <input type="number" min={0.0001} step="0.01" value={outputQuantity} onChange={(e) => setOutputQuantity(Number(e.target.value))} />
+                <input type="number" min={0.0001} step="any" value={outputQuantity} onChange={(e) => setOutputQuantity(Number(e.target.value))} />
               </div>
 
               <div className="form-field" style={{ marginTop: 10 }}>
@@ -273,7 +273,7 @@ export default function Manufacturing() {
                       </select>
                     </td>
                     <td>
-                      <input type="number" min={0.0001} step="0.01" value={newQuantity} onChange={(e) => setNewQuantity(Number(e.target.value))} style={{ width: 90 }} />
+                      <input type="number" min={0.0001} step="any" value={newQuantity} onChange={(e) => setNewQuantity(Number(e.target.value))} style={{ width: 90 }} />
                     </td>
                     <td>
                       <button type="button" className="btn btn-secondary btn-sm" onClick={addBomLine} disabled={!newRawMaterialId}>
@@ -369,7 +369,7 @@ export default function Manufacturing() {
                 </div>
                 <div className="form-field">
                   <label>{t.inventory.manufacturingProducedQuantity}</label>
-                  <input type="number" min={0.0001} step="0.01" value={orderProducedQuantity} onChange={(e) => setOrderProducedQuantity(Number(e.target.value))} required />
+                  <input type="number" min={0.0001} step="any" value={orderProducedQuantity} onChange={(e) => setOrderProducedQuantity(Number(e.target.value))} required />
                 </div>
                 <div className="form-field">
                   <label>{t.common.notes}</label>

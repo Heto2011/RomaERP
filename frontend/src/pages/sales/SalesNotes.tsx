@@ -193,7 +193,7 @@ export default function SalesNotes() {
                   {lines.map((line, idx) => (
                     <tr key={idx}>
                       <td><input value={line.description} onChange={(e) => updateLine(idx, { description: e.target.value })} required /></td>
-                      <td><input type="number" min={0.0001} step="0.01" value={line.quantity} onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })} style={{ width: 90 }} required /></td>
+                      <td><input type="number" min={0.0001} step="any" value={line.quantity} onChange={(e) => updateLine(idx, { quantity: Number(e.target.value) })} style={{ width: 90 }} required /></td>
                       <td><input type="number" min={0} step="0.01" value={line.unitPrice} onChange={(e) => updateLine(idx, { unitPrice: Number(e.target.value) })} style={{ width: 110 }} required /></td>
                       <td className="text-muted">{(vatRate * 100).toFixed(0)}%</td>
                       <td>
