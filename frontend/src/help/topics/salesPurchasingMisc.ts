@@ -318,6 +318,33 @@ export const TOPICS: HelpTopic[] = [
     },
   },
   {
+    id: "spm-sales-orders",
+    routes: ["/sales/orders"],
+    section: { ar: "المبيعات", en: "Sales" },
+    title: { ar: "أوامر البيع وإذن التسليم", en: "Sales orders and delivery notes" },
+    keywords: "أمر بيع اذن تسليم توصيل تسليم بضاعة طلب عميل sales order delivery note dispatch shipment",
+    steps: {
+      ar: [
+        "افتح المبيعات ثم \"أوامر البيع وإذن التسليم\" ودوس \"أمر بيع جديد\". أو من \"عروض الأسعار\" دوس \"اعمل أمر بيع\" على العرض المقبول.",
+        "اختار العميل وتاريخ التسليم وعنوانه، وأضف البنود، وحفظ. الأمر مسودة تقدر تعدّلها.",
+        "دوس \"أكّد الأمر\" لما العميل يأكد. بعدها تقدر تطبع \"إذن التسليم\" (من غير أسعار) وترافق البضاعة، وتوقيع المستلم بيتكتب عليه.",
+        "لما البضاعة تتسلّم دوس \"اتسلّم\" وبيتسجل اسم اللي سلّم.",
+        "دوس \"حوّله لفاتورة\"، اختار الفترة وطريقة الدفع، وهتتعمل فاتورة مبيعات عادية بنفس البنود.",
+      ],
+      en: [
+        "Open Sales, then \"Sales orders and delivery notes\", and press \"New sales order\". Or from \"Quotations\" press \"Make a sales order\" on an accepted quotation.",
+        "Choose the customer, the delivery date and address, add the lines and save. The order is a draft you can edit.",
+        "Press \"Confirm the order\" when the customer confirms. Then you can print the \"delivery note\" (no prices) to go with the goods, with a line for the receiver's signature.",
+        "When the goods are handed over press \"Delivered\"; the name of the person who delivered is kept.",
+        "Press \"Make an invoice\", choose the period and payment, and a normal sales invoice is made with the same lines.",
+      ],
+    },
+    tips: {
+      ar: ["أمر البيع مش بيتسجل في الدفاتر ومش بيخصم من المخزون. ده بيحصل لما يتحوّل لفاتورة.", "الأمر المؤكد مينفعش يتعدّل. لو محتاج تغيير، ألغيه واعمل أمر جديد."],
+      en: ["A sales order is not booked in the ledger and does not take stock out. That happens when it becomes an invoice.", "A confirmed order cannot be edited. Cancel it and make a new one if you need a change."],
+    },
+  },
+  {
     id: "spm-ai-actions",
     routes: ["/assistant/actions"],
     section: { ar: "المساعد الذكي", en: "Smart assistant" },

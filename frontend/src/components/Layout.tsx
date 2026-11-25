@@ -266,6 +266,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         { to: "/sales/customers", label: t.nav.customers, icon: <IconUsers /> },
         { to: "/sales/customers/new", label: t.nav.addCustomerFull, icon: <IconUser /> },
         { to: "/sales/quotations", label: t.nav.quotations, icon: <IconFile /> },
+        { to: "/sales/orders", label: t.nav.salesOrders, icon: <IconFile /> },
         { to: "/sales/invoices", label: t.nav.salesInvoices, icon: <IconFile /> },
         { to: "/sales/recurring", label: t.nav.recurringInvoices, icon: <IconRefresh /> },
         { to: "/sales/notes", label: t.nav.salesNotes, icon: <IconEdit /> },

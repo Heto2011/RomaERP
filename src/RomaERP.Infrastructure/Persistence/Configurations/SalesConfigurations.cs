@@ -321,3 +321,34 @@ public class RecurringInvoiceDueConfiguration : IEntityTypeConfiguration<Recurri
         builder.HasIndex(d => new { d.RecurringInvoiceId, d.PeriodKey }).IsUnique();
     }
 }
+
+public class SalesOrderConfiguration : IEntityTypeConfiguration<SalesOrder>
+{
+    public void Configure(EntityTypeBuilder<SalesOrder> builder)
+    {
+        builder.Property(o => o.OrderNumber).HasMaxLength(20).IsRequired();
+        builder.Property(o => o.DeliveryAddress).HasMaxLength(300);
+        builder.Property(o => o.Notes).HasMaxLength(1000);
+        builder.Property(o => o.DeliveredBy).HasMaxLength(100);
+        builder.Property(o => o.SubTotal).HasPrecision(18, 2);
+        builder.Property(o => o.VatAmount).HasPrecision(18, 2);
+        builder.Property(o => o.TotalAmount).HasPrecision(18, 2);
+        builder.HasIndex(o => o.OrderNumber).IsUnique();
+        builder.HasOne(o => o.Customer).WithMany().HasForeignKey(o => o.CustomerId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasMany(o => o.Lines).WithOne(l => l.SalesOrder).HasForeignKey(l => l.SalesOrderId).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
+public class SalesOrderLineConfiguration : IEntityTypeConfiguration<SalesOrderLine>
+{
+    public void Configure(EntityTypeBuilder<SalesOrderLine> builder)
+    {
+        builder.Property(l => l.Description).HasMaxLength(500).IsRequired();
+        builder.Property(l => l.Quantity).HasPrecision(18, 4);
+        builder.Property(l => l.UnitPrice).HasPrecision(18, 2);
+        builder.Property(l => l.LineTotal).HasPrecision(18, 2);
+        builder.Property(l => l.VatRate).HasPrecision(5, 4);
+        builder.Property(l => l.VatAmount).HasPrecision(18, 2);
+        builder.HasOne(l => l.Item).WithMany().HasForeignKey(l => l.ItemId).OnDelete(DeleteBehavior.Restrict);
+    }
+}

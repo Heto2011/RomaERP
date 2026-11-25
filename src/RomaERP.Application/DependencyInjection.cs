@@ -67,6 +67,7 @@ public static class DependencyInjection
 
         services.AddScoped<ISalesService, SalesService>();
         services.AddScoped<RomaERP.Application.Sales.Services.IRecurringInvoiceService, RomaERP.Application.Sales.Services.RecurringInvoiceService>();
+        services.AddScoped<RomaERP.Application.Sales.Services.ISalesOrderService, RomaERP.Application.Sales.Services.SalesOrderService>();
         services.AddScoped<RomaERP.Application.Sales.Services.IQuotationService, RomaERP.Application.Sales.Services.QuotationService>();
         services.AddScoped<RomaERP.Application.Purchasing.Services.IPurchaseNoteService, RomaERP.Application.Purchasing.Services.PurchaseNoteService>();
         services.AddScoped<RomaERP.Application.Purchasing.Services.IPurchaseOrderService, RomaERP.Application.Purchasing.Services.PurchaseOrderService>();

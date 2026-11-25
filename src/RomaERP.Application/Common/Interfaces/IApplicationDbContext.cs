@@ -109,6 +109,8 @@ public interface IApplicationDbContext
     DbSet<SalesNote> SalesNotes { get; }
     DbSet<SalesNoteLine> SalesNoteLines { get; }
     DbSet<SalesQuotation> SalesQuotations { get; }
+    DbSet<SalesOrder> SalesOrders { get; }
+    DbSet<SalesOrderLine> SalesOrderLines { get; }
     DbSet<RecurringInvoice> RecurringInvoices { get; }
     DbSet<RecurringInvoiceLine> RecurringInvoiceLines { get; }
     DbSet<RecurringInvoiceDue> RecurringInvoiceDues { get; }

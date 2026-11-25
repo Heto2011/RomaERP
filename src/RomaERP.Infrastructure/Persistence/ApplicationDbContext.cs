@@ -154,6 +154,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<SalesNote> SalesNotes => Set<SalesNote>();
     public DbSet<SalesNoteLine> SalesNoteLines => Set<SalesNoteLine>();
     public DbSet<SalesQuotation> SalesQuotations => Set<SalesQuotation>();
+    public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
+    public DbSet<SalesOrderLine> SalesOrderLines => Set<SalesOrderLine>();
     public DbSet<RecurringInvoice> RecurringInvoices => Set<RecurringInvoice>();
     public DbSet<RecurringInvoiceLine> RecurringInvoiceLines => Set<RecurringInvoiceLine>();
     public DbSet<RecurringInvoiceDue> RecurringInvoiceDues => Set<RecurringInvoiceDue>();

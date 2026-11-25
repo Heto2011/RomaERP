@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { QuotationsApi, SalesApi, LookupsApi, type Quotation, type TradeLineInput } from "../../api/services";
+import { useNavigate } from "react-router-dom";
+import { QuotationsApi, SalesApi, SalesOrdersApi, LookupsApi, type Quotation, type TradeLineInput } from "../../api/services";
 import type { Customer, FiscalPeriod } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
@@ -9,7 +10,7 @@ const TEXT = {
     title: "عروض الأسعار", add: "عرض سعر جديد", cancel: "إلغاء", save: "حفظ", customer: "العميل", choose: "اختار...", date: "التاريخ", valid: "صالح لحد", notes: "ملاحظات", terms: "الشروط (توريد، دفع...)",
     lines: "البنود", desc: "الوصف", qty: "الكمية", price: "السعر", vat: "الضريبة %", addLine: "إضافة بند", removeLine: "حذف البند", total: "الإجمالي", net: "قبل الضريبة", tax: "الضريبة",
     number: "الرقم", status: "الحالة", empty: "مفيش عروض لسه.", edit: "تعديل", send: "اتبعت للعميل", accept: "العميل وافق", reject: "العميل رفض", reopen: "رجّعه مسودة", toInvoice: "حوّله لفاتورة", print: "طباعة",
-    s: { 1: "مسودة", 2: "اتبعت", 3: "اتقبل", 4: "مرفوض", 5: "اتحوّل لفاتورة" } as Record<number, string>, expired: "منتهي الصلاحية",
+    s: { 1: "مسودة", 2: "اتبعت", 3: "اتقبل", 4: "مرفوض", 5: "اتحوّل لفاتورة" } as Record<number, string>, expired: "منتهي الصلاحية", toOrder: "اعمل أمر بيع",
     convertTitle: "تحويل لفاتورة مبيعات", invoiceDate: "تاريخ الفاتورة", period: "الفترة المحاسبية", payment: "طريقة الدفع", cash: "نقدي", card: "كارت", credit: "آجل", run: "حوّل", note: "الفاتورة بتتسجل في الدفاتر بالطريقة العادية.",
     hint: "العرض مش بيتسجل في الدفاتر. الدفاتر بتشوفه بس لما يتحوّل لفاتورة.",
   },
@@ -17,7 +18,7 @@ const TEXT = {
     title: "Quotations", add: "New quotation", cancel: "Cancel", save: "Save", customer: "Customer", choose: "Choose...", date: "Date", valid: "Valid until", notes: "Notes", terms: "Terms (delivery, payment...)",
     lines: "Lines", desc: "Description", qty: "Qty", price: "Price", vat: "Tax %", addLine: "Add line", removeLine: "Remove line", total: "Total", net: "Before tax", tax: "Tax",
     number: "No.", status: "Status", empty: "No quotations yet.", edit: "Edit", send: "Sent to customer", accept: "Customer accepted", reject: "Customer rejected", reopen: "Back to draft", toInvoice: "Make an invoice", print: "Print",
-    s: { 1: "Draft", 2: "Sent", 3: "Accepted", 4: "Rejected", 5: "Invoiced" } as Record<number, string>, expired: "Expired",
+    s: { 1: "Draft", 2: "Sent", 3: "Accepted", 4: "Rejected", 5: "Invoiced" } as Record<number, string>, expired: "Expired", toOrder: "Make a sales order",
     convertTitle: "Make a sales invoice", invoiceDate: "Invoice date", period: "Fiscal period", payment: "Payment", cash: "Cash", card: "Card", credit: "On account", run: "Convert", note: "The invoice is booked in the ledger the normal way.",
     hint: "A quotation is not booked in the ledger. The ledger only sees it once it becomes an invoice.",
   },
@@ -30,6 +31,7 @@ const money = (n: number) => n.toLocaleString(undefined, { maximumFractionDigits
 export default function Quotations() {
   const { lang } = useLanguage();
   const x = TEXT[lang === "ar" ? "ar" : "en"];
+  const navigate = useNavigate();
   const [list, setList] = useState<Quotation[]>([]);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [periods, setPeriods] = useState<FiscalPeriod[]>([]);
@@ -145,6 +147,7 @@ export default function Quotations() {
                     {(q.status === 1 || q.status === 2) && <button className="btn btn-secondary btn-sm" onClick={() => status(q.id, 4)}>{x.reject}</button>}
                     {q.status === 4 && <button className="btn btn-secondary btn-sm" onClick={() => status(q.id, 1)}>{x.reopen}</button>}
                     {q.status !== 4 && q.status !== 5 && <button className="btn btn-sm" onClick={() => { setConverting(q); setCv({ invoiceDate: today(), fiscalPeriodId: "", paymentTerm: 3 }); }}>{x.toInvoice}</button>}
+                    {q.status === 3 && <button className="btn btn-secondary btn-sm" onClick={async () => { setError(null); try { await SalesOrdersApi.fromQuotation(q.id); navigate("/sales/orders"); } catch (err) { setError(getErrorMessage(err)); } }}>{x.toOrder}</button>}
                     <button className="btn btn-secondary btn-sm" onClick={() => print(q)}>{x.print}</button>
                   </td>
                 </tr>

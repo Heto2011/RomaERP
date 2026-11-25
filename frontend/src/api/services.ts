@@ -1225,3 +1225,18 @@ export const RecurringInvoicesApi = {
   skip: (dueId: string) => apiClient.post<RecurringDue>(`/sales/recurring/pending/${dueId}/skip`),
   prepareNow: () => apiClient.post<number>("/sales/recurring/prepare-now"),
 };
+
+export interface SalesOrder {
+  id: string; orderNumber: string; orderDate: string; deliveryDate: string | null; customerId: string; customerName: string; customerPhone: string | null; status: number;
+  deliveryAddress: string | null; notes: string | null; subTotal: number; vatAmount: number; totalAmount: number; quotationId: string | null; invoiceId: string | null; deliveredBy: string | null; lines: TradeLine[];
+}
+export const SalesOrdersApi = {
+  getAll: () => apiClient.get<SalesOrder[]>("/sales/orders"),
+  create: (d: unknown) => apiClient.post<SalesOrder>("/sales/orders", d),
+  update: (id: string, d: unknown) => apiClient.put<SalesOrder>(`/sales/orders/${id}`, d),
+  fromQuotation: (quotationId: string) => apiClient.post<SalesOrder>(`/sales/orders/from-quotation/${quotationId}`),
+  confirm: (id: string) => apiClient.post<SalesOrder>(`/sales/orders/${id}/confirm`),
+  delivered: (id: string) => apiClient.post<SalesOrder>(`/sales/orders/${id}/delivered`),
+  cancel: (id: string) => apiClient.post<SalesOrder>(`/sales/orders/${id}/cancel`),
+  convert: (id: string, d: { invoiceDate: string; fiscalPeriodId: string; paymentTerm: number }) => apiClient.post<SalesOrder>(`/sales/orders/${id}/convert`, d),
+};
