@@ -5,6 +5,7 @@ import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import { bilingualName } from "../../i18n/bilingual";
 import QuickAddBulk from "../../components/QuickAddBulk";
+import BarcodeScanField from "../../components/BarcodeScanField";
 import { makeSequentialCodeGenerator } from "../../utils/sequentialCode";
 
 export default function Items() {
@@ -28,6 +29,8 @@ export default function Items() {
   const [reorderLevel, setReorderLevel] = useState("0");
   const [leadTimeDays, setLeadTimeDays] = useState("2");
   const [isLotTracked, setIsLotTracked] = useState(false);
+  const [barcode, setBarcode] = useState("");
+  const [find, setFind] = useState("");
 
   const [categoryCode, setCategoryCode] = useState("");
   const [categoryNameAr, setCategoryNameAr] = useState("");
@@ -59,6 +62,7 @@ export default function Items() {
     setReorderLevel("0");
     setLeadTimeDays("2");
     setIsLotTracked(false);
+    setBarcode("");
   }
 
   function startEdit(item: Item) {
@@ -71,6 +75,7 @@ export default function Items() {
     setReorderLevel(String(item.reorderLevel));
     setLeadTimeDays(String(item.leadTimeDays ?? 2));
     setIsLotTracked(item.isLotTracked);
+    setBarcode(item.barcode ?? "");
     setShowForm(true);
   }
 
@@ -78,7 +83,7 @@ export default function Items() {
     e.preventDefault();
     setError(null);
     try {
-      const payload = { nameAr, nameEn, unitOfMeasure, itemCategoryId, reorderLevel: Number(reorderLevel) || 0, leadTimeDays: Math.max(0, Math.round(Number(leadTimeDays) || 0)), isLotTracked };
+      const payload = { nameAr, nameEn, unitOfMeasure, itemCategoryId, reorderLevel: Number(reorderLevel) || 0, leadTimeDays: Math.max(0, Math.round(Number(leadTimeDays) || 0)), isLotTracked, barcode: barcode.trim() };
       if (editingId) await ItemsApi.update(editingId, payload);
       else await ItemsApi.create({ ...payload, code });
       resetForm();
@@ -249,6 +254,11 @@ export default function Items() {
                 <input type="number" step="0.01" value={reorderLevel} onChange={(e) => setReorderLevel(e.target.value)} />
               </div>
               <div className="form-field">
+                <label>{lang === "ar" ? "الباركود" : "Barcode"}</label>
+                <BarcodeScanField onScan={(c) => setBarcode(c)} />
+                <input value={barcode} onChange={(e) => setBarcode(e.target.value.replace(/\s/g, ""))} maxLength={64} placeholder={lang === "ar" ? "الباركود المسجّل للصنف" : "The item's barcode"} style={{ marginTop: 6 }} />
+              </div>
+              <div className="form-field">
                 <label>{t.inventory.leadTimeDays}</label>
                 <input type="number" min={0} step="1" value={leadTimeDays} onChange={(e) => setLeadTimeDays(e.target.value)} />
               </div>
@@ -267,11 +277,20 @@ export default function Items() {
         </div>
       )}
 
+      <div className="card" style={{ paddingBottom: 8 }}>
+        <label style={{ display: "block", marginBottom: 4 }}>{lang === "ar" ? "ابحث بالباركود أو الكود أو الاسم" : "Find by barcode, code or name"}</label>
+        <div style={{ display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+          <BarcodeScanField onScan={(c) => setFind(c)} />
+          {find && <button type="button" className="btn btn-secondary btn-sm" onClick={() => setFind("")}>{lang === "ar" ? `مسح البحث (${find})` : `Clear (${find})`}</button>}
+        </div>
+      </div>
+
       <div className="card">
         <table>
           <thead>
             <tr>
               <th>{t.common.code}</th>
+              <th>{lang === "ar" ? "الباركود" : "Barcode"}</th>
               <th>{t.common.nameAr}</th>
               <th>{t.inventory.category}</th>
               <th>{t.inventory.unit}</th>
@@ -282,9 +301,10 @@ export default function Items() {
             </tr>
           </thead>
           <tbody>
-            {items.map((item) => (
+            {items.filter((item) => { const q = find.trim().toLowerCase(); return !q || item.code.toLowerCase().includes(q) || (item.barcode ?? "").toLowerCase().includes(q) || item.nameAr.toLowerCase().includes(q) || item.nameEn.toLowerCase().includes(q); }).map((item) => (
               <tr key={item.id}>
                 <td>{item.code}</td>
+                <td>{item.barcode ?? ""}</td>
                 <td>{bilingualName(item.nameAr, item.nameEn, lang)}</td>
                 <td>{item.itemCategoryName || categoryName(item.itemCategoryId)}</td>
                 <td>{item.unitOfMeasure}</td>

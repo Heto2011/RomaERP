@@ -1394,6 +1394,7 @@ export interface Item {
   isMenuItem: boolean;
   menuPrice: number;
   isLotTracked: boolean;
+  barcode?: string | null;
 }
 
 export interface ItemLot {

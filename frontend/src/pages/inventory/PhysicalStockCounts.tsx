@@ -3,6 +3,8 @@ import { PhysicalStockCountsApi, ItemsApi, WarehousesApi, EmployeesApi } from ".
 import type { CountVarianceRow, Employee, Item, PhysicalStockCountEntry, Warehouse } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import BarcodeScanField from "../../components/BarcodeScanField";
+import { findItemByCode } from "../../utils/barcodeMatch";
 import InfoTooltip from "../../components/InfoTooltip";
 import { bilingualName } from "../../i18n/bilingual";
 import { useAuth } from "../../context/AuthContext";
@@ -174,7 +176,8 @@ export default function PhysicalStockCountsPage() {
               </div>
               <div className="form-field">
                 <label>{t.sales.item}</label>
-                <select value={itemId} onChange={(e) => setItemId(e.target.value)} required>
+                <BarcodeScanField onScan={(c) => { const it = findItemByCode(items, c); if (it) { setError(null); setItemId(it.id); } else setError(lang === "ar" ? `مفيش صنف بالباركود ده: ${c}` : `No item has this barcode: ${c}`); }} />
+                <select value={itemId} onChange={(e) => setItemId(e.target.value)} required style={{ marginTop: 6 }}>
                   <option value="">{t.inventory.selectItem}</option>
                   {items.map((i) => (
                     <option key={i.id} value={i.id}>

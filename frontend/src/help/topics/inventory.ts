@@ -15,6 +15,7 @@ export const TOPICS: HelpTopic[] = [
         "لو الصنف له تاريخ صلاحية، فعّل «تتبع بالدُفعات وتاريخ الصلاحية». أي استلام للصنف ده هيطلب رقم دُفعة وتاريخ صلاحية.",
         "اضغط «حفظ». عشان تضيف أصناف كتير مرة واحدة اضغط «إضافة سريعة»، واختر التصنيف والوحدة، والصق الأسماء اسم في كل سطر.",
         "من الجدول تقدر تشوف الرصيد الحالي ومتوسط التكلفة، وتضغط «تعديل» أو «حذف» على أي صنف.",
+        "الباركود: اكتب باركود الصنف في خانة «الباركود»، أو وجّه قارئ الباركود (أو زر 📷 كاميرا على الموبايل) عليه وهيتكتب لوحده. مينفعش باركود يتكرر على صنفين. بعد كده تقدر تضيف الصنف في فاتورة المبيعات أو المشتريات أو الجرد بمسح الباركود بس، ولو مسحته تاني بتزيد الكمية واحد، وتبحث عن الصنف في القائمة بالباركود.",
       ],
       en: [
         "Press “+ تصنيف” (new category) if you need one: enter the category code and the Arabic and English names, then “Save category”. You need a category before adding items.",
@@ -23,6 +24,7 @@ export const TOPICS: HelpTopic[] = [
         "If the item has an expiry date, turn on “Track by lot and expiry date”. Every receipt of that item will then ask for a lot number and expiry date.",
         "Press “Save”. To add many items at once press “Quick add”, choose the category and unit, and paste the names one per line.",
         "The table shows quantity on hand and average cost, with “Edit” and “Delete” on every item.",
+        "Barcode: type the item's barcode in the “Barcode” box, or point a barcode scanner (or the 📷 camera button on a phone) at it and it fills in by itself. Two items cannot share a barcode. After that you can add the item to a sales invoice, a purchase invoice or a stock count just by scanning it; scanning it again adds one to the quantity; and you can find an item in the list by its barcode.",
       ],
     },
     tips: {

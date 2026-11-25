@@ -22,6 +22,11 @@ public class ItemsController : ControllerBase
     public async Task<ActionResult<List<ItemDto>>> GetAll(CancellationToken ct)
         => Ok(await _itemService.GetAllAsync(ct));
 
+    /// <summary>The scanned barcode (or the item code) to the item it belongs to.</summary>
+    [HttpGet("by-barcode/{code}")]
+    public async Task<ActionResult<ItemDto>> GetByBarcode(string code, CancellationToken ct)
+        => Ok(await _itemService.GetByBarcodeAsync(code, ct));
+
     [HttpGet("{id:guid}")]
     public async Task<ActionResult<ItemDto>> GetById(Guid id, CancellationToken ct)
         => Ok(await _itemService.GetByIdAsync(id, ct));

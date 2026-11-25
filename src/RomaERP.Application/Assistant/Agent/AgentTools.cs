@@ -815,7 +815,7 @@ public class PrepareNewItemTool : PrepareFormTool
     public override JsonObject InputSchema => Opt(p =>
     {
         p["name"] = ToolArgs.S("the item name"); p["name_en"] = ToolArgs.S("the English name, if given"); p["unit"] = ToolArgs.S("unit of measure, e.g. kg or piece");
-        p["category"] = ToolArgs.S("the item category name"); p["reorder_level"] = ToolArgs.N("quantity at which to reorder, if stated"); p["lead_time_days"] = ToolArgs.N("supplier lead time in days, if stated");
+        p["category"] = ToolArgs.S("the item category name"); p["reorder_level"] = ToolArgs.N("quantity at which to reorder, if stated"); p["lead_time_days"] = ToolArgs.N("supplier lead time in days, if stated"); p["barcode"] = ToolArgs.S("the code printed on the product, if stated");
     }, "name");
 }
 
@@ -828,7 +828,7 @@ public class PrepareUpdateItemTool : PrepareFormTool
     public override JsonObject InputSchema => Opt(p =>
     {
         p["item"] = ToolArgs.S("the item name or code"); p["name"] = ToolArgs.S("new name, only if it changes"); p["name_en"] = ToolArgs.S("new English name, only if it changes");
-        p["unit"] = ToolArgs.S("new unit, only if it changes"); p["reorder_level"] = ToolArgs.N("new reorder level, only if it changes"); p["lead_time_days"] = ToolArgs.N("new lead time, only if it changes");
+        p["unit"] = ToolArgs.S("new unit, only if it changes"); p["reorder_level"] = ToolArgs.N("new reorder level, only if it changes"); p["lead_time_days"] = ToolArgs.N("new lead time, only if it changes"); p["barcode"] = ToolArgs.S("new barcode, only if it changes");
     }, "item");
 }
 

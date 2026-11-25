@@ -130,8 +130,37 @@ public class ItemService : IItemService
         return Map(item);
     }
 
+    public const int MaxBarcodeLength = 64;
+
+    private static string? CleanBarcode(string? raw)
+    {
+        var s = raw?.Trim();
+        if (string.IsNullOrEmpty(s)) return null;
+        if (s.Length > MaxBarcodeLength) throw new ValidationAppException($"الباركود أطول من {MaxBarcodeLength} حرف.");
+        if (s.Any(char.IsWhiteSpace)) throw new ValidationAppException("الباركود مينفعش يحتوي على مسافات.");
+        return s;
+    }
+
+    private async Task EnsureBarcodeFreeAsync(string barcode, Guid? exceptItemId, CancellationToken ct)
+    {
+        var taken = await _context.Items.AsNoTracking().Where(i => !i.IsDeleted && i.Barcode == barcode && (exceptItemId == null || i.Id != exceptItemId)).Select(i => i.Code).FirstOrDefaultAsync(ct);
+        if (taken is not null) throw new ValidationAppException($"الباركود ده مستخدم بالفعل للصنف {taken}.");
+    }
+
+    public async Task<ItemDto> GetByBarcodeAsync(string code, CancellationToken ct = default)
+    {
+        var c = code?.Trim();
+        if (string.IsNullOrEmpty(c)) throw new ValidationAppException("اكتب أو اعمل مسح للباركود.");
+        var item = await _context.Items.AsNoTracking().Include(i => i.ItemCategory).Where(i => !i.IsDeleted && i.IsActive && i.Barcode == c).FirstOrDefaultAsync(ct)
+            ?? await _context.Items.AsNoTracking().Include(i => i.ItemCategory).Where(i => !i.IsDeleted && i.IsActive && i.Code == c).FirstOrDefaultAsync(ct)
+            ?? throw new NotFoundException(nameof(Item), c);
+        return Map(item);
+    }
+
     public async Task<ItemDto> CreateAsync(CreateItemDto dto, CancellationToken ct = default)
     {
+        var barcode = CleanBarcode(dto.Barcode);
+        if (barcode is not null) await EnsureBarcodeFreeAsync(barcode, null, ct);
         var codeExists = await _context.Items.AnyAsync(i => i.Code == dto.Code && !i.IsDeleted, ct);
         if (codeExists)
             throw new ValidationAppException($"كود الصنف '{dto.Code}' مستخدم بالفعل.");
@@ -147,6 +176,7 @@ public class ItemService : IItemService
             NameEn = dto.NameEn.Trim(),
             UnitOfMeasure = dto.UnitOfMeasure.Trim(),
             ItemCategoryId = dto.ItemCategoryId,
+            Barcode = barcode,
             ReorderLevel = dto.ReorderLevel,
             LeadTimeDays = Math.Max(0, dto.LeadTimeDays),
             IsActive = true,
@@ -177,6 +207,12 @@ public class ItemService : IItemService
         item.ReorderLevel = dto.ReorderLevel;
         item.LeadTimeDays = Math.Max(0, dto.LeadTimeDays);
         item.IsLotTracked = dto.IsLotTracked;
+        if (dto.Barcode is not null)
+        {
+            var barcode = CleanBarcode(dto.Barcode);
+            if (barcode is not null) await EnsureBarcodeFreeAsync(barcode, item.Id, ct);
+            item.Barcode = barcode;
+        }
 
         await _context.SaveChangesAsync(ct);
         return await GetByIdAsync(item.Id, ct);
@@ -211,6 +247,7 @@ public class ItemService : IItemService
         IsActive = i.IsActive,
         IsMenuItem = i.IsMenuItem,
         MenuPrice = i.MenuPrice,
-        IsLotTracked = i.IsLotTracked
+        IsLotTracked = i.IsLotTracked,
+        Barcode = i.Barcode
     };
 }

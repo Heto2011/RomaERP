@@ -734,6 +734,7 @@ export const ItemsApi = {
   create: (data: Partial<Item>) => apiClient.post<Item>("/items", data),
   update: (id: string, data: Partial<Item>) => apiClient.put<Item>(`/items/${id}`, data),
   remove: (id: string) => apiClient.delete(`/items/${id}`),
+  byBarcode: (code: string) => apiClient.get<Item>(`/items/by-barcode/${encodeURIComponent(code)}`),
 };
 
 export const ManufacturingApi = {

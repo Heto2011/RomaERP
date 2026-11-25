@@ -10,6 +10,9 @@ public class Item : AuditableEntity
     public string NameEn { get; set; } = string.Empty;
     public string UnitOfMeasure { get; set; } = string.Empty;
 
+    /// <summary>The code printed on the product (EAN/UPC or the company's own label), read by a scanner or the phone camera. Unique among live items when set.</summary>
+    public string? Barcode { get; set; }
+
     public Guid ItemCategoryId { get; set; }
     public ItemCategory? ItemCategory { get; set; }
 

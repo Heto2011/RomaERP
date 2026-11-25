@@ -3,6 +3,8 @@ import { ExchangeRatesApi, ItemsApi, LookupsApi, SalesApi, WarehousesApi } from 
 import { EInvoiceStatus, PaymentTerm, type Customer, type FiscalPeriod, type Item, type SalesInvoice, type SalesInvoiceLineInput, type Warehouse } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import BarcodeScanField from "../../components/BarcodeScanField";
+import { findItemByCode } from "../../utils/barcodeMatch";
 import { bilingualName } from "../../i18n/bilingual";
 
 const emptyLine = (): SalesInvoiceLineInput => ({ description: "", quantity: 1, unitPrice: 0, itemId: null });
@@ -71,6 +73,19 @@ export default function SalesInvoices() {
 
   function updateLine(idx: number, patch: Partial<SalesInvoiceLineInput>) {
     setLines((prev) => prev.map((l, i) => (i === idx ? { ...l, ...patch } : l)));
+  }
+
+  function scanItem(code: string) {
+    setError(null);
+    const item = findItemByCode(items, code);
+    if (!item) { setError(lang === "ar" ? `مفيش صنف بالباركود ده: ${code}` : `No item has this barcode: ${code}`); return; }
+    setLines((prev) => {
+      const same = prev.findIndex((l) => l.itemId === item.id);
+      if (same >= 0) return prev.map((l, i) => (i === same ? { ...l, quantity: l.quantity + 1 } : l));
+      const line = { description: bilingualName(item.nameAr, item.nameEn, lang), quantity: 1, unitPrice: item.menuPrice || 0, itemId: item.id };
+      const blank = prev.length === 1 && !prev[0].itemId && prev[0].description === "" && prev[0].unitPrice === 0;
+      return blank ? [line] : [...prev, line];
+    });
   }
 
   function selectLineItem(idx: number, itemId: string) {
@@ -269,7 +284,9 @@ export default function SalesInvoices() {
             </div>
 
             <div style={{ marginTop: 16 }}>
-              <table>
+              <label>{lang === "ar" ? "إضافة صنف بالباركود" : "Add an item by barcode"}</label>
+              <BarcodeScanField onScan={scanItem} />
+              <table style={{ marginTop: 8 }}>
                 <thead>
                   <tr>
                     <th>{t.sales.item}</th>

@@ -49,6 +49,7 @@ public class ItemDto
     public bool IsMenuItem { get; set; }
     public decimal MenuPrice { get; set; }
     public bool IsLotTracked { get; set; }
+    public string? Barcode { get; set; }
 }
 
 public class CreateItemDto
@@ -61,6 +62,7 @@ public class CreateItemDto
     public decimal ReorderLevel { get; set; }
     public int LeadTimeDays { get; set; } = 2;
     public bool IsLotTracked { get; set; }
+    public string? Barcode { get; set; }
 }
 
 /// <summary>Code is intentionally excluded — it's referenced by existing stock movements/invoices, so it stays stable after creation.</summary>
@@ -73,4 +75,6 @@ public class UpdateItemDto
     public decimal ReorderLevel { get; set; }
     public int LeadTimeDays { get; set; } = 2;
     public bool IsLotTracked { get; set; }
+    /// <summary>Null = leave the barcode as it is; an empty text clears it.</summary>
+    public string? Barcode { get; set; }
 }

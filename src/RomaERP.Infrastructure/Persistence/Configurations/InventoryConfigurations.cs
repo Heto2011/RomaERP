@@ -40,7 +40,9 @@ public class ItemConfiguration : IEntityTypeConfiguration<Item>
         builder.Property(i => i.QuantityOnHand).HasPrecision(18, 4);
         builder.Property(i => i.AverageCost).HasPrecision(18, 4);
         builder.Property(i => i.MenuPrice).HasPrecision(18, 2);
+        builder.Property(i => i.Barcode).HasMaxLength(64);
         builder.HasIndex(i => i.Code).IsUnique();
+        builder.HasIndex(i => i.Barcode).IsUnique().HasFilter("[Barcode] IS NOT NULL AND [IsDeleted] = 0");
 
         builder.HasOne(i => i.ItemCategory)
             .WithMany(c => c.Items)

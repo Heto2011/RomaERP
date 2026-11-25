@@ -3,6 +3,8 @@ import { AccountsApi, ExchangeRatesApi, ItemsApi, LookupsApi, PurchasingApi, War
 import { PaymentTerm, ProductScope, type InvoiceScanResult, type Account, type FiscalPeriod, type Item, type Warehouse, type PendingPurchaseInvoice, type PurchaseInvoice, type PurchaseInvoiceLineInput, type Vendor } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
+import BarcodeScanField from "../../components/BarcodeScanField";
+import { findItemByCode } from "../../utils/barcodeMatch";
 import { useAuth } from "../../context/AuthContext";
 import { bilingualName } from "../../i18n/bilingual";
 import QuickAddItemsPicker from "../../components/QuickAddItemsPicker";
@@ -149,6 +151,14 @@ export default function PurchaseInvoices() {
       const isUntouchedBlankLine = prev.length === 1 && !prev[0].itemId && prev[0].description === "" && prev[0].unitPrice === 0;
       return isUntouchedBlankLine ? newLines : [...prev, ...newLines];
     });
+  }
+
+  function scanItem(code: string) {
+    setError(null);
+    const item = findItemByCode(items, code);
+    if (!item) { setError(lang === "ar" ? `مفيش صنف بالباركود ده: ${code}` : `No item has this barcode: ${code}`); return; }
+    if (lines.some((l) => l.itemId === item.id)) setLines((prev) => prev.map((l) => (l.itemId === item.id ? { ...l, quantity: l.quantity + 1 } : l)));
+    else handleAddItems([item]);
   }
 
   async function decidePending(id: string, approve: boolean) {
@@ -414,7 +424,8 @@ export default function PurchaseInvoices() {
             </div>
 
             <div style={{ marginTop: 16 }}>
-              <table>
+              {unitMode && (<><label>{lang === "ar" ? "إضافة صنف بالباركود" : "Add an item by barcode"}</label><BarcodeScanField onScan={scanItem} /></>)}
+              <table style={{ marginTop: 8 }}>
                 <thead>
                   <tr>
                     <th>{t.common.description}</th>

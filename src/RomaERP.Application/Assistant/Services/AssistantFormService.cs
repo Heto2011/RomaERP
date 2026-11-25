@@ -165,7 +165,7 @@ public class AssistantFormService : IAssistantFormService
         {
             F("nameAr", "الاسم", name, "text", true), F("nameEn", "الاسم بالإنجليزي", Arg(a, "name_en")), F("unit", "وحدة القياس", Arg(a, "unit"), "text", true),
             F("category", "الفئة", cat?.Id.ToString(), "select", true, cats), F("reorderLevel", "حد إعادة الطلب", Arg(a, "reorder_level") ?? "0", "number"),
-            F("leadTimeDays", "أيام التوريد", Arg(a, "lead_time_days") ?? "2", "number"),
+            F("leadTimeDays", "أيام التوريد", Arg(a, "lead_time_days") ?? "2", "number"), F("barcode", "الباركود", Arg(a, "barcode")),
         }, similar.Count > 0 ? "في أصناف قريبة بنفس الاسم: " + string.Join("، ", similar) : string.Empty, cat is null ? "اختار الفئة." : string.Empty);
     }
 
@@ -187,6 +187,7 @@ public class AssistantFormService : IAssistantFormService
             F("unit", "وحدة القياس", Arg(a, "unit") ?? i.UnitOfMeasure, "text", true),
             F("category", "الفئة", i.ItemCategoryId.ToString(), "select", true, await CategoriesAsync(ct)),
             F("reorderLevel", "حد إعادة الطلب", Arg(a, "reorder_level") ?? D(i.ReorderLevel), "number"), F("leadTimeDays", "أيام التوريد", Arg(a, "lead_time_days") ?? i.LeadTimeDays.ToString(), "number"),
+            F("barcode", "الباركود", Arg(a, "barcode") ?? i.Barcode),
         }, "سعر الصنف في المنيو بيتغيّر بأداة تغيير سعر المنيو، مش من هنا.");
     }
 
@@ -333,7 +334,7 @@ public class AssistantFormService : IAssistantFormService
                 await _items.CreateAsync(new CreateItemDto
                 {
                     Code = code, NameAr = name, NameEn = Opt(v, "nameEn", 150) ?? name, UnitOfMeasure = Req(v, "unit", "وحدة القياس", 30), ItemCategoryId = cat,
-                    ReorderLevel = Dec(v, "reorderLevel", "حد إعادة الطلب", false), LeadTimeDays = (int)Math.Min(365, Dec(v, "leadTimeDays", "أيام التوريد", false)),
+                    ReorderLevel = Dec(v, "reorderLevel", "حد إعادة الطلب", false), LeadTimeDays = (int)Math.Min(365, Dec(v, "leadTimeDays", "أيام التوريد", false)), Barcode = v.TryGetValue("barcode", out var bc0) ? bc0 : null,
                 }, ct);
                 return new($"اتضاف الصنف {name} بكود {code}.", "/inventory/items");
             }
@@ -346,7 +347,7 @@ public class AssistantFormService : IAssistantFormService
                 await _items.UpdateAsync(id, new UpdateItemDto
                 {
                     NameAr = name, NameEn = Opt(v, "nameEn", 150) ?? name, UnitOfMeasure = Req(v, "unit", "وحدة القياس", 30), ItemCategoryId = Id(v, "category", "الفئة"),
-                    ReorderLevel = Dec(v, "reorderLevel", "حد إعادة الطلب", false), LeadTimeDays = (int)Math.Min(365, Dec(v, "leadTimeDays", "أيام التوريد", false)), IsLotTracked = cur.IsLotTracked,
+                    ReorderLevel = Dec(v, "reorderLevel", "حد إعادة الطلب", false), LeadTimeDays = (int)Math.Min(365, Dec(v, "leadTimeDays", "أيام التوريد", false)), IsLotTracked = cur.IsLotTracked, Barcode = v.TryGetValue("barcode", out var bc1) ? (bc1 ?? "") : null,
                 }, ct);
                 return new($"اتحدّث الصنف {name}.", "/inventory/items");
             }
