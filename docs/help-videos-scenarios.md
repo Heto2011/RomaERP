@@ -17,3 +17,14 @@ For each: say what you will do (5 sec), do it slowly, say the result (5 sec). No
 Recorded from the real screens with demo data (captions only, no voice): `docs/videos/`
 1-first-sales-invoice, 2-collect-payment, 3-purchase-order, 4-ask-the-assistant, 5-install-the-app-iphone, quotation-to-invoice.
 Also recorded: 6-payroll. Not recorded yet: stock count and low stock (the stock count screen needs a longer, careful demo).
+
+## Scenario for video 5 (stock count), to record by hand on a demo company
+Follows the "Physical stock count" help guide, so the screen and the words match.
+1. (5 sec) "الجرد عندنا بتدخله إنت بنفسك، والنظام مش بيعدّل الرصيد من نفسه."
+2. Inventory → Physical stock count → "+ جرد جديد". Pick the date, the branch, one item. Read the system balance out loud.
+3. Type the counted quantity (make it 3 less than the system) → Save. Say: "النظام حسب الفرق وقيمته، ولسه الرصيد ما اتغيّرش."
+4. The line stays "منتظر الاعتماد". Say: "المالك أو المحاسب بس هما اللي يعتمدوا."
+5. Open "مراجعة واعتماد". Choose who bears the shortage (branch, company, or an employee). Say: "لو اخترت موظف، النقص بيتسجل مديونية عليه."
+6. Write the decision note → "اعتماد وعمل التسوية". Say: "اتعمل قيد وتسوية مخزون."
+7. Show the "فروقات الجرد" summary at the bottom (biggest loss first). 
+Use the demo company, never a real one. Total time under 90 seconds.
