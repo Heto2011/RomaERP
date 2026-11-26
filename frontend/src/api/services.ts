@@ -1240,3 +1240,10 @@ export const SalesOrdersApi = {
   cancel: (id: string) => apiClient.post<SalesOrder>(`/sales/orders/${id}/cancel`),
   convert: (id: string, d: { invoiceDate: string; fiscalPeriodId: string; paymentTerm: number }) => apiClient.post<SalesOrder>(`/sales/orders/${id}/convert`, d),
 };
+
+export interface PortalLinkStatus { hasActiveLink: boolean; expiresAtUtc: string | null; lastViewedAtUtc: string | null; viewCount: number }
+export const CustomerPortalAdminApi = {
+  status: (customerId: string) => apiClient.get<PortalLinkStatus>(`/sales/customers/${customerId}/portal`),
+  create: (customerId: string, days?: number) => apiClient.post<{ token: string; expiresAtUtc: string }>(`/sales/customers/${customerId}/portal`, { days: days ?? null }),
+  revoke: (customerId: string) => apiClient.delete(`/sales/customers/${customerId}/portal`),
+};

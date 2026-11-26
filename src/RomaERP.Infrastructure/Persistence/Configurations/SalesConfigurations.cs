@@ -352,3 +352,13 @@ public class SalesOrderLineConfiguration : IEntityTypeConfiguration<SalesOrderLi
         builder.HasOne(l => l.Item).WithMany().HasForeignKey(l => l.ItemId).OnDelete(DeleteBehavior.Restrict);
     }
 }
+
+public class CustomerPortalLinkConfiguration : IEntityTypeConfiguration<CustomerPortalLink>
+{
+    public void Configure(EntityTypeBuilder<CustomerPortalLink> builder)
+    {
+        builder.Property(l => l.TokenHash).HasMaxLength(64).IsRequired();
+        builder.HasIndex(l => l.TokenHash).IsUnique();
+        builder.HasOne(l => l.Customer).WithMany().HasForeignKey(l => l.CustomerId).OnDelete(DeleteBehavior.Cascade);
+    }
+}

@@ -5,6 +5,7 @@ import type { Customer } from "../../api/types";
 import { getErrorMessage } from "../../api/client";
 import { useLanguage } from "../../i18n/LanguageContext";
 import QuickAddBulk from "../../components/QuickAddBulk";
+import CustomerPortalPanel from "../../components/CustomerPortalPanel";
 import { makeSequentialCodeGenerator } from "../../utils/sequentialCode";
 
 export default function Customers() {
@@ -13,6 +14,8 @@ export default function Customers() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [showQuickAdd, setShowQuickAdd] = useState(false);
+  const [portalFor, setPortalFor] = useState<Customer | null>(null);
+  const companyCode = (() => { try { return localStorage.getItem("companyCode") ?? ""; } catch { return ""; } })();
   const codeGenRef = useRef<() => string>(() => "");
   const [error, setError] = useState<string | null>(null);
   const [code, setCode] = useState("");
@@ -122,6 +125,8 @@ export default function Customers() {
         </div>
       )}
 
+      {portalFor && <CustomerPortalPanel customerId={portalFor.id} customerName={portalFor.nameAr} companyCode={companyCode} onClose={() => setPortalFor(null)} />}
+
       <div className="card">
         <table>
           <thead>
@@ -131,12 +136,13 @@ export default function Customers() {
               <th>{t.common.nameEn}</th>
               <th>{t.common.phone}</th>
               <th>{t.sales.arBalance}</th>
+              <th />
             </tr>
           </thead>
           <tbody>
             {customers.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
+                <td colSpan={6} className="text-muted" style={{ textAlign: "center", padding: 20 }}>
                   {t.common.noData}
                 </td>
               </tr>
@@ -148,6 +154,7 @@ export default function Customers() {
                 <td>{c.nameEn}</td>
                 <td>{c.phone ?? "-"}</td>
                 <td>{c.arBalance.toLocaleString()}</td>
+                <td onClick={(e) => e.stopPropagation()}><button className="btn btn-secondary btn-sm" onClick={() => setPortalFor(c)}>🔗 {t.nav.customers === "العملاء" ? "بوابة العميل" : "Portal"}</button></td>
               </tr>
             ))}
           </tbody>

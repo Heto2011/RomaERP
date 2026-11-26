@@ -345,6 +345,33 @@ export const TOPICS: HelpTopic[] = [
     },
   },
   {
+    id: "spm-customer-portal",
+    routes: ["/sales/customers"],
+    section: { ar: "المبيعات", en: "Sales" },
+    title: { ar: "بوابة العميل (رابط خاص)", en: "Customer portal (private link)" },
+    keywords: "بوابة عميل رابط خاص كشف حساب فواتير العميل يشوف مشاركة واتساب customer portal private link statement invoices share",
+    steps: {
+      ar: [
+        "افتح المبيعات ثم \"العملاء\" ودوس زر \"بوابة العميل\" جنب العميل.",
+        "اختار مدة الرابط (الافتراضي 180 يوم) ودوس \"اعمل رابط\".",
+        "انسخ الرابط فورًا (بيظهر مرة واحدة بس) أو دوس \"ابعته واتساب\".",
+        "العميل يفتح الرابط من موبايله من غير تسجيل دخول، ويشوف فواتيره ورصيده المستحق وكشف حسابه آخر 12 شهر، ويحمّل أي فاتورة PDF.",
+        "تقدر تشوف هل اتفتح وكام مرة، وتوقف الرابط في أي وقت، أو تعمل رابط جديد (والقديم بيقف).",
+      ],
+      en: [
+        "Open Sales, then \"Customers\", and press the \"Portal\" button next to the customer.",
+        "Choose how long the link lasts (180 days by default) and press \"Make a link\".",
+        "Copy the link right away (it is shown only once) or press \"Send on WhatsApp\".",
+        "The customer opens it from their phone with no sign-in and sees their invoices, the amount due and the last 12 months of their statement, and can download any invoice as a PDF.",
+        "You can see whether it was opened and how many times, switch it off at any time, or make a new one (the old one stops).",
+      ],
+    },
+    tips: {
+      ar: ["الرابط بيفتح فواتير العميل ده بس. مفيش حاجة تانية ممكن يوصلها.", "ما تبعتش الرابط في مكان عام. أي حد معاه الرابط يشوف الفواتير.", "الدفع الأونلاين من البوابة لسه مش متاح."],
+      en: ["The link opens only this customer's invoices. Nothing else can be reached.", "Do not post the link anywhere public: anyone who has it can see the invoices.", "Paying online from the portal is not available yet."],
+    },
+  },
+  {
     id: "spm-ai-actions",
     routes: ["/assistant/actions"],
     section: { ar: "المساعد الذكي", en: "Smart assistant" },

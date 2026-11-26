@@ -113,6 +113,11 @@ builder.Services.AddRateLimiter(options =>
     // A short PIN is brute-forceable, so this throttles guesses per device — a legitimate cashier
     // mistyping a few times in a row never hits it, but a script trying every 4-digit PIN does.
     // The public careers form saves a record for anyone who fills it in, so each IP gets only a few applications an hour.
+    // The customer link page: a few views a minute is normal, a script walking guesses is not.
+    options.AddPolicy("portal-view", httpContext => RateLimitPartition.GetFixedWindowLimiter(
+        partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
+        factory: _ => new FixedWindowRateLimiterOptions { PermitLimit = 60, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+
     options.AddPolicy("careers-apply", httpContext => RateLimitPartition.GetFixedWindowLimiter(
         partitionKey: httpContext.Connection.RemoteIpAddress?.ToString() ?? "unknown",
         factory: _ => new FixedWindowRateLimiterOptions { PermitLimit = 10, Window = TimeSpan.FromHours(1), QueueLimit = 0 }));

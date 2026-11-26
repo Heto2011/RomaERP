@@ -47,9 +47,9 @@ public static class ProductScopeAccess
         ["accounts"] = Area.Accounting, ["financialreports"] = Area.Accounting, ["fiscalperiods"] = Area.Accounting,
         ["recurring-expenses"] = Area.Expenses, ["expense-policies"] = Area.Expenses,
 
-        ["sales"] = Area.Sales, ["customer-followups"] = Area.Sales,
+        ["sales"] = Area.Sales, ["customer-followups"] = Area.Sales, ["portal"] = Area.Sales,
         ["purchasing"] = Area.Purchasing,
-        ["aiassistant"] = Area.Ai, ["whatsapp"] = Area.Ai,
+        ["aiassistant"] = Area.Ai, ["assistant-agent"] = Area.Ai, ["whatsapp"] = Area.Ai,
         ["einvoicing"] = Area.EInvoicing,
     };
 
