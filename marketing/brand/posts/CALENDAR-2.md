@@ -33,4 +33,4 @@ Quotation → invoice in one click. First invoice in a minute. Record a part-pay
 ## Voice and music (what to ask whoever records)
 - A clear Egyptian voice, one short sentence per step, the same sentences as the on-screen captions.
 - A very soft instrumental track under the voice, volume well below it. Use a library whose licence allows commercial use (YouTube Audio Library or Pixabay Music) and keep the licence page.
-- Keep each video under 20 seconds for Reels/TikTok; the ones here are 14-20 seconds already.
+- Keep each video under 20 seconds for Reels/TikTok; the ones here are 10-19 seconds already.
