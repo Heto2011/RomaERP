@@ -30,6 +30,8 @@ public class MenuItemDto
     public string CategoryName { get; set; } = string.Empty;
     public bool HasRecipe { get; set; }
     public bool IsOpenPrice { get; set; }
+    /// <summary>The code on the product, so the cashier can add it by scanning.</summary>
+    public string? Barcode { get; set; }
 }
 
 public class RecipeLineDto

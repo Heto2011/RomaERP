@@ -2023,6 +2023,7 @@ export interface MenuItem {
   categoryName: string;
   hasRecipe: boolean;
   isOpenPrice?: boolean;
+  barcode?: string | null;
 }
 
 export interface RecipeLine {

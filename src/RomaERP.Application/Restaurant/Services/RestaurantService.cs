@@ -100,7 +100,8 @@ public class RestaurantService : IRestaurantService
             ItemCategoryId = i.ItemCategoryId,
             CategoryName = i.ItemCategory?.NameAr ?? string.Empty,
             HasRecipe = i.RecipeLines.Count > 0,
-            IsOpenPrice = i.IsOpenPrice
+            IsOpenPrice = i.IsOpenPrice,
+            Barcode = i.Barcode
         }).ToList();
     }
 

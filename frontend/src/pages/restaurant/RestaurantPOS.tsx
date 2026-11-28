@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import BarcodeScanField from "../../components/BarcodeScanField";
 import { useNavigate } from "react-router-dom";
 import { CashierShiftsApi, EmployeesApi, LookupsApi, LoyaltyApi, RestaurantApi, SalesApi, WarehousesApi } from "../../api/services";
 import {
@@ -254,6 +255,13 @@ export default function RestaurantPOS() {
     } catch (err) {
       setError(getErrorMessage(err));
     }
+  }
+
+  async function scanToOrder(code: string) {
+    const c = code.trim().toLowerCase();
+    const item = menu.find((m) => (m.barcode ?? "").toLowerCase() === c) ?? menu.find((m) => m.code.toLowerCase() === c);
+    if (!item) { setError(lang === "ar" ? `مفيش صنف بالباركود ده: ${code}` : `No item has this barcode: ${code}`); return; }
+    await handleAddItem(item.id);
   }
 
   async function handleLineQuantity(lineId: string, quantity: number) {
@@ -674,6 +682,7 @@ export default function RestaurantPOS() {
           {!selectedOrder && <div className="text-muted" style={{ padding: 24 }}>{t.restaurant.selectOrderHint}</div>}
           {selectedOrder && selectedOrder.status === RestaurantOrderStatus.Open && (
             <>
+              <div style={{ padding: "6px 8px" }}><BarcodeScanField autoFocus onScan={scanToOrder} /></div>
               <div className="pos-category-tabs">
                 {menuByCategory.map(([category]) => (
                   <button
